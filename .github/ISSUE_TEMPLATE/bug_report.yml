@@ -1,0 +1,38 @@
+name: Bug report
+description: Report a reproducible defect or operational failure.
+title: "[Bug]: "
+labels: [bug, needs-triage]
+body:
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: What happened and how did it affect the operator or show?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Provide the smallest reliable sequence of steps.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Build, OS, hardware, browser, network, DVS, receiver, and firmware versions.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Sanitized logs, measurements, screenshots, or synthetic recordings.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Data safety
+      options:
+        - label: I removed credentials, private keys, real show audio, and personal information.
+          required: true

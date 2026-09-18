@@ -1,0 +1,71 @@
+# Documentation
+
+This directory is the durable project record. Pull-request discussion can
+explain a change, but architecture, operating constraints, and product intent
+must remain understandable without access to the original conversation.
+
+## Start here
+
+- [Product vision](product/vision.md)
+- [Reference productions](product/reference-productions.md)
+- [Cast, microphone, image, and cue workflows](product/cast-mics-cues.md)
+- [A1/A2 views and collaboration](product/a1-a2-views-and-collaboration.md)
+- [Roadmap](product/roadmap.md)
+- [System architecture](architecture/overview.md)
+- [Deployment topologies](architecture/deployment.md)
+- [Latency architecture](architecture/latency.md)
+- [Time, clock, and replay](architecture/time-and-replay.md)
+- [Failure and degraded modes](architecture/failure-and-degraded-modes.md)
+- [Collaboration state and authorization contract](architecture/collaboration-contract.md)
+- [Observability and operational evidence](architecture/observability.md)
+- [Domain model](architecture/domain-model.md)
+- [Operator workflows](product/operator-workflows.md)
+- [Receiver integration standard](integrations/README.md)
+- [Shure wireless integration](integrations/shure-wireless.md)
+- [Sennheiser EW-DX integration](integrations/sennheiser-ew-dx.md)
+- [Performance baselines](quality/performance-baselines.md)
+- [Reference validation matrix](quality/validation-matrix.md)
+- [Threat model](quality/threat-model.md)
+- [Repository governance](quality/repository-governance.md)
+- [Definition of done](quality/definition-of-done.md)
+- [Show management and control API](api/show-management-and-control.md)
+- [A1/A2 theatre workflow research](research/a1-a2-collaboration.md)
+- [Independent-review response research](research/review-response-research.md)
+- [A1/A2 independent review](reviews/2026-09-18-a1-a2-independent-review.md)
+
+## Accepted decisions
+
+- [Cross-platform single-device capture](decisions/0003-cross-platform-single-capture-device.md)
+- [Active-performance authority and control ledger](decisions/0004-active-performance-command-authority.md)
+- [Cue authority and occurrences](decisions/0005-cue-authority-and-occurrences.md)
+- [Foreground Live client profile](decisions/0006-foreground-live-client-profile.md)
+- [Appliance resource isolation](decisions/0007-appliance-resource-isolation.md)
+
+## Reference
+
+- `decisions`: architecture decision records (ADRs)
+- `api`: public management, control, event, and integration contracts
+- `quality`: testing, performance, security, and release gates
+- `integrations`: receiver coverage, transports, capability maps, and firmware policy
+- `research`: source-backed technical and competitive research
+- `reviews`: review findings and action ledgers
+- `runbooks`: repeatable development and operational procedures
+
+## Document states
+
+Use these labels at the top of technical documents where ambiguity matters:
+
+- **Proposed**: not yet accepted or proven.
+- **Accepted**: the current project decision.
+- **Validated**: measured on a named test setup.
+- **Superseded**: retained for history and linked to its replacement.
+
+Targets and verified measurements must never be presented as the same thing.
+
+## Keeping documentation healthy
+
+- Update a document in the same pull request as the behavior it describes.
+- Add an ADR for decisions that are costly to reverse.
+- Link to primary vendor or standards sources for changing technical facts.
+- Record source access dates for web research.
+- Prefer diagrams for process boundaries and timing paths, not decoration.

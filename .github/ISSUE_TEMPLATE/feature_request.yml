@@ -1,0 +1,29 @@
+name: Feature request
+description: Propose an operator workflow or platform capability.
+title: "[Feature]: "
+labels: [enhancement, needs-triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Operator problem
+      description: Describe the job, failure mode, or decision that is difficult today.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: What should become faster, safer, or easier?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Possible approach
+      description: Optional. Describe a solution without prescribing it unnecessarily.
+  - type: textarea
+    id: show_context
+    attributes:
+      label: Show context
+      description: Channel count, crew roles, venue type, devices, and frequency of use.

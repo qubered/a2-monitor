@@ -1,0 +1,55 @@
+# Operating systems and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# Logs, captures, recordings, and generated reports
+*.log
+captures/
+recordings/
+reports/
+coverage/
+
+# JavaScript / TypeScript
+node_modules/
+.next/
+dist/
+build/
+
+# Rust
+target/
+
+# C / C++ / CMake
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+compile_commands.json
+
+# Go
+bin/
+
+# Python
+__pycache__/
+.pytest_cache/
+.venv/
+
+# Local databases and runtime state
+*.db
+*.db-shm
+*.db-wal
+data/
+tmp/
