@@ -2,7 +2,7 @@
 
 - **Status:** Accepted as the implementation baseline; installers remain Phase 0 evidence work
 - **Date:** 2026-09-19
-- **Owners:** Project team
+- **Owners:** Release/signing custodian; platform/security owner
 - **Supersedes:** None
 
 ## Context
@@ -16,7 +16,7 @@ start predictably and remain installable offline with verified signatures.
 
 Use a Cargo workspace for Rust crates and npm workspaces for backend, web and
 shared TypeScript packages. Commit `Cargo.lock` and `package-lock.json`. Pin the
-Rust stable toolchain and Node 24 LTS major. Do not add pnpm, Nx, Turborepo,
+exact Rust, Node and npm patch used for every release. Do not add pnpm, Nx, Turborepo,
 Bazel, containers or a cross-language task runner until measured repository
 scale requires one.
 
@@ -34,10 +34,22 @@ The default quality tools are:
 Keep the existing dependency-light Node test runner for repository contract and
 cryptographic verifier tests until migration provides a concrete benefit.
 
-Use signed WiX-authored MSI/Burn packages on Windows and signed, hardened,
-notarized/stapled flat installer packages on macOS. The installer provisions
-data directories, certificates, firewall policy, logs, repair/uninstall and a
-dedicated show-user startup mechanism.
+Use signed MSI/Burn packages on Windows and signed, hardened,
+notarized/stapled flat installer packages on macOS. WiX v7 is only the reference
+authoring implementation after explicit OSMF/EULA/commercial approval; a
+  supported commercial MSI authoring product or reviewed direct Windows
+  Installer implementation is the fallback. Inno Setup is not represented as
+  an MSI replacement. The
+installer provisions immutable version slots, separate data directories,
+certificates, firewall policy, logs, repair/uninstall and a dedicated show-user
+startup mechanism.
+
+Ship a pinned Node runtime, compiled application JS/static assets and the
+adjacent signed native SQLite addon. Node SEA is not the initial package form.
+Release/evidence builds have no public-network access, forbid CPAL's automatic
+ASIO SDK download and consume licensed/checksummed native inputs from controlled
+storage. Exact Node/npm/.NET/LLVM/protoc/native-source hashes appear in release
+provenance.
 
 The Phase 0 reference builds are Windows 11 x86-64 and Apple-silicon macOS on
 exact in-support OS builds. macOS x86-64 and Windows ARM64 remain build-design
@@ -50,6 +62,18 @@ triggered task on Windows and LaunchAgent on macOS. The initial readiness model
 requires that account to be logged in; operating-system boot alone is not audio
 readiness. A backend helper may run as a service/daemon only after session,
 authority and update tests prove the split.
+
+The initial supported profile uses manual show-user login. Power-to-login-ready
+and login-to-audio-ready are separate measurements; the 120-second recovery
+target begins after login. Controlled autologin requires a separate managed-
+appliance security profile.
+
+Node and backend have independent supervisors. Updates are stopped-state
+administrative operations over immutable application slots and an atomic,
+ACL-protected activation record; mutable data is outside the slots. The previous
+compatible version remains available until health confirmation. The updater
+vendor/CDN is deferred, not these invariants. See
+[the process/update lifecycle](../architecture/process-and-update-lifecycle.md).
 
 ## Consequences
 
@@ -71,6 +95,7 @@ authority and update tests prove the split.
   until its legal/commercial terms are approved, with another supported MSI
   authoring tool as the fallback.
 - A dedicated show account must be logged in for the version-one audio profile.
+- Unattended power recovery is not claimed by the manual-login profile.
 - npm and Cargo orchestration is less centralized than a large monorepo tool.
 - Signed installer/update and rollback tests require protected hardware and
   credentials outside ordinary pull-request CI.
@@ -93,6 +118,8 @@ authority and update tests prove the split.
 
 - Build, install, upgrade, roll back, repair and uninstall on clean supported
   Windows and macOS machines without internet access.
+- Power-cut every slot installation, activation, health-confirmation, schema and
+  rollback boundary; an active performance must reject update attempts.
 - Verify signed binaries, notarization/stapling, ACLs, firewall bindings, data
   preservation and complete executable inventory.
 - Exercise login/logout, lock/unlock, sleep/wake, crash/restart and audio-device

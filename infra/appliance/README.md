@@ -18,11 +18,19 @@ Expected responsibilities:
 - diagnostics export and factory recovery; and
 - single-host and split-host installation profiles.
 
-The initial packaging model is selected in ADR 0018: signed WiX/MSI on Windows
+The initial packaging model is selected in ADR 0018: signed MSI on Windows
 and a signed, hardened, notarized/stapled flat package on macOS. The audio-node
 supervisor starts in the dedicated logged-in show-user session using a Windows
-logon task or macOS LaunchAgent. Boot without that user session is not reported
-as audio ready.
+logon task or `SMAppService` LaunchAgent. Boot without that user session is not
+reported as audio ready, and the version-one profile requires manual login.
+WiX is only the reference MSI authoring implementation after explicit current
+commercial/EULA approval.
+
+Application binaries occupy immutable versioned slots; mutable data lives
+outside them. A candidate passes signature, compatibility, migration, startup,
+selected-device and API health checks before the protected activation selector
+changes. The prior compatible slot remains available for rollback, and updates
+are blocked during an active performance.
 
 Windows and macOS are both product targets. Their service supervision,
 keystore, firewall, update, and recovery profiles may differ while preserving

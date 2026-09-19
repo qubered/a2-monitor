@@ -21,10 +21,10 @@ real-time boundary:
 | Database | Local SQLite WAL/FULL; `better-sqlite3` in a dedicated backend storage worker and bundled `rusqlite` on the node | Accepted with version and power-cut gates |
 | Manager and Live | Separate React + TypeScript + Vite applications | Accepted |
 | Browser state transport | Versioned REST commands/snapshots plus WebSocket deltas; WebRTC only for media and its bounded control channel | Accepted |
-| Internal native IPC | Shared-memory SPSC PCM rings plus local pipes/sockets carrying bounded Protobuf control messages | Accepted |
+| Internal native IPC | Page-separated shared-memory SPSC PCM rings plus local pipes/sockets using codec-neutral bounded frames | Accepted; JSON versus Protobuf measured in Phase 0T |
 | Repository | Cargo workspace plus npm workspaces and one lockfile for each ecosystem | Accepted |
 | Test stack | Rust native tests/fuzzing/benchmarks, Vitest for TypeScript components, Playwright for browser flows, custom hardware evidence harness | Accepted |
-| Installation | Signed WiX/MSI on Windows; signed/notarized flat package on macOS; audio runtime in the logged-in show-user session | Accepted as the packaging spike baseline |
+| Installation | Signed MSI on Windows; signed/notarized flat package on macOS; audio runtime in the logged-in show-user session | Accepted; WiX is conditional on commercial/EULA approval |
 
 This is a production-shaped baseline, not a claim that CPAL or `str0m` has
 already passed the named-hardware gates. Those two layers sit behind narrow
@@ -140,10 +140,16 @@ common deadline in [Understanding Audio Workgroups](https://developer.apple.com/
 
 ### ASIO legal and build gate
 
-Steinberg now publishes an open-source GPLv3 path as well as proprietary
-licensing information for ASIO. The project must choose a redistribution path
-compatible with its own eventual licence before a distributable ASIO build.
-The SDK, headers or binaries are never committed casually. See Steinberg's
+Steinberg publishes an open-source GPLv3 path as well as proprietary licensing
+information for ASIO. The working product assumption is proprietary
+distribution, so the first ASIO evidence build—not merely the first public
+release—requires an approved proprietary Steinberg route, recorded SDK
+provenance and a reviewed local `CPAL_ASIO_DIR`. CPAL's convenience build may
+download the SDK when that variable is absent; release/evidence builds prohibit
+public-network access and must fail instead. If a proprietary route is not
+available, ASIO artifacts and compatibility claims remain blocked rather than
+silently inheriting GPLv3 obligations. The SDK, headers or binaries are never
+committed casually. See Steinberg's
 [ASIO SDK page](https://www.steinberg.net/developers/asiosdk-open/) and CPAL's
 documented LLVM/Clang build requirement.
 
@@ -201,6 +207,12 @@ first application choice.
 This choice does not change ADR 0002's one continuous Opus track per client or
 the standard local profile's no-public-STUN/TURN rule.
 
+Disable `str0m` default features and select the cryptographic backend
+deliberately: `apple-crypto` on macOS and `wincrypto` on Windows, with the
+AWS-LC/Rustls path retained only as an explicitly measured fallback. Record the
+provider and version in every evidence manifest. This prevents a crate-default
+change from silently changing native libraries, trust behavior or packaging.
+
 ## Backend and public API
 
 ### Comparison
@@ -219,6 +231,16 @@ is LTS at the research date. See the official [release schedule](https://nodejs.
 Fastify aligns with the existing contract approach: it recommends JSON Schema
 for request validation and response serialization and compiles those schemas.
 See [Fastify validation and serialization](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization/).
+
+The project installs Fastify 5.12.2 or newer within the pinned major because
+earlier versions are affected by its 2026 schema-validation advisory. Fastify's
+default validator/serializer stack is Draft 7-oriented, while this repository
+uses Draft 2020-12, so the backend injects one explicitly configured Ajv 2020
+instance in strict, non-mutating mode (`removeAdditional`, `useDefaults` and
+`coerceTypes` disabled). Runtime requests, tools and golden vectors use that
+same configuration. Responses are validated before `JSON.stringify`; compiled
+serialization is permitted only after a conformance suite proves it cannot
+hide invalid or omitted fields.
 
 Rules for this boundary:
 
@@ -324,7 +346,10 @@ There are two paths because PCM and control have different requirements.
 ### PCM path
 
 Use fixed-size, preallocated single-producer/single-consumer rings in shared
-memory. The header contains a magic value, ABI version, epoch, sample format,
+memory. Separate page-aligned regions hold immutable descriptors, producer-
+writable counters, consumer-writable counters and PCM slots so each process
+receives only the write permissions it needs. The descriptor contains a magic
+value, ABI version, byte order, epoch, sample format,
 channel count, frames per slot, capacity, monotonic sequence counters and
 overrun/underrun counters. Slots contain fixed-layout PCM and capture timing.
 There are no pointers, strings, variable-length records or ownership transfer
@@ -339,8 +364,8 @@ macOS exposes POSIX `shm_open`; see Apple's [`shm_open(2)`](https://developer.ap
 ### Control path
 
 Use byte-mode named pipes on Windows and Unix-domain sockets on macOS. Frames
-are `u32` network-order length plus a Protobuf envelope with protocol version,
-message kind, request/event ID, authority epoch where relevant and payload.
+are `u32` network-order length plus a codec/version byte and bounded payload
+with message kind, request/event ID, authority epoch where relevant and payload.
 Apply a small hard maximum before allocation, deadlines, bounded queues,
 peer-identity checks and close-on-protocol-error behavior.
 
@@ -349,16 +374,16 @@ the logon SID; Microsoft's [named-pipe security](https://learn.microsoft.com/en-
 documentation notes that default descriptors can grant read access to Everyone
 and anonymous users. On macOS, the socket directory and object are owner-only.
 
-Protobuf is used for evolvable native control records, not PCM. Its tagged wire
-format allows parsers to skip unknown fields, but serialization is not a stable
-canonical byte representation; signatures and hashes continue to use the
-existing RFC 8785 canonical JSON contract. See the official
+Phase 0T compares bounded JSON against Protobuf on representative commands and
+telemetry before selecting the control codec. Protobuf is the reference
+candidate for evolvable native control records, not PCM; its tagged format can
+skip unknown fields, but serialization is not a stable canonical byte
+representation. Signatures and hashes continue to use RFC 8785 canonical JSON.
+The outer framing and limits do not depend on the codec. See the official
 [Protocol Buffers encoding guide](https://protobuf.dev/programming-guides/encoding/).
 
 Alternatives rejected for this path:
 
-- JSON for internal high-rate control: useful for diagnostics, but more parsing
-  and allocation and weaker generated multi-language contracts;
 - gRPC: HTTP/2 and service machinery are unnecessary on a local process edge;
 - Protobuf/FlatBuffers for PCM: any record serialization is unnecessary copying;
 - one in-process monolith: violates the established crash and privilege
@@ -407,7 +432,7 @@ cross-language meta-build until the build graph demonstrates a need. Root
 scripts may orchestrate stable component checks without hiding their native
 commands.
 
-Pin the Rust toolchain and Node LTS major. Rust 1.98.1 is the stable point
+Pin the Rust toolchain and exact Node 24 patch in the release manifest. Rust 1.98.1 is the stable point
 release at the research date according to the official
 [Rust release announcement](https://blog.rust-lang.org/releases/latest/). Pin
 direct dependencies and commit both lockfiles. Renovation is a reviewed change
@@ -474,7 +499,7 @@ and [Designing Daemons and Services](https://developer.apple.com/library/archive
 
 Packaging baseline:
 
-- Windows: WiX-authored signed MSI/Burn bundle, explicit firewall rules,
+- Windows: maintained-tool-authored signed MSI/bundle, explicit firewall rules,
   show-user logon task, repair/uninstall and no opaque auto-update. WiX builds
   standard Windows Installer packages and bundles; see its
   [current documentation](https://docs.firegiant.com/wix/). Current WiX releases
@@ -490,14 +515,24 @@ MSIX may be revisited for managed enterprise distribution, but MSI is the first
 spike because the appliance needs explicit machine integration, repair and
 logon-task behavior without depending on packaging capability/version
 differences. If WiX terms are not approved, compare a supported commercial MSI
-tool and [Inno Setup](https://jrsoftware.org/isinfo.php) against the same
-signing, rollback, ACL, logon-task and offline-repair manifest rather than
-freezing an unsupported WiX release.
+authoring tool or a reviewed direct Windows Installer implementation against
+the same signing, transactional rollback, ACL, logon-task and offline-repair
+manifest rather than freezing an unsupported WiX release. Inno Setup is not an
+MSI-semantic substitute and is removed from the baseline comparison.
 
 The initial support contract therefore requires a dedicated show account to be
 logged in before capture can become ready. “Machine booted” is not reported as
 “audio ready.” Backend/system helpers may later run as services/daemons, but
 their loss or session split must not violate node authority or audio ownership.
+The initial product does not silently auto-log in this account; a documented
+manual login is part of the pre-show procedure.
+
+Installations use immutable versioned application slots. The candidate is
+staged beside the active slot, signatures and compatibility are checked,
+migrations are exercised against a snapshot, and startup/device/API health
+gates pass before an atomic selector change. The prior slot and compatible data
+snapshot remain available for rollback. Updates are refused during an active
+performance, and power interruption at every transition is tested on both OSes.
 
 ## Choices deliberately deferred
 

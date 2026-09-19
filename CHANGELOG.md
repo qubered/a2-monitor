@@ -10,6 +10,15 @@ externally tested release.
 
 ### Added
 
+- Resolved the independent stack reviews with executable evidence predicates
+  over verified artifact bytes, explicit OS/device/browser/lifecycle promotion
+  matrices, capture-frame/RTP rules, a hardened shared-memory ABI, complete
+  native/backend supervision, media-worker recovery, immutable-slot updates,
+  strict Ajv 2020/Fastify conformance, explicit WebRTC crypto providers,
+  hermetic ASIO builds, accountable release roles and conditional WiX use.
+- Rebased Phase 0 into a prerequisite closure slice, stack scaffold, capture
+  proof and three attributable Phase 0B media/appliance/integration gates.
+
 - Selected and documented the implementation baseline: Rust with a replaceable
   CPAL audio-host layer, shared-memory/Protobuf IPC, `str0m` plus `libopus`, a
   TypeScript/Fastify backend, independent React/Vite applications, pinned

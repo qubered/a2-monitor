@@ -4,7 +4,7 @@
 errors = []
 
 Dir.glob("**/*.md", File::FNM_DOTMATCH).sort.each do |file|
-  next if file.start_with?(".git/", "node_modules/", "dist/", "build/", "target/")
+  next if (file.split("/") & %w[.git node_modules dist build target]).any?
 
   File.read(file).scan(/\[[^\]]*\]\(([^)]+)\)/).flatten.each do |raw|
     link = raw.strip.delete_prefix("<").delete_suffix(">")

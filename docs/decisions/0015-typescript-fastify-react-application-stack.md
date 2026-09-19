@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-19
-- **Owners:** Project team
+- **Owners:** Application/backend owner; platform/security owner for runtime validation
 - **Supersedes:** None
 
 ## Context
@@ -21,6 +21,14 @@ synchronous database work and untrusted jobs off the HTTP/WebSocket event loop.
 Use the current supported Node.js 24 LTS line and strict TypeScript for the
 management backend. Use Fastify for local HTTPS, REST, WebSocket signaling/state
 subscriptions and static asset delivery.
+
+Pin the exact Node/npm patch in release manifests. Fastify must be 5.12.2 or
+newer and remain on a reviewed supported line. Configure a custom Draft 2020-12
+runtime: strict `Ajv2020`, registered project formats, no coercion, defaults or
+additional-property removal. Validate responses with the same registry and then
+use ordinary `JSON.stringify`; do not pass authoritative 2020-12 schemas to the
+default Draft-7 `fast-json-stringify` path. Signed/canonical bodies are validated
+without mutation before authorization/signature/domain projection.
 
 Use separate React + TypeScript + Vite applications for Manager and Live. They
 share generated protocol clients, headless accessible primitives, design
@@ -43,6 +51,12 @@ behind repository interfaces; do not introduce an ORM initially. Assert the
 runtime SQLite version/compile options and disable native extension loading.
 Node's built-in `node:sqlite` may replace the addon only after it is stable and
 passes migration, backup, version and performance gates.
+
+The initial storage worker is a Node worker thread: it protects the HTTP event
+loop but is not an operating-system crash/security boundary. A native-addon
+fault may terminate the backend; independent node/backend supervision ensures
+that cannot affect capture. Move storage to a process only if recovery evidence
+requires it.
 
 High-rate telemetry does not flow through React component state. A typed
 transport writes bounded external stores; Canvas/WebGL render meters, traces
@@ -89,6 +103,9 @@ audio guarantee.
 
 - Run API/WebSocket/storage load together with the Phase 0B full appliance load
   and prove it sheds before capture or live media.
+- Execute every positive/negative contract vector through Ajv, a real Fastify
+  route, response validation, generated Rust/TypeScript and JCS signing; prove
+  signed input is never coerced or stripped.
 - Profile 64 then 128 visible channels and enforce UI frame/input budgets on
   named browser devices.
 - Test Manager and Live as independent builds and reject dependency leakage.

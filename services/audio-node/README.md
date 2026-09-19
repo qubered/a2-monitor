@@ -21,6 +21,9 @@ least-privilege supervised processes, not one large privileged process.
 ## Process boundary
 
 - the audio engine alone owns the selected device and real-time callback;
+- one canonical sequencer owns runtime command order and durable acceptance;
+- a least-privilege client gateway validates leased data-channel commands but
+  cannot commit state independently;
 - media, replay, receiver adapters, and supervision run in separate failure
   domains with bounded IPC;
 - network parsers cannot allocate or block work in the callback; and
@@ -49,10 +52,17 @@ and privileged configuration fail safely until the backend returns.
 - Rust 2024 on the repository-pinned stable toolchain;
 - a project-owned host interface with CPAL as the Phase 0A ASIO/WASAPI/Core
   Audio adapter;
-- fixed shared-memory PCM rings and bounded Protobuf pipe/socket control IPC;
-- upstream `libopus` and `str0m` in an isolated Phase 0B media worker;
+- page-separated fixed shared-memory PCM rings and codec-neutral bounded pipe/
+  socket control IPC; bounded JSON versus Protobuf is a Phase 0T measurement;
+- upstream `libopus` and `str0m`, with explicit OS crypto features, in an
+  isolated Phase 0B media worker;
 - bundled `rusqlite` for the node control ledger; and
 - supervised Rust replay and receiver-adapter workers.
 
 CPAL and `str0m` are reference implementations, not compatibility claims. ADR
 0014 and ADR 0017 define the evidence and targeted replacement rules.
+
+Capture frame and epoch—not wall clock—drive RTP timestamps. A media-worker
+restart creates fresh peer/RTP generations and reconnects clients without
+stopping capture. The full normative process, time and ABI rules are linked
+from the architecture index.

@@ -39,6 +39,8 @@ required_files=(
   docs/product/vision.md
   docs/architecture/overview.md
   docs/architecture/implementation-structure.md
+  docs/architecture/process-and-update-lifecycle.md
+  docs/architecture/media-clock-and-ipc-abi.md
   docs/architecture/collaboration-contract.md
   docs/decisions/0004-active-performance-command-authority.md
   docs/decisions/0005-cue-authority-and-occurrences.md
@@ -56,6 +58,7 @@ required_files=(
   docs/decisions/0017-str0m-webrtc-media-worker.md
   docs/decisions/0018-workspaces-testing-and-native-packaging.md
   docs/research/technology-stack-selection.md
+  docs/research/stack-review-resolution.md
   docs/architecture/performance-lifecycle.md
   docs/architecture/runtime-command-contract.md
   docs/architecture/temporal-identity-and-swap.md
@@ -73,6 +76,9 @@ required_files=(
   packages/protocol/model/aggregate-transitions.v0.json
   tests/catalog/evidence-tests.v0.json
   tests/catalog/operator-tests.v0.json
+  tests/manifests/evidence-metrics.schema.json
+  tests/fixtures/evidence/phase0a-nominal.metrics.valid.json
+  tests/fixtures/evidence/phase0a-nominal.metrics.false-pass.json
 )
 
 for path in "${required_files[@]}"; do
@@ -83,7 +89,7 @@ for path in "${required_files[@]}"; do
 done
 
 while IFS= read -r path; do
-  [[ -e "$path" ]] || continue
+  [[ -f "$path" ]] || continue
   size="$(wc -c < "$path" | tr -d ' ')"
   if (( size > 10485760 )); then
     echo "Tracked file exceeds 10 MiB; use an approved artifact store or Git LFS: $path" >&2

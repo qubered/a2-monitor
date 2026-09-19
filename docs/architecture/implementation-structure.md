@@ -21,6 +21,8 @@ not imply that empty packages must be created before their phase begins.
 │   ├── opus-sys-safe/            # only audited libopus FFI leaf
 │   ├── replay/                   # replay segment/read model
 │   ├── receiver-domain/          # normalized receiver types/capabilities
+│   ├── control-ledger/           # canonical sequencer and durable append API
+│   ├── client-gateway/           # lease/signature checks; no canonical append
 │   ├── runtime-protocol/         # generated Protobuf transport DTOs
 │   └── telemetry/                # metrics/log vocabulary and redaction
 ├── services/
@@ -29,7 +31,11 @@ not imply that empty packages must be created before their phase begins.
 │   │       ├── audio-engine.rs
 │   │       ├── media-worker.rs
 │   │       ├── replay-worker.rs
+│   │       ├── command-sequencer.rs
+│   │       ├── client-gateway.rs
+│   │       ├── receiver-adapter.rs
 │   │       └── node-supervisor.rs
+│   ├── backend-supervisor/       # Rust launcher for pinned Node/backend tree
 │   └── backend/
 │       └── src/
 │           ├── auth/             # identity, policy and leases
@@ -81,6 +87,10 @@ flowchart LR
     Media --> IPC
     ReplayBin["replay-worker binary"] --> Replay["replay"]
     Replay --> IPC
+    MediaBin --> GatewayBin["client-gateway binary"]
+    GatewayBin --> IPC
+    SequencerBin["command-sequencer binary"] --> Ledger["control-ledger"]
+    SequencerBin --> IPC
     Adapters["receiver adapter workers"] --> Receiver["receiver-domain"]
     Adapters --> IPC
     IPC --> NativeProtocol["runtime-protocol"]
@@ -102,6 +112,10 @@ Rules:
   authority decisions.
 - receiver adapters depend inward on normalized receiver contracts; backend and
   UI code never imports vendor parsers or vendor wire structures.
+- the media worker terminates SCTP but cannot append canonical state; it forwards
+  bounded untrusted bytes to the client gateway, which validates leases and
+  signatures before the command sequencer sees a command.
+- only the command sequencer imports the `control-ledger` append capability.
 - backend packages do not import Rust/native crates. They communicate through
   versioned network contracts.
 - `apps/manager` and `apps/live` do not import one another. Both may import only
@@ -166,7 +180,8 @@ compile never marks a hardware tuple supported.
    changing schema IDs; add deterministic generation and golden-vector checks.
 3. Create `audio-host-api`, `audio-core`, `ipc` and a synthetic capture binary.
 4. Create independent backend, Manager and Live health/snapshot skeletons.
-5. Add supervised native worker lifecycle and installer smoke packages.
+5. Add the sequencer, client gateway, receiver worker and independently
+   supervised backend/native process skeletons plus packaging-layout smoke tests.
 6. Begin Phase 0A hardware capture; do not wait for final UI design.
 7. Add the Opus/`str0m` media worker only after capture/timing instrumentation
    is stable enough to preserve causal measurements.

@@ -53,6 +53,13 @@ useful for attribution but is not an acceptable end-to-end result by itself.
 The browser may clamp or ignore requested behavior. Negotiated SDP and measured
 WebRTC statistics must be captured with every benchmark.
 
+The offer/answer must request Opus at 48 kHz and record the actual payload type,
+channel count, `ptime`/`maxptime`, `stereo`/`sprop-stereo`, in-band FEC, DTX and
+bitrate-related FMTP values. The test harness parses the negotiated SDP and RTP
+packet cadence; a UI configuration value is not proof that the packet profile
+was used. `jitterBufferTarget` is an optimization only where the named browser
+actually implements it, never a support prerequisite.
+
 ## Test method
 
 Use a physical impulse or timecoded click:
@@ -62,7 +69,8 @@ Use a physical impulse or timecoded click:
    recorder/interface;
 3. calculate sample offset over at least 100 events;
 4. report p50, p95, p99, maximum, and audible discontinuities; and
-5. repeat after a one-hour warm-up and during representative CPU/network load.
+5. report a robust latency-versus-time slope across the full run; and
+6. repeat after a one-hour warm-up and during representative CPU/network load.
 
 Test at least:
 
@@ -74,6 +82,14 @@ Test at least:
 
 Bluetooth measurements must be reported separately because device codec and
 buffer latency are outside the application's control.
+
+The executable Phase 0B gates are wired p50/p95/p99/max <= 50/75/100/150 ms
+and Wi-Fi <= 80/120/180/250 ms. Maximum single audible interruptions are
+<= 100 ms wired and <= 250 ms on the declared venue-Wi-Fi profile. Capture-to-
+ear latency drift must remain within an absolute 1 ms/hour slope. The frozen
+impairment manifest records direction, delay distribution, burst model, loss,
+jitter, reorder, duplication, corruption, bandwidth and outage schedule so the
+same profile can be reproduced.
 
 ## Switching latency
 
@@ -108,6 +124,11 @@ Version one is explicitly foreground-only. On visibility loss, screen lock, or
 audio-context suspension, Live must mark monitoring interrupted rather than
 showing a misleading healthy listen state. Foreground recovery is measured;
 continuous background audio is deferred.
+
+Capture frame number and epoch are the media time authority. RTP/RTCP mapping,
+gap handling and worker-restart generation rules are specified in the
+[media clock and IPC ABI](media-clock-and-ipc-abi.md); wall clock is never used
+to advance RTP timestamps.
 
 ## Product boundary
 

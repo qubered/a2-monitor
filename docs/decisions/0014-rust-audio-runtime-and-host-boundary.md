@@ -2,7 +2,7 @@
 
 - **Status:** Accepted; CPAL production promotion remains Phase 0A-gated
 - **Date:** 2026-09-19
-- **Owners:** Project team
+- **Owners:** Audio runtime owner; platform/security owner for ASIO provenance
 - **Supersedes:** None
 
 ## Context
@@ -36,6 +36,12 @@ Use ASIO for DVS and named professional Windows profiles. Evaluate low-period
 WASAPI shared mode before exclusive mode for ordinary Windows devices. Use Core
 Audio on macOS and add native Audio Workgroup integration for auxiliary
 real-time threads when the Phase 0A profile requires it.
+
+The initial distribution assumption is proprietary. No GPLv3 ASIO SDK/header is
+used in a distributable build. ASIO/DVS release support is blocked until the
+Steinberg proprietary path is approved and a licensed, checksummed SDK is
+available through controlled build storage. Release/evidence builds set
+`CPAL_ASIO_DIR` explicitly and fail rather than allowing CPAL to download an SDK.
 
 The DSP core uses preallocated fixed-capacity buffers and queues. No general
 audio-plugin host is included in phases 0–2. Upstream `libopus` is wrapped in a
@@ -83,4 +89,5 @@ single audited Rust FFI crate for live encoding.
   host proof before changing the product claim.
 - Pass 12-hour soaks, device removal/reopen, clock change and no-silent-repatch
   tests.
-- Complete ASIO licence and redistributable-build review before shipping it.
+- Complete the proprietary ASIO licence and hermetic SDK-input gate before the
+  first ASIO/DVS evidence build, not merely before shipping it.

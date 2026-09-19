@@ -57,5 +57,7 @@ topology permits.
 
 ## Validation
 
-Meet the targets and method in `docs/quality/performance-baselines.md` across
-the supported compatibility matrix before changing this ADR to Accepted.
+The WebRTC/Opus architecture is accepted. Promote an individual browser/output/
+network support profile only after it meets the targets and physical method in
+`docs/quality/performance-baselines.md`; passing one profile does not validate
+another.
