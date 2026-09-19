@@ -1191,7 +1191,7 @@ function card(ch,i){
       ${face(ch)}
       <span class="no">${String(ch.no).padStart(2,"0")}</span>
       ${ch.reported&&!ch.claimed
-        ? `<span class="listening-tag badge b-warn"><i class="dot live-dot"></i>A1 REPORTED${ch.reported.length>1?` ×${ch.reported.length}`:""}</span>`
+        ? `<span class="listening-tag badge b-warn"><i class="dot live-dot"></i>REPORTED${ch.reported.length>1?` ×${ch.reported.length}`:""}</span>`
         : ch.live?`<span class="listening-tag badge b-live"><i class="dot live-dot"></i>LISTENING</span>`:""}
       <button class="zoom" data-detail="${i}" aria-label="Open details for ${ch.nm}"><i><svg viewBox="0 0 16 16"
         fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">

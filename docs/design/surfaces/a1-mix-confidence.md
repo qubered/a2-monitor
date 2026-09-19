@@ -89,9 +89,8 @@ plain words, the time, and who sent it. No identity translation, no readback.
   be able to sit in unnoticed. It stops on claim, and `prefers-reduced-motion`
   removes it while the amber outline stays.
 - The card shows **REPORTED**, with a count when more than one issue went, until
-  someone claims it — then **BEING WORKED** with the claimant. On the A2 grid the
-  same channel reads **A1 REPORTED**, so it is obvious the fault came from the
-  desk rather than from telemetry.
+  someone claims it — then **BEING WORKED** with the claimant. The A2 grid shows
+  the same **REPORTED** badge on that channel.
 - Critical exceptions across the whole show sit in one banner at the top,
   including sources not currently on stage.
 - The open-reports bar names who has what.
