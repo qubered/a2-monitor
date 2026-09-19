@@ -322,6 +322,18 @@ Two corrections came out of review, and both improved it:
   operator does that, and needs to see the meter and the status strip to do it.
   The overlay now veils the photograph and name only, stopping short of the
   status strip, and carries one icon and two words.
+- **The overlay covers the whole card, and the Acknowledge button is gone.**
+  Pressing the card acknowledges the alert *and* starts listening to that
+  channel. This resolved a tension in the earlier build: the overlay was a listen
+  target and also carried a button, which meant two different things could happen
+  depending on where a thumb landed. One press, both outcomes, because "I see it,
+  let me hear it" is a single intention.
+- **A fault that clears takes its alert with it.** If the condition resolves on
+  its own — the pack is unmuted, the interference passes — the alert leaves the
+  card whether or not anyone acknowledged it. Asking an operator to dismiss
+  something that is no longer true is busywork during a show. The event stays in
+  the channel history and on the replay timeline, so a fault that came and went is
+  still auditable afterwards.
 - **The overlay expires on a configurable timer; the alert does not.** Stated
   earlier in these notes as "it does not time out", which was wrong. An unattended
   screen should not end the night as a wall of red. The overlay holds the card for
@@ -375,10 +387,13 @@ These need an operator in a room, not more desk research.
 15. With several alerts unacknowledged at once, does a wall of takeover cards
     stop being readable? A storm is exactly when the grid matters most, and the
     plan already requires alert storms to collapse into a grouped incident.
-16. What is the right default expiry per severity? Five minutes is a guess. A
+16. With no Acknowledge button, is "press to acknowledge" discoverable enough on
+    a first shift, or does the hint need to stay permanently? It is the only
+    place in the product where a press means something other than listen.
+17. What is the right default expiry per severity? Five minutes is a guess. A
     critical audio loss probably deserves longer than a battery warning, and the
     number should come from watching operators rather than from taste.
-17. Should acknowledgement be per-operator or per-show? Two A2s working
+18. Should acknowledgement be per-operator or per-show? Two A2s working
     different zones may both need to see an alert before it is considered seen.
-18. Does the detail view need a compare mode — two channels side by side — for
+19. Does the detail view need a compare mode — two channels side by side — for
     the common "is it this pack or this zone" question?

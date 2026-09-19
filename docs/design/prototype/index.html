@@ -166,7 +166,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    pointer events, so a press anywhere that is not the photo lands here. */
 .chcard .hit{position:absolute;inset:0;z-index:1;border-radius:var(--r-lg);background:none}
 .chcard .hit:focus-visible{outline:2px solid var(--red);outline-offset:3px}
-.chcard > *:not(.hit):not(.tile){pointer-events:none}
+.chcard > *:not(.hit):not(.tile):not(.alertover){pointer-events:none}
 /* the photograph and the name. an alert veils this much and stops short of the
    status strip, which stays readable underneath it. */
 .chcard .tile{position:relative;display:flex;flex-direction:column;gap:12px}
@@ -191,20 +191,21 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    whose channel it is, what the meter is doing and where the fault sits in the
    status strip — which is what they need to start troubleshooting. The overlay
    names the problem and nothing else. */
-.alertover{position:absolute;inset:-6px -4px -8px;z-index:4;border-radius:var(--r);
+.alertover{position:absolute;inset:0;z-index:5;border-radius:calc(var(--r-lg) - 2px);
   background:color-mix(in srgb, var(--t-out) 11%, rgba(255,253,248,.44));
-  display:flex;flex-direction:column;padding:10px 12px 12px;
+  display:flex;flex-direction:column;padding:14px;
   align-items:center;justify-content:flex-start;text-align:center;width:100%;border:none;cursor:pointer}
 .alertover.warn{background:color-mix(in srgb, var(--warn) 13%, rgba(255,253,248,.44))}
 /* the mark sits over the photograph, the way WaveTool puts it on the tile,
    so the name and the status strip underneath stay readable */
-.alertover .mark{flex:1 1 auto;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:4px}
-.alertover .ackbtn{margin-bottom:2px}
+/* the mark matches the photograph's box exactly, so the name and the status
+   strip stay legible under the veil rather than being written over */
+.alertover .mark{flex:0 0 auto;width:100%;aspect-ratio:16/10;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px}
 .alertover .glyph{color:var(--t-out);opacity:.92;line-height:0}
 .alertover.warn .glyph{color:var(--warn)}
-.alertover .glyph svg{width:52px;height:52px;filter:drop-shadow(0 1px 0 rgba(255,253,248,.9))}
-.alertover .kind{font-family:var(--fd);font-weight:800;font-size:19px;letter-spacing:.02em;
+.alertover .glyph svg{width:46px;height:46px;filter:drop-shadow(0 1px 0 rgba(255,253,248,.9))}
+.alertover .kind{font-family:var(--fd);font-weight:800;font-size:18px;letter-spacing:.02em;
   text-transform:uppercase;color:var(--t-out);text-shadow:0 1px 0 rgba(255,253,248,.85)}
 .alertover.warn .kind{color:var(--warn)}
 /* the overlay clears itself after a configurable time. the alert does not:
@@ -216,12 +217,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   transform-origin:left;animation:alertexpire var(--dur,300s) linear forwards}
 .alertover.warn .timer i{background:var(--warn)}
 @keyframes alertexpire{from{transform:scaleX(1)}to{transform:scaleX(0)}}
-.alertover .ackbtn{background:var(--red);color:#fff;box-shadow:0 3px 0 var(--red-700);
-  border-radius:99px;font-family:var(--fb);font-weight:700;font-size:13.5px;min-height:44px;padding:0 22px;
-  display:flex;align-items:center;justify-content:center;transition:transform .12s,box-shadow .12s}
-.alertover.warn .ackbtn{background:var(--warn);box-shadow:0 3px 0 #9C6A0E}
-.alertover .ackbtn:hover{transform:translateY(-1px)}
-.alertover .ackbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--red-700)}
+.alertover .press{font-family:var(--fb);font-weight:700;font-size:10px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--t-out);opacity:.7;margin-top:4px;
+  text-shadow:0 1px 0 rgba(255,253,248,.85)}
+.alertover.warn .press{color:var(--warn)}
+.alertover:active{background:color-mix(in srgb, var(--t-out) 20%, rgba(255,253,248,.44))}
+.alertover.warn:active{background:color-mix(in srgb, var(--warn) 22%, rgba(255,253,248,.44))}
 @keyframes alertpulse{0%,100%{box-shadow:0 3px 0 var(--red-700)}50%{box-shadow:0 3px 0 var(--red-700),0 0 0 4px var(--red-soft)}}
 .chcard.alert{animation:alertpulse 2.2s ease-in-out infinite}
 
@@ -1014,13 +1015,13 @@ function alertOverlay(ch,i){
   const dur = ALERT_OVERLAY_SECONDS;
   /* the overlay itself listens, so an alert never stands between an operator
      and the audio they need to hear to judge it */
-  return `<button class="alertover ${warn?'warn':''}" data-listen="${i}" style="--dur:${dur}s"
-      aria-label="Listen to ${ch.nm} — unacknowledged ${ch.alert.kind}">
+  return `<button class="alertover ${warn?'warn':''}" data-ack="${i}" style="--dur:${dur}s"
+      aria-label="${ch.alert.kind} on ${ch.nm}, channel ${ch.no}. Press to acknowledge and listen.">
     <span class="mark">
       <span class="glyph" aria-hidden="true">${BIGICON[icon]}</span>
       <span class="kind">${label}</span>
+      <span class="press">Press to acknowledge</span>
     </span>
-    <span class="ackbtn" role="button" data-ack="${i}">Acknowledge</span>
     <span class="timer" aria-hidden="true"><i></i></span>
   </button>`;
 }
@@ -1044,8 +1045,8 @@ function card(ch,i){
   const alerting = ch.alert && !ch.acked;
   return `<article class="chcard ${ch.live?'listening':''} ${ch.crit?'critical':''} ${alerting?'alert':''}" data-i="${i}">
     <button class="hit" data-listen="${i}" aria-label="Listen to ${ch.nm}, channel ${ch.no}"></button>
-    <div class="tile">
     ${alertOverlay(ch,i)}
+    <div class="tile">
     <button class="shot" data-detail="${i}" aria-label="Open details for ${ch.nm}">
       ${face(ch)}
       <span class="no">${String(ch.no).padStart(2,"0")}</span>
@@ -1067,6 +1068,24 @@ function renderGrids(){
   const a1=$("#a1grid"); if(a1) a1.innerHTML = CH.slice(0,8).map((c,i)=>card(c,i)).join("");
 }
 renderGrids();
+
+/* An alert belongs to a fault. When the fault clears, the alert goes with it —
+   acknowledged or not — because an operator should never be asked to dismiss
+   something that is no longer true. The event stays in the channel's history. */
+function resolveAlert(i){
+  const ch=CH[i]; if(!ch || !ch.alert) return;
+  ch.alert=null; ch.acked=false; ch.expired=false; ch.crit=false;
+  renderGrids();
+  const n=CH.filter(c=>c.alert&&!c.acked).length;
+  $$("[data-ackcount]").forEach(x=>{
+    x.textContent = n ? `${n} to acknowledge` : "all acknowledged";
+    x.classList.toggle("out", n>0); });
+}
+/* demonstration: the muted pack gets unmuted, so its alert clears itself */
+setTimeout(()=>{
+  const i=CH.findIndex(c=>c.alert && c.alert.kind==="Audio drop");
+  if(i>-1){ CH[i].st="on"; CH[i].af=-21.4; CH[i].s.audio="ok"; resolveAlert(i); }
+}, 12000);
 
 /* the overlay times out on its own; the alert stays unacknowledged */
 CH.forEach((ch,i)=>{
@@ -1218,6 +1237,8 @@ document.addEventListener("click",e=>{
   if(ak){
     e.stopPropagation();
     const i=+ak.dataset.ack; CH[i].acked=true; CH[i].expired=false;
+    /* pressing an alerting channel means "I see it, let me hear it" */
+    listen(i);
     /* acknowledging is not fixing: the fault stays in the status strip, and the
        alert moves into the card's status area rather than vanishing */
     renderGrids();

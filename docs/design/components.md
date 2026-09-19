@@ -101,54 +101,66 @@ everywhere it is seen.
 
 ## Alert overlay
 
-An alert that nobody has acknowledged veils the channel's tile and name, the way
-WaveTool draws its fault overlay on a channel strip.
+An alert that nobody has acknowledged veils the **whole card**, the way WaveTool
+draws its fault overlay on a channel strip.
 
 ```
 ┌────────────────────────────────┐
 │ ┌────────────────────────────┐ │
-│ │ 27      ((( ))))       ⤢   │ │ ← translucent veil: the photograph,
-│ │          LOW RF            │ │   the meter and the channel number
-│ │▁▂▅█▆▃▂▁▂▄▆█▇▄▂▁▂▃▅▇█▆▄▂▁▂▃▄│ │   are all still visible through it
+│ │ 27      ((( ))))       ⤢   │ │ ← the mark sits on the photograph's box
+│ │          LOW RF            │ │
+│ │   PRESS TO ACKNOWLEDGE     │ │
+│ │▁▂▅█▆▃▂▁▂▄▆█▇▄▂▁▂▃▅▇█▆▄▂▁▂▃▄│ │
 │ └────────────────────────────┘ │
-│ Eleanor Vance  ┌────────────┐  │
-│ Marguerite Hal │Acknowledge │  │
-│ ──────────────────────────────  │ ← the overlay's own countdown
+│ Eleanor Vance                  │ ← veiled, but readable
+│ Marguerite Hale                │
 │ ┌─────┬─────┬─────┬─────┐      │
-│ │  ✕  │  ✓  │  ✓  │  ⚠  │      │ ← the status strip is NOT veiled
+│ │  ✕  │  ✓  │  ✓  │  ⚠  │      │ ← veiled, but readable
 │ │ RF  │AUDIO│ BATT│CHECK│      │
 │ └─────┴─────┴─────┴─────┘      │
+│ ──────────────────────────────  │ ← the overlay's own countdown
 └────────────────────────────────┘
 ```
 
-**It is a veil, not a replacement.** The operator can still see whose channel it
-is, what the meter is doing, and where the fault sits in the status strip
-underneath — which is what they need to start troubleshooting. The overlay is
-deliberately scoped to stop short of the status strip.
+**A veil, not a replacement.** The tint covers the whole card, but everything
+underneath still reads: the face, the channel number, the meter, the name, and
+the status strip. That is what an operator needs to start troubleshooting, and
+it is why the mark is pinned to the photograph's box rather than centred over
+the card, where it would be written across the name.
 
 **It names the problem and nothing else.** One icon, two words — *Low RF*, *No
-audio*, *Low battery* — and an Acknowledge button. No explanation, no timestamp,
-no diagnosis, no action list. The operator troubleshoots; the product's job is to
-say which channel and which kind, fast, from across a wing.
+audio*, *Low battery*. No explanation, no timestamp, no diagnosis, no action
+list. The operator troubleshoots; the product's job is to say which channel and
+which kind, fast, from across a wing.
 
-Rules:
+### Behaviour
 
-1. **The overlay is itself a listen target.** Pressing anywhere on it that is not
-   the Acknowledge button listens to that channel. The first thing anyone does
-   with "low RF on 27" is listen to 27, and an alert that blocked that would be
-   worse than no alert.
+1. **Pressing the card acknowledges it — and starts listening.** There is no
+   Acknowledge button. Pressing an alerting channel means "I see it, let me hear
+   it", so one press does both: the alert is acknowledged and that channel goes
+   into the operator's ears. The alert is the only thing standing between the
+   card and its normal press-to-listen behaviour, and it gets out of the way on
+   the first press.
 2. **The overlay expires; the alert does not.** It holds the card for a
    configurable time — default five minutes, set per severity by production
-   policy — and then clears itself, so an unattended screen does not end the
-   night as a wall of red. A countdown along the bottom of the overlay shows this
-   is going to happen rather than surprising anyone.
-3. **Expiry is not acknowledgement.** An alert that timed out moves into the
-   card's status area marked **Not acknowledged**, with a dashed border, and
-   still counts in the header's outstanding total. An alert nobody saw must never
-   look like one somebody saw.
+   policy — then clears, so an unattended screen does not end the night as a wall
+   of red. A countdown along the bottom edge shows this is coming.
+3. **Expiry is not acknowledgement.** A timed-out alert moves into the card's
+   status area marked **Not acknowledged**, with a dashed border, and still
+   counts in the header's outstanding total. An alert nobody saw must never look
+   like one somebody saw.
 4. **Acknowledging is not fixing.** An acknowledged alert moves into the same
    status area marked *Seen*, while the failed dimension stays failed in the
    status strip. A channel whose RF is still broken still reads `✕ RF`.
+5. **A fault that clears takes its alert with it.** If the underlying condition
+   resolves — the pack is unmuted, the interference passes, the battery is
+   changed — the alert disappears from the card entirely, acknowledged or not.
+   Nobody should be asked to dismiss something that is no longer true. The event
+   stays in the channel's history and in the replay timeline, so a fault that
+   came and went is still visible afterwards; it just stops occupying the grid.
+
+The header carries a live count of unacknowledged alerts, which is the number an
+operator is working down. Self-resolved alerts leave that count on their own.
 
 ## The player
 
