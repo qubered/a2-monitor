@@ -21,26 +21,39 @@ a backstage object or a piece of operational meaning, it is deleted.
 
 ## Where this is up to
 
-Four rounds so far. The specs describe the current one.
+Five rounds. Rounds 1–4 were all rejected, and the useful part of this directory
+is why.
 
-- Round 1 was rejected as "futuristic AI slop" — glow, neon on blue-black.
-- Round 2 removed the glow and warmed the neutrals, and was rejected as
-  "cartoonish and far too info dense" — thick outlines, hard offset shadows,
-  pills and plates everywhere, and a card carrying twelve things at once.
-- Round 3 subtracted rather than re-tinted. Outlines became hairlines or
-  nothing, shadows went, controls stopped being pills, and the card dropped from
-  twelve elements to five. A category that is clear says nothing at all.
-- Round 4, current, is structural rather than cosmetic, and came from three
-  direct instructions: **headshots matter**, **a sidebar is not the vibe**, and
-  **the bottom bar should rise into the monitoring view for the channel you
-  tapped, with its timeline**. So: the card is now a photograph; the left filter
-  rail became a horizontal band and the right exceptions rail became a sheet;
-  and the side inspector is gone, replaced by a monitor bar that raises out of
-  the bottom of the window carrying the selected source's identity, lanes and
-  its own scrubable timeline.
+1. **Rejected — "futuristic AI slop."** Glow, neon on blue-black.
+2. **Rejected — "cartoonish and far too info dense."** Thick outlines, hard
+   shadows, pills everywhere, a card carrying twelve things.
+3. **Rejected.** Subtracted the chrome and the density; still not it.
+4. **Rejected.** Photo-led cards, no sidebar, a monitor bar rising from the
+   bottom. The structure was right; the whole register was still wrong.
+5. **Current — a restart, not an iteration.** Built directly on the
+   [RVLT design language](https://rvlt-labs.github.io/rvlt-designlanguage/) with
+   its published tokens, on its light **Paper** surface. Big, obviously
+   pressable channel cards: press one and you are listening to that channel.
 
-The rejections are recorded in [research notes](research-notes.md), because they
-are the most useful design findings in this directory.
+The lesson, recorded plainly because it cost four rounds: the first four
+attempted a *bespoke* language "inspired by" the references. The brief was to
+use the existing one. Rounds 1–4 differ from each other in finish; round 5
+differs in kind.
+
+## Cue tracking is optional
+
+A2 Monitor does **not** assume a cue list. The default view is every channel,
+and cue-derived features — On Stage, Up Next, expected-silence arming, cue-aware
+alert windows — are an opt-in layer that appears only when a cue source is
+connected. Most productions will never have someone who meticulously tags every
+stage movement, and a product that degrades without one is a product that fails
+for most of its users.
+
+This contradicts [operator workflows](../product/operator-workflows.md), which
+currently says Live "defaults to exceptions and cue context, not an
+undifferentiated 128-channel wall". That document has not been changed here,
+because the change is a product decision rather than a design one and belongs in
+its own pull request. **One of the two needs to move.**
 
 ## Read in this order
 

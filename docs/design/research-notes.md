@@ -242,6 +242,52 @@ sheet reached from the monitor bar. That is one more tap for the deepest
 material, which is the right trade, but it needs watching in the first
 rehearsal — see the open questions below.
 
+## Design review, round 5 — restart on RVLT
+
+Rounds 1–4 were rejected. The instruction for round 5 was explicit: start over,
+go light/paper, keep obviously-pressable cards where pressing one listens to
+that channel, and **follow RVLT much more closely** — treat it as a template
+rather than a loose reference.
+
+That last instruction is the whole finding. The first four rounds all built a
+bespoke language that borrowed ideas from RVLT, PostHog and Airbnb. Round 5
+takes RVLT's published tokens, type roles, shapes, shadows and component
+behaviour as-is and adds only a domain mapping. It is the first round that is
+different in kind rather than in finish.
+
+Two things fell out of it that are worth keeping regardless of what happens
+next:
+
+- **Red already meant the right thing.** RVLT reserves its accent for
+  "active/live · alerts only". In this domain that maps exactly onto *the
+  channel you are hearing*, so the most prominent colour in the product marks
+  the single most important piece of state, with no new token invented.
+- **Paper is easier to read at a glance than the dark surface was**, at least on
+  a bright screen. Whether that survives a blackout backstage is an open
+  question below, and it is the one that could send this back to the dark theme.
+
+## Product finding: cue tracking cannot be the spine
+
+Raised by the product owner during round 5, and more consequential than any
+visual decision in this directory.
+
+The plan's Live surface is built around cue context — On Stage, Up Next,
+expected silence, cue-aware alert arming. That assumes a production with someone
+who will meticulously tag every stage movement, and that person is rare. A
+product whose default view depends on them is a product that is degraded for
+most of the people who install it.
+
+So: every channel is the default view, and cue-derived behaviour is an opt-in
+layer that appears only when a cue source is connected. The QLab observer
+remains valuable; it stops being load-bearing.
+
+This has consequences past the design directory. Alert arming that is defined
+against cue state needs a defined non-cue behaviour; "expected silent" needs a
+per-channel setting rather than a scene-derived one; and the reference workflow
+in [operator workflows](../product/operator-workflows.md) states the opposite
+and needs reconciling. Those are product changes, not design ones, and are not
+made here.
+
 ## Open design questions
 
 These need an operator in a room, not more desk research.
@@ -268,3 +314,10 @@ These need an operator in a room, not more desk research.
     monitor bar have a second, taller detent instead of a separate sheet?
 11. Does the monitor bar's timeline confuse live and replay, given that dragging
     its scrub is what enters replay mode?
+12. Does the Paper surface survive a blackout backstage, or does a light screen
+    at any brightness ruin an operator's dark adaptation and force the dark
+    theme for Live?
+13. With cue context demoted, what orders the default grid of 64 channels —
+    channel number, rack, zone, or most-recently-in-trouble?
+14. Is one "Listen" button per card plus the whole card being pressable
+    redundant, or is the explicit button what makes it obvious?

@@ -1,590 +1,287 @@
 <!doctype html>
-<html lang="en" data-surface="a2" data-view="ipad-l">
+<html lang="en" class="light" data-surface="a2" data-view="ipad-l">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Show Slate — A2 Monitor surfaces</title>
+<title>A2 Monitor — surfaces</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   SHOW SLATE — design tokens
-   Foundation, semantic, group ramp. See docs/design/visual-language.md
+   A2 MONITOR — built on the RVLT design language.
+   Tokens below mirror rvlt-designlanguage DESIGN.md §15.1 / Appendix A
+   (v1.1.0) as published. Paper (light) is the default surface here.
+   Domain semantics are mapped onto RVLT's existing roles rather than
+   inventing a parallel palette:
+     --red   brand / live / the channel you are listening to
+     --t-out critical fault          --warn  needs intervention
+     --ok    verified                --rep   stale or unknown
+     --purple replay
    ============================================================ */
-:root{
-  /* warm charcoal — painted stage black, not blue-black tech dark */
-  --canvas:#121110; --panel:#1A1816; --raised:#24211E; --rule:#4A453E;
-  --ink:#F2EFE9; --ink-2:#A8A29A; --shadow:#080706;
-  /* semantic hues, printed as ink: never a fill at scale, never a light source */
-  --listening:#56C7D9; --verified:#69C17D; --intervention:#E3B55F;
-  --critical:#F05D5E; --replay:#B39DDB; --stale:#8B9499;
-  /* matte variants — what actually gets laid down as a mark */
-  --listening-ink:#4E9DA9; --verified-ink:#6A9C6E; --intervention-ink:#BE9A52;
-  --critical-ink:#C2514F; --replay-ink:#8F81AC; --stale-ink:#7E786F;
-  --g1:#56C7D9; --g2:#69C17D; --g3:#E3B55F; --g4:#B39DDB;
-  --g5:#E08A5B; --g6:#7FA7D9; --g7:#C4A8E0; --g8:#8FBF9F;
-  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px; --s7:32px;
-  --r-sm:5px; --r:8px; --r-lg:12px; --r-pill:8px;
-  --sh:none;
-  --sh-hover:none;
-  --sh-press:none;
-  --hair:#2B2823;
-  --m-press:80ms cubic-bezier(.2,.8,.3,1);
-  --m-state:140ms cubic-bezier(.2,.8,.3,1);
-  --m-panel:220ms cubic-bezier(.16,1,.3,1);
-  --font-display:"Bricolage Grotesque",system-ui,sans-serif;
-  --font-ui:"Instrument Sans",system-ui,sans-serif;
-  --font-mono:"IBM Plex Mono",ui-monospace,monospace;
-  --font-hand:"Caveat",cursive;
-  --hatch:repeating-linear-gradient(45deg,transparent 0 3px,rgba(139,148,153,.14) 3px 5px);
-  --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/></filter><rect width='120' height='120' filter='url(%23n)' opacity='.5'/></svg>");
+:root{                             /* RVLT dark */
+  --paper:#141210; --paper-2:#1A1613; --card:#211C17; --elev:#2A241D;
+  --ink:#F5EFE2; --ink-2:#CDC4B2; --muted:#9E9483; --faint:#6E665A;
+  --line:#332C24; --line-2:#473E32;
+  --red:#E0363D; --red-700:#B21F26; --red-soft:rgba(224,54,61,.16);
+  --ok:#4FD888; --warn:#EBA53A; --rep:#B6AC9A; --t-out:#F26F73;
+  --ok-soft:rgba(62,207,122,.14); --warn-soft:rgba(235,165,58,.15);
+  --rep-soft:rgba(158,148,131,.14); --out-soft:rgba(224,54,61,.18);
+  --amber:#EBA53A; --blue:#5B8DEF; --green:#3ECF7A; --purple:#9B82E6; --dark:#0E0C0A;
+  --coral:#EF7E55; --teal:#3FC8BE; --pink:#E875AC; --lime:#AFC44E;
+  --purple-soft:rgba(155,130,230,.15);
+  --scrim:rgba(14,12,10,.66); --select:rgba(224,54,61,.20); --link:#5B8DEF;
+  --sh-card:0 3px 0 #0C0A08; --sh-hover:0 7px 0 #0C0A08;
+  --lit:inset 0 1px 0 rgba(255,253,248,.14); --sh-stk:2px 4px 0 rgba(0,0,0,.5);
+  --cream:#F5EFE2; --cream-ink:#1D1A15;
+  --r:14px; --r-lg:20px; --radius:0.875rem;
+  --fd:"Archivo",sans-serif;
+  --fb:"Hanken Grotesk",system-ui,sans-serif;
+  --fh:"Kalam",cursive; --fm:"JetBrains Mono",ui-monospace,monospace;
+  --card-outline:var(--line-2);
+}
+.light{                            /* RVLT Paper — the default here */
+  --paper:#F4EEE1; --paper-2:#EDE4D2; --card:#FFFDF8; --elev:#FFFDF8;
+  --ink:#1D1A15; --ink-2:#4B4539; --muted:#7D7565; --faint:#A89E89;
+  --line:#E4DAC3; --line-2:#D8CCB0;
+  --red:#C12229; --red-700:#9C1B21; --red-soft:#FBE7E3;
+  --ok:#2EA65C; --warn:#C98A14; --rep:#8A8270; --t-out:#9C1B21;
+  --ok-soft:#E7F5EC; --warn-soft:#FBF0D6; --rep-soft:#EFE9DC; --out-soft:#FBE7E3;
+  --amber:#E79A2B; --blue:#2F6BD6; --green:#2EA65C; --purple:#7A5CD0; --dark:#241F1A;
+  --coral:#CC5E2E; --teal:#1C8B83; --pink:#C2487E; --lime:#6E8C12;
+  --purple-soft:#ECE6FA;
+  --scrim:rgba(40,30,15,.45); --select:rgba(193,34,41,.16); --link:#2F6BD6;
+  --sh-card:0 3px 0 var(--line-2); --sh-hover:0 7px 0 var(--line-2);
+  --sh-stk:2px 4px 0 rgba(40,30,15,.13);
+  --card-outline:var(--ink);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+::selection{background:var(--select)}
 html,body{height:100%}
-body{
-  background:var(--canvas);color:var(--ink);
-  font:400 15px/22px var(--font-ui);
-  font-variant-numeric:tabular-nums;
-  display:flex;flex-direction:column;
-  overflow:hidden;
-}
+body{background:var(--paper);color:var(--ink);font-family:var(--fb);font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;overflow:hidden}
+h1,h2,h3,h4{font-family:var(--fd);font-weight:800;letter-spacing:-.02em}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
-.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
-.hand{font-family:var(--font-hand);font-size:17px;line-height:20px;color:var(--ink-2)}
-.micro{font:700 11px/14px var(--font-ui);letter-spacing:.06em;text-transform:uppercase}
+.mono{font-family:var(--fm);font-variant-numeric:tabular-nums}
+.hand{font-family:var(--fh);font-weight:700}
 
-/* ---------- prototype chrome (not part of the product) ---------- */
-.specbar{
-  flex:0 0 auto;display:flex;align-items:center;gap:var(--s4);
-  padding:10px var(--s5);background:#0B0A09;border-bottom:1px solid var(--hair);
-  flex-wrap:wrap;
-}
-.specbar h1{font:600 15px/1 var(--font-display);letter-spacing:.01em}
-.specbar h1 span{color:var(--stale);font-weight:500}
-.seg{display:flex;gap:2px;background:var(--panel);border:1px solid var(--hair);
-  border-radius:var(--r-sm);padding:3px}
-.seg button{
-  padding:7px 13px;border-radius:var(--r-pill);font:600 12px/1 var(--font-ui);
-  color:var(--ink-2);transition:background var(--m-state),color var(--m-state);
-  min-height:32px;
-}
-.seg button[aria-pressed=true]{background:var(--raised);color:var(--ink)}
-.specbar .note{color:var(--stale);font-size:12px;margin-left:auto}
-.specbar a{color:var(--listening)}
+/* ---------- prototype chrome (not the product) ---------- */
+.specbar{flex:0 0 auto;display:flex;align-items:center;gap:18px;padding:10px 24px;
+  background:var(--paper-2);border-bottom:2px solid var(--line-2);flex-wrap:wrap}
+.specbar .t{font-family:var(--fd);font-weight:800;font-size:15px}
+.specbar .t span{color:var(--muted);font-weight:600}
+.seg{display:flex;gap:4px}
+.seg button{font-family:var(--fb);font-weight:600;font-size:13px;border-radius:99px;padding:7px 14px;
+  border:2px solid transparent;color:var(--muted)}
+.seg button[aria-pressed=true]{border-color:var(--ink);color:var(--ink)}
+.specbar .note{margin-left:auto;font-size:12px;color:var(--faint)}
 
-/* ---------- device frame ---------- */
-.stage{flex:1 1 auto;display:grid;place-items:center;overflow:auto;padding:var(--s5)}
-.device{
-  background:var(--canvas);border:1px solid var(--hair);border-radius:var(--r-lg);
-  box-shadow:6px 6px 0 var(--shadow);overflow:hidden;position:relative;
-  display:flex;flex-direction:column;flex:0 0 auto;
-}
+/* ---------- device ---------- */
+.stage{flex:1 1 auto;display:grid;place-items:center;overflow:auto;padding:22px}
+.device{background:var(--paper);border:2px solid var(--card-outline);border-radius:var(--r-lg);
+  box-shadow:var(--sh-card);overflow:hidden;position:relative;display:flex;flex-direction:column;flex:0 0 auto}
 [data-view=desktop] .device{width:1512px;height:900px}
 [data-view=ipad-l]  .device{width:1180px;height:820px}
 [data-view=ipad-p]  .device{width:820px;height:1080px}
 
-/* replay mode takes over the whole viewport edge */
-/* the whole window is printed on something: a faint tooth, never a gradient */
-.device::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:50;
-  background-image:var(--grain);background-size:150px;opacity:.04;mix-blend-mode:screen}
-/* replay: the window is outlined in the mode colour. thick enough to be
-   unmissable across a wing, matte enough not to look like a HUD. */
-.device[data-mode=replay]{border-color:var(--replay-ink);border-width:3px}
+/* ---------- buttons, §15.2 ---------- */
+.btn{font-family:var(--fb);font-weight:600;font-size:14px;border-radius:99px;padding:11px 20px;border:none;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;
+  transition:transform .12s,box-shadow .12s,background .12s,color .12s}
+.btn-primary{background:var(--red);color:#fff;box-shadow:0 3px 0 var(--red-700)}
+.btn-primary:hover{transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(2px);box-shadow:0 1px 0 var(--red-700)}
+.btn-line{background:transparent;color:var(--ink);border:2px solid var(--ink);padding:9px 18px}
+.btn-line:hover{background:var(--ink);color:var(--paper)}
+.btn-line:active{transform:translateY(2px)}
+.btn-ghost{background:transparent;color:var(--muted)}
+.btn-ghost:hover{color:var(--red)}
+.btn:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.btn.lg{min-height:52px;font-size:15px;padding:13px 24px}
+.btn.sq{padding:11px 16px}
 
-/* ---------- shared: raised / tactile ---------- */
-.raised{background:var(--raised);border:2px solid var(--rule);border-radius:var(--r);box-shadow:var(--sh)}
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);
-  min-height:44px;padding:0 16px;border-radius:var(--r-sm);
-  background:#262320;border:1px solid var(--hair);
-  font:500 14px/1 var(--font-ui);color:var(--ink);
-  transition:background var(--m-state);touch-action:manipulation;user-select:none;
-}
-.btn:active{background:#332F2A}
-@media (hover:hover){.btn:hover{background:#2D2A25}}
-.btn.lg{min-height:56px;padding:0 22px;font-size:15px}
-.btn.primary{background:var(--listening-ink);color:#0B1719;border-color:#3A7580}
-.btn.quiet{background:transparent;border-color:transparent;color:var(--ink-2)}
-.btn[aria-pressed=true]{background:var(--listening-ink);color:#0B1719;border-color:#3A7580}
-.btn:focus-visible{outline:2px solid var(--listening);outline-offset:2px}
+/* ---------- badges, §3.3 ---------- */
+.badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--fb);font-weight:700;font-size:11px;
+  border-radius:99px;padding:4px 10px;white-space:nowrap}
+.b-ok{color:var(--ok);background:var(--ok-soft)}
+.b-warn{color:var(--warn);background:var(--warn-soft)}
+.b-out{color:var(--t-out);background:var(--out-soft)}
+.b-rep{color:var(--rep);background:var(--rep-soft)}
+.b-live{color:#fff;background:var(--red)}
+.b-replay{color:var(--purple);background:var(--purple-soft)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.live-dot{animation:pulse 1.7s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* status chips */
-.chip{display:inline-flex;align-items:center;gap:6px;height:20px;padding:0;
-  border:0;background:none;font:400 12px/1 var(--font-ui);color:var(--ink-2)}
-.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--stale-ink);flex:0 0 auto}
-.chip.crit{color:var(--critical)}     .chip.crit::before{background:var(--critical-ink)}
-.chip.warn{color:var(--intervention)} .chip.warn::before{background:var(--intervention-ink)}
-.chip.ok{color:var(--ink-2)}          .chip.ok::before{background:var(--verified-ink)}
-.chip.stale{color:var(--stale)}
-.chip.listen{color:var(--listening)}  .chip.listen::before{background:var(--listening-ink)}
-.chip.inferred{border-style:dashed}
+/* ---------- top bar ---------- */
+.top{flex:0 0 auto;height:68px;display:flex;align-items:center;gap:20px;padding:0 22px;
+  background:var(--paper-2);border-bottom:2px solid var(--line-2)}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--fd);font-weight:800;font-size:19px;flex:none}
+.brand .mark{color:var(--red);letter-spacing:.02em}
+.show{display:flex;flex-direction:column;line-height:1.2;padding-left:18px;border-left:2px solid var(--line-2)}
+.show b{font-family:var(--fd);font-weight:700;font-size:15px}
+.show span{font-size:12px;color:var(--muted)}
+.cue{display:flex;align-items:center;gap:14px;margin-left:4px}
+.cue .blk{display:flex;flex-direction:column;gap:1px}
+.cue .k{font-family:var(--fm);font-size:10px;color:var(--faint);letter-spacing:.08em}
+.cue .v{font-family:var(--fm);font-size:15px;font-weight:600}
+.top .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.count{display:inline-flex;align-items:center;gap:7px;border-radius:99px;padding:8px 14px;min-height:44px;
+  border:2px solid var(--line-2);font-weight:700;font-size:13px;background:var(--card)}
+.count.out{border-color:var(--t-out);color:var(--t-out)}
+.count.warn{border-color:var(--warn);color:var(--warn)}
+.count:active{transform:translateY(2px)}
 
-/* tape label — printed identity on a label-maker strip */
-.tape{
-  display:inline-block;font:400 11px/15px var(--font-mono);color:var(--stale);
-  letter-spacing:.04em;
-}
-.tape .mute{color:var(--critical);font-weight:600}
-
-/* stale hatch overlay */
-.hatched{background-image:var(--hatch)}
-
-/* ---------- header ---------- */
-.hdr{
-  flex:0 0 auto;height:72px;display:flex;align-items:center;gap:var(--s5);
-  padding:0 var(--s5);background:var(--canvas);border-bottom:1px solid var(--hair);
-}
-.hdr .show{font:600 17px/20px var(--font-display)}
-.hdr .sub{font-size:12px;color:var(--ink-2)}
-.cueblock{display:flex;flex-direction:column;gap:3px}
-.cueblock .now{font:400 15px/18px var(--font-mono);color:var(--ink)}
-.cueblock.lost .now{text-decoration:line-through;color:var(--stale)}
-.counters{margin-left:auto;display:flex;gap:var(--s2)}
-.counter{
-  min-width:44px;height:44px;padding:0 10px;border-radius:var(--r-sm);
-  border:0;background:none;color:var(--ink-2);
-  display:flex;align-items:center;gap:7px;font:400 14px/1 var(--font-ui);
-  transition:background var(--m-state);
-}
-.counter:active{background:#262320}
-.counter .g{font-size:13px}
-.counter.crit{color:var(--critical)}
-.counter.warn{color:var(--intervention)}
-.counter.info{color:var(--ink-2)}
-
-/* ---------- body split ---------- */
-.body{flex:1 1 auto;display:flex;min-height:0}
-/* No sidebar. Context lives in one horizontal band under the header, where a
-   running order lives on paper: left to right, in the order you read. */
-.filterbar{
-  flex:0 0 auto;height:60px;display:flex;align-items:center;gap:var(--s2);
-  padding:0 var(--s5);border-bottom:1px solid var(--hair);overflow-x:auto;
-  scrollbar-width:none;
-}
-.filterbar::-webkit-scrollbar{display:none}
-.filterbar .sep{width:1px;height:24px;background:var(--hair);flex:0 0 auto;margin:0 6px}
-.filterbar .lbl{color:var(--stale);flex:0 0 auto;padding-right:2px}
-.filt{
-  display:flex;align-items:center;gap:7px;flex:0 0 auto;
-  min-height:44px;padding:0 13px;border-radius:var(--r-sm);
-  border:1px solid transparent;color:var(--ink-2);font:400 14px/1 var(--font-ui);
-  transition:background var(--m-state),color var(--m-state);
-}
-.filt .n{font:500 12px/1 var(--font-mono);color:var(--stale)}
-.filt[aria-pressed=true]{background:#262320;border-color:transparent;color:var(--ink)}
-.filt[aria-pressed=true] .n{color:var(--ink-2)}
-@media (hover:hover){.filt:hover{color:var(--ink)}}
-
-.main{flex:1 1 auto;overflow:auto;padding:var(--s5);min-width:0}
-.gridhead{display:flex;align-items:center;gap:var(--s3);margin-bottom:var(--s4);flex-wrap:wrap}
-.gridhead h2{font:500 21px/26px var(--font-display);letter-spacing:-.01em}
-.gridhead .zoom{margin-left:auto;display:flex;gap:2px;background:none;border:0;padding:0}
-.gridhead .zoom button{min-height:34px;padding:0 14px;border-radius:var(--r-pill);
-  font:600 12px/1 var(--font-ui);color:var(--ink-2)}
-.gridhead .zoom button[aria-pressed=true]{background:#262320;color:var(--ink)}
-
-.grid{display:grid;gap:var(--s3);grid-template-columns:repeat(auto-fill,minmax(196px,1fr))}
-[data-view=ipad-p] .grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
-[data-zoom=compact] .grid{grid-template-columns:repeat(auto-fill,minmax(136px,1fr))}
-[data-zoom=compact] .card .exc{display:none}
-[data-zoom=compact] .card .c-person{display:none}
-[data-zoom=expanded] .grid{grid-template-columns:repeat(auto-fill,minmax(268px,1fr))}
-[data-zoom=expanded] .shot{aspect-ratio:4/5}
+/* ---------- filter band ---------- */
+.filters{flex:0 0 auto;height:62px;display:flex;align-items:center;gap:8px;padding:0 22px;
+  border-bottom:2px solid var(--line-2);overflow-x:auto;scrollbar-width:none;background:var(--paper)}
+.filters::-webkit-scrollbar{display:none}
+.filters .lbl{font-family:var(--fm);font-size:11px;color:var(--faint);letter-spacing:.08em;flex:none;padding-right:4px}
+.chipf{flex:none;display:inline-flex;align-items:center;gap:7px;min-height:42px;padding:0 15px;border-radius:99px;
+  border:2px solid var(--line-2);background:var(--card);font-weight:600;font-size:14px;color:var(--ink-2);
+  transition:transform .12s,box-shadow .12s,background .12s}
+.chipf .n{font-family:var(--fm);font-size:12px;color:var(--faint)}
+.chipf[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--paper);box-shadow:0 3px 0 var(--line-2)}
+.chipf[aria-pressed=true] .n{color:rgba(255,255,255,.7)}
+.chipf:active{transform:translateY(2px)}
 
 /* ============================================================
-   CHANNEL CARD — the centrepiece
+   CHANNEL CARD — an obvious, pressable object.
+   RVLT card: 2px --ink outline on Paper, 20px radius, hard 3px
+   offset shadow, lifts 3px on hover. Pressing it listens.
    ============================================================ */
-/* Photo first. An A2 recognises a face faster than a number, and the whole
-   product is about people. The frame is a 4:5 headshot crop. */
-.card{
-  position:relative;background:var(--raised);border:0;
-  border-radius:var(--r);padding:0 0 13px;overflow:hidden;
-  display:flex;flex-direction:column;gap:0;text-align:left;width:100%;
-  transition:background var(--m-state);touch-action:manipulation;
-}
-.card:active{background:#2A2723}
-@media (hover:hover){.card:hover{background:#292520}}
-.card:focus-visible{outline:2px solid var(--listening);outline-offset:2px}
+.body{flex:1 1 auto;overflow:auto;padding:22px;min-height:0}
+.gridhead{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.gridhead h2{font-size:26px}
+.gridhead .sub{color:var(--muted);font-size:14px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(228px,1fr))}
+[data-view=ipad-p] .grid{grid-template-columns:repeat(auto-fill,minmax(236px,1fr))}
 
-/* lit edge — the only glow in the product, exactly one card at a time */
-/* what you are hearing: a single quiet rule down the left edge. nothing else. */
-.card.listening{background:#282521}
-.card.listening::before{
-  content:"";position:absolute;left:0;right:0;bottom:0;height:3px;z-index:2;
-  background:var(--listening-ink);
-}
-/* latched reads in the word, not in an ornament */
-.card.latched .c-role::after{content:" ⏻";font-size:12px;color:var(--listening);vertical-align:2px}
-.card.critical::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;z-index:2;
-  background:var(--critical-ink)}
+.chcard{position:relative;background:var(--card);border:2px solid var(--card-outline);border-radius:var(--r-lg);
+  box-shadow:var(--sh-card);padding:14px;display:flex;flex-direction:column;gap:12px;text-align:left;width:100%;
+  transition:transform .16s,box-shadow .16s,border-color .16s;touch-action:manipulation}
+.chcard:hover{transform:translateY(-3px);box-shadow:var(--sh-hover)}
+.chcard:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line-2)}
+.chcard:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+/* the one you are hearing: RVLT reserves red for active/live */
+.chcard.listening{border-color:var(--red);box-shadow:0 3px 0 var(--red-700)}
+.chcard.listening:hover{box-shadow:0 7px 0 var(--red-700)}
+.chcard.critical{border-color:var(--t-out)}
 
-/* row 1 — channel no, badge rail, staleness */
-.c-top{display:flex;align-items:center;gap:var(--s2)}
-.c-no{display:flex;align-items:center;gap:8px;font:400 12px/1 var(--font-mono);color:var(--stale)}
-.c-no i{width:7px;height:7px;border-radius:50%;background:var(--g1);display:block}
-.c-no b{font-weight:400;letter-spacing:.06em}
-.rail-badges{display:flex;gap:12px;margin-left:auto;align-items:center}
-.bdg{display:none;font:500 11px/1 var(--font-ui);letter-spacing:.04em;color:var(--ink-2);
-  position:relative;align-items:center;gap:5px}
-.bdg::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
-.bdg.on{display:flex}
-.bdg.audio.on,.bdg.sys.on{color:var(--critical)}
-.bdg.rf.on{color:var(--critical)}
-.bdg.batt.on{color:var(--intervention)}
-.bdg.id.on{color:var(--intervention)}
-.bdg.cue.on{color:var(--stale)}
-.bdg.cli.on{color:var(--listening)}
-.bdg .n{font-variant-numeric:tabular-nums}
-.c-stale{font:500 11px/1 var(--font-mono);color:var(--stale)}
+.shot{position:relative;border:2px solid var(--card-outline);border-radius:var(--r);overflow:hidden;
+  aspect-ratio:16/10;background:var(--paper-2)}
+.shot svg.face{display:block;width:100%;height:100%}
+.shot .no{position:absolute;left:8px;top:8px;font-family:var(--fm);font-size:11px;font-weight:600;
+  background:var(--card);border:2px solid var(--card-outline);border-radius:8px;padding:2px 7px}
+.shot .flags{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.shot .meter{position:absolute;left:0;right:0;bottom:0;height:26px;background:var(--scrim)}
+.shot .meter svg{display:block;width:100%;height:100%}
+.shot .listening-tag{position:absolute;left:8px;bottom:32px}
 
-/* row 2 — identity */
-/* the headshot frame */
-.shot{position:relative;width:100%;aspect-ratio:5/4;overflow:hidden;background:#1E1B18;flex:0 0 auto}
-.shot img,.shot svg{display:block;width:100%;height:100%;object-fit:cover}
-.shot .over{position:absolute;left:10px;top:10px;right:10px;display:flex;align-items:center;gap:8px;
-  font:400 11px/1 var(--font-mono);color:#EDE9E2;text-shadow:0 1px 3px rgba(0,0,0,.85)}
-.shot .over .dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
-.shot .over .flags{margin-left:auto;display:flex;gap:9px;font-family:var(--font-ui);font-size:11px}
-.shot .scrim{position:absolute;left:0;right:0;bottom:0;height:58px;
-  background:linear-gradient(to top,rgba(10,9,8,.86),rgba(10,9,8,0))}
-/* the ten-second trace sits on the bottom edge of the photograph, the way
-   WaveTool draws it — but as a strip, so it never covers the face */
-.shot .strip{position:absolute;left:0;right:0;bottom:0;height:22px}
-.shot .strip svg{width:100%;height:100%}
-.c-id{display:flex;gap:11px;align-items:flex-start;padding:11px 13px 0}
-.face{
-  width:52px;height:52px;border-radius:var(--r-sm);border:0;
-  flex:0 0 auto;display:grid;place-items:center;
-  font:600 18px/1 var(--font-display);color:var(--ink);overflow:hidden;
-}
-.c-names{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;gap:2px}
-.c-role{font:500 18px/22px var(--font-ui);letter-spacing:-.012em;color:var(--ink);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.c-person{font:400 13px/16px var(--font-ui);color:var(--ink-2);
+.who{display:flex;flex-direction:column;gap:1px;min-width:0}
+.who .nm{font-family:var(--fd);font-weight:800;font-size:18px;letter-spacing:-.02em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who .rl{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tags{display:flex;flex-wrap:wrap;gap:6px;min-height:22px}
+.saying{font-size:13px;color:var(--ink-2);display:flex;gap:7px;align-items:flex-start;min-height:38px}
+.saying b{color:var(--t-out);font-weight:700}
+.saying.warn b{color:var(--warn)}
+.chcard .acts{display:flex;gap:8px;margin-top:auto}
+.chcard .acts .btn{flex:1 1 auto}
+.chcard .acts .btn.sq{flex:0 0 auto}
 
-/* lanes */
-.lane{display:flex;align-items:center;gap:10px}
-.lane .k{display:none}
-.trace{flex:1 1 auto;height:26px;background:transparent;border:0;
+/* ============================================================
+   NOW LISTENING BAR — press a card, it fills in here.
+   Expands to that channel's own timeline.
+   ============================================================ */
+.nowbar{flex:0 0 auto;background:var(--paper-2);border-top:2px solid var(--line-2);
+  display:flex;flex-direction:column;transition:height .22s cubic-bezier(.16,1,.3,1);height:96px;overflow:hidden}
+.nowbar[data-open=true]{height:340px}
+[data-view=ipad-p] .nowbar[data-open=true]{height:400px}
+.nowrow{flex:0 0 96px;display:flex;align-items:center;gap:14px;padding:0 20px}
+.nowrow .np{display:flex;align-items:center;gap:12px;flex:none;min-width:220px}
+.nowrow .np .pic{width:56px;height:56px;border-radius:12px;border:2px solid var(--card-outline);overflow:hidden;flex:none}
+.nowrow .np .pic svg{display:block;width:100%;height:100%}
+.nowrow .np .lbl{display:flex;flex-direction:column;gap:3px;min-width:0}
+.nowrow .np .lbl b{font-family:var(--fd);font-weight:800;font-size:16px;letter-spacing:-.02em}
+.vsep{width:2px;height:48px;background:var(--line-2);flex:none}
+.level{display:flex;align-items:center;gap:10px;flex:none}
+.level .v{font-family:var(--fm);font-size:17px;font-weight:600;width:44px;text-align:right}
+.bars{display:flex;gap:3px}
+.bars i{width:7px;height:30px;border-radius:2px;background:var(--line-2);display:block}
+.bars i.on{background:var(--ok)}
+.groups{display:flex;gap:8px;flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none}
+.groups::-webkit-scrollbar{display:none}
+.gbtn{flex:none;min-height:52px;padding:0 15px;border-radius:99px;border:2px solid var(--line-2);
+  background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  font-family:var(--fb);font-weight:700;font-size:11px;color:var(--ink-2);transition:transform .12s}
+.gbtn i{width:22px;height:3px;border-radius:2px;display:block}
+.gbtn:active{transform:translateY(2px)}
+.expand{flex:none;width:52px;height:52px;border-radius:50%;border:2px solid var(--ink);display:grid;place-items:center;
+  font-size:16px;transition:transform .2s}
+.nowbar[data-open=true] .expand{transform:rotate(180deg)}
+
+.nowpanel{flex:1 1 auto;display:none;gap:22px;padding:4px 20px 18px;min-height:0}
+.nowbar[data-open=true] .nowpanel{display:flex}
+[data-view=ipad-p] .nowpanel{flex-direction:column;overflow:auto}
+.np-facts{flex:0 0 250px;display:flex;flex-direction:column;gap:8px}
+.np-facts dl{display:grid;grid-template-columns:66px 1fr;gap:3px 10px;font-family:var(--fm);font-size:11.5px}
+.np-facts dt{color:var(--faint)}
+.np-facts dd{color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np-tl{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:6px;justify-content:center}
+.lane{display:flex;align-items:center;gap:12px;height:32px}
+.lane .k{width:62px;flex:none;font-size:11.5px;color:var(--faint);font-weight:600}
+.lane .t{flex:1 1 auto;height:100%;border:2px solid var(--line-2);border-radius:8px;background:var(--card);
   overflow:hidden;position:relative}
-.trace.rf{height:20px}
-.trace svg{display:block;width:100%;height:100%}
-.trace::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--hair)}
-.lane .v{font:400 12px/1 var(--font-mono);color:var(--ink-2);width:78px;text-align:right;flex:0 0 auto}
-.lane .v.dim{color:var(--stale)}
-.qual{display:flex;gap:2px;flex:0 0 auto}
-.qual i{width:4px;height:13px;border-radius:0;background:#332F2A;display:block}
-.qual i.on{background:var(--verified-ink)}
-.qual.warn i.on{background:var(--intervention-ink)}
-.qual.bad i.on{background:var(--critical-ink)}
+.lane .t svg{display:block;width:100%;height:100%}
+.lane .v{width:84px;text-align:right;flex:none;font-family:var(--fm);font-size:12px;color:var(--ink-2)}
+.cuelane{position:relative}
+.cuelane span.c{position:absolute;top:7px;font-family:var(--fm);font-size:11px;color:var(--muted)}
+.cuelane .ev{position:absolute;top:4px;width:20px;height:20px;border-radius:6px;display:grid;place-items:center;
+  font-size:10px;border:2px solid var(--card-outline);background:var(--card)}
+.scrubber{display:flex;align-items:center;gap:12px;margin-top:6px}
+.scrubber .k{width:62px;flex:none}
+.scrubber .track{flex:1 1 auto;height:8px;border-radius:99px;background:var(--line-2);position:relative}
+.scrubber .fill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:var(--red)}
+.scrubber .knob{position:absolute;top:-16px;width:40px;height:40px;margin-left:-20px;border-radius:50%;
+  background:var(--card);border:2px solid var(--ink);box-shadow:var(--sh-card);display:grid;place-items:center;
+  font-family:var(--fm);font-size:10px;font-weight:600}
+.scrubber .v{width:84px;flex:none}
+.ticks{display:flex;justify-content:space-between;margin-left:74px;margin-right:96px;
+  font-family:var(--fm);font-size:10.5px;color:var(--faint)}
+.np-acts{flex:0 0 190px;display:flex;flex-direction:column;gap:8px;justify-content:center}
+.np-acts .btn{width:100%;justify-content:flex-start}
+[data-view=ipad-p] .np-acts{flex-direction:row;flex-wrap:wrap}
+[data-view=ipad-p] .np-acts .btn{width:auto;flex:1 1 44%}
 
-/* exception line */
-.exc{display:flex;align-items:flex-start;gap:8px;font:400 13px/18px var(--font-ui);
-  padding:8px 13px 0;border:0;background:none;color:var(--ink-2);min-height:44px}
-.exc span:last-child{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-  overflow:hidden}
-.exc.ok{visibility:hidden}
-.exc .g{flex:0 0 auto;font-size:12px;line-height:17px}
-.exc .g{color:var(--ink-2)}
-.exc.crit .g{color:var(--critical)}
-.exc.warn .g{color:var(--intervention)}
-.exc.inferred{font-style:italic}
-.exc em{font-style:normal;color:var(--ink-2);font-weight:400}
+/* ---------- exceptions sheet ---------- */
+.sheet{position:absolute;top:0;right:0;bottom:96px;width:378px;background:var(--card);
+  border-left:2px solid var(--card-outline);padding:20px;display:flex;flex-direction:column;gap:12px;overflow:auto;
+  transform:translateX(102%);transition:transform .22s cubic-bezier(.16,1,.3,1);z-index:6}
+.sheet.open{transform:none}
+[data-view=ipad-p] .sheet{width:100%}
+.sheet h3{font-size:19px}
+.sheet .close{align-self:flex-start}
+.exrow{border:2px solid var(--card-outline);border-radius:var(--r);background:var(--card);box-shadow:var(--sh-card);
+  padding:13px;display:flex;flex-direction:column;gap:8px;text-align:left;transition:transform .12s,box-shadow .12s}
+.exrow:hover{transform:translateY(-2px);box-shadow:var(--sh-hover)}
+.exrow:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line-2)}
+.exrow .t{font-family:var(--fd);font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px}
+.exrow .m{font-size:13px;color:var(--muted)}
+.exrow .r{display:flex;gap:8px}
+.notecard{border-left:3px solid var(--warn);padding-left:12px}
+.notecard p{font-family:var(--fh);font-weight:700;font-size:16px;color:var(--ink-2);line-height:1.35}
+.notecard .by{font-size:11px;color:var(--faint);font-family:var(--fb);font-weight:600;margin-top:4px}
 
-/* checks + owner */
-.c-foot{display:none}
-.card .checks{display:none}
-.checks{display:flex;gap:4px}
-.checks i{width:13px;height:13px;border-radius:4px;display:block;
-  border:1.5px solid var(--rule);background:transparent}
-.checks i.pass{background:var(--verified-ink);border-color:var(--verified-ink)}
-.checks i.fail{background:var(--critical-ink);border-color:var(--critical-ink)}
-.checks i.void{border-color:var(--stale);background:
-  linear-gradient(45deg,transparent 45%,var(--stale) 45% 55%,transparent 55%)}
-.owner{margin-left:auto;display:flex;align-items:center;gap:6px;
-  font:600 11px/1 var(--font-ui);color:var(--ink-2)}
-.owner b{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;
-  font:700 10px/1 var(--font-ui);color:#121110;background:var(--intervention-ink)}
-
-/* compact zoom drops detail, keeps position */
-[data-zoom=compact] .card .lane.rf,
-[data-zoom=compact] .card .exc,
-[data-zoom=compact] .card .c-foot,
-[data-zoom=compact] .card .tape{display:none}
-[data-zoom=compact] .card .face{width:40px;height:40px}
-[data-zoom=compact] .card .c-role{font-size:15px;line-height:19px}
-[data-zoom=expanded] .card .extra{display:flex}
-.card .extra{display:none;flex-direction:column;gap:6px;padding-top:9px;border-top:2px solid var(--rule)}
-
-/* ---------- exceptions rail ---------- */
-.excrail{
-  background:var(--panel);border-left:1px solid var(--hair);
-  padding:var(--s4);display:flex;flex-direction:column;gap:var(--s3);overflow:auto;
-  transform:translateX(102%);transition:transform var(--m-panel);
-}
-.excrail.open{transform:none}
-/* show-wide exceptions are a sheet on every viewport, never a standing panel */
-.excrail{
-  position:absolute;top:0;right:0;bottom:104px;z-index:4;width:360px;
-  transform:translateX(102%);transition:transform var(--m-panel);
-  box-shadow:-6px 0 0 var(--shadow);
-}
-[data-view=ipad-p] .excrail{width:100%}
-/* the edge handle that replaces the always-on rail on touch viewports */
-.excgrab{position:absolute;right:0;top:50%;transform:translateY(-50%);
-  width:26px;height:132px;z-index:3;border-radius:var(--r-sm) 0 0 var(--r-sm);
-  border:1px solid var(--hair);border-right:0;background:var(--canvas);
-  writing-mode:vertical-rl;font:700 10px/28px var(--font-ui);letter-spacing:.1em;color:var(--ink-2)}
-
-.excrail h3{font:600 13px/1 var(--font-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--stale)}
-.excrow{display:flex;flex-direction:column;gap:6px;padding:14px 0;min-height:56px;
-  border:0;border-top:1px solid var(--hair);background:none;text-align:left;
-  transition:opacity var(--m-state)}
-.excrow:active{opacity:.7}
-.excrow .t{color:var(--ink)}
-.excrow .t{display:flex;align-items:center;gap:8px;font:600 14px/18px var(--font-ui)}
-.excrow .m{font:400 12px/16px var(--font-ui);color:var(--ink-2)}
-.excrow .acts{display:flex;gap:7px;margin-top:2px}
-.excrow .acts .btn{min-height:40px;padding:0 14px;font-size:13px}
-
-/* ---------- transport rail ---------- */
-/* ============================================================
-   MONITOR BAR — the bottom bar is the detail view.
-   Collapsed it is transport only. Selecting a channel raises it into a
-   monitoring panel: that source's identity, its lanes, and its own
-   timeline. No side drawer, no modal, no leaving the grid.
-   ============================================================ */
-.monitor{flex:0 0 auto;display:flex;flex-direction:column;background:var(--canvas);
-  border-top:1px solid var(--hair);transition:height var(--m-panel);height:104px;overflow:hidden}
-.monitor[data-open=true]{height:316px}
-[data-view=ipad-p] .monitor[data-open=true]{height:396px}
-.mon-grip{flex:0 0 auto;height:18px;display:grid;place-items:center;cursor:ns-resize}
-.mon-grip i{width:44px;height:4px;border-radius:2px;background:var(--hair);display:block}
-.mon-panel{flex:1 1 auto;display:none;min-height:0;gap:var(--s5);padding:0 var(--s5) var(--s4)}
-.monitor[data-open=true] .mon-panel{display:flex}
-[data-view=ipad-p] .mon-panel{flex-direction:column;gap:var(--s4);overflow:auto}
-
-.mon-who{flex:0 0 320px;display:flex;gap:14px;min-width:0;overflow:hidden}
-.mon-who .shot{width:96px;aspect-ratio:4/5;border-radius:var(--r-sm);flex:0 0 auto}
-.mon-who .meta{min-width:0;overflow:hidden;display:flex;flex-direction:column;gap:3px}
-.mon-who h3{font:500 20px/24px var(--font-ui);letter-spacing:-.012em}
-.mon-who .sub{font-size:13px;color:var(--ink-2)}
-.mon-who dl{display:grid;grid-template-columns:62px 1fr;gap:2px 10px;margin-top:9px;
-  font:400 11px/15px var(--font-mono);color:var(--ink-2);white-space:nowrap}
-.mon-who dt{color:var(--stale)}
-.mon-who dd{color:var(--ink);overflow:hidden;text-overflow:ellipsis}
-
-.mon-tl{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:5px;justify-content:center}
-.mon-tl .row{display:flex;align-items:center;gap:12px;height:30px}
-.mon-tl .row .k{width:64px;flex:0 0 auto;font:400 11px/1 var(--font-ui);color:var(--stale)}
-.mon-tl .row .t{flex:1 1 auto;height:100%;position:relative;overflow:hidden}
-.mon-tl .row .t svg{display:block;width:100%;height:100%}
-.mon-tl .row .t::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--hair)}
-.mon-tl .row .v{width:84px;text-align:right;flex:0 0 auto;font:400 12px/1 var(--font-mono);color:var(--ink-2)}
-.mon-scrub{position:relative;height:46px;margin-left:76px;margin-top:4px;margin-right:84px}
-.mon-scrub .track{position:absolute;left:0;right:0;top:20px;height:6px;border-radius:3px;background:#221F1B}
-.mon-scrub .played{position:absolute;left:0;top:20px;height:6px;border-radius:3px;background:var(--listening-ink);opacity:.5}
-.mon-scrub .handle{position:absolute;top:0;width:56px;height:46px;margin-left:-28px;border-radius:var(--r-sm);
-  background:#2C2823;display:grid;place-items:center;font:400 11px/1 var(--font-mono);color:var(--ink)}
-.mon-ticks{display:flex;justify-content:space-between;margin-left:76px;margin-right:84px;color:var(--stale);
-  font:400 11px/1 var(--font-mono)}
-.mon-acts{flex:0 0 172px;display:flex;flex-direction:column;gap:6px;justify-content:center}
-.mon-acts .btn{width:100%;justify-content:flex-start;min-height:44px;padding:0 13px;
-  font-size:13px;white-space:nowrap}
-[data-view=ipad-p] .mon-acts{flex-direction:row;flex-wrap:wrap}
-[data-view=ipad-p] .mon-acts .btn{width:auto;flex:1 1 40%}
-
-.transport{
-  flex:0 0 auto;height:86px;background:transparent;border-top:0;
-  display:flex;align-items:center;gap:var(--s3);padding:0 var(--s4);min-width:0;
-}
-.transport .grow{flex:1 1 auto;min-width:0;display:flex;gap:var(--s2);overflow-x:auto;
-  scrollbar-width:none;padding:2px 0}
-.transport .grow::-webkit-scrollbar{display:none}
-.nowplay{display:flex;align-items:center;gap:11px;padding:10px 14px 10px 16px;border-radius:var(--r-sm);
-  border:0;background:#262320;position:relative;flex:0 0 auto;min-width:208px}
-.nowplay::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
-  border-radius:var(--r-sm) 0 0 var(--r-sm);background:var(--listening-ink)}
-.nowplay .f{width:38px;height:38px;border-radius:var(--r-sm);border:0;
-  display:grid;place-items:center;font:600 14px/1 var(--font-display)}
-.nowplay .l{display:flex;flex-direction:column;gap:2px}
-.nowplay .l b{font:600 15px/18px var(--font-ui)}
-.nowplay .l span{font:400 11px/1 var(--font-ui);color:var(--listening)}
-.tsep{width:1px;height:44px;background:var(--hair);flex:0 0 auto}
-.level{display:flex;align-items:center;gap:10px;flex:0 0 auto}
-.level .v{font:500 18px/1 var(--font-mono);width:52px;text-align:right}
-.meterbars{display:flex;gap:3px}
-.meterbars i{width:7px;height:32px;border-radius:1px;background:#332F2A;display:block}
-.meterbars i.on{background:var(--verified-ink)}
-.groups{display:flex;gap:7px;flex:0 0 auto}
-.transport .btn.lg{flex:0 0 auto}
-[data-view=ipad-l] .transport .btn.lg,[data-view=ipad-p] .transport .btn.lg{padding:0 15px}
-.nowplay{flex:0 0 auto}
-.gbtn{min-height:56px;min-width:62px;padding:0 10px;flex:0 0 auto;border-radius:var(--r-sm);
-  border:1px solid var(--hair);background:#262320;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
-  transition:background var(--m-state)}
-.gbtn:active{background:#332F2A}
-.gbtn b{font:500 11px/1 var(--font-ui);letter-spacing:.03em;color:var(--ink-2)}
-.gbtn i{width:22px;height:2px;border-radius:1px;display:block}
-.gbtn[aria-pressed=true]{background:#332F2A}
-.gbtn[aria-pressed=true] b{color:var(--ink)}
-.btn.danger{position:relative;overflow:hidden}
-.btn.danger .fill{position:absolute;inset:0;width:0;background:var(--critical);opacity:.35}
-
-/* ---------- inspector ---------- */
-.inspector{
-  position:absolute;top:0;right:0;bottom:104px;width:460px;background:var(--panel);
-  display:none;
-  border-left:1px solid var(--hair);display:flex;flex-direction:column;
-  transform:translateX(102%);transition:transform var(--m-panel);z-index:5;
-}
-.inspector.open{transform:none}
-[data-view=ipad-p] .inspector{width:100%;border-left:0;border-top:2px solid var(--rule);
-  border-radius:var(--r-lg) var(--r-lg) 0 0;top:120px;transform:translateY(102%)}
-[data-view=ipad-p] .inspector.open{transform:none}
-.insp-hd{display:flex;align-items:center;gap:var(--s3);padding:var(--s4);border-bottom:1px solid var(--hair)}
-.insp-hd h3{font:600 19px/23px var(--font-display);flex:1 1 auto}
-.insp-close{width:48px;height:48px;border-radius:var(--r-sm);border:0;
-  background:#262320;display:grid;place-items:center;font-size:18px;color:var(--ink-2)}
-.insp-body{flex:1 1 auto;overflow:auto;padding:var(--s4);display:flex;flex-direction:column;gap:var(--s4)}
-.sect{display:flex;flex-direction:column;gap:9px}
-.sect > h4{font:700 11px/1 var(--font-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--stale)}
-.kv{display:grid;grid-template-columns:132px 1fr;gap:6px 12px;font-size:13px}
-.kv dt{color:var(--ink-2)}
-.kv dd{font-family:var(--font-mono);font-size:12px}
-.chart{height:92px;border-radius:var(--r-sm);border:1px solid var(--hair);background:#171512;position:relative;overflow:hidden}
-.chart svg{display:block;width:100%;height:100%}
-.chart .cap{position:absolute;left:8px;top:6px;font:700 10px/1 var(--font-ui);letter-spacing:.06em;color:var(--stale)}
-.insp-acts{flex:0 0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2);
-  padding:var(--s4);border-top:1px solid var(--hair);background:var(--panel)}
-.insp-acts .btn{min-height:56px;padding:0 8px;font-size:13px;flex-direction:column;gap:3px}
-.note{display:flex;gap:9px;padding-left:9px;border-left:2px solid var(--g3)}
-
-/* ============================================================
-   A1 SURFACE
-   ============================================================ */
-.tiles{display:grid;gap:var(--s3);grid-template-columns:repeat(auto-fill,minmax(244px,1fr))}
-[data-view=ipad-p] .tiles{grid-template-columns:1fr 1fr}
-.tile{position:relative;background:var(--raised);border:0;border-top:1px solid var(--hair);
-  border-radius:var(--r);padding:15px 15px 13px;display:flex;flex-direction:column;gap:11px;
-  text-align:left;transition:background var(--m-state)}
-.tile:active{background:#2A2723}
-@media (hover:hover){.tile:hover{background:#292520}}
-.tile.listening{background:#282521}
-.tile.listening::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
-  border-radius:var(--r) 0 0 var(--r);background:var(--listening-ink)}
-.tile.critical::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
-  border-radius:var(--r) 0 0 var(--r);background:var(--critical-ink)}
-.tile .t-id{display:flex;gap:10px;align-items:center}
-.tile .face{width:44px;height:44px}
-.tile .c-role{font-size:16px;line-height:20px}
-.tile .risks{display:flex;gap:6px;flex-wrap:wrap}
-.secthead{display:flex;align-items:center;gap:12px;margin:var(--s5) 0 var(--s3)}
-.secthead b{font:700 11px/1 var(--font-ui);letter-spacing:.09em;text-transform:uppercase;color:var(--stale)}
-.secthead hr{flex:1;border:0;border-top:1px solid var(--hair)}
-.banner{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:var(--r);
-  border:0;border-left:3px solid var(--critical-ink);background:#231D1C;margin-bottom:var(--s5)}
-.banner .btn{margin-left:auto}
-
-/* ============================================================
-   MIC CHECK
-   ============================================================ */
-.mc{flex:1 1 auto;display:flex;min-height:0}
-.mc-ctx{flex:1 1 50%;padding:var(--s7) var(--s6);display:flex;flex-direction:column;gap:var(--s5);
-  border-right:1px solid var(--hair);overflow:auto}
-.mc-ctx .face{width:96px;height:96px;font-size:30px}
-.mc-who{display:flex;gap:var(--s4);align-items:center}
-.mc-who h2{font:600 30px/34px var(--font-display);letter-spacing:-.01em}
-.mc-who p{color:var(--ink-2);font-size:15px}
-.placeholder-img{height:150px;border-radius:var(--r);border:2px solid var(--rule);
-  background:#12181B url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><path d='M0 40 L40 0' stroke='%23222b2f' stroke-width='2'/><path d='M-10 30 L30 -10' stroke='%23222b2f' stroke-width='2'/><path d='M10 50 L50 10' stroke='%23222b2f' stroke-width='2'/></svg>");
-  display:grid;place-items:center;color:var(--stale);font-size:12px}
-.mc-verd{flex:1 1 50%;padding:var(--s6);display:flex;flex-direction:column;gap:var(--s4);overflow:auto}
-.mc-step{display:flex;flex-direction:column;gap:11px}
-.mc-step .lbl{display:flex;align-items:center;gap:10px}
-.mc-step .lbl b{font:600 17px/1 var(--font-ui)}
-.mc-step .lbl span{font:500 12px/1 var(--font-mono);color:var(--stale)}
-.verdicts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--s3)}
-.verdict{height:72px;border-radius:var(--r-sm);border:1px solid var(--hair);background:#262320;
-  font:500 15px/1 var(--font-ui);letter-spacing:.02em;
-  transition:background var(--m-state)}
-.verdict:active{background:#332F2A}
-.verdict.pass[aria-pressed=true]{background:var(--verified-ink);color:#0D160E;border-color:#4C7350}
-.verdict.fail[aria-pressed=true]{background:var(--critical-ink);color:#180A0A;border-color:#8E3C3A}
-.verdict.recheck[aria-pressed=true]{background:var(--intervention-ink);color:#181205;border-color:#8B7038}
-.mc-list{display:flex;flex-direction:column;gap:0;margin-top:var(--s4)}
-.mc-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 12px;border-radius:var(--r-sm)}
-.mc-row.done{color:var(--ink-2)}
-.mc-row.next{background:#262320}
-.mc-row .n{font:500 12px/1 var(--font-mono);color:var(--stale);width:14px}
-.mc-row .s{margin-left:auto;font:700 11px/1 var(--font-ui);letter-spacing:.06em}
-.mc-row .s.pass{color:var(--verified)}
-.mc-row .s.pend{color:var(--stale)}
-.mc-foot{flex:0 0 auto;height:88px;border-top:1px solid var(--hair);background:var(--canvas);
-  display:flex;align-items:center;gap:var(--s4);padding:0 var(--s5)}
-.progress{display:flex;align-items:center;gap:12px;margin-left:auto}
-.progress .bar{width:180px;height:10px;border-radius:5px;background:#171512;
-  border:2px solid var(--rule);overflow:hidden}
-.progress .bar i{display:block;height:100%;background:var(--verified-ink)}
-
-/* ============================================================
-   REPLAY
-   ============================================================ */
-.livestrip{flex:0 0 auto;height:52px;display:flex;align-items:center;gap:12px;padding:0 var(--s5);
-  background:#231D1C;border-bottom:1px solid var(--hair)}
-.replaybar{flex:0 0 auto;height:60px;display:flex;align-items:center;gap:14px;padding:0 var(--s5);
-  background:#211E26;border-bottom:1px solid var(--hair)}
-.replaybar .off{font:500 17px/1 var(--font-mono);color:var(--replay)}
-.replaybar .chip{border-color:var(--replay-ink)!important;color:var(--replay)!important}
-.replaybar .btn.primary{background:var(--replay-ink);color:#16121C;border-color:#6A5E80;margin-left:auto}
-.tl{padding:var(--s4) var(--s5) var(--s5);display:flex;flex-direction:column;gap:6px}
-.tl-lane{display:flex;align-items:center;gap:var(--s3);min-height:44px;flex:0 0 auto}
-.tl-lane .k{width:78px;flex:0 0 auto;font:700 10px/1 var(--font-ui);letter-spacing:.08em;color:var(--stale)}
-.tl-lane .t{flex:1 1 auto;height:40px;border-radius:var(--r-sm);border:1px solid var(--hair);
-  background:#171512;position:relative;overflow:hidden}
-.tl-lane .t svg{display:block;width:100%;height:100%}
-.gap{position:absolute;top:0;bottom:0;background-image:var(--hatch);border-left:2px dashed var(--stale);border-right:2px dashed var(--stale)}
-.cuemark{position:absolute;top:0;bottom:0;border-left:2px solid var(--rule);
-  padding-left:6px;font:500 11px/40px var(--font-mono);color:var(--ink-2)}
-.evmark{position:absolute;top:50%;transform:translate(-50%,-50%);width:24px;height:24px;border-radius:6px;
-  display:grid;place-items:center;font-size:11px;border:1px solid var(--hair);background:var(--raised)}
-.evmark.crit{border-color:var(--critical);color:var(--critical)}
-.evmark.warn{border-color:var(--intervention);color:var(--intervention)}
-.evmark.note{border-color:var(--g3);font-family:var(--font-hand);font-size:14px;color:var(--g3)}
-.scrub{position:relative;height:56px;margin:var(--s1) 0 0 90px;flex:0 0 auto}
-.scrub .track{position:absolute;left:0;right:0;top:22px;height:10px;border-radius:5px;
-  background:#171512;border:2px solid var(--rule)}
-.scrub .played{position:absolute;left:0;top:22px;height:10px;border-radius:5px;background:var(--replay-ink);opacity:.7}
-.scrub .handle{position:absolute;top:0;width:56px;height:56px;margin-left:-28px;border-radius:var(--r);
-  border:3px solid var(--replay-ink);background:var(--raised);box-shadow:var(--sh);
-  display:grid;place-items:center;color:var(--replay-ink);font-size:16px}
-.ticks{display:flex;justify-content:space-between;margin-left:90px;color:var(--stale);
-  font:500 11px/1 var(--font-mono)}
-
-/* ---------- ghost light (empty / offline) ---------- */
-.ghost{display:flex;flex-direction:column;align-items:center;gap:var(--s4);padding:var(--s7);text-align:center}
-.ghost p{color:var(--ink-2);max-width:40ch}
-.ghost .hand{color:var(--stale)}
-
-/* surface visibility */
 .surface{display:none;flex-direction:column;flex:1 1 auto;min-height:0}
-[data-surface=a2]      .surface#s-a2,
-[data-surface=a1]      .surface#s-a1,
-[data-surface=check]   .surface#s-check,
-[data-surface=replay]  .surface#s-replay{display:flex}
-
-@media (prefers-reduced-motion:reduce){
-  *{transition-duration:0ms !important;animation-duration:0ms !important}
-  .card:hover,.tile:hover,.btn:hover{transform:none !important}
-}
+[data-surface=a2] #s-a2,[data-surface=a1] #s-a1,
+[data-surface=check] #s-check,[data-surface=replay] #s-replay{display:flex}
+@media (prefers-reduced-motion:reduce){*{transition-duration:0ms!important;animation-duration:0ms!important}}
 </style>
 </head>
 <body>
 <div class="specbar">
-  <h1>Show Slate <span>— A2 Monitor surfaces</span></h1>
+  <div class="t">A2 Monitor <span>— surfaces on the RVLT design language</span></div>
   <div class="seg" role="group" aria-label="Surface">
     <button data-s="a2" aria-pressed="true">A2 grid</button>
     <button data-s="a1" aria-pressed="false">A1 mix</button>
@@ -592,1022 +289,572 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     <button data-s="replay" aria-pressed="false">Replay</button>
   </div>
   <div class="seg" role="group" aria-label="Viewport">
-    <button data-v="desktop" aria-pressed="false">Desktop 1512</button>
+    <button data-v="desktop" aria-pressed="false">Desktop</button>
     <button data-v="ipad-l" aria-pressed="true">iPad landscape</button>
     <button data-v="ipad-p" aria-pressed="false">iPad portrait</button>
   </div>
-  <span class="note">Fabricated data. Tap a card to listen · long-press to latch · swipe left for inspector.</span>
+  <div class="seg" role="group" aria-label="Theme">
+    <button data-t="light" aria-pressed="true">Paper</button>
+    <button data-t="dark" aria-pressed="false">Dark</button>
+  </div>
+  <span class="note">Fabricated data. Press a card to listen to that channel.</span>
 </div>
 
-<div class="stage">
-<div class="device" id="device">
+<div class="stage"><div class="device" id="device">
 
-  <!-- ============================ A2 LIVE GRID ============================ -->
+  <!-- ===================== A2 GRID ===================== -->
   <section class="surface" id="s-a2">
-    <header class="hdr">
-      <div>
-        <div class="show">The Winter Circus</div>
-        <div class="sub">Northgate Playhouse · Preview 3</div>
+    <header class="top">
+      <div class="brand"><span class="mark">▲</span> A2 MONITOR</div>
+      <div class="show"><b>The Winter Circus</b><span>Northgate Playhouse · Preview 3</span></div>
+      <div class="cue">
+        <div class="blk"><span class="k">NODE</span><span class="v" style="color:var(--ok)">64 ch · 48k</span></div>
+        <div class="blk"><span class="k">YOU</span><span class="v">SL · J. Marsh</span></div>
+        <span class="badge b-rep" title="Cue tracking is off. Turn it on in Manager if you run a cue list.">
+          <i class="dot"></i>NO CUE SOURCE</span>
       </div>
-      <div class="cueblock">
-        <div class="micro" style="color:var(--stale)">Cue</div>
-        <div class="now">41 · Ballroom</div>
-      </div>
-      <div class="cueblock">
-        <div class="micro" style="color:var(--stale)">Next</div>
-        <div class="now">42 in 1:20</div>
-      </div>
-      <div class="cueblock">
-        <div class="micro" style="color:var(--stale)">Zone</div>
-        <div class="now" style="font-family:var(--font-ui);font-size:14px">SL wing · J. Marsh</div>
-      </div>
-      <div class="counters">
-        <button class="counter info"><span class="g">◍</span>3</button>
-        <button class="counter warn"><span class="g">▲</span>2</button>
-        <button class="counter crit"><span class="g">■</span>1</button>
-        <button class="counter"><span class="g">✉</span>4</button>
+      <div class="right">
+        <button class="count out" data-sheet>1 critical</button>
+        <button class="count warn">2 to do</button>
+        <button class="count">3 unchecked</button>
       </div>
     </header>
 
-    <div class="filterbar" role="group" aria-label="Filters">
-      <span class="micro lbl">Showing</span>
-      <button class="filt" aria-pressed="true">On stage <span class="n">12</span></button>
-      <button class="filt" aria-pressed="true">Up next <span class="n">6</span></button>
-      <button class="filt" aria-pressed="false">Quick change <span class="n">2</span></button>
-      <span class="sep"></span>
-      <button class="filt" aria-pressed="false">My track <span class="n">9</span></button>
-      <button class="filt" aria-pressed="false">SL wing <span class="n">14</span></button>
-      <span class="sep"></span>
-      <button class="filt" aria-pressed="false">Warnings <span class="n">4</span></button>
-      <button class="filt" aria-pressed="false">Unchecked <span class="n">3</span></button>
-      <button class="filt" aria-pressed="false">Stale <span class="n">2</span></button>
-      <button class="filt" aria-pressed="false">Spares <span class="n">6</span></button>
-      <span class="sep"></span>
-      <button class="filt" aria-pressed="false">All channels <span class="n">64</span></button>
+    <div class="filters" role="group" aria-label="Filters">
+      <span class="lbl">SHOWING</span>
+      <button class="chipf" aria-pressed="true">All channels <span class="n">64</span></button>
+      <button class="chipf" aria-pressed="false">Needs someone <span class="n">4</span></button>
+      <button class="chipf" aria-pressed="false">Wireless <span class="n">48</span></button>
+      <button class="chipf" aria-pressed="false">Wired <span class="n">16</span></button>
+      <button class="chipf" aria-pressed="false">My zone <span class="n">9</span></button>
+      <button class="chipf" aria-pressed="false">Unchecked <span class="n">3</span></button>
+      <button class="chipf" aria-pressed="false">Spares <span class="n">6</span></button>
+      <button class="chipf" aria-pressed="false">Rack A <span class="n">32</span></button>
+      <button class="chipf" aria-pressed="false">Rack B <span class="n">32</span></button>
     </div>
 
-    <div class="body">
-      <main class="main" id="a2main">
-        <div class="gridhead">
-          <h2>On stage &amp; up next</h2>
-          <span class="chip">18 sources</span>
-          <div class="zoom" role="group" aria-label="Density">
-            <button data-z="compact" aria-pressed="false">Compact</button>
-            <button data-z="standard" aria-pressed="true">Standard</button>
-            <button data-z="expanded" aria-pressed="false">Expanded</button>
+    <main class="body">
+      <div class="gridhead">
+        <h2>All channels</h2>
+        <span class="sub">64 sources · press a card to listen</span>
+      </div>
+      <div class="grid" id="a2grid"></div>
+    </main>
+
+    <aside class="sheet" id="sheet" aria-label="Show-wide exceptions">
+      <button class="btn btn-line close" data-sheet>Close</button>
+      <h3>Needs someone</h3>
+      <button class="exrow">
+        <div class="t"><span class="badge b-out"><i class="dot"></i>CRITICAL</span> 27 · Eleanor Vance</div>
+        <div class="m">RF quality collapsed 0:40 ago. Level is normal. <b>Cause not observed.</b></div>
+        <div class="r"><span class="btn btn-primary">Listen</span><span class="btn btn-line">Claim</span></div>
+      </button>
+      <button class="exrow">
+        <div class="t"><span class="badge b-warn"><i class="dot"></i>BATTERY</span> 12 · Dov Halpern</div>
+        <div class="m">0:41 left — the shortest on the rig by some way.</div>
+        <div class="r"><span class="btn btn-primary">Listen</span><span class="btn btn-line">Make a task</span></div>
+      </button>
+      <button class="exrow">
+        <div class="t"><span class="badge b-rep"><i class="dot"></i>STALE</span> Rack B</div>
+        <div class="m">No telemetry for 42s. Eight sources are showing last-known RF.</div>
+      </button>
+      <div class="notecard">
+        <p>tape lifting on Eleanor again — 3rd time this week, ask wardrobe for a different anchor</p>
+        <div class="by">J. Marsh · 19:42</div>
+      </div>
+    </aside>
+
+    <footer class="nowbar" id="nowbar" data-open="false">
+      <div class="nowrow">
+        <div class="np">
+          <div class="pic" id="np-pic"></div>
+          <div class="lbl">
+            <b id="np-name">Eleanor Vance</b>
+            <span class="badge b-live"><i class="dot live-dot"></i>LISTENING · LATCHED</span>
           </div>
         </div>
-        <div class="grid" id="a2grid"></div>
-      </main>
-
-      <aside class="excrail" aria-label="Critical exceptions, show-wide">
-        <h3>Exceptions · show-wide</h3>
-        <button class="excrow crit">
-          <div class="t"><span style="color:var(--critical)">■</span> 27 · Eleanor Vance</div>
-          <div class="m">RF quality collapsed 0:40 ago. Level normal. <b style="color:var(--ink)">Cause not observed.</b></div>
-          <div class="acts"><span class="btn">◉ Listen</span><span class="btn">Claim</span></div>
-        </button>
-        <button class="excrow">
-          <div class="t"><span style="color:var(--intervention)">▲</span> 12 · Dov Halpern</div>
-          <div class="m">Battery 0:41. No change window before the interval at cue 58.</div>
-          <div class="acts"><span class="btn">◉ Listen</span><span class="btn">Task</span></div>
-        </button>
-        <button class="excrow">
-          <div class="t"><span style="color:var(--intervention)">▲</span> Node · clock</div>
-          <div class="m">Capture epoch changed 4m ago. Affects all 64 inputs. <em>Audio continuous.</em></div>
-        </button>
-        <button class="excrow">
-          <div class="t"><span style="color:var(--stale)">?</span> Rack B telemetry</div>
-          <div class="m hatched" style="padding:3px 6px;border-radius:4px">Last update 42s ago. 8 sources showing last-known RF.</div>
-        </button>
-        <div class="note" style="margin-top:8px">
-          <div class="hand">tape lifting on Eleanor again — 3rd time this week, ask wardrobe for a different anchor<br>— J. Marsh, 19:42</div>
+        <div class="vsep"></div>
+        <button class="btn btn-line sq">Prev</button>
+        <button class="btn btn-line sq">Clear</button>
+        <button class="btn btn-line sq" id="mutebtn">Mute</button>
+        <button class="btn btn-line sq">Dim</button>
+        <div class="level"><span class="v mono">−18</span><div class="bars" id="outbars"></div></div>
+        <div class="vsep"></div>
+        <div class="groups">
+          <button class="gbtn">PRINC<i style="background:var(--blue)"></i></button>
+          <button class="gbtn">ENSMB<i style="background:var(--green)"></i></button>
+          <button class="gbtn">BAND<i style="background:var(--amber)"></i></button>
+          <button class="gbtn">SWING<i style="background:var(--purple)"></i></button>
+          <button class="gbtn">RADIO<i style="background:var(--teal)"></i></button>
         </div>
-      </aside>
-      <button class="excgrab" data-exc aria-label="Show show-wide exceptions">EXCEPTIONS</button>
-    </div>
-
-    <!-- inspector -->
-    <div class="inspector" id="insp">
-      <div class="insp-hd">
-        <div class="shot" style="width:52px;aspect-ratio:4/5;border-radius:4px;flex:0 0 auto" data-static-shot="1"></div>
-        <h3>Eleanor Vance<br><span style="font:400 13px/16px var(--font-ui);color:var(--ink-2)">Marguerite Hale</span></h3>
-        <button class="insp-close" id="inspclose" aria-label="Close inspector">✕</button>
+        <button class="expand" id="expand" aria-label="Expand channel detail" aria-expanded="false">⌃</button>
       </div>
-      <div class="insp-body">
-        <div class="sect">
-          <h4>Identity</h4>
-          <dl class="kv">
-            <dt>Receiver</dt><dd>EW-DX EM4 · RX 4 · ch B</dd>
-            <dt>Audio input</dt><dd>DVS 27 · console 27</dd>
-            <dt>Transmitter</dt><dd>SK-DX A2-114 · 596.075 MHz</dd>
-            <dt>Element</dt><dd>MKE-1 beige · asset E-221</dd>
-            <dt>Last verified</dt><dd>18:55 · J. Marsh</dd>
-          </dl>
-          <span class="chip warn">▲ changed since activation</span>
-        </div>
-        <div class="sect">
-          <h4>RF level — observed</h4>
-          <div class="chart"><span class="cap">RSSI dBm · 30 min</span><svg id="chart-rssi" preserveAspectRatio="none" viewBox="0 0 400 92"></svg></div>
-        </div>
-        <div class="sect">
-          <h4>Link quality — observed, separate from level</h4>
-          <div class="chart"><span class="cap">Quality % · 30 min</span><svg id="chart-q" preserveAspectRatio="none" viewBox="0 0 400 92"></svg></div>
-          <span class="chip inferred warn">▲ likely interference — quality fell, level did not</span>
-        </div>
-        <div class="sect">
-          <h4>Battery</h4>
-          <dl class="kv">
-            <dt>Remaining</dt><dd>2:14 · 2× AA lithium</dd>
-            <dt>Changed</dt><dd>17:40 · pre-show</dd>
-            <dt>Next safe window</dt><dd>interval, cue 58, in 34m</dd>
+
+      <div class="nowpanel">
+        <div class="np-facts">
+          <div class="tags" id="np-tags"></div>
+          <dl>
+            <dt>role</dt><dd id="np-role">Marguerite Hale</dd>
+            <dt>receiver</dt><dd id="np-rx">RX 4 · ant B · in 27</dd>
+            <dt>pack</dt><dd>A2-114 · 596.075 MHz</dd>
+            <dt>element</dt><dd>MKE-1 beige · E-221</dd>
+            <dt>battery</dt><dd>2:14 · change at interval</dd>
+            <dt>checked</dt><dd>18:55 · J. Marsh</dd>
           </dl>
         </div>
-        <div class="sect">
-          <h4>Checks</h4>
-          <div class="checks" style="gap:6px">
-            <i class="pass"></i><i class="pass"></i><i class="pass"></i><i class="pass"></i>
-            <i class="void"></i><i class="pass"></i><i class="pass"></i><i></i>
-          </div>
-          <div style="font-size:12px;color:var(--ink-2)">Spare check invalidated by swap at 19:42. Operator sign-off outstanding.</div>
-        </div>
-        <div class="sect">
-          <h4>Placement</h4>
-          <div class="placeholder-img" style="height:120px">placement image · hairline, left temple</div>
-          <div class="note"><div class="hand">anchor tape under the wig cap, not on the skin</div></div>
-        </div>
-      </div>
-      <div class="insp-acts">
-        <button class="btn">◉<span>Listen</span></button>
-        <button class="btn">⟲<span>Replay</span></button>
-        <button class="btn">✉<span>Message</span></button>
-        <button class="btn">◍<span>Check</span></button>
-        <button class="btn">⊕<span>Spare</span></button>
-        <button class="btn danger" id="swapbtn"><span class="fill"></span>⇄<span>Swap</span></button>
-      </div>
-    </div>
 
-    <footer class="monitor" id="monitor" data-open="true">
-      <button class="mon-grip" id="mongrip" aria-label="Collapse monitor panel" aria-expanded="true"><i></i></button>
-
-      <div class="mon-panel">
-        <div class="mon-who">
-          <div class="shot" id="mon-shot"></div>
-          <div class="meta">
-            <h3 id="mon-role">Eleanor Vance</h3>
-            <div class="sub" id="mon-person">Marguerite Hale · principal</div>
-            <dl>
-              <dt>rx</dt><dd id="mon-rx">RX 4 · B · IN 27</dd>
-              <dt>pack</dt><dd>A2-114 · 596.075</dd>
-              <dt>element</dt><dd>MKE-1 beige</dd>
-              <dt>battery</dt><dd>2:14 · change at interval</dd>
-              <dt>checked</dt><dd>18:55 · J. Marsh</dd>
-            </dl>
-          </div>
-        </div>
-
-        <div class="mon-tl">
-          <div class="row">
+        <div class="np-tl">
+          <div class="lane">
             <span class="k">Audio</span>
-            <div class="t"><svg viewBox="0 0 900 34" preserveAspectRatio="none" data-mon="audio"></svg></div>
+            <div class="t"><svg viewBox="0 0 900 32" preserveAspectRatio="none" data-np="audio"></svg></div>
             <span class="v">−18.2 dBFS</span>
           </div>
-          <div class="row">
+          <div class="lane">
             <span class="k">RF level</span>
-            <div class="t"><svg viewBox="0 0 900 34" preserveAspectRatio="none" data-mon="rf"></svg></div>
+            <div class="t"><svg viewBox="0 0 900 32" preserveAspectRatio="none" data-np="rf"></svg></div>
             <span class="v">−62 dBm</span>
           </div>
-          <div class="row">
+          <div class="lane">
             <span class="k">Quality</span>
-            <div class="t"><svg viewBox="0 0 900 34" preserveAspectRatio="none" data-mon="q"></svg></div>
+            <div class="t"><svg viewBox="0 0 900 32" preserveAspectRatio="none" data-np="q"></svg></div>
             <span class="v">31 %</span>
           </div>
-          <div class="row">
-            <span class="k">Cue</span>
-            <div class="t">
-              <span style="position:absolute;left:2%;top:10px;font:400 11px/1 var(--font-mono);color:var(--ink-2)">40</span>
-              <span style="position:absolute;left:34%;top:10px;font:400 11px/1 var(--font-mono);color:var(--ink-2)">41 Ballroom</span>
-              <span style="position:absolute;left:78%;top:10px;font:400 11px/1 var(--font-mono);color:var(--ink-2)">42</span>
-              <span class="evmark crit" style="left:53%;width:20px;height:20px">■</span>
-              <span class="evmark note" style="left:66%;width:20px;height:20px">✎</span>
+          <div class="lane">
+            <span class="k">Events</span>
+            <div class="t cuelane">
+              <span class="ev" style="left:53%;color:var(--t-out)">■</span>
+              <span class="c" style="left:calc(53% + 26px)">quality dropped</span>
+              <span class="ev hand" style="left:78%;color:var(--warn)">✎</span>
+              <span class="c" style="left:calc(78% + 26px)">your note</span>
             </div>
             <span class="v">live</span>
           </div>
-          <div class="mon-scrub" id="monscrub">
-            <div class="track"></div><div class="played" style="width:100%"></div>
-            <div class="handle" style="left:100%">now</div>
+          <div class="scrubber">
+            <span class="k"></span>
+            <div class="track"><div class="fill" style="width:100%"></div><div class="knob" style="left:100%">now</div></div>
+            <span class="v"></span>
           </div>
-          <div class="mon-ticks"><span>−30m</span><span>−20m</span><span>−10m</span><span>−5m</span><span>now</span></div>
+          <div class="ticks"><span>−30m</span><span>−20m</span><span>−10m</span><span>−5m</span><span>now</span></div>
         </div>
 
-        <div class="mon-acts">
-          <button class="btn">⟲&nbsp; Replay from here</button>
-          <button class="btn">⚑&nbsp; Mark this moment</button>
-          <button class="btn">◍&nbsp; Run check</button>
-          <button class="btn">✉&nbsp; Message about this</button>
-          <button class="btn danger" id="swapbtn2"><span class="fill"></span>⇄&nbsp; Swap…</button>
+        <div class="np-acts">
+          <button class="btn btn-line">Replay from here</button>
+          <button class="btn btn-line">Mark this moment</button>
+          <button class="btn btn-line">Run a check</button>
+          <button class="btn btn-line">Message about this</button>
+          <button class="btn btn-primary">Swap…</button>
         </div>
-      </div>
-
-      <div class="transport" id="transport">
-        <div class="nowplay">
-          <div class="f" id="np-face"></div>
-          <div class="l"><b>Eleanor Vance</b><span>Latched</span></div>
-        </div>
-        <button class="btn lg">◀ Prev</button>
-        <button class="btn lg" id="clearbtn">⊘ Clear all</button>
-        <div class="tsep"></div>
-        <button class="btn lg" aria-pressed="false" id="mutebtn">Mute</button>
-        <button class="btn lg" aria-pressed="false">Dim</button>
-        <div class="level">
-          <span class="v mono">−18</span>
-          <div class="meterbars" id="outmeter"></div>
-        </div>
-        <div class="tsep"></div>
-        <div class="grow"><div class="groups">
-          <button class="gbtn"><b>PRINC</b><i style="background:var(--g1)"></i></button>
-          <button class="gbtn"><b>ENSMB</b><i style="background:var(--g2)"></i></button>
-          <button class="gbtn"><b>BAND</b><i style="background:var(--g3)"></i></button>
-          <button class="gbtn"><b>SWING</b><i style="background:var(--g4)"></i></button>
-          <button class="gbtn"><b>RADIO</b><i style="background:var(--g6)"></i></button>
-        </div></div>
-        <button class="btn lg" data-goto="replay">⟲ Replay</button>
       </div>
     </footer>
   </section>
 
-  <!-- ============================ A1 MIX CONFIDENCE ============================ -->
+  <!-- ===================== A1 MIX ===================== -->
   <section class="surface" id="s-a1">
-    <header class="hdr">
-      <div>
-        <div class="show">The Winter Circus</div>
-        <div class="sub">A1 · mix confidence</div>
+    <header class="top">
+      <div class="brand"><span class="mark">▲</span> A2 MONITOR</div>
+      <div class="show"><b>The Winter Circus</b><span>A1 · mix confidence</span></div>
+      <div class="cue">
+        <div class="blk"><span class="k">NODE</span><span class="v" style="color:var(--ok)">64 ch · 48k</span></div>
+        <div class="blk"><span class="k">CLOCK</span><span class="v" style="color:var(--ok)">locked</span></div>
       </div>
-      <div class="cueblock"><div class="micro" style="color:var(--stale)">Cue</div><div class="now">41 · Ballroom</div></div>
-      <div class="cueblock"><div class="micro" style="color:var(--stale)">Next</div><div class="now">42 in 1:20</div></div>
-      <div class="cueblock">
-        <div class="micro" style="color:var(--stale)">System</div>
-        <div class="now" style="font-family:var(--font-ui);font-size:13px;color:var(--verified)">node ✓ · device ✓ · clock ✓</div>
-      </div>
-      <div class="counters">
-        <button class="counter crit"><span class="g">■</span>1</button>
-        <button class="counter info"><span class="g">◍</span>2</button>
-        <button class="counter"><span class="g">✉</span>3</button>
+      <div class="right">
+        <button class="count out" data-sheet>1 critical</button>
+        <button class="count">2 requests</button>
       </div>
     </header>
 
-    <div class="filterbar" role="group" aria-label="Filters">
-      <span class="micro lbl">Showing</span>
-      <button class="filt" aria-pressed="true">On stage <span class="n">12</span></button>
-      <button class="filt" aria-pressed="true">Up next <span class="n">6</span></button>
-      <span class="sep"></span>
-      <button class="filt" aria-pressed="false">Warnings <span class="n">4</span></button>
-      <button class="filt" aria-pressed="false">Being worked <span class="n">2</span></button>
-      <span class="sep"></span>
-      <button class="filt" aria-pressed="false">All channels <span class="n">64</span></button>
+    <div class="filters" role="group" aria-label="Filters">
+      <span class="lbl">SHOWING</span>
+      <button class="chipf" aria-pressed="true">All channels <span class="n">64</span></button>
+      <button class="chipf" aria-pressed="false">Needs someone <span class="n">4</span></button>
+      <button class="chipf" aria-pressed="false">Being worked <span class="n">2</span></button>
+      <button class="chipf" aria-pressed="false">Vocals <span class="n">24</span></button>
     </div>
 
-    <div class="body">
-      <main class="main">
-        <div class="banner">
-          <span style="color:var(--critical);font-size:15px">■</span>
-          <div>
-            <b>27 · Eleanor Vance</b> — RF quality collapsed. <span style="color:var(--ink-2)">J. Marsh is investigating, 0:40.</span>
-          </div>
-          <button class="btn">Follow</button>
+    <main class="body">
+      <div class="exrow" style="border-color:var(--t-out);margin-bottom:18px;flex-direction:row;align-items:center;gap:14px">
+        <span class="badge b-out"><i class="dot live-dot"></i>CRITICAL</span>
+        <div style="flex:1 1 auto">
+          <div class="t" style="font-size:16px">27 · Eleanor Vance</div>
+          <div class="m">RF quality collapsed. J. Marsh is on it — 0:40 so far.</div>
         </div>
-        <div class="gridhead"><h2>On stage</h2><span class="chip">12 sources</span></div>
-        <div class="tiles" id="a1tiles"></div>
-        <div class="secthead"><b>Up next · cue 42</b><hr></div>
-        <div class="tiles" id="a1next"></div>
-      </main>
-
-      <aside class="excrail" aria-label="Critical exceptions">
-        <h3>Critical · whole show</h3>
-        <button class="excrow crit">
-          <div class="t"><span style="color:var(--critical)">■</span> 27 · Eleanor Vance</div>
-          <div class="m">RF quality collapsed. <b style="color:var(--ink)">J. Marsh · investigating · 0:40</b></div>
-        </button>
-        <button class="excrow">
-          <div class="t"><span style="color:var(--intervention)">▲</span> Node clock</div>
-          <div class="m">Capture epoch changed. Affects 64 inputs. <em>Audio continuous.</em></div>
-        </button>
-        <button class="excrow">
-          <div class="t"><span style="color:var(--stale)">?</span> 51 · Ines Okonjo <span class="chip" style="height:22px">offstage</span></div>
-          <div class="m">Telemetry stale 42s. Visible here although not on stage.</div>
-        </button>
-        <h3 style="margin-top:8px">Requests you opened</h3>
-        <button class="excrow">
-          <div class="t"><span style="color:var(--listening)">◍</span> Check placement · 33</div>
-          <div class="m">Claimed by A. Dunne, 2m ago.</div>
-        </button>
-      </aside>
-      <button class="excgrab" data-exc aria-label="Show show-wide exceptions">EXCEPTIONS</button>
-    </div>
-
-    <footer class="transport">
-      <div class="nowplay">
-        <div class="f" style="background:rgba(227,181,95,.18)">DH</div>
-        <div class="l"><b>Dov Halpern</b><span>◉ Momentary</span></div>
+        <span class="btn btn-line">Follow</span>
       </div>
-      <button class="btn lg">◀ Prev</button>
-      <button class="btn lg">⊘ Clear</button>
-      <div class="tsep"></div>
-      <button class="btn lg">Mute</button>
-      <button class="btn lg">Dim</button>
-      <div class="level"><span class="v mono">−22</span><div class="meterbars" id="outmeter2"></div></div>
-      <div class="tsep"></div>
-      <div class="grow">
-        <button class="btn lg primary">◍ Request check</button>
-        <button class="btn lg">■ Report fault</button>
+      <div class="gridhead"><h2>All channels</h2><span class="sub">press a card to hear it</span></div>
+      <div class="grid" id="a1grid"></div>
+    </main>
+
+    <aside class="sheet" aria-label="Critical exceptions">
+      <button class="btn btn-line close" data-sheet>Close</button>
+      <h3>Critical · whole show</h3>
+      <button class="exrow">
+        <div class="t"><span class="badge b-out"><i class="dot"></i>RF</span> 27 · Eleanor Vance</div>
+        <div class="m">J. Marsh · investigating · 0:40</div>
+      </button>
+      <button class="exrow">
+        <div class="t"><span class="badge b-rep"><i class="dot"></i>OFFSTAGE</span> 51 · Ines Okonjo</div>
+        <div class="m">Telemetry stale 42s. Shown here although not on stage.</div>
+      </button>
+    </aside>
+
+    <footer class="nowbar" data-open="false">
+      <div class="nowrow">
+        <div class="np">
+          <div class="pic" data-static-pic></div>
+          <div class="lbl"><b>Dov Halpern</b><span class="badge b-live"><i class="dot live-dot"></i>LISTENING</span></div>
+        </div>
+        <div class="vsep"></div>
+        <button class="btn btn-line sq">Prev</button>
+        <button class="btn btn-line sq">Clear</button>
+        <button class="btn btn-line sq">Mute</button>
+        <button class="btn btn-line sq">Dim</button>
+        <div class="level"><span class="v mono">−22</span><div class="bars" id="outbars2"></div></div>
+        <div class="vsep"></div>
+        <div class="groups" style="flex:0 0 auto">
+          <button class="btn btn-primary lg">Request a check</button>
+          <button class="btn btn-line lg">Report a fault</button>
+        </div>
+        <button class="expand" aria-label="Expand channel detail" aria-expanded="false">⌃</button>
       </div>
-      <button class="btn lg" data-goto="replay">⟲ Replay</button>
+      <div class="nowpanel">
+        <div class="np-facts">
+          <div class="tags"><span class="badge b-ok"><i class="dot"></i>RF OK</span><span class="badge b-warn"><i class="dot"></i>BATT 0:41</span></div>
+          <dl><dt>role</dt><dd>Auguste Renaud</dd><dt>console</dt><dd>ch 12</dd><dt>heard</dt><dd>21:03 · you</dd></dl>
+        </div>
+        <div class="np-tl">
+          <div class="lane"><span class="k">Audio</span><div class="t"><svg viewBox="0 0 900 32" preserveAspectRatio="none" data-np="audio2"></svg></div><span class="v">−12.4 dBFS</span></div>
+          <div class="lane"><span class="k">Events</span><div class="t cuelane"><span class="c" style="left:2%">nothing logged on this channel</span></div><span class="v">live</span></div>
+        </div>
+        <div class="np-acts">
+          <button class="btn btn-primary">Request a check</button>
+          <button class="btn btn-line">Report a fault</button>
+          <button class="btn btn-line">Mark this moment</button>
+        </div>
+      </div>
     </footer>
   </section>
 
-  <!-- ============================ GUIDED MIC CHECK ============================ -->
+  <!-- ===================== MIC CHECK ===================== -->
   <section class="surface" id="s-check">
-    <header class="hdr">
-      <div><div class="show">Mic check · SL wing track</div><div class="sub">J. Marsh · started 18:31</div></div>
-      <div class="cueblock"><div class="micro" style="color:var(--stale)">Position</div><div class="now">7 of 22</div></div>
-      <div class="counters">
-        <button class="counter">⏸ Pause</button>
-        <button class="counter">Left-handed</button>
-        <button class="counter" data-goto="a2">✕ Exit</button>
+    <header class="top">
+      <div class="brand"><span class="mark">▲</span> MIC CHECK</div>
+      <div class="show"><b>SL wing track</b><span>J. Marsh · started 18:31</span></div>
+      <div class="cue"><div class="blk"><span class="k">POSITION</span><span class="v">7 of 22</span></div></div>
+      <div class="right">
+        <button class="count">Left-handed</button>
+        <button class="count">Pause</button>
+        <button class="count" data-goto="a2">Exit</button>
       </div>
     </header>
 
-    <div class="mc">
-      <div class="mc-ctx">
-        <div class="mc-who">
-          <div class="shot" style="width:52px;aspect-ratio:4/5;border-radius:4px;flex:0 0 auto" data-static-shot="1"></div>
-          <div>
-            <h2>Eleanor Vance</h2>
-            <p>Marguerite Hale · principal</p>
+    <main class="body" style="display:flex;gap:26px">
+      <div style="flex:1 1 46%;display:flex;flex-direction:column;gap:16px">
+        <div class="chcard" style="cursor:default;gap:14px">
+          <div class="shot" data-static-face style="aspect-ratio:4/3"></div>
+          <div class="who"><div class="nm" style="font-size:26px">Eleanor Vance</div><div class="rl">Marguerite Hale · principal</div></div>
+          <div class="tags">
+            <span class="badge b-warn"><i class="dot"></i>QUICK CHANGE CUE 52</span>
+            <span class="badge b-rep"><i class="dot"></i>SPARE NOT PREPARED</span>
           </div>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <span class="tape">RX 4 · B · IN 27</span>
-          <span class="tape">PACK A2-114</span>
-          <span class="tape">MKE-1 beige · E-221</span>
-        </div>
-        <div class="placeholder-img">placement image · hairline, left temple</div>
-        <div class="note">
-          <div class="hand">tape lifting again, 3rd time this week — try the anchor under the wig cap<br>— J. Marsh, Tue</div>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <span class="chip warn">▲ quick change at cue 52</span>
-          <span class="chip stale">? spare not yet prepared</span>
+          <dl style="display:grid;grid-template-columns:70px 1fr;gap:3px 10px;font-family:var(--fm);font-size:12px">
+            <dt style="color:var(--faint)">receiver</dt><dd>RX 4 · ant B · in 27</dd>
+            <dt style="color:var(--faint)">pack</dt><dd>A2-114</dd>
+            <dt style="color:var(--faint)">element</dt><dd>MKE-1 beige · E-221</dd>
+          </dl>
+          <div class="notecard">
+            <p>tape lifting again, 3rd time this week — try the anchor under the wig cap</p>
+            <div class="by">J. Marsh · Tuesday</div>
+          </div>
         </div>
       </div>
 
-      <div class="mc-verd">
-        <div class="mc-step">
-          <div class="lbl"><span class="mono" style="color:var(--stale)">3</span><b>Captured audio heard</b><span>assigned to A1</span></div>
-          <div class="verdicts">
-            <button class="verdict pass" aria-pressed="false">✓ PASS</button>
-            <button class="verdict fail" aria-pressed="false">✕ FAIL</button>
-            <button class="verdict recheck" aria-pressed="false">↻ RECHECK</button>
+      <div style="flex:1 1 54%;display:flex;flex-direction:column;gap:14px">
+        <div>
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px">
+            <h2 style="font-size:22px">3 · Captured audio heard</h2>
+            <span class="badge b-rep">A1 DECIDES THIS ONE</span>
           </div>
-          <button class="btn lg" style="width:100%;margin-top:4px">◉ Listen — hold</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+            <button class="btn btn-line" style="height:76px;font-size:16px" data-verdict>Pass</button>
+            <button class="btn btn-line" style="height:76px;font-size:16px" data-verdict>Fail</button>
+            <button class="btn btn-line" style="height:76px;font-size:16px" data-verdict>Recheck</button>
+          </div>
+          <button class="btn btn-primary lg" style="width:100%;margin-top:10px">Hold to listen</button>
         </div>
-
-        <div class="mc-list">
-          <div class="mc-row done"><span class="n mono">1</span>Identity / label<span class="s pass">PASS</span></div>
-          <div class="mc-row done"><span class="n mono">2</span>RF / link in zone<span class="s pass">PASS</span></div>
-          <div class="mc-row next"><span class="n mono">3</span><b>Captured audio heard</b><span class="s pend">NOW</span></div>
-          <div class="mc-row"><span class="n mono">4</span>TX mute / control<span class="s pend">—</span></div>
-          <div class="mc-row"><span class="n mono">5</span>Spare pack<span class="s pend">—</span></div>
-          <div class="mc-row"><span class="n mono">6</span>Battery for show window<span class="s pend">—</span></div>
-          <div class="mc-row"><span class="n mono">7</span>Placement / costume<span class="s pend">—</span></div>
-          <div class="mc-row"><span class="n mono">8</span>Operator sign-off<span class="s pend">—</span></div>
-        </div>
+        <div style="display:flex;flex-direction:column;gap:2px;margin-top:4px" id="mclist"></div>
       </div>
-    </div>
+    </main>
 
-    <footer class="mc-foot">
-      <button class="btn lg">◀ Previous</button>
-      <button class="btn lg">⏭ Skip — absent / costumed / blocked</button>
-      <div class="progress">
-        <span class="micro" style="color:var(--stale)">2 exceptions held</span>
-        <div class="bar"><i style="width:32%"></i></div>
-        <span class="mono" style="font-size:15px">7 / 22</span>
+    <footer class="nowbar" data-open="false" style="height:96px">
+      <div class="nowrow">
+        <button class="btn btn-line lg">Previous</button>
+        <button class="btn btn-line lg">Skip — absent, costumed or blocked</button>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
+          <span class="badge b-warn">2 EXCEPTIONS HELD</span>
+          <div style="width:190px;height:10px;border-radius:99px;background:var(--line-2);overflow:hidden">
+            <i style="display:block;height:100%;width:32%;background:var(--ok)"></i></div>
+          <b class="mono" style="font-size:17px">7 / 22</b>
+        </div>
       </div>
     </footer>
   </section>
 
-  <!-- ============================ REPLAY + INCIDENT ============================ -->
+  <!-- ===================== REPLAY ===================== -->
   <section class="surface" id="s-replay">
-    <div class="livestrip">
-      <span class="chip crit">■ Live</span>
-      <b>27 · Eleanor Vance</b>
-      <span style="color:var(--ink-2)">RF quality collapsed · J. Marsh investigating</span>
-      <button class="btn" style="margin-left:auto;min-height:36px">Go to live</button>
-    </div>
-    <div class="replaybar">
-      <span class="chip listen" style="border-color:var(--replay);color:var(--replay)">⟲ Replay</span>
-      <span class="off">−4m 12s</span>
-      <span class="mono" style="color:var(--ink-2);font-size:13px">epoch 3 · 21:04:18 · incident #114</span>
-      <button class="btn primary lg" data-goto="a2">Return to live</button>
-    </div>
+    <header class="top" style="background:var(--purple-soft);border-bottom-color:var(--purple)">
+      <div class="brand"><span class="mark" style="color:var(--purple)">⟲</span> REPLAY</div>
+      <div class="show"><b class="mono" style="font-size:19px">−4m 12s</b><span>epoch 3 · 21:04:18 · incident #114</span></div>
+      <div class="cue">
+        <div class="blk"><span class="k">LIVE NOW</span><span class="v" style="color:var(--t-out)">27 · RF fault</span></div>
+      </div>
+      <div class="right">
+        <button class="count out">Go to live fault</button>
+        <button class="btn btn-primary lg" data-goto="a2">Back to live</button>
+      </div>
+    </header>
 
-    <div class="body">
-      <main class="main" style="padding:0">
-        <div style="padding:var(--s5) var(--s5) 0">
-          <div class="card listening" style="max-width:520px">
-            <div class="c-top">
-              <span class="c-no"><i style="background:var(--g1)"></i><b>27</b></span>
-              <span class="chip" style="border-color:var(--replay);color:var(--replay);height:24px">⟲ historical</span>
-              <span class="c-stale" style="margin-left:auto">21:04:18</span>
-            </div>
-            <div class="c-id">
-              <div class="shot" style="width:52px;aspect-ratio:4/5;border-radius:4px;flex:0 0 auto" data-static-shot="1"></div>
-              <div class="c-names">
-                <div class="c-role" style="background:rgba(86,199,217,.22)">Eleanor Vance</div>
-                <div class="c-person">Marguerite Hale</div>
-                <span class="tape" style="margin-top:4px">RX 4 · B · IN 27</span>
-              </div>
-            </div>
-            <div class="lane">
-              <span class="k">AF</span>
-              <div class="trace"><svg viewBox="0 0 240 28" preserveAspectRatio="none" data-trace="replay-af"></svg></div>
-              <span class="v" style="color:var(--replay)">−18.2</span>
-            </div>
+    <main class="body" style="display:flex;gap:22px">
+      <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:16px">
+        <div class="chcard" style="cursor:default;max-width:330px;border-color:var(--purple);box-shadow:0 3px 0 var(--purple)">
+          <div class="shot" data-static-face>
+            <span class="no">27</span>
+            <span class="listening-tag badge b-replay"><i class="dot"></i>HISTORICAL</span>
+            <div class="meter"><svg viewBox="0 0 240 26" preserveAspectRatio="none" data-np="replayaf"></svg></div>
+          </div>
+          <div class="who"><div class="nm">Eleanor Vance</div><div class="rl">Marguerite Hale · 21:04:18</div></div>
+        </div>
+
+        <div class="np-tl" style="gap:7px">
+          <div class="lane"><span class="k">Audio</span><div class="t"><svg viewBox="0 0 900 32" preserveAspectRatio="none" data-np="raudio"></svg></div><span class="v">−18.2 dBFS</span></div>
+          <div class="lane"><span class="k">RF level</span><div class="t"><svg viewBox="0 0 900 32" preserveAspectRatio="none" data-np="rrf"></svg></div><span class="v">−62 dBm</span></div>
+          <div class="lane"><span class="k">Quality</span><div class="t"><svg viewBox="0 0 900 32" preserveAspectRatio="none" data-np="rq"></svg></div><span class="v">31 %</span></div>
+          <div class="lane"><span class="k">Events</span><div class="t cuelane">
+            <span class="ev" style="left:53%;color:var(--t-out)">■</span>
+            <span class="ev" style="left:59%;color:var(--warn)">▲</span>
+            <span class="ev hand" style="left:66%;color:var(--warn)">✎</span>
+            <span class="ev" style="left:71%;color:var(--ink-2)">⇄</span>
+          </div><span class="v">21:04</span></div>
+          <div class="scrubber">
+            <span class="k"></span>
+            <div class="track"><div class="fill" style="width:86%;background:var(--purple)"></div>
+              <div class="knob" style="left:86%;border-color:var(--purple)">−4m</div></div>
+            <span class="v"></span>
+          </div>
+          <div class="ticks"><span>−30m</span><span>−20m</span><span>−10m</span><span>−5m</span><span>now</span></div>
+          <div style="display:flex;gap:10px;margin-top:10px">
+            <button class="btn btn-line">−10s</button>
+            <button class="btn btn-line">Play</button>
+            <button class="btn btn-line">+10s</button>
+            <button class="btn btn-line">Mark</button>
+            <button class="btn btn-line">Export…</button>
           </div>
         </div>
+      </div>
 
-        <div class="tl">
-          <div class="tl-lane"><span class="k">Audio</span><div class="t"><svg viewBox="0 0 900 40" preserveAspectRatio="none" data-tl="audio"></svg></div></div>
-          <div class="tl-lane"><span class="k">RF level</span><div class="t"><svg viewBox="0 0 900 40" preserveAspectRatio="none" data-tl="rf"></svg><div class="gap" style="left:52%;width:9%"></div></div></div>
-          <div class="tl-lane"><span class="k">Quality</span><div class="t"><svg viewBox="0 0 900 40" preserveAspectRatio="none" data-tl="q"></svg></div></div>
-          <div class="tl-lane"><span class="k">Cue</span><div class="t">
-            <div class="cuemark" style="left:4%">40</div>
-            <div class="cuemark" style="left:34%">41 Ballroom</div>
-            <div class="cuemark" style="left:78%">42</div>
-            <div class="gap" style="left:60%;width:11%"></div>
-            <span style="position:absolute;left:61%;top:12px;font:700 10px/1 var(--font-ui);letter-spacing:.06em;color:var(--stale)">AUTHORITY LOST</span>
-          </div></div>
-          <div class="tl-lane"><span class="k">Swap</span><div class="t">
-            <div class="evmark" style="left:71%">◆</div>
-            <span style="position:absolute;left:calc(71% + 20px);top:13px;font:500 11px/1 var(--font-mono);color:var(--ink-2)">pack A2-114 → A2-119</span>
-          </div></div>
-          <div class="tl-lane"><span class="k">Events</span><div class="t">
-            <div class="evmark crit" style="left:53%">■</div>
-            <div class="evmark warn" style="left:58%">▲</div>
-            <div class="evmark note" style="left:66%">✎</div>
-            <span style="position:absolute;left:calc(66% + 20px);top:12px" class="hand">hair noise?</span>
-          </div></div>
-
-          <div class="scrub">
-            <div class="track"></div><div class="played" style="width:86%"></div>
-            <div class="handle" style="left:86%">◆</div>
-          </div>
-          <div class="ticks"><span>−30m</span><span>−20m</span><span>−10m</span><span>−4m</span><span>now</span></div>
+      <aside style="flex:0 0 320px;display:flex;flex-direction:column;gap:12px">
+        <h3 style="font-size:19px">Incident #114</h3>
+        <div class="tags">
+          <span class="badge b-warn"><i class="dot"></i>INVESTIGATING</span>
+          <span class="badge b-rep">J. MARSH HAS IT</span>
         </div>
-      </main>
-
-      <aside class="excrail" aria-label="Incident">
-        <h3>Incident #114</h3>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <span class="chip warn">▲ investigating</span>
-          <span class="chip">coordinator J. Marsh</span>
-          <span class="chip">seen ×3</span>
+        <div class="exrow">
+          <div class="t"><span class="badge b-out">OBSERVED</span></div>
+          <div class="m mono" style="font-size:11.5px">21:04:18 · quality 92% → 31%, RSSI −61 → −62 dBm</div>
         </div>
-        <div class="excrow">
-          <div class="t"><span style="color:var(--critical)">■</span> Observed</div>
-          <div class="m mono" style="font-size:11px">21:04:18 quality 92% → 31%, RSSI −61 → −62 dBm</div>
+        <div class="exrow" style="border-style:dashed">
+          <div class="t"><span class="badge b-warn">LIKELY — NOT CONFIRMED</span></div>
+          <div class="m">Interference in the SL zone. Level held while quality fell.</div>
         </div>
-        <div class="excrow" style="border-style:dashed">
-          <div class="t"><span style="color:var(--intervention)">▲</span> Likely — inferred</div>
-          <div class="m">Interference in SL zone. Level held while quality fell. <em>Not confirmed.</em></div>
+        <div class="notecard">
+          <p>swapped to A2-119, quality back to 90 — old pack bagged for RF to look at</p>
+          <div class="by">J. Marsh · 21:09</div>
         </div>
-        <div class="excrow">
-          <div class="t"><span style="color:var(--g3)">✎</span> Operator</div>
-          <div class="m hand" style="font-size:16px">swapped to A2-119, quality back to 90 — leaving the old pack bagged for RF to look at</div>
-        </div>
-        <div class="sect" style="margin-top:4px">
-          <h4>Resolve with confidence</h4>
-          <div class="verdicts" style="grid-template-columns:1fr 1fr 1fr;gap:8px">
-            <button class="btn" style="min-height:48px;padding:0 6px;font-size:12px">Observed</button>
-            <button class="btn" style="min-height:48px;padding:0 6px;font-size:12px">Likely</button>
-            <button class="btn" style="min-height:48px;padding:0 6px;font-size:12px">Unconfirmed</button>
+        <div style="margin-top:4px">
+          <div style="font-size:12px;color:var(--faint);margin-bottom:8px">RESOLVE WITH CONFIDENCE</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <button class="btn btn-line" style="padding:9px 6px;font-size:12px">Observed</button>
+            <button class="btn btn-line" style="padding:9px 6px;font-size:12px">Likely</button>
+            <button class="btn btn-line" style="padding:9px 6px;font-size:12px">Unconfirmed</button>
           </div>
         </div>
       </aside>
-      <button class="excgrab" data-exc aria-label="Show incident panel">INCIDENT</button>
-    </div>
-
-    <footer class="transport">
-      <div class="nowplay" style="border-color:var(--replay-ink)">
-        <div class="f" style="background:rgba(179,157,219,.18)">EV</div>
-        <div class="l"><b>Eleanor Vance</b><span style="color:var(--replay)">⟲ −4m 12s</span></div>
-      </div>
-      <button class="btn lg">⏮ −10s</button>
-      <button class="btn lg">▶</button>
-      <button class="btn lg">+10s ⏭</button>
-      <div class="tsep"></div>
-      <button class="btn lg">Mute</button>
-      <button class="btn lg">Dim</button>
-      <div class="level"><span class="v mono">−18</span><div class="meterbars" id="outmeter3"></div></div>
-      <div class="tsep"></div>
-      <div class="grow">
-        <button class="btn lg">⚑ Mark</button>
-        <button class="btn lg">Export…</button>
-      </div>
-      <button class="btn lg primary" data-goto="a2">Return to live</button>
-    </footer>
+    </main>
   </section>
 
-</div>
-</div>
-
-<style>
-  /* replay mode re-tints the lit edge — mode colour wins over listening colour */
-  #s-replay .nowplay::before{background:var(--replay-ink)}
-  #s-replay .nowplay{border-color:var(--replay-ink)}
-  #s-replay .card.listening{border-color:var(--replay-ink)}
-  #s-replay .card.listening::before{background:var(--replay-ink)}
-  #s-replay .meterbars i.on{background:var(--replay-ink)}
-  #s-replay .level .v{color:var(--replay)}
-  #s-replay .qual i.on{background:var(--replay-ink)}
-  #s-replay .btn.primary{background:var(--replay-ink);color:#16121C;border-color:#6A5E80}
-  #s-replay .excgrab{color:var(--replay)}
-  .shot .over .fl{display:inline-flex;align-items:center;gap:4px}
-  .shot .over .fl::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
-  .shot .over .fl.rf,.shot .over .fl.audio,.shot .over .fl.sys{color:#F0908E}
-  .shot .over .fl.batt,.shot .over .fl.id{color:#E8C37A}
-  .shot .over .fl.cue,.shot .over .fl.stale{color:#C3BDB4}
-  .shot .over .fl.cli{color:#7FC9D6}
-  .lane .v u{display:inline-block;margin-left:3px;font:500 9px/1 var(--font-ui);
-    letter-spacing:.04em;color:var(--stale);text-decoration:none}
-  .lane .v{width:84px}
-</style>
+</div></div>
 
 <script>
 (() => {
 "use strict";
-const $  = (s, r=document) => r.querySelector(s);
-const $$ = (s, r=document) => [...r.querySelectorAll(s)];
-const html = document.documentElement;
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const html=document.documentElement;
 
-/* ---------------------------------------------------------------
-   Fabricated show data. Not a claim about any real production.
-   --------------------------------------------------------------- */
-const CH = [
-  {no:27, g:1, role:"Eleanor Vance", person:"Marguerite Hale", ini:"EV",
-   rx:"RX 4 · B · IN 27", af:-18.2, afState:"present", rf:-62, q:1, qState:"bad",
-   badges:{audio:0, rf:1, batt:0, id:1, cue:0, cli:0, sys:0},
-   exc:{lvl:"crit", g:"■", t:"RF quality collapsed 0:40 ago. Level normal.", tail:"Cause not observed."},
-   checks:["pass","pass","pass","pass","void","pass","pass",""], owner:"JM",
-   listening:true, latched:true, critical:true},
-
-  {no:12, g:1, role:"Dov Halpern", person:"Auguste Renaud", ini:"DH",
-   rx:"RX 2 · A · IN 12", af:-12.4, afState:"present", rf:-48, q:5, qState:"ok",
-   badges:{audio:0, rf:0, batt:1, id:0, cue:0, cli:0, sys:0},
-   exc:{lvl:"warn", g:"▲", t:"Battery 0:41.", tail:"No change window before the interval."},
-   checks:["pass","pass","pass","pass","pass","fail","pass","pass"], owner:""},
-
-  {no:33, g:1, role:"Ines Okonjo", person:"Vera Castellan", ini:"IO",
-   rx:"RX 5 · B · IN 33", af:-24.0, afState:"present", rf:-51, q:4, qState:"ok",
-   badges:{audio:0, rf:0, batt:0, id:0, cue:0, cli:1, sys:0},
-   exc:{lvl:"ok", g:"✓", t:"Nothing outstanding.", tail:"Verified 18:55."},
-   checks:["pass","pass","pass","pass","pass","pass","pass","pass"], owner:"AD"},
-
-  {no:41, g:2, role:"Tobias Renn", person:"Ensemble 4", ini:"TR",
-   rx:"RX 7 · A · IN 41", af:null, afState:"silent", rf:-55, q:4, qState:"ok",
-   badges:{audio:0, rf:0, batt:0, id:0, cue:0, cli:0, sys:0},
-   exc:{lvl:"ok", g:"✓", t:"Expected silent this scene.", tail:"Silence alert unarmed."},
-   checks:["pass","pass","pass","pass","pass","pass","pass","pass"], owner:""},
-
-  {no:19, g:4, role:"Priya Nandakumar", person:"Swing · cov. Marguerite", ini:"PN",
-   rx:"RX 3 · B · IN 19", af:-31.5, afState:"present", rf:-58, q:3, qState:"warn",
-   badges:{audio:0, rf:0, batt:0, id:1, cue:0, cli:0, sys:0},
-   exc:{lvl:"warn", g:"▲", t:"Identity unverified since 17:12 swap.", tail:"", inferred:false},
-   checks:["pass","","pass","pass","void","pass","","",], owner:""},
-
-  {no:51, g:2, role:"Marcus Bell", person:"Ensemble 9", ini:"MB",
-   rx:"RX 8 · A · IN 51", af:-20.1, afState:"present", rf:null, q:0, qState:"stale",
-   badges:{audio:0, rf:0, batt:0, id:0, cue:0, cli:0, sys:1},
-   exc:{lvl:"warn", g:"?", t:"Rack B telemetry stale.", tail:"Showing last known RF.", stale:true},
-   checks:["pass","pass","pass","pass","pass","pass","pass","pass"], owner:"", stale:42},
-
-  {no:8, g:3, role:"Reed Kovac", person:"Bandleader · keys vox", ini:"RK",
-   rx:"RX 1 · A · IN 08", af:-9.8, afState:"present", rf:-44, q:5, qState:"ok",
-   badges:{audio:0, rf:0, batt:0, id:0, cue:0, cli:0, sys:0},
-   exc:{lvl:"ok", g:"✓", t:"Nothing outstanding.", tail:""},
-   checks:["pass","pass","pass","pass","pass","pass","pass","pass"], owner:""},
-
-  {no:36, g:1, role:"Anneke Vos", person:"Célestine", ini:"AV",
-   rx:"RX 6 · B · IN 36", af:null, afState:"mute", rf:-53, q:4, qState:"ok",
-   badges:{audio:1, rf:0, batt:0, id:0, cue:0, cli:0, sys:0},
-   exc:{lvl:"crit", g:"■", t:"Transmitter muted at the pack.", tail:"On stage in cue 42.", inferred:false},
-   checks:["pass","pass","pass","fail","pass","pass","pass","pass"], owner:"", mute:true, critical:true},
-
-  {no:22, g:2, role:"Halim Ferrer", person:"Ensemble 2", ini:"HF",
-   rx:"RX 4 · A · IN 22", af:-26.7, afState:"present", rf:-57, q:4, qState:"ok",
-   badges:{audio:0, rf:0, batt:0, id:0, cue:1, cli:0, sys:0},
-   exc:{lvl:"warn", g:"?", t:"Cue authority lost 2m ago.", tail:"Scene expectations unknown.", stale:true},
-   checks:["pass","pass","pass","pass","","pass","pass","pass"], owner:""},
-
-  {no:45, g:6, role:"Stage radio 1", person:"DSM · comms tap", ini:"R1",
-   rx:"RX 9 · A · IN 45", af:-38.0, afState:"present", rf:-50, q:5, qState:"ok",
-   badges:{audio:0, rf:0, batt:0, id:0, cue:0, cli:0, sys:0},
-   exc:{lvl:"ok", g:"✓", t:"Nothing outstanding.", tail:""},
-   checks:["pass","pass","pass","pass","pass","pass","pass","pass"], owner:""},
-
-  {no:14, g:1, role:"Solomon Adeyemi", person:"Le Directeur", ini:"SA",
-   rx:"RX 2 · B · IN 14", af:-15.9, afState:"present", rf:-59, q:3, qState:"warn",
-   badges:{audio:0, rf:1, batt:0, id:0, cue:0, cli:0, sys:0},
-   exc:{lvl:"warn", g:"▲", t:"Likely interference in SL zone.", tail:"Quality fell, level did not.", inferred:true},
-   checks:["pass","pass","pass","pass","pass","pass","pass",""], owner:""},
-
-  {no:60, g:4, role:"Juno Park", person:"Swing · unassigned", ini:"JP",
-   rx:"RX 10 · A · IN 60", af:null, afState:"silent", rf:-61, q:4, qState:"ok",
-   badges:{audio:0, rf:0, batt:0, id:0, cue:0, cli:0, sys:0},
-   exc:{lvl:"ok", g:"✓", t:"Spare, prepared and verified.", tail:"Ready to promote."},
-   checks:["pass","pass","pass","pass","pass","pass","pass","pass"], owner:""},
+/* Fabricated show data. Not a claim about any real production. */
+const AV=["--blue","--green","--amber","--purple","--coral","--teal","--pink","--lime"];
+const CH=[
+ {no:27,g:0,nm:"Eleanor Vance",rl:"Marguerite Hale",af:-18.2,st:"on",
+  tags:[["b-out","RF QUALITY"],["b-warn","UNVERIFIED ID"]],
+  say:["<b>RF quality collapsed</b> 0:40 ago. Level normal.","crit"],crit:true,live:true},
+ {no:12,g:1,nm:"Dov Halpern",rl:"Auguste Renaud",af:-12.4,st:"on",
+  tags:[["b-warn","BATTERY 0:41"]],say:["<b>Battery 0:41</b> left. Shortest on the rig.","warn"]},
+ {no:33,g:2,nm:"Ines Okonjo",rl:"Vera Castellan",af:-24.0,st:"on",
+  tags:[["b-ok","ALL GOOD"]],say:["Checked 18:55. Nothing outstanding.",""]},
+ {no:41,g:3,nm:"Tobias Renn",rl:"Ensemble 4",af:null,st:"silent",
+  tags:[["b-rep","SILENT"]],say:["No audio for 6m. Silence alerts are off for this channel.",""]},
+ {no:19,g:4,nm:"Priya Nandakumar",rl:"Swing · covering Marguerite",af:-31.5,st:"on",
+  tags:[["b-warn","IDENTITY"]],say:["<b>Not verified</b> since the 17:12 swap.","warn"]},
+ {no:51,g:5,nm:"Marcus Bell",rl:"Ensemble 9",af:-20.1,st:"stale",
+  tags:[["b-rep","RF STALE 42s"]],say:["Rack B has gone quiet. Showing last-known RF.",""]},
+ {no:8,g:6,nm:"Reed Kovac",rl:"Bandleader · keys vox",af:-9.8,st:"on",
+  tags:[["b-ok","ALL GOOD"]],say:["Checked 18:41. Nothing outstanding.",""]},
+ {no:36,g:7,nm:"Anneke Vos",rl:"Célestine",af:null,st:"mute",
+  tags:[["b-out","MUTED AT PACK"]],say:["<b>Muted at the pack</b> for 3m. Nobody has touched it.","crit"],crit:true},
+ {no:22,g:1,nm:"Halim Ferrer",rl:"Ensemble 2",af:-26.7,st:"on",
+  tags:[["b-ok","ALL GOOD"]],say:["Checked 18:48. Nothing outstanding.",""]},
+ {no:14,g:0,nm:"Solomon Adeyemi",rl:"Le Directeur",af:-15.9,st:"on",
+  tags:[["b-warn","RF WATCH"]],say:["<em>Likely</em> interference in SL. Quality fell, level did not.","warn"]},
+ {no:45,g:5,nm:"Stage radio 1",rl:"DSM · comms tap",af:-38.0,st:"on",
+  tags:[["b-ok","ALL GOOD"]],say:["Nothing outstanding.",""]},
+ {no:60,g:3,nm:"Juno Park",rl:"Swing · unassigned",af:null,st:"silent",
+  tags:[["b-ok","SPARE READY"]],say:["Prepared and verified. Ready to swap in.",""]},
 ];
 
-/* A stand-in for a real production headshot. The frame, crop and weight are
-   exactly what a real photograph gets; only the pixels are fabricated, because
-   a design file must not ship pictures of real people. Manager's managed image
-   pipeline supplies the real ones. */
-function headshot(ch, seed){
-  const g = `var(--g${ch.g})`;
-  const x = 40 + ((seed % 5) - 2) * 2.2;
-  const y = 30 + (seed % 6);
-  return `<svg viewBox="0 0 80 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-    <rect width="80" height="100" fill="color-mix(in srgb, ${g} 9%, #201D1A)"/>
-    <ellipse cx="${x}" cy="${y}" rx="15" ry="18" fill="color-mix(in srgb, ${g} 18%, #363029)"/>
-    <path d="M${x} ${y + 20} c-19 0-30 13-33 34 h66 c-3-21-14-34-33-34 z"
-          fill="color-mix(in srgb, ${g} 14%, #2E2924)"/>
-  </svg>`;
+/* A stand-in for a real approved headshot: the exact frame, crop and weight a
+   photograph gets. Only the pixels are fabricated, because a design file must
+   not ship pictures of real people. Manager's managed image pipeline supplies
+   the real ones. */
+function face(ch){
+  const c=`var(${AV[ch.g%8]})`, y=30+(ch.no%6), x=40+((ch.no%5)-2)*2;
+  return `<svg class="face" viewBox="0 0 80 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect width="80" height="100" fill="color-mix(in srgb, ${c} 16%, var(--paper-2))"/>
+    <ellipse cx="${x}" cy="${y}" rx="15" ry="18" fill="color-mix(in srgb, ${c} 38%, var(--paper-2))"/>
+    <path d="M${x} ${y+20} c-19 0-30 13-33 34 h66 c-3-21-14-34-33-34 z"
+      fill="color-mix(in srgb, ${c} 30%, var(--paper-2))"/></svg>`;
 }
 
-/* U+2212 minus, not a hyphen: a readout is typeset, not printed from a keyboard */
-const num = v => String(v).replace("-", "\u2212");
+/* traces: a shape, not a chart. Redrawn at the data rate, never transitioned. */
+const seeds=new Map();
+function ser(k,n,b,sp){ if(!seeds.has(k)) seeds.set(k,Array.from({length:n},()=>b+(Math.random()-.5)*sp)); return seeds.get(k); }
+function adv(k,b,sp){ const a=seeds.get(k); if(a){a.shift();a.push(b+(Math.random()-.5)*sp);} }
+function bars(a,w,h,c){ const n=a.length,bw=w/n;
+  return a.map((v,i)=>{const hh=Math.max(1.5,Math.min(1,Math.max(0,v))*h);
+  return `<rect x="${(i*bw).toFixed(2)}" y="${(h-hh).toFixed(2)}" width="${(bw*.6).toFixed(2)}" height="${hh.toFixed(2)}" fill="${c}"/>`;}).join(""); }
+function line(a,w,h,c){ const n=a.length;
+  const p=a.map((v,i)=>`${(i*(w/(n-1))).toFixed(1)},${(h-Math.min(1,Math.max(0,v))*h).toFixed(1)}`).join(" ");
+  return `<polyline points="${p}" fill="none" stroke="${c}" stroke-width="2.5" stroke-linejoin="round"/>`; }
+const C={ok:"var(--ok)",warn:"var(--warn)",out:"var(--t-out)",rep:"var(--rep)",rp:"var(--purple)",cream:"#F5EFE2"};
 
-const BADGE_KEYS = [["audio","A"],["rf","R"],["batt","B"],["id","I"],["cue","C"],["cli","L"],["sys","S"]];
-const BADGE_NAMES = {audio:"Audio", rf:"RF", batt:"Battery", id:"Identity", cue:"Cue", cli:"Client", sys:"System"};
-
-/* ---------------------------------------------------------------
-   Traces. A shape, not a chart: no axes, no legend, no tooltip.
-   --------------------------------------------------------------- */
-const seeds = new Map();
-function series(key, n, base, spread){
-  if(!seeds.has(key)) seeds.set(key, Array.from({length:n}, () => base + (Math.random()-.5)*spread));
-  return seeds.get(key);
-}
-function advance(key, base, spread){
-  const a = seeds.get(key); if(!a) return;
-  a.shift(); a.push(base + (Math.random()-.5)*spread);
-}
-function bars(arr, w, h, colour, floor=0){
-  const n = arr.length, bw = w/n;
-  return arr.map((v,i) => {
-    const hh = Math.max(1.5, Math.min(1, Math.max(0, v)) * h);
-    return `<rect x="${(i*bw).toFixed(2)}" y="${(h-hh).toFixed(2)}" width="${(bw*0.62).toFixed(2)}" height="${hh.toFixed(2)}" rx="0.8" fill="${colour}"/>`;
-  }).join("");
-}
-function line(arr, w, h, colour, dash){
-  const n = arr.length;
-  const pts = arr.map((v,i) => `${(i*(w/(n-1))).toFixed(1)},${(h - Math.min(1,Math.max(0,v))*h).toFixed(1)}`).join(" ");
-  return `<polyline points="${pts}" fill="none" stroke="${colour}" stroke-width="2" stroke-linejoin="round" ${dash?'stroke-dasharray="4 3"':''}/>`;
-}
-/* marks are laid down matte — a trace is ink on the card, not a light */
-const COL = {verified:"#6A9C6E", ink2:"#8E887F", intervention:"#BE9A52", stale:"#7E786F",
-             critical:"#C2514F", replay:"#8F81AC", listening:"#4E9DA9"};
-
-function afTrace(ch){
-  const k = "af"+ch.no;
-  if(ch.afState === "mute")  return `<line x1="0" y1="14" x2="240" y2="14" stroke="${COL.critical}" stroke-width="2"/>`;
-  if(ch.afState === "silent"){
-    const a = series(k, 48, .06, .05);
-    return bars(a, 240, 28, COL.ink2);
-  }
-  const a = series(k, 48, .52, .8);
-  return bars(a, 240, 28, ch.stale ? COL.stale : COL.verified);
-}
-function rfTrace(ch){
-  const k = "rf"+ch.no;
-  const a = series(k, 40, ch.q <= 2 ? .34 : .62, .16);
-  return line(a, 240, 20, ch.stale ? COL.stale : "rgba(190,154,82,.85)", ch.stale);
+function afTrace(ch,w=240,h=26){
+  if(ch.st==="mute") return `<line x1="0" y1="${h/2}" x2="${w}" y2="${h/2}" stroke="${C.out}" stroke-width="2.5"/>`;
+  if(ch.st==="silent") return bars(ser("af"+ch.no,44,.07,.05),w,h,C.cream);
+  return bars(ser("af"+ch.no,44,.5,.8),w,h,ch.st==="stale"?C.rep:C.ok);
 }
 
-/* ---------------------------------------------------------------
-   Card rendering
-   --------------------------------------------------------------- */
-function badgeRail(ch){
-  /* A category that is clear says nothing at all. A category in fault says its
-     name, so a second independent fault is still visible behind the first. */
-  const on = BADGE_KEYS.filter(([k]) => (ch.badges[k]|0) > 0);
-  if(!on.length) return `<div class="rail-badges"></div>`;
-  return `<div class="rail-badges" role="group" aria-label="Categories in fault">` + on.map(([k]) => {
-    const n = ch.badges[k]|0;
-    return `<span class="bdg ${k} on">${BADGE_NAMES[k]}${n>1?`<span class="n"> ${n}</span>`:""}</span>`;
-  }).join("") + `</div>`;
-}
-function qualBars(ch){
-  return `<span class="qual ${ch.qState==='bad'?'bad':ch.qState==='warn'?'warn':''}" aria-label="Link quality ${ch.q} of 5">` +
-    [1,2,3,4,5].map(i => `<i class="${i<=ch.q?'on':''}"></i>`).join("") + `</span>`;
-}
-function cardHTML(ch, i){
-  const afv = ch.afState === "mute" ? "muted at pack"
-            : ch.afState === "silent" ? "silent"
-            : num(ch.af) + " dBFS";
-  const flags = BADGE_KEYS.filter(([k]) => (ch.badges[k]|0) > 0)
-    .map(([k]) => `<span class="fl ${k}">${BADGE_NAMES[k]}</span>`).join("");
-  return `
-  <button class="card ${ch.listening?'listening':''} ${ch.latched?'latched':''} ${ch.critical?'critical':''}"
-          data-i="${i}" aria-label="${ch.role}, channel ${ch.no}">
+function card(ch,i){
+  const tags=ch.tags.map(([c,t])=>`<span class="badge ${c}"><i class="dot"></i>${t}</span>`).join("");
+  const val = ch.st==="mute"?"muted":ch.st==="silent"?"silent":ch.af.toFixed(1)+" dBFS";
+  return `<article class="chcard ${ch.live?'listening':''} ${ch.crit?'critical':''}" data-i="${i}">
     <div class="shot">
-      ${headshot(ch, ch.no)}
-      <div class="over">
-        <span class="dot" style="background:var(--g${ch.g})"></span>
-        <span>${String(ch.no).padStart(2,"0")}</span>
-        <span class="flags">${flags}${ch.stale?`<span class="fl stale">${ch.stale}s old</span>`:""}</span>
-      </div>
-      <div class="scrim"></div>
-      <div class="strip"><svg viewBox="0 0 240 22" preserveAspectRatio="none" data-af="${ch.no}">${afTrace(ch)}</svg></div>
+      ${face(ch)}
+      <span class="no">${String(ch.no).padStart(2,"0")}</span>
+      ${ch.live?`<span class="listening-tag badge b-live"><i class="dot live-dot"></i>LISTENING</span>`:""}
+      <div class="meter"><svg viewBox="0 0 240 26" preserveAspectRatio="none" data-af="${ch.no}">${afTrace(ch)}</svg></div>
     </div>
-    <div class="c-id">
-      <div class="c-names">
-        <div class="c-role">${ch.role}</div>
-        <div class="c-person">${ch.person}</div>
-      </div>
+    <div class="who"><div class="nm">${ch.nm}</div><div class="rl">${ch.rl}</div></div>
+    <div class="tags">${tags}</div>
+    <div class="saying ${ch.say[1]}"><span>${ch.say[0]}</span></div>
+    <div class="acts">
+      <button class="btn ${ch.live?'btn-primary':'btn-line'}" data-listen="${i}">${ch.live?'Listening':'Listen'}</button>
+      <button class="btn btn-line sq" data-more="${i}" aria-label="More about ${ch.nm}">⋯</button>
     </div>
-    <div class="exc ${ch.exc.lvl} ${ch.exc.inferred?'inferred':''}">
-      <span class="g">${ch.exc.g}</span>
-      <span>${ch.exc.inferred?'likely — ':''}${ch.exc.t}</span>
-    </div>
-  </button>`;
+  </article>`;
 }
 
-function tileHTML(ch, i){
-  const afv = ch.afState === "mute" ? "muted" : ch.afState === "silent" ? "silent" : num(ch.af)+" dBFS";
-  const risk = ch.badges.rf   ? `<span class="chip warn">RF watch</span>`
-             : ch.badges.batt ? `<span class="chip warn">battery 0:41</span>`
-             : ch.stale       ? `<span class="chip stale">RF stale</span>`
-             : ``;
-  return `
-  <button class="tile ${ch.listening?'listening':''} ${ch.critical?'critical':''}" data-i="${i}" aria-label="${ch.role}">
-    <div class="t-id">
-      <div class="shot" style="width:46px;aspect-ratio:4/5;border-radius:4px;flex:0 0 auto">${headshot(ch, ch.no)}</div>
-      <div class="c-names">
-        <div class="c-role" style="background:color-mix(in srgb, var(--g${ch.g}) 22%, transparent)">${ch.role}</div>
-        <div class="c-person">${ch.person}</div>
-      </div>
-    </div>
-    <div class="lane">
-      <div class="trace ${ch.stale?'hatched':''}" style="height:22px"><svg viewBox="0 0 240 28" preserveAspectRatio="none" data-af2="${ch.no}">${afTrace(ch)}</svg></div>
-      <span class="v ${ch.afState!=='present'?'dim':''}" style="width:62px">${afv}</span>
-    </div>
-    <div class="risks"><span class="tape">console ${String(ch.no).padStart(2,"0")}</span>${risk}${ch.owner?`<span class="chip listen">${ch.owner} has it</span>`:""}</div>
-  </button>`;
+$("#a2grid").innerHTML = CH.map(card).join("");
+$("#a1grid").innerHTML = CH.slice(0,8).map((c,i)=>card(c,i)).join("");
+$$("[data-static-pic]").forEach(el=>el.innerHTML=face(CH[0]));
+{ const p=$("#np-pic"); if(p) p.innerHTML=face(CH[0]); }
+$$("[data-static-face]").forEach(el=>el.insertAdjacentHTML("afterbegin",face(CH[0])));
+$$(".bars").forEach(b=>b.innerHTML=Array.from({length:8},(_,i)=>`<i class="${i<5?'on':''}"></i>`).join(""));
+$("#mclist").innerHTML=[["Identity and label","done"],["RF and link in the zone","done"],
+ ["Captured audio heard","now"],["Transmitter mute and control",""],["Spare pack",""],
+ ["Battery for the show window",""],["Placement and costume",""],["Operator sign-off",""]]
+ .map(([t,s],i)=>`<div style="display:flex;align-items:center;gap:12px;min-height:46px;padding:0 12px;border-radius:10px;
+   ${s==='now'?'background:var(--paper-2);box-shadow:inset 0 0 0 2px var(--ink)':''}">
+   <span class="mono" style="font-size:12px;color:var(--faint);width:14px">${i+1}</span>
+   <span style="font-weight:${s==='now'?700:500};color:${s==='done'?'var(--muted)':'var(--ink)'}">${t}</span>
+   <span style="margin-left:auto">${s==='done'?'<span class="badge b-ok">PASS</span>':s==='now'?'<span class="badge b-live">NOW</span>':''}</span></div>`).join("");
+
+/* long lanes in the expanded bar */
+const L=(sel,html)=>{const e=$(sel); if(e)e.innerHTML=html;};
+function paintLanes(){
+  L('[data-np=audio]', bars(Array.from({length:110},(_,k)=>.22+Math.abs(Math.sin(k/6))*.55*Math.random()+.12),900,32,C.ok));
+  L('[data-np=rf]',    line(Array.from({length:110},(_,k)=>k>86?.34:.6+(Math.random()-.5)*.08),900,32,C.warn));
+  L('[data-np=q]',     bars(Array.from({length:110},(_,k)=>k>86?.2:.82+(Math.random()-.5)*.09),900,32,C.out));
+  L('[data-np=audio2]',bars(Array.from({length:110},()=>.25+Math.random()*.6),900,32,C.ok));
+  L('[data-np=raudio]',bars(Array.from({length:110},(_,k)=>.22+Math.abs(Math.sin(k/6))*.55*Math.random()+.12),900,32,C.rp));
+  L('[data-np=rrf]',   line(Array.from({length:110},(_,k)=>k>62&&k<76?.12:.6+(Math.random()-.5)*.08),900,32,C.rp));
+  L('[data-np=rq]',    bars(Array.from({length:110},(_,k)=>k>62&&k<80?.18:.82+(Math.random()-.5)*.09),900,32,C.rp));
+  L('[data-np=replayaf]', bars(Array.from({length:44},()=>.2+Math.random()*.7),240,26,C.rp));
 }
+paintLanes();
 
-/* ---------------------------------------------------------------
-   Mount
-   --------------------------------------------------------------- */
-$("#a2grid").innerHTML   = CH.map(cardHTML).join("");
-$("#a1tiles").innerHTML  = CH.slice(0,6).map((c,i)=>tileHTML(c,i)).join("");
-$("#a1next").innerHTML   = CH.slice(6,10).map((c,i)=>tileHTML(c,i+6)).join("");
+setInterval(()=>{
+  CH.forEach(ch=>{
+    if(ch.st==="on") adv("af"+ch.no,.5,.8); else if(ch.st==="silent") adv("af"+ch.no,.07,.05);
+    $$(`[data-af="${ch.no}"]`).forEach(s=>s.innerHTML=afTrace(ch));
+  });
+  $$(".bars").forEach(m=>{const lit=3+Math.floor(Math.random()*4);
+    [...m.children].forEach((b,i)=>b.classList.toggle("on",i<lit));});
+},280);
 
-["#outmeter","#outmeter2","#outmeter3"].forEach(sel => {
-  const el = $(sel); if(!el) return;
-  el.innerHTML = Array.from({length:8}, (_,i)=>`<i class="${i<5?'on':''}"></i>`).join("");
+/* press a card -> you are listening to that channel, and the bar fills in */
+function listen(i){
+  const ch=CH[i]; if(!ch) return;
+  CH.forEach(c=>c.live=false); ch.live=true;
+  $$(".chcard").forEach(el=>{
+    const on=+el.dataset.i===i;
+    el.classList.toggle("listening",on);
+    const tag=$(".listening-tag",el);
+    if(on && !tag) $(".shot",el).insertAdjacentHTML("beforeend",
+      `<span class="listening-tag badge b-live"><i class="dot live-dot"></i>LISTENING</span>`);
+    if(!on && tag) tag.remove();
+    const b=$("[data-listen]",el);
+    if(b){ b.textContent=on?"Listening":"Listen";
+      b.className="btn "+(on?"btn-primary":"btn-line"); }
+  });
+  const pic=$("#np-pic"); if(pic) pic.innerHTML=face(ch);
+  const set=(id,v)=>{const e=$(id); if(e)e.textContent=v;};
+  set("#np-name",ch.nm); set("#np-role",ch.rl);
+  const tg=$("#np-tags");
+  if(tg) tg.innerHTML=ch.tags.map(([c,t])=>`<span class="badge ${c}"><i class="dot"></i>${t}</span>`).join("");
+  const bar=$("#nowbar"); if(bar) bar.dataset.open="true";
+  const ex=$("#expand"); if(ex){ex.setAttribute("aria-expanded","true");}
+  paintLanes();
+}
+document.addEventListener("click",e=>{
+  const c=e.target.closest("[data-listen]")||e.target.closest(".chcard");
+  if(c){ const i=+(c.dataset.listen ?? c.dataset.i); if(!Number.isNaN(i)) listen(i); }
+  const sh=e.target.closest("[data-sheet]");
+  if(sh){ const s=sh.closest("section").querySelector(".sheet"); if(s) s.classList.toggle("open"); }
+  const ex=e.target.closest(".expand");
+  if(ex){ const bar=ex.closest(".nowbar"); const open=bar.dataset.open!=="true";
+    bar.dataset.open=String(open); ex.setAttribute("aria-expanded",String(open)); if(open) paintLanes(); }
+  const v=e.target.closest("[data-verdict]");
+  if(v){ $$("[data-verdict]").forEach(o=>{o.className="btn btn-line";o.style.height="76px";o.style.fontSize="16px";});
+    v.className="btn btn-primary"; v.style.height="76px"; v.style.fontSize="16px"; }
+  const g=e.target.closest("[data-goto]");
+  if(g){ go(g.dataset.goto); }
 });
-
-/* inspector charts — the real chart lives here, with a caption and an axis-free
-   but legible shape; level and quality are deliberately separate charts. */
-function mountChart(id, key, base, spread, colour){
-  const el = $(id); if(!el) return;
-  el.innerHTML = line(series(key, 60, base, spread), 400, 92, colour);
-}
-mountChart("#chart-rssi", "insp-rssi", .58, .10, COL.intervention);
-(() => {
-  const el = $("#chart-q"); if(!el) return;
-  const a = Array.from({length:60}, (_,i) => i < 42 ? .84 + (Math.random()-.5)*.08 : .28 + (Math.random()-.5)*.12);
-  el.innerHTML = line(a, 400, 92, COL.critical);
-})();
-
-/* replay timeline lanes */
-function mountTl(sel, fn){ const el = $(sel); if(el) el.innerHTML = fn(); }
-mountTl('[data-tl=audio]', () => bars(Array.from({length:120},(_,i)=> .25 + Math.abs(Math.sin(i/7))*.6*Math.random()+.1), 900, 40, COL.replay));
-mountTl('[data-tl=rf]',    () => line(Array.from({length:120},(_,i)=> i>62&&i<76 ? .1 : .6 + (Math.random()-.5)*.1), 900, 40, COL.replay));
-mountTl('[data-tl=q]',     () => bars(Array.from({length:120},(_,i)=> i>62&&i<80 ? .18 : .8 + (Math.random()-.5)*.1), 900, 40, COL.replay));
-mountTl('[data-trace=replay-af]', () => bars(Array.from({length:48},()=> .2+Math.random()*.7), 240, 28, COL.replay));
-
-/* ---------------------------------------------------------------
-   Live redraw. Meters are not transitioned — they redraw at their
-   data rate. Applying an animation would make them lie about when
-   the value changed.
-   --------------------------------------------------------------- */
-setInterval(() => {
-  CH.forEach(ch => {
-    if(ch.afState === "present"){ advance("af"+ch.no, .52, .8); }
-    else if(ch.afState === "silent"){ advance("af"+ch.no, .06, .05); }
-    advance("rf"+ch.no, ch.q <= 2 ? .34 : .62, .16);
-    $$(`[data-af="${ch.no}"], [data-af2="${ch.no}"]`).forEach(s => s.innerHTML = afTrace(ch));
-    const r = $(`[data-rf="${ch.no}"]`); if(r) r.innerHTML = rfTrace(ch);
-  });
-  $$(".meterbars").forEach(m => {
-    const lit = 3 + Math.floor(Math.random()*4);
-    [...m.children].forEach((b,i) => b.classList.toggle("on", i < lit));
-  });
-}, 260);
-
-/* ---------------------------------------------------------------
-   Touch-first interaction. Every gesture has a visible equivalent
-   control; the gesture is the shortcut, never the mechanism.
-   --------------------------------------------------------------- */
-const LONG_PRESS = 400, HOLD_CLEAR = 1500;
-
-/* Selecting a channel raises the bottom bar into its monitoring panel. The
-   grid never moves, nothing opens over it, and the panel always shows the one
-   source you are hearing. */
-function showMonitor(ch){
-  const mon = document.getElementById("monitor");
-  if(!mon) return;
-  mon.dataset.open = "true";
-  const grip = document.getElementById("mongrip");
-  if(grip) grip.setAttribute("aria-expanded","true");
-  const shot = document.getElementById("mon-shot");
-  if(shot) shot.innerHTML = headshot(ch, ch.no);
-  const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
-  set("mon-role", ch.role);
-  set("mon-person", ch.person);
-  set("mon-rx", ch.rx);
-  const face = document.getElementById("np-face");
-  if(face) face.innerHTML = headshot(ch, ch.no);
-  drawMonitorLanes(ch);
-}
-function drawMonitorLanes(ch){
-  const put = (sel, html) => { const el = document.querySelector(sel); if(el) el.innerHTML = html; };
-  put('[data-mon=audio]', bars(Array.from({length:110},(_,k)=> .2 + Math.abs(Math.sin(k/6))*.55*Math.random()+.12), 900, 34, COL.verified));
-  put('[data-mon=rf]',    line(Array.from({length:110},(_,k)=> k>86 ? .34 : .6 + (Math.random()-.5)*.09), 900, 34, COL.intervention));
-  put('[data-mon=q]',     bars(Array.from({length:110},(_,k)=> k>86 ? .2 : .82 + (Math.random()-.5)*.1), 900, 34, ch.q<=2 ? COL.critical : COL.verified));
-}
-
-function setListening(i){
-  CH.forEach((c,n) => { c.listening = n === i; if(n !== i) c.latched = false; });
-  $$(".card, .tile").forEach(el => {
-    const on = +el.dataset.i === i;
-    el.classList.toggle("listening", on);
-    el.classList.toggle("latched", false);
-  });
-  const ch = CH[i]; if(!ch) return;
-  $$(".nowplay").forEach(np => {
-    const f = $(".f", np), b = $("b", np), sp = $("span", np);
-    if(f) f.innerHTML = headshot(ch, ch.no);
-    if(b) b.textContent = ch.role;
-    if(sp && !sp.textContent.includes("−")) sp.textContent = "Momentary";
-  });
-  showMonitor(ch);
-}
-function latch(i){
-  setListening(i);
-  CH[i].latched = true;
-  $$(`.card[data-i="${i}"]`).forEach(el => el.classList.add("latched"));
-  $$(".nowplay span").forEach(s => { if(!s.textContent.includes("−")) s.textContent = "Latched"; });
-  if(navigator.vibrate) navigator.vibrate(10);
-}
-
-/* press-and-hold with a visible filling ring at the touch point */
-function ring(x, y, ms, colour){
-  const el = document.createElement("div");
-  el.style.cssText = `position:fixed;left:${x-26}px;top:${y-26}px;width:52px;height:52px;border-radius:50%;
-    pointer-events:none;z-index:99;border:3px solid ${colour};opacity:.9;
-    clip-path:inset(0 0 100% 0);transition:clip-path ${ms}ms linear`;
-  document.body.appendChild(el);
-  requestAnimationFrame(() => el.style.clipPath = "inset(0 0 0 0)");
-  return () => el.remove();
-}
-
-$$(".card, .tile").forEach(el => {
-  let t = null, kill = null, moved = false, sx = 0, sy = 0, fired = false;
-  el.addEventListener("pointerdown", e => {
-    moved = false; fired = false; sx = e.clientX; sy = e.clientY;
-    kill = ring(e.clientX, e.clientY, LONG_PRESS, "var(--listening-ink)");
-    t = setTimeout(() => { fired = true; latch(+el.dataset.i); kill && kill(); kill = null; }, LONG_PRESS);
-  });
-  const end = () => { clearTimeout(t); kill && kill(); kill = null; };
-  el.addEventListener("pointerup", e => {
-    end();
-    if(fired || moved) return;
-    setListening(+el.dataset.i);
-  });
-  el.addEventListener("pointercancel", end);
-  el.addEventListener("pointerleave", end);
-  el.addEventListener("pointermove", e => {
-    if(Math.abs(e.clientX - sx) > 8 || Math.abs(e.clientY - sy) > 8){
-      moved = true; end();
-      /* swipe left opens the inspector; swipe right claims */
-      if(sx - e.clientX > 60) openInspector();
-    }
-  });
-});
-
-/* swipe left no longer opens a drawer — it raises the monitor panel */
-function openInspector(){
-  const i = CH.findIndex(c => c.listening);
-  showMonitor(CH[i > -1 ? i : 0]);
-}
-$("#inspclose").addEventListener("click", () => $("#insp").classList.remove("open"));
-
-/* long-press clear-all, with the same filling ring */
-const clearBtn = $("#clearbtn");
-if(clearBtn){
-  let t=null, kill=null;
-  clearBtn.addEventListener("pointerdown", e => {
-    kill = ring(e.clientX, e.clientY, HOLD_CLEAR, "var(--critical-ink)");
-    t = setTimeout(() => {
-      CH.forEach(c => { c.listening=false; c.latched=false; });
-      $$(".card,.tile").forEach(el => el.classList.remove("listening","latched"));
-      kill && kill(); kill=null;
-      if(navigator.vibrate) navigator.vibrate(30);
-    }, HOLD_CLEAR);
-  });
-  const stop = () => { clearTimeout(t); kill && kill(); kill=null; };
-  ["pointerup","pointerleave","pointercancel"].forEach(ev => clearBtn.addEventListener(ev, stop));
-}
-
-/* danger action: a long-press that fills, never a red button */
-const swap = $("#swapbtn");
-if(swap){
-  let t=null; const fill = $(".fill", swap);
-  swap.addEventListener("pointerdown", () => {
-    fill.style.transition = `width ${HOLD_CLEAR}ms linear`;
-    requestAnimationFrame(() => fill.style.width = "100%");
-    t = setTimeout(() => { if(navigator.vibrate) navigator.vibrate(30); }, HOLD_CLEAR);
-  });
-  const reset = () => { clearTimeout(t); fill.style.transition="width 120ms"; fill.style.width="0"; };
-  ["pointerup","pointerleave","pointercancel"].forEach(ev => swap.addEventListener(ev, reset));
-}
-
-/* toggles */
-$$(".seg [data-s]").forEach(b => b.addEventListener("click", () => {
-  $$(".seg [data-s]").forEach(o => o.setAttribute("aria-pressed", String(o === b)));
-  html.dataset.surface = b.dataset.s;
-  $("#device").dataset.mode = b.dataset.s === "replay" ? "replay" : "live";
-}));
-$$(".seg [data-v]").forEach(b => b.addEventListener("click", () => {
-  $$(".seg [data-v]").forEach(o => o.setAttribute("aria-pressed", String(o === b)));
-  html.dataset.view = b.dataset.v;
-}));
-$$("[data-goto]").forEach(b => b.addEventListener("click", () => {
-  const s = b.dataset.goto;
-  $$(".seg [data-s]").forEach(o => o.setAttribute("aria-pressed", String(o.dataset.s === s)));
-  html.dataset.surface = s;
-  $("#device").dataset.mode = s === "replay" ? "replay" : "live";
-}));
-$$(".zoom [data-z]").forEach(b => b.addEventListener("click", () => {
-  $$(".zoom [data-z]").forEach(o => o.setAttribute("aria-pressed", String(o === b)));
-  html.dataset.zoom = b.dataset.z;
-}));
-$$(".filt, .verdict, .gbtn, #mutebtn").forEach(b => b.addEventListener("click", () => {
-  if(b.classList.contains("verdict")){
-    $$(".verdict", b.parentElement).forEach(o => o.setAttribute("aria-pressed","false"));
-  }
-  b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true"));
-}));
-
-/* keyboard: everything reachable by touch is reachable by key */
-addEventListener("keydown", e => {
-  if(e.key === "Escape") $("#insp").classList.remove("open");
-  if(e.key === "/" ) e.preventDefault();
-});
-
-$$("[data-exc]").forEach(b => b.addEventListener("click", () => {
-  const rail = b.parentElement.querySelector(".excrail");
-  const open = rail.classList.toggle("open");
-  b.setAttribute("aria-expanded", String(open));
-}));
-
-const grip = document.getElementById("mongrip");
-if(grip) grip.addEventListener("click", () => {
-  const mon = document.getElementById("monitor");
-  const open = mon.dataset.open !== "true";
-  mon.dataset.open = String(open);
-  grip.setAttribute("aria-expanded", String(open));
-  grip.setAttribute("aria-label", open ? "Collapse monitor panel" : "Expand monitor panel");
-});
-const swap2 = document.getElementById("swapbtn2");
-if(swap2){
-  let t=null; const fill = swap2.querySelector(".fill");
-  swap2.addEventListener("pointerdown", () => {
-    fill.style.transition = `width ${HOLD_CLEAR}ms linear`;
-    requestAnimationFrame(() => fill.style.width = "100%");
-    t = setTimeout(() => { if(navigator.vibrate) navigator.vibrate(30); }, HOLD_CLEAR);
-  });
-  const reset = () => { clearTimeout(t); fill.style.transition="width 120ms"; fill.style.width="0"; };
-  ["pointerup","pointerleave","pointercancel"].forEach(ev => swap2.addEventListener(ev, reset));
-}
-$$("[data-static-shot]").forEach(el => el.innerHTML = headshot(CH[0], CH[0].no));
-showMonitor(CH[0]);
-
-html.dataset.zoom = "standard";
-$("#device").dataset.mode = "live";
+function go(s){ $$(".seg [data-s]").forEach(o=>o.setAttribute("aria-pressed",String(o.dataset.s===s))); html.dataset.surface=s; }
+$$(".seg [data-s]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.s)));
+$$(".seg [data-v]").forEach(b=>b.addEventListener("click",()=>{
+  $$(".seg [data-v]").forEach(o=>o.setAttribute("aria-pressed",String(o===b))); html.dataset.view=b.dataset.v; }));
+$$(".seg [data-t]").forEach(b=>b.addEventListener("click",()=>{
+  $$(".seg [data-t]").forEach(o=>o.setAttribute("aria-pressed",String(o===b)));
+  html.classList.toggle("light",b.dataset.t==="light"); }));
+$$(".chipf,#mutebtn").forEach(b=>b.addEventListener("click",()=>
+  b.setAttribute("aria-pressed",String(b.getAttribute("aria-pressed")!=="true"))));
 })();
 </script>
 </body>
