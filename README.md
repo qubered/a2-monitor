@@ -23,14 +23,20 @@ identity.
 
 ## Project status
 
-The project is in **discovery and technical validation**. The first milestone
-is a measured cross-platform vertical slice using one Windows or macOS audio
-device, WebRTC, Sennheiser EW-DX, and a representative Shure rack receiver. DVS
-is an important device profile, not a special-case architecture. The
-implementation baseline is now Rust/CPAL/`str0m`/`libopus` for the native node,
-TypeScript/Node/Fastify for management, React/Vite for Manager and Live, and
-SQLite for local authority. CPAL and `str0m` remain hardware/browser evidence-
-gated rather than being treated as proven by selection alone.
+The project is in **discovery**, and nothing has been measured. There is no
+product code. Everything in `docs` is a hypothesis written ahead of evidence;
+read [open questions](docs/open-questions.md) before anything else.
+
+The next action is a disposable two-week spike that answers the two questions
+which decide the product: whether a browser can hold usable capture-to-ear
+latency across Chrome, Firefox and Safari/iPad on venue Wi-Fi, and whether the
+EW-DX and Shure APIs expose telemetry rich enough for causal diagnosis rather
+than another meter grid.
+
+A proposed implementation stack is recorded (Rust for the native node,
+TypeScript/Node/Fastify for management, React/Vite for the web applications,
+SQLite for local authority) but no part of it has been validated, and the
+spike deliberately does not use it.
 
 ## Product principles
 
@@ -97,11 +103,11 @@ See the [roadmap](docs/product/roadmap.md) and
 
 ## Development
 
-There is deliberately no root product build command until the selected
-workspaces contain runnable components. The stack, alternatives and
-falsification gates are recorded in
+There is no product build command because there is no product code. The
+proposed stack, its alternatives and its falsification gates are recorded in
 [technology stack selection](docs/research/technology-stack-selection.md) and
-ADRs 0014–0018. The repository-level check is:
+ADRs 0014–0018, all of which are unvalidated hypotheses. The repository-level
+check is:
 
 ```sh
 ./scripts/check-repo.sh

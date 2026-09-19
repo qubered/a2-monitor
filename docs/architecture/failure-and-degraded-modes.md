@@ -1,6 +1,6 @@
 # Failure and degraded-operation contract
 
-**Status:** Proposed release contract
+**Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 
 The product is an advisory monitoring system, not part of the programme audio
 or performer-monitor path. A conventional console/headphone monitoring path is

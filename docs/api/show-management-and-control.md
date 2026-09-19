@@ -68,8 +68,8 @@ Show-time changes are commands, not generic PATCH requests:
 - `begin-cue-rebase`, `commit-cue-rebase` and `transfer-cue-authority` for
   explicit external recovery/manual handover;
 - `record-check`, `record-battery-change` and `record-placement`;
-- the complete task/incident commands defined in the
-  [collaboration contract](../architecture/collaboration-contract.md); and
+- task/incident commands, whose contract is withdrawn with Phase 1B/1C (see
+  [open questions](../open-questions.md)); and
 - personal listen/replay commands covered by a node lease.
 
 Healthy runtime commands enter through these backend routes, but the backend
@@ -138,10 +138,10 @@ are expiring advisory state and must never imply that a person saw, heard,
 claimed or resolved anything.
 
 Allowed lifecycles, durable acceptance, sequence domains, object-level policy,
-page recipient states, retention, browser caching and initial hard limits are
-normative in the
-[collaboration contract](../architecture/collaboration-contract.md). Broad
-scopes never grant access to an arbitrary object ID or linked attachment.
+page recipient states, retention, browser caching and hard limits were
+specified in the collaboration contract, withdrawn with Phase 1B/1C (see
+[open questions](../open-questions.md)). Broad scopes never grant access to an
+arbitrary object ID or linked attachment.
 
 ## Cue API
 
@@ -184,7 +184,7 @@ Finalization returns a ready attachment/image-asset version and rendition URLs
 requiring object-level authorization. A message can reference only ready
 versions. URLs are short-lived or authenticated, never public guessable paths.
 Pending/rejected/orphan cleanup, quotas, retention inheritance, transcript
-versions and deletion follow the collaboration contract. Deleting a person's
+versions and deletion are unspecified while Phase 1B/1C is withdrawn. Deleting a person's
 primary image removes the relationship immediately; blob deletion follows
 retention/evidence rules and is audited.
 

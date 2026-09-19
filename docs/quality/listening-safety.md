@@ -1,6 +1,6 @@
 # Personal listening safety and field-kit contract
 
-**Status:** Normative qualification baseline
+**Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 
 Browser transport readiness is not proof of audibility. Every supported
 headphone/output kit is a named tuple: client hardware, OS/browser, adapter,

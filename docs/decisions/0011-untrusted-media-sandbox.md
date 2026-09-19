@@ -1,6 +1,6 @@
 # ADR 0011: Untrusted media sandbox profiles
 
-- **Status:** Accepted; qualification required before image ingestion
+- **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 - **Date:** 2026-09-19
 - **Owners:** Project team
 - **Supersedes:** None

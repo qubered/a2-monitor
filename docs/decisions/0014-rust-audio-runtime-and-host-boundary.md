@@ -1,6 +1,6 @@
 # ADR 0014: Use Rust for the native node and CPAL behind an evidence-gated host boundary
 
-- **Status:** Accepted; CPAL production promotion remains Phase 0A-gated
+- **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 - **Date:** 2026-09-19
 - **Owners:** Audio runtime owner; platform/security owner for ASIO provenance
 - **Supersedes:** None

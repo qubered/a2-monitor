@@ -59,11 +59,15 @@ a secure product build.
 
 ## Architecture-review exit rule
 
-Round 5 is the final general architecture-loop review if it finds no P0 blocker,
-every remaining P1 has an owner and phase gate, and schemas, vectors, transition
-catalogues, evidence verifier and repository checks agree. Review then moves to
-evidence-bearing milestones: Phase 0A, Phase 0B, each Phase 1A slice and release/
-security readiness. Another broad review is not requested by default.
+The general architecture-review loop is closed. Five rounds ran against
+documents alone and the loop began reviewing its own output; the review
+documents are withdrawn and their open findings live in
+[open questions](../open-questions.md).
+
+No further broad architecture review is requested. Review moves to
+evidence-bearing milestones: the disposable spike, Phase 0A, Phase 0B, each
+Phase 1A slice, and release/security readiness. No new architecture document
+is written until a measured number exists that it responds to.
 
 The architecture loop reopens only when scope materially changes, a test
 falsifies an architectural assumption, a security incident changes the threat

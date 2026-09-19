@@ -1,6 +1,6 @@
 # ADR 0012: Cross-platform node process confinement
 
-- **Status:** Accepted; exact platform profiles require the Phase 0D packaged spike
+- **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 - **Date:** 2026-09-19
 - **Owners:** Security/platform and audio-runtime owners
 

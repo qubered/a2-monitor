@@ -1,6 +1,6 @@
 # Client, browser, and appliance qualification profiles
 
-**Status:** Normative planning baseline
+**Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 
 ## Browser lifecycle
 

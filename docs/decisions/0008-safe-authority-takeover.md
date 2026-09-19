@@ -1,6 +1,6 @@
 # ADR 0008: Version-one takeover uses power fencing and boot grants
 
-- **Status:** Accepted
+- **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 - **Date:** 2026-09-19
 - **Owners:** Project team
 - **Supersedes:** Takeover wording in ADR 0004

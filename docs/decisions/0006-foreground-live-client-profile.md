@@ -1,6 +1,6 @@
 # ADR 0006: Foreground-only Live client operating profile
 
-- **Status:** Accepted
+- **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 - **Date:** 2026-09-18
 - **Owners:** Project team
 - **Supersedes:** None

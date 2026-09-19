@@ -1,6 +1,6 @@
 # Implementation and workspace structure
 
-**Status:** Accepted implementation baseline
+**Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 
 This document turns ADRs 0014–0018 into a repository dependency map. It does
 not imply that empty packages must be created before their phase begins.

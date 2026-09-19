@@ -1,6 +1,6 @@
 # ADR 0004: Active-performance command authority and durable control ledger
 
-- **Status:** Accepted
+- **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 - **Date:** 2026-09-18
 - **Owners:** Project team
 - **Superseded in part by:** [ADR 0008](0008-safe-authority-takeover.md)

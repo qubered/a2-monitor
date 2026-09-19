@@ -1,6 +1,6 @@
 # ADR 0009: Live control lease and WebRTC channel binding
 
-- **Status:** Accepted
+- **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 - **Date:** 2026-09-19
 - **Owners:** Project team
 

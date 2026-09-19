@@ -1,11 +1,16 @@
 # Phase 1 operator evidence contract
 
-**Status:** Normative gate before operator reliance
+**Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 
-Each slice uses the closed
-[`operator catalogue`](../../tests/catalog/operator-tests.v0.json), validates a
-frozen [`run manifest`](../../tests/manifests/phase1-operator-run.schema.json),
-and emits the same signed evidence-result envelope used by Phase 0.
+This document states requirements; the catalogue and run manifest it described
+are withdrawn with the rest of the evidence apparatus. What they lacked is
+recorded in [open questions](../open-questions.md): slice promotion sets for
+`1A.1`/`1A.2`/`1A.3`, named A1/A2/observer roles, catalogue-frozen numeric
+thresholds rather than per-run choices, and per-repetition completion, abort
+and fault allocation rather than a bare repetition count.
+
+When rebuilt, each slice uses a closed operator catalogue, validates a frozen
+run manifest, and emits the same signed evidence-result envelope as Phase 0.
 
 The normative theatre fixture has 32 performers, 40 roles, 48 captured/receiver
 paths, six prepared spares, eight zones and at least 120 cue definitions. A run

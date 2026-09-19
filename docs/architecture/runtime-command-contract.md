@@ -1,6 +1,6 @@
 # Runtime command and ledger contract
 
-**Status:** Normative design baseline for protocol v0
+**Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 
 ## Authorities and revisions
 

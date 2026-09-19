@@ -1,6 +1,6 @@
 # ADR 0017: Use str0m as the Phase 0B native WebRTC engine
 
-- **Status:** Accepted as the Phase 0B reference; production promotion is evidence-gated
+- **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 - **Date:** 2026-09-19
 - **Owners:** Media runtime owner; evidence authority for browser promotion
 - **Supersedes:** None

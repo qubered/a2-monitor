@@ -26,8 +26,12 @@ The proposed semantics, including negotiation, snapshots/deltas, command
 idempotency, atomic single-node activation, event delivery, imports, and Live
 leases, are in [protocol v0](specification.md).
 
-Initial machine-readable contracts are in [`schema/v0`](schema/v0), with golden
-fixtures under [`tests/fixtures/protocol/v0`](../../tests/fixtures/protocol/v0).
-They cover the safety-critical envelope first. OpenAPI/AsyncAPI documents are
-generated from the frozen domain schemas when concrete HTTP/subscription routes
-are implemented; hand-written copies may not diverge from these schemas.
+There are currently no machine-readable contracts. The `schema/v0` tree and its
+golden fixtures were withdrawn: the command envelope conflated bootstrap and
+Live authority, and canonical events and ledger chunks accepted arbitrary
+objects, so an empty event with a false payload hash validated. See
+[open questions](../../docs/open-questions.md).
+
+Schemas are rewritten against a runtime that exists. OpenAPI/AsyncAPI documents
+are generated from the frozen domain schemas when concrete HTTP/subscription
+routes are implemented; hand-written copies may not diverge from them.

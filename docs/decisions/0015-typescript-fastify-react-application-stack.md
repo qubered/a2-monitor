@@ -1,6 +1,6 @@
 # ADR 0015: Use TypeScript/Fastify for management and React/Vite for the web applications
 
-- **Status:** Accepted
+- **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 - **Date:** 2026-09-19
 - **Owners:** Application/backend owner; platform/security owner for runtime validation
 - **Supersedes:** None

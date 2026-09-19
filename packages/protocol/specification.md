@@ -1,6 +1,6 @@
 # Protocol v0 specification
 
-**Status:** Proposed; must be frozen before production component work
+**Status:** Hypothesis; no supporting evidence. See [open questions](../../docs/open-questions.md).
 
 ## Scope
 
@@ -9,7 +9,8 @@ control, show activation, and import/export envelopes. Control and durable event
 encoding is I-JSON. Hashes and signatures use RFC 8785 JCS bytes and SHA-256;
 Unicode is preserved exactly, duplicate names and nonfinite numbers are rejected,
 and counters/revisions outside safe small numeric ranges are canonical decimal
-strings. Initial machine schemas live in `schema/v0`.
+strings. There are currently no machine schemas; see
+[open questions](../../docs/open-questions.md).
 
 ## Version negotiation
 

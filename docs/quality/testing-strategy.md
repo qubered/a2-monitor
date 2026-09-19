@@ -6,8 +6,8 @@
   IPC, media, replay and receiver adapters;
 - strict TypeScript checks and Vitest for backend and web packages;
 - Playwright for Chromium, WebKit and Firefox browser workflows;
-- the existing dependency-light Node runner for repository contract and
-  evidence-verifier tests until a migration has a concrete benefit; and
+- a repository contract and evidence runner, to be written when there are
+  contracts and evidence to check; and
 - signed custom hardware evidence manifests for all performance/support claims.
 
 Generated Rust and TypeScript protocol artifacts are rebuilt in CI and a dirty

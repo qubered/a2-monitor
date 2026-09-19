@@ -1,6 +1,6 @@
 # ADR 0010: Persistence, recovery, and migration contract
 
-- **Status:** Accepted as a required profile; implementation remains Phase 0B
+- **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 - **Date:** 2026-09-19
 - **Owners:** Project team
 - **Supersedes:** None

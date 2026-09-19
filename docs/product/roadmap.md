@@ -1,6 +1,17 @@
 # Roadmap
 
-**Status:** Proposed and rebaselined after independent review
+**Status:** Proposed; sequencing superseded ahead of Phase 0D
+
+Phases 0D and 0T below were written to close findings against protocol schemas
+and an evidence-verifier apparatus that have since been withdrawn as wrong and
+premature. They are retained for the engineering content, not the order.
+
+The next action is the disposable two-week spike in
+[open questions](../open-questions.md): measure capture-to-ear latency in real
+browsers and read what the receiver APIs actually deliver. Both questions can
+kill the product, neither needs a ledger, a lease protocol or an installer
+rollback transaction, and the phases below are re-planned once they have
+answers.
 
 Dates begin only when the named team, representative hardware, vendor access,
 and test network are available. Every phase ends in evidence and a go/no-go

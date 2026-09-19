@@ -3,6 +3,11 @@
 **Status:** Proposed release gates. Values are targets until a result is marked
 Validated with a linked report.
 
+The browser latency figures below are a single unvalidated tier and are known
+to be aggressive. Before Phase 0B measures anything, they must be split into a
+`target` tier and a `ship-acceptable` tier, with the native-client trigger
+bound to the second. See [open questions](../open-questions.md).
+
 ## Supported reference profile
 
 Phase 0A must define exact Windows and macOS reference hardware. Until then, results

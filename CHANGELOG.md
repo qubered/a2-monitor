@@ -8,6 +8,32 @@ externally tested release.
 
 ## Unreleased
 
+### Removed
+
+- Withdrew the specification layer that ran ahead of evidence: five independent
+  review rounds and their response ledgers, the `schema/v0` wire contracts and
+  their golden fixtures, the evidence catalogues, manifest schemas and the
+  evidence verifier, and the collaboration contract that specified the
+  deferred Phase 1B/1C chat features. Recoverable at commit
+  `6c123f3b44f69392da62ee9da0f61d07c7999daf`.
+- The verifier was withdrawn rather than repaired because it did not verify:
+  it compared declared artifact hashes without resolving the storage key,
+  reading bytes, checking length or recomputing SHA-256, and its passing
+  fixture used placeholder hashes against nonexistent stores. A green check
+  asserted an assurance level the project did not have.
+
+### Changed
+
+- ADRs 0004-0018 and the dependent architecture, quality and protocol
+  documents are marked Hypothesis rather than Accepted or Normative. ADRs
+  0001-0003 keep Accepted.
+- Added `docs/open-questions.md` as the live working list: the two questions
+  that decide the product, the disposable spike that answers them, the
+  contract findings still open when the reviews were withdrawn, and the
+  commercial questions the plan has never addressed.
+- Closed the general architecture-review loop. Review moves to
+  evidence-bearing milestones.
+
 ### Added
 
 - Resolved the independent stack reviews with executable evidence predicates
