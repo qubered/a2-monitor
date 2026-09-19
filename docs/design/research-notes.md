@@ -1,0 +1,437 @@
+# Design research notes
+
+**Status:** Research snapshot
+
+**Last reviewed:** 2026-09-19
+
+Sources behind the decisions in this directory. Web sources were accessed on
+2026-09-19.
+
+## Shure WAVETOOL 4 — the competitive baseline
+
+Shure's own documentation describes the home screen in concrete terms.
+
+Channel strip contents: channel name, channel image, a green waveform line
+representing the last ten seconds of incoming audio level (levels below −48 dBFS
+are not drawn), an antenna input indicator (A/B), and battery status in hours and
+minutes for supported receivers.
+
+Status encoding: green line for the audio waveform history; orange line for the
+last ten seconds of received antenna signal strength; green frame for the active
+channel; white frame for hard solo; a red overlay with an SCP symbol for a
+channel problem requiring an alert reset; pink dashes for quality level on
+supported receivers; and a coloured channel-name background indicating group
+membership.
+
+Toolbar: Select, Zoom, Select-and-Zoom, Panel views (A/B), Solo Clear (press for
+1.5 seconds), Alert Reset, Chat, and group buttons 1–8 with press-to-listen.
+Arrow keys navigate; Shift+left-click resets one channel's alert.
+
+Product page claims: up to 192 wired and wireless channels in one system view, a
+redesigned scalable interface with zoom/resize/prioritise, Global Instant Replay
+rewinding all channels with up to 30 minutes of history, intelligent mic issue
+detection that filters expected production sounds, up to eight concurrent users,
+chat with images/reactions/voice notes, and pre-show session building with talent
+photos, instrument images and channel notes.
+
+Sources:
+
+- [WAVETOOL home screen documentation](https://content-files.shure.com/Pubs/wavetool/en-US/home-screen.html)
+- [Shure WAVETOOL 4 product page](https://www.shure.com/en-ASIA/products/software/wavetool4)
+
+### What we take
+
+- **Photo-forward tiles.** An A2 identifies people faster than numbers. Keep.
+- **A ten-second rolling trace on the tile.** A shape, not a chart. Keep, and
+  keep the ten-second window because it is a learned convention.
+- **Group colour as a name-plate background.** Identity, not status. Keep
+  exactly, including keeping it off borders and meters.
+- **Press-to-listen group buttons 1–8.** Keep, enlarged to touch size.
+- **Long-press for global clear.** Keep, with a visible filling ring.
+- **Zoom levels for density.** Keep, on pinch as well as a control.
+
+### What we change, and why
+
+- **The trace sits on the face.** In the reference screenshot the waveform is
+  drawn over the headshot, and the headshot is the fastest identifier on the
+  tile. We move the trace to its own lane below the name.
+- **Audio and RF share one overlay.** We stack them as two lanes so neither
+  obscures the other and each can be hatched independently when its own source
+  goes stale.
+- **RF level and link quality risk being read as one thing.** Sennheiser
+  distinguishes them because interference can reduce quality without an
+  equivalent fall in RSSI
+  ([research](../research/wavetool-and-browser-audio.md)). We show a level trace
+  and a separate discrete quality indicator, and prohibit a merged health bar.
+- **A red overlay covers the channel.** It obscures the face. We use a
+  `--critical` outline, a badge and an exception sentence instead.
+- **One visible problem per channel.** Our badge rail shows every show-critical
+  category at fixed positions so a second independent fault cannot hide.
+- **Saturated neon on black at high density.** Legible to a trained operator,
+  punishing at a glance and in a dark wing. We trade some density for the
+  one-second glance and push the remainder into the inspector.
+- **Modifier-key actions.** Replaced with long-press, because touch is primary.
+
+## RVLT design language — the reference for materiality
+
+The user's existing design language for another product, cited as a style
+reference rather than a template.
+
+Recorded characteristics: a 2px outline with a hard offset shadow and no blur,
+described as "tactile, like printed flight cases"; cards lifting on hover; a
+"lit edge" top accent for live, real-time widgets; pill buttons that lift 1px on
+hover and drop 2px on active; radii of 14px and 20px with 99px pills; inputs at
+16px minimum text and 44px tall with a 2px rule; an 8-colour avatar palette;
+"colour is the fun; never decorate the rows"; a single reserved accent for
+active/live and alerts only; display, body, tabular-mono and handwriting type
+roles; Lucide icons at 16/20/24px; and a mascot with idle/scanning/celebrating/
+worried states.
+
+Sources:
+
+- [RVLT design language](https://rvlt-labs.github.io/rvlt-designlanguage/)
+- [RVLT component preview](https://rvlt-labs.github.io/rvlt-designlanguage/preview)
+
+### What we take, and how we diverge
+
+Taken: the hard-offset materiality, the lit edge for live, pill buttons that
+physically travel, the 44px/16px input floor, the four type roles, Lucide at
+matching stroke weight, and the discipline that colour is meaning rather than
+decoration.
+
+Diverged: our foundation is the Show Slate dark palette rather than cream and
+red; our radii are tighter (12/18) because our cards carry instrument data
+rather than catalogue content; our accent is `--listening` cyan reserved for
+audition rather than a red primary; our mascot is a ghost light rather than a
+moving-head fixture, and it never celebrates; and our handwriting layer carries
+a hard semantic rule — the hand means a human wrote it — rather than being a
+decorative accent.
+
+## PostHog — whimsy that survives being a serious tool
+
+Recorded characteristics: an explicit "taste" principle — decisions that reflect
+a real point of view, caring whether something is right rather than merely done;
+clarity over cleverness; a deliberate rejection of the default dark-tech
+aesthetic in favour of bordered cards on a warm cream canvas with a
+textbook-illustration sensibility; a hedgehog mascot, Max, drawn in specific
+scenarios; an olive/sage family for text and borders; and the position that
+brand is the company experienced from the outside.
+
+Source: [PostHog brand handbook](https://posthog.com/handbook/brand/foundations),
+[visual identity](https://posthog.com/handbook/brand/visual-identity),
+[logos and hedgehogs](https://posthog.com/handbook/brand/assets)
+
+The lesson taken is not the cream canvas — we need dark for a wing. It is that
+the whimsy is *consistent, drawn by hand, and confined*: a specific character in
+specific situations, an opinionated palette, and documentation that states the
+point of view rather than listing tokens. Our Ghost is that character, our
+confinement rule is the whimsy policy in [principles](DESIGN.md), and the
+"refusals" list exists because a point of view is mostly a list of things you
+will not do.
+
+## Airbnb DLS — restraint and unification
+
+Recorded characteristics: the principles Unified, Universal, Iconic and
+Conversational, with "each piece is part of a greater whole"; Airbnb Cereal,
+commissioned in 2018 from Dalton Maag, guided by the keywords human, friendly,
+welcoming and creative professionalism; and a foundation of restraint — one
+typeface, one accent, soft shapes, depth from photography and whitespace rather
+than heavy shadows.
+
+Sources: [Building a Visual Language](https://medium.com/airbnb-design/building-a-visual-language-behind-the-scenes-of-our-airbnb-design-system-224748775e4e),
+[Working Type](https://medium.com/airbnb-design/working-type-81294544608b),
+[Airbnb DLS](https://karrisaarinen.com/dls/)
+
+Taken: one accent, depth from photography (our headshots) rather than layered
+shadow, and the principle that a component must contribute positively to the
+system at scale — which is why our card, tile, mic-check row and timeline lane
+are one grammar rather than four designs.
+
+Not taken: one typeface. We need four, because the distinction between a machine
+measurement and a human note is the product's central honesty claim and type is
+the cheapest, fastest way to carry it.
+
+## Mobbin — the pattern survey, used as a warning
+
+Searched for dark per-device status dashboards and for people-card grids on web.
+Returned: Vapi, Railway, Supabase, Sentry, Cloudflare, Better Stack, StackAI and
+LangChain for the first; Circle, Whop, Notion, Polywork, ClickUp and HelloFresh
+for the second.
+
+The dark-dashboard results are close to identical to one another: near-black
+canvas, hairline 1px borders, a single accent, a large number above a sparkline,
+generic sans throughout, no materiality, no voice. They are the thing the
+refusals list in [principles](DESIGN.md) exists to prevent. They were used
+as a negative reference.
+
+The people-card results were more useful, and confirmed two things: a photo plus
+a name plus one status chip is read almost instantly, and a card that carries
+more than about six facts stops being glanceable. That ceiling is why the A2
+card pushes everything past six facts into the badge rail — fixed positions the
+eye learns — and the rest into the inspector.
+
+Screens cited: [Vapi](https://mobbin.com/screens/9da1fbc3-8295-418a-bb3f-67079f8fd2f2),
+[Railway](https://mobbin.com/screens/4e385395-8885-4bd2-ae55-a242c9c7af30),
+[Supabase](https://mobbin.com/screens/782baf2b-1d87-4a1c-a461-a87acc585ba9),
+[Sentry](https://mobbin.com/screens/ac81ee7f-550f-4395-aafe-13da3dc10e05),
+[Cloudflare](https://mobbin.com/screens/fa011061-0438-45b8-9371-caa44424b211),
+[Better Stack](https://mobbin.com/screens/dc1236fd-3d9b-4152-a435-f54a50642974),
+[Circle](https://mobbin.com/screens/c2f99cf3-fa9b-4be2-b607-e09c41f3b5da),
+[Notion](https://mobbin.com/screens/0bd76f5f-9281-4d76-933e-cafe385ef965),
+[ClickUp](https://mobbin.com/screens/9d29b1e7-7fb3-482a-8d4c-88891da75e66),
+[HelloFresh](https://mobbin.com/screens/9ad368e4-3979-483c-ad77-82726b866a71).
+
+## Design review, 2026-09-19 — first visual round rejected
+
+The first styleframe round was rejected by the product owner as reading
+"futuristic AI slop". The diagnosis was specific and correct, and it is recorded
+here because it is the most useful design finding in this directory.
+
+What was wrong:
+
+1. **Glow.** The listening marker was a 2px edge with an outer halo, and the
+   replay mode chrome had a bloom. Both read as a heads-up display. Everything
+   that emitted light has been removed; the marker is now a 7px matte bar, and
+   replay is a 4px matte border.
+2. **A cold blue-black canvas.** `#0E1113` and its blue-leaning greys are the
+   default of every framework dark mode, and that default is now the strongest
+   "generated by a machine" signal available in a dark interface. The neutrals
+   were re-cut warm — `#121110` canvas, `#4A453E` rules, `#F2EFE9` ink.
+3. **Saturated fills on near-black.** The semantic palette was correct as
+   *colour* and wrong as *material*. Each meaning now has a hue for text and
+   glyphs and a matte ink for anything actually laid down as a mark.
+
+The rule that came out of it is the one now at the top of
+[visual language](DESIGN.md): **printed, not illuminated.** It is worth
+more than the rest of this file, because it is the one that was learned by
+getting it wrong first.
+
+Not changed, because they were not the problem: the pill controls, the card
+grammar, the grid layout, the rails, and the four-family type system.
+
+## Design review, round 4 — structure, not paint
+
+Three instructions from the product owner, each of which changed the shape of
+the product rather than its finish.
+
+1. **"I want to be able to do headshots and stuff."** The card is now a
+   photograph with a 5:4 crop, the channel number and fault flags over the
+   image, and the ten-second trace as a strip on its bottom edge. This is
+   WaveTool's instinct and it is correct: an A2 looks for Eleanor, not for input
+   27. It also makes Manager's managed headshot pipeline
+   ([roadmap](../product/roadmap.md), Phase 1A.3) load-bearing for the Live
+   experience rather than a nicety, which is worth knowing before it is
+   scheduled.
+2. **"I don't think a sidebar is the vibe for this app at all."** Correct, and
+   for a reason beyond taste: a standing left rail spends permanent width on
+   navigation used in bursts, and a standing right rail spends it on a list that
+   is empty most of the night. Filters became a horizontal band under the
+   header; show-wide exceptions became a sheet on every viewport. The width went
+   to faces.
+3. **"The bottom bar coming up when you click on a channel to monitor it with
+   like its timeline."** This replaced the side inspector entirely and is the
+   better idea. The detail view now rises from the thumb zone, the grid does not
+   move, nothing covers the faces, and the source's own timeline sits directly
+   under the source's own identity. It also collapses two concepts — the
+   inspector and the replay scrub — into one control that behaves the same way
+   in both.
+
+What this cost: the "full record" (assignment history, placement gallery, every
+check badge, incident evidence) no longer has a permanent home and is now a
+sheet reached from the monitor bar. That is one more tap for the deepest
+material, which is the right trade, but it needs watching in the first
+rehearsal — see the open questions below.
+
+## Design review, round 5 — restart on RVLT
+
+Rounds 1–4 were rejected. The instruction for round 5 was explicit: start over,
+go light/paper, keep obviously-pressable cards where pressing one listens to
+that channel, and **follow RVLT much more closely** — treat it as a template
+rather than a loose reference.
+
+That last instruction is the whole finding. The first four rounds all built a
+bespoke language that borrowed ideas from RVLT, PostHog and Airbnb. Round 5
+takes RVLT's published tokens, type roles, shapes, shadows and component
+behaviour as-is and adds only a domain mapping. It is the first round that is
+different in kind rather than in finish.
+
+Two things fell out of it that are worth keeping regardless of what happens
+next:
+
+- **Red already meant the right thing.** RVLT reserves its accent for
+  "active/live · alerts only". In this domain that maps exactly onto *the
+  channel you are hearing*, so the most prominent colour in the product marks
+  the single most important piece of state, with no new token invented.
+- **Paper is easier to read at a glance than the dark surface was**, at least on
+  a bright screen. Whether that survives a blackout backstage is an open
+  question below, and it is the one that could send this back to the dark theme.
+
+## Product finding: cue tracking cannot be the spine
+
+Raised by the product owner during round 5, and more consequential than any
+visual decision in this directory.
+
+The plan's Live surface is built around cue context — On Stage, Up Next,
+expected silence, cue-aware alert arming. That assumes a production with someone
+who will meticulously tag every stage movement, and that person is rare. A
+product whose default view depends on them is a product that is degraded for
+most of the people who install it.
+
+So: every channel is the default view, and cue-derived behaviour is an opt-in
+layer that appears only when a cue source is connected. The QLab observer
+remains valuable; it stops being load-bearing.
+
+**Resolved.** Both consequences were decided by the product owner and are now
+recorded in [ADR 0019](../decisions/0019-cue-optional-and-show-time-scope.md):
+Live defaults to every channel, and silence alerting is a per-channel setting
+rather than a scene-derived conclusion. `operator-workflows.md` and `vision.md`
+have been updated to match.
+
+The vendor-tool boundary was resolved in the same pass, and the product owner's
+formulation is better than the one these notes first proposed. "Display is not
+management" is nearly right but answers the wrong question: operators do not hop
+between programs because of a capability boundary, they hop because of *when*
+they need something. The line is **time** — during a performance the work happens
+here; coordination, scanning and firmware are before-and-after work and stay in
+the vendor tools.
+
+## Product findings from round 6
+
+**The tool replaces the reason to open WWB and WSM.** Stated by the product
+owner: A2 Monitor should carry the same data a show may need, and the channel
+detail is the right place for it. That makes the detail view a genuine
+single-source screen rather than a summary, and it is why the grid can stay as
+sparse as it is — the depth has somewhere to go.
+
+It also puts pressure on two non-goals in [the vision](../product/vision.md).
+Read-only display does not conflict with "no frequency coordination or firmware
+management", but it does sit awkwardly against "not replacing Wireless Systems
+Manager". The distinction that resolves it — **display is not management** — is
+worth writing into the vision rather than leaving implied.
+
+A practical consequence: the detail view is capability-driven. Receivers report
+different fields, and a field a receiver does not report must render as unknown
+rather than as a plausible default. The integration layer needs a per-model
+capability map for display, not only for control.
+
+**Alerts require acknowledgement, and acknowledgement is not resolution.** An
+unacknowledged alert veils the channel's tile and name. On acknowledgement it
+moves into the card's status area as a compact row while the failed dimension
+stays failed in the status strip.
+
+Two corrections came out of review, and both improved it:
+
+- **The overlay is translucent, and it says almost nothing.** The first build
+  replaced the card's contents with the alert type, a sentence of explanation and
+  a timestamp. Wrong on both counts. WaveTool draws its fault overlay *over* the
+  channel so the operator can still see the tile, and it says only what the fault
+  is. The explanation was the product trying to do the troubleshooting; the
+  operator does that, and needs to see the meter and the status strip to do it.
+  The overlay now veils the photograph and name only, stopping short of the
+  status strip, and carries one icon and two words.
+- **The overlay covers the whole card, and the Acknowledge button is gone.**
+  Pressing the card acknowledges the alert *and* starts listening to that
+  channel. This resolved a tension in the earlier build: the overlay was a listen
+  target and also carried a button, which meant two different things could happen
+  depending on where a thumb landed. One press, both outcomes, because "I see it,
+  let me hear it" is a single intention.
+- **A fault that clears takes its alert with it.** If the condition resolves on
+  its own — the pack is unmuted, the interference passes — the alert leaves the
+  card whether or not anyone acknowledged it. Asking an operator to dismiss
+  something that is no longer true is busywork during a show. The event stays in
+  the channel history and on the replay timeline, so a fault that came and went is
+  still auditable afterwards.
+- **The overlay expires on a configurable timer; the alert does not.** Stated
+  earlier in these notes as "it does not time out", which was wrong. An unattended
+  screen should not end the night as a wall of red. The overlay holds the card for
+  a configurable period — five minutes by default, per severity — then clears,
+  with a countdown along its bottom edge so the expiry is visible rather than
+  surprising. Critically, **expiry is not acknowledgement**: the alert drops into
+  the status area marked *Not acknowledged* with a dashed border and still counts
+  in the header total. An alert nobody saw must never look like one somebody saw.
+
+The design rule that came out of building it: **the takeover must itself be a
+listen target.** The first thing any operator does with "RF drop on 27" is
+listen to 27, and an alert that blocks that would be worse than no alert. The
+implementation had this wrong at first — the card's listen-everywhere rule
+disabled pointer events on the overlay — which is exactly the kind of mistake
+that would have shipped as "the alert is unclickable" without a prototype.
+
+## Consequences for the plan, from the round-7 decisions
+
+Two of the answers above reach past the design directory and are noted here so
+they are not lost.
+
+**Fault reports survive a backend outage on the node path.**
+[A1/A2 views](../product/a1-a2-views-and-collaboration.md) currently says
+incident and task lifecycle wait for the backend, and that the node does not
+become a collaboration server. Both remain true: what moves onto the leased-node
+path is the *delivery* of a report, which is a bounded safety-relevant event of
+the same kind as a check result or a local evidence marker, already on that list.
+Claiming, assignment, ownership and promotion still wait. That distinction needs
+writing into the collaboration document and into whatever eventually replaces the
+withdrawn control contract, because "the report arrived but nobody owns it yet"
+is a state the UI already describes and the protocol does not.
+
+**A fault report banners on every surface.** This is a deliberate exception to
+the attention policy in the same document, which keeps ordinary traffic out of
+the way. The justification is that a report is assigned work from the one person
+in the building who can hear the programme, and an A2 finishing a five-minute mic
+check before noticing it costs more than the interruption does. If rehearsal
+shows the banner is disruptive during a check, the fallback is urgent-only, not
+silence.
+
+## Open design questions
+
+These need an operator in a room, not more desk research.
+
+1. Does the hand/mono split read as intended to an A2 who has never been told
+   the rule, or does it just look inconsistent?
+2. Is a 300×212 card at four columns too sparse for an operator used to
+   WaveTool's density, and does pinch-to-compact recover it?
+3. Is the ten-second window right for our lanes, or does separating audio and RF
+   change the useful window for each?
+4. Does the replay violet chrome survive a wing at 20% brightness under blue
+   worklight, against the dark canvas?
+5. Is the badge rail learned within one performance, or does it need labels for
+   longer than that?
+6. Does the ghost light read as a ghost light, or as a lamp?
+7. Does the warm charcoal hold up under a blue worklight, or does the warmth
+   disappear the moment the ambient light is cold?
+8. Is the matte ink still legible at 20% screen brightness, or did removing the
+   saturation cost more than the glow was worth?
+9. Does a real production headshot survive the 5:4 crop, at 196px, in a dark
+   wing — or do theatre headshots (often high-key, often full-length) need a
+   managed face crop on ingest?
+10. Is one tap to the full record too far when an A2 is mid-swap, and should the
+    monitor bar have a second, taller detent instead of a separate sheet?
+11. Does the monitor bar's timeline confuse live and replay, given that dragging
+    its scrub is what enters replay mode?
+12. Does the Paper surface survive a blackout backstage, or does a light screen
+    at any brightness ruin an operator's dark adaptation and force the dark
+    theme for Live?
+13. With cue context demoted, what orders the default grid of 64 channels —
+    channel number, rack, zone, or most-recently-in-trouble? Still open, and now
+    carried as a negative consequence in ADR 0019.
+14. Is one "Listen" button per card plus the whole card being pressable
+    redundant, or is the explicit button what makes it obvious? *(Resolved in
+    round 6: the button is gone and the whole card listens.)*
+15. With several alerts unacknowledged at once, does a wall of takeover cards
+    stop being readable? A storm is exactly when the grid matters most, and the
+    plan already requires alert storms to collapse into a grouped incident.
+16. With no Acknowledge button, is "press to acknowledge" discoverable enough on
+    a first shift, or does the hint need to stay permanently? It is the only
+    place in the product where a press means something other than listen.
+17. Does a report banner on every surface disrupt a mic check enough to be worth
+    downgrading to urgent-only? Decided as all-reports; worth measuring.
+18. Is a critical alert that never expires the right call on a 64-channel rig
+    during a storm, or does the grouped-incident collapse need to arrive at the
+    same time to stop the grid filling?
+19. What is the right default expiry per severity? Decided as: critical never
+    expires, everything else five minutes. The five is still a guess. Five minutes is a guess. A
+    critical audio loss probably deserves longer than a battery warning, and the
+    number should come from watching operators rather than from taste.
+20. Should acknowledgement be per-operator or per-show? Two A2s working
+    different zones may both need to see an alert before it is considered seen.
+21. Does the detail view need a compare mode — two channels side by side — for
+    the common "is it this pack or this zone" question?

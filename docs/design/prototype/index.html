@@ -1,0 +1,1629 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-surface="a2" data-view="fit">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A2 Monitor — surfaces</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Baloo+2:wght@700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   A2 MONITOR — built on the RVLT design language.
+   Tokens below mirror rvlt-designlanguage DESIGN.md §15.1 / Appendix A
+   (v1.1.0) as published. Paper (light) is the default surface here.
+   Domain semantics are mapped onto RVLT's existing roles rather than
+   inventing a parallel palette:
+     --red   brand / live / the channel you are listening to
+     --t-out critical fault          --warn  needs intervention
+     --ok    verified                --rep   stale or unknown
+     --purple replay
+   ============================================================ */
+:root{                            /* RVLT Paper — the default surface */
+  --paper:#F4EEE1; --paper-2:#EDE4D2; --card:#FFFDF8; --elev:#FFFDF8;
+  --ink:#1D1A15; --ink-2:#4B4539; --muted:#7D7565; --faint:#A89E89;
+  --line:#E4DAC3; --line-2:#D8CCB0;
+  --red:#C12229; --red-700:#9C1B21; --red-soft:#FBE7E3;
+  --ok:#2EA65C; --warn:#C98A14; --rep:#8A8270; --t-out:#9C1B21;
+  --ok-soft:#E7F5EC; --warn-soft:#FBF0D6; --rep-soft:#EFE9DC; --out-soft:#FBE7E3;
+  --amber:#E79A2B; --blue:#2F6BD6; --green:#2EA65C; --purple:#7A5CD0; --dark:#241F1A;
+  --coral:#CC5E2E; --teal:#1C8B83; --pink:#C2487E; --lime:#6E8C12;
+  --purple-soft:#ECE6FA;
+  --scrim:rgba(40,30,15,.45); --select:rgba(193,34,41,.16); --link:#2F6BD6;
+  --veil:rgba(255,253,248,.44); --veil-ink:rgba(255,253,248,.85); --card-lit:none;
+  --elev-2:#F7F2E6; --elev-3:#F1EADA; --elev-4:#E9E0CC; --well:#FBF7EE;
+  --warn-700:#9C6A0E;
+  --sh-card:0 3px 0 var(--line-2); --sh-hover:0 7px 0 var(--line-2);
+  --sh-stk:2px 4px 0 rgba(40,30,15,.13);
+  --card-outline:var(--ink);
+}
+/* The viewer's theme has three states: an explicit choice stamps data-theme on
+   the root, and the default "system" setting stamps nothing. So the dark set is
+   declared twice — once behind the media query for un-stamped documents, once
+   behind the explicit stamp so the in-app toggle wins either way. */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){                /* RVLT dark */
+  --paper:#141210; --paper-2:#1A1613; --card:#211C17; --elev:#2A241D;
+  --ink:#F5EFE2; --ink-2:#CDC4B2; --muted:#9E9483; --faint:#6E665A;
+  --line:#332C24; --line-2:#473E32;
+  --red:#E0363D; --red-700:#B21F26; --red-soft:rgba(224,54,61,.16);
+  --ok:#4FD888; --warn:#EBA53A; --rep:#B6AC9A; --t-out:#F26F73;
+  --ok-soft:rgba(62,207,122,.14); --warn-soft:rgba(235,165,58,.15);
+  --rep-soft:rgba(158,148,131,.14); --out-soft:rgba(224,54,61,.18);
+  --amber:#EBA53A; --blue:#5B8DEF; --green:#3ECF7A; --purple:#9B82E6; --dark:#0E0C0A;
+  --coral:#EF7E55; --teal:#3FC8BE; --pink:#E875AC; --lime:#AFC44E;
+  --purple-soft:rgba(155,130,230,.15);
+  --scrim:rgba(14,12,10,.66); --select:rgba(224,54,61,.20); --link:#5B8DEF;
+  --sh-card:0 3px 0 #0C0A08; --sh-hover:0 7px 0 #0C0A08;
+  --lit:inset 0 1px 0 rgba(255,253,248,.14); --sh-stk:2px 4px 0 rgba(0,0,0,.5);
+  --cream:#F5EFE2; --cream-ink:#1D1A15;
+  --r:14px; --r-lg:20px; --radius:0.875rem;
+  --veil:rgba(20,18,16,.50); --veil-ink:rgba(10,9,8,.85); --card-lit:var(--lit);
+  --elev-2:#262320; --elev-3:#2D2A25; --elev-4:#332F2A; --well:#171512;
+  --warn-700:#9C6A0E;
+  --fd:"Archivo",sans-serif; --fw:"Baloo 2",cursive;
+  --fb:"Hanken Grotesk",system-ui,sans-serif;
+  --fh:"Kalam",cursive; --fm:"JetBrains Mono",ui-monospace,monospace;
+  --card-outline:var(--line-2);
+  }
+}
+:root[data-theme="dark"]{                         /* RVLT dark */
+  --paper:#141210; --paper-2:#1A1613; --card:#211C17; --elev:#2A241D;
+  --ink:#F5EFE2; --ink-2:#CDC4B2; --muted:#9E9483; --faint:#6E665A;
+  --line:#332C24; --line-2:#473E32;
+  --red:#E0363D; --red-700:#B21F26; --red-soft:rgba(224,54,61,.16);
+  --ok:#4FD888; --warn:#EBA53A; --rep:#B6AC9A; --t-out:#F26F73;
+  --ok-soft:rgba(62,207,122,.14); --warn-soft:rgba(235,165,58,.15);
+  --rep-soft:rgba(158,148,131,.14); --out-soft:rgba(224,54,61,.18);
+  --amber:#EBA53A; --blue:#5B8DEF; --green:#3ECF7A; --purple:#9B82E6; --dark:#0E0C0A;
+  --coral:#EF7E55; --teal:#3FC8BE; --pink:#E875AC; --lime:#AFC44E;
+  --purple-soft:rgba(155,130,230,.15);
+  --scrim:rgba(14,12,10,.66); --select:rgba(224,54,61,.20); --link:#5B8DEF;
+  --sh-card:0 3px 0 #0C0A08; --sh-hover:0 7px 0 #0C0A08;
+  --lit:inset 0 1px 0 rgba(255,253,248,.14); --sh-stk:2px 4px 0 rgba(0,0,0,.5);
+  --cream:#F5EFE2; --cream-ink:#1D1A15;
+  --r:14px; --r-lg:20px; --radius:0.875rem;
+  --veil:rgba(20,18,16,.50); --veil-ink:rgba(10,9,8,.85); --card-lit:var(--lit);
+  --elev-2:#262320; --elev-3:#2D2A25; --elev-4:#332F2A; --well:#171512;
+  --warn-700:#9C6A0E;
+  --fd:"Archivo",sans-serif; --fw:"Baloo 2",cursive;
+  --fb:"Hanken Grotesk",system-ui,sans-serif;
+  --fh:"Kalam",cursive; --fm:"JetBrains Mono",ui-monospace,monospace;
+  --card-outline:var(--line-2);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+::selection{background:var(--select)}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--fb);font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;overflow:hidden}
+h1,h2,h3,h4{font-family:var(--fd);font-weight:800;letter-spacing:-.02em}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+.mono{font-family:var(--fm);font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.hand{font-family:var(--fh);font-weight:700}
+
+/* ---------- prototype chrome (not the product) ---------- */
+.specbar{flex:0 0 auto;display:flex;align-items:center;gap:18px;padding:10px 24px;
+  background:var(--paper-2);border-bottom:2px solid var(--line-2);flex-wrap:wrap}
+.specbar .t{font-family:var(--fd);font-weight:800;font-size:15px}
+.specbar .t span{color:var(--muted);font-weight:600}
+.seg{display:flex;gap:4px}
+.seg button{font-family:var(--fb);font-weight:600;font-size:13px;border-radius:99px;padding:7px 14px;
+  border:2px solid transparent;color:var(--muted)}
+.seg button[aria-pressed=true]{border-color:var(--ink);color:var(--ink)}
+.specbar .note{margin-left:auto;font-size:12px;color:var(--faint)}
+
+/* ---------- device ---------- */
+.stage{flex:1 1 auto;display:grid;place-items:center;overflow:auto;padding:22px;min-height:0}
+[data-view=fit] .stage{padding:0}
+.device{background:var(--paper);border:2px solid var(--card-outline);border-radius:var(--r-lg);
+  box-shadow:var(--sh-card);overflow:hidden;position:relative;display:flex;flex-direction:column;flex:0 0 auto}
+[data-view=fit] .device{width:100%;height:100%;border:0;border-radius:0;box-shadow:none}
+[data-view=desktop] .device{width:1512px;height:900px}
+[data-view=ipad-l]  .device{width:1180px;height:820px}
+[data-view=ipad-p]  .device{width:820px;height:1080px}
+
+/* ---------- buttons, §15.2 ---------- */
+.btn{font-family:var(--fb);font-weight:600;font-size:14px;border-radius:99px;padding:11px 20px;border:none;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;
+  transition:transform .12s,box-shadow .12s,background .12s,color .12s}
+.btn-primary{background:var(--red);color:#fff;box-shadow:0 3px 0 var(--red-700)}
+.btn-primary:hover{transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(2px);box-shadow:0 1px 0 var(--red-700)}
+.btn-line{background:transparent;color:var(--ink);border:2px solid var(--ink);padding:9px 18px}
+.btn-line:hover{background:var(--ink);color:var(--paper)}
+.btn-line:active{transform:translateY(2px)}
+.btn-ghost{background:transparent;color:var(--muted)}
+.btn-ghost:hover{color:var(--red)}
+.btn:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.btn.lg{min-height:52px;font-size:15px;padding:13px 24px}
+.btn.sq{padding:11px 16px}
+
+/* ---------- badges, §3.3 ---------- */
+.badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--fb);font-weight:700;font-size:11px;
+  border-radius:99px;padding:4px 10px;white-space:nowrap}
+.b-ok{color:var(--ok);background:var(--ok-soft)}
+.b-warn{color:var(--warn);background:var(--warn-soft)}
+.b-out{color:var(--t-out);background:var(--out-soft)}
+.b-rep{color:var(--rep);background:var(--rep-soft)}
+.b-live{color:#fff;background:var(--red)}
+.b-replay{color:var(--purple);background:var(--purple-soft)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.live-dot{animation:pulse 1.7s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ---------- top bar ---------- */
+.top{flex:0 0 auto;height:68px;display:flex;align-items:center;gap:20px;padding:0 22px;
+  background:var(--paper-2);border-bottom:2px solid var(--line-2)}
+.brand{display:flex;align-items:center;gap:9px;font-family:var(--fd);font-weight:800;font-size:19px;
+  letter-spacing:-.01em;flex:none}
+/* Baloo 2 is the wordmark face and nothing else (RVLT 5.3) */
+.brand .wm{font-family:var(--fw);font-weight:700;letter-spacing:-.01em;font-size:21px}
+.brand .mark{color:var(--red);letter-spacing:.02em}
+.show{display:flex;flex-direction:column;line-height:1.2;padding-left:18px;border-left:2px solid var(--line-2)}
+.show b{font-family:var(--fd);font-weight:700;font-size:15px}
+.show span{font-size:12px;color:var(--muted)}
+.cue{display:flex;align-items:center;gap:14px;margin-left:4px}
+.cue .blk{display:flex;flex-direction:column;gap:1px}
+.cue .k{font-family:var(--fm);font-size:11px;color:var(--faint);letter-spacing:.08em}
+.cue .v{font-family:var(--fm);font-size:15px;font-weight:600}
+.top .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.count{display:inline-flex;align-items:center;gap:7px;border-radius:99px;padding:8px 14px;min-height:44px;
+  border:2px solid var(--line-2);font-weight:700;font-size:13px;background:var(--card)}
+.count.out{border-color:var(--t-out);color:var(--t-out)}
+.count.warn{border-color:var(--warn);color:var(--warn)}
+.count:active{transform:translateY(2px)}
+
+/* ---------- filter band ---------- */
+.filters{flex:0 0 auto;height:62px;display:flex;align-items:center;gap:8px;padding:0 22px;
+  border-bottom:2px solid var(--line-2);overflow-x:auto;scrollbar-width:none;background:var(--paper)}
+.filters::-webkit-scrollbar{display:none}
+.filters .lbl{font-family:var(--fm);font-size:11px;color:var(--faint);letter-spacing:.08em;flex:none;padding-right:4px}
+.chipf{flex:none;display:inline-flex;align-items:center;gap:7px;min-height:42px;padding:0 15px;border-radius:99px;
+  border:2px solid var(--line-2);background:var(--card);font-weight:600;font-size:14px;color:var(--ink-2);
+  transition:transform .12s,box-shadow .12s,background .12s}
+.chipf .n{font-family:var(--fm);font-size:12px;color:var(--faint)}
+.chipf[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--paper);box-shadow:0 3px 0 var(--line-2)}
+.chipf[aria-pressed=true] .n{color:var(--paper);opacity:.62}
+.chipf:active{transform:translateY(2px)}
+
+/* ============================================================
+   CHANNEL CARD — an obvious, pressable object.
+   RVLT card: 2px --ink outline on Paper, 20px radius, hard 3px
+   offset shadow, lifts 3px on hover. Pressing it listens.
+   ============================================================ */
+.body{flex:1 1 auto;overflow:auto;padding:22px;min-height:0}
+.gridhead{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.gridhead h2{font-size:26px}
+.gridhead .sub{color:var(--muted);font-size:14px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(228px,1fr))}
+[data-view=ipad-p] .grid{grid-template-columns:repeat(auto-fill,minmax(236px,1fr))}
+
+.chcard{position:relative;background:var(--card);border:2px solid var(--card-outline);border-radius:var(--r-lg);
+  box-shadow:var(--sh-card),var(--card-lit,none);padding:14px;display:flex;flex-direction:column;gap:12px;text-align:left;width:100%;
+  transition:transform .16s,box-shadow .16s,border-color .16s;touch-action:manipulation}
+/* the whole card listens. it sits under the content, which does not take
+   pointer events, so a press anywhere that is not the photo lands here. */
+.chcard .hit{position:absolute;inset:0;z-index:1;border-radius:var(--r-lg);background:none}
+.chcard .hit:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.chcard > *:not(.hit):not(.tile):not(.alertover){pointer-events:none}
+/* the photograph and the name. an alert veils this much and stops short of the
+   status strip, which stays readable underneath it. */
+.chcard .tile{position:relative;display:flex;flex-direction:column;gap:12px}
+.chcard .tile > *:not(.alertover){pointer-events:none}
+.chcard .tile .zoom{pointer-events:auto}
+.chcard:hover{transform:translateY(-3px);box-shadow:var(--sh-hover)}
+.chcard:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line-2)}
+.chcard:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+/* the one you are hearing: RVLT reserves red for active/live */
+.chcard.listening{border-color:var(--red);box-shadow:0 3px 0 var(--red-700)}
+.chcard.listening:hover{box-shadow:0 7px 0 var(--red-700)}
+.chcard.critical{border-color:var(--t-out)}
+
+/* ============================================================
+   ALERT TAKEOVER — an unacknowledged alert owns the whole card,
+   the way WaveTool's SCP overlay does. It cannot be missed from
+   across a wing, and it does not clear itself: someone says they
+   have seen it. Acknowledging is not fixing — the fault stays in
+   the status strip afterwards.
+   ============================================================ */
+.chcard.alert{border-color:var(--t-out);box-shadow:0 3px 0 var(--red-700)}
+/* A veil over the card, not a replacement for it. The operator can still see
+   whose channel it is, what the meter is doing and where the fault sits in the
+   status strip — which is what they need to start troubleshooting. The overlay
+   names the problem and nothing else. */
+.alertover{position:absolute;inset:0;z-index:5;border-radius:calc(var(--r-lg) - 2px);
+  background:color-mix(in srgb, var(--t-out) 11%, var(--veil));
+  display:flex;flex-direction:column;padding:14px;
+  align-items:center;justify-content:flex-start;text-align:center;width:100%;border:none;cursor:pointer}
+.alertover.warn{background:color-mix(in srgb, var(--warn) 13%, var(--veil))}
+/* the mark sits over the photograph, the way WaveTool puts it on the tile,
+   so the name and the status strip underneath stay readable */
+/* the mark matches the photograph's box exactly, so the name and the status
+   strip stay legible under the veil rather than being written over */
+.alertover .mark{flex:0 0 auto;width:100%;aspect-ratio:16/10;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px}
+.alertover .glyph{color:var(--t-out);opacity:.92;line-height:0}
+.alertover.warn .glyph{color:var(--warn)}
+.alertover .glyph svg{width:46px;height:46px;filter:drop-shadow(0 1px 0 var(--veil-ink))}
+.alertover .kind{font-family:var(--fd);font-weight:800;font-size:18px;letter-spacing:.02em;
+  color:var(--t-out);text-shadow:0 1px 0 var(--veil-ink)}
+.alertover.warn .kind{color:var(--warn)}
+/* the overlay clears itself after a configurable time. the alert does not:
+   it drops into the status area still marked unacknowledged. */
+.alertover .timer{position:absolute;left:14px;right:14px;bottom:4px;height:3px;border-radius:2px;
+  background:color-mix(in srgb, var(--t-out) 28%, transparent);overflow:hidden}
+.alertover.warn .timer{background:color-mix(in srgb, var(--warn) 32%, transparent)}
+.alertover .timer i{display:block;height:100%;background:var(--t-out);width:100%;
+  transform-origin:left;animation:alertexpire var(--dur,300s) linear forwards}
+.alertover.warn .timer i{background:var(--warn)}
+@keyframes alertexpire{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.alertover .press{font-family:var(--fb);font-weight:700;font-size:11px;letter-spacing:.07em;
+  color:var(--t-out);opacity:.7;margin-top:4px;
+  text-shadow:0 1px 0 var(--veil-ink)}
+.alertover.warn .press{color:var(--warn)}
+.alertover:active{background:color-mix(in srgb, var(--t-out) 20%, var(--veil))}
+.alertover.warn:active{background:color-mix(in srgb, var(--warn) 22%, var(--veil))}
+@keyframes alertpulse{0%,100%{box-shadow:0 3px 0 var(--red-700)}50%{box-shadow:0 3px 0 var(--red-700),0 0 0 4px var(--red-soft)}}
+.chcard.alert{animation:alertpulse 2.2s ease-in-out infinite}
+
+.shot{position:relative;display:block;width:100%;padding:0;
+  border:2px solid var(--card-outline);border-radius:var(--r);overflow:hidden;
+  aspect-ratio:16/10;background:var(--paper-2)}
+/* the only thing on a card that opens the detail. everything else — including
+   the rest of the photograph — does whatever the card does. */
+.shot .zoom{position:absolute;right:6px;bottom:30px;width:44px;height:44px;z-index:3;
+  display:grid;place-items:center;pointer-events:auto;background:none;border:0;padding:0}
+.shot .zoom i{width:32px;height:32px;border-radius:50%;background:var(--card);
+  border:2px solid var(--card-outline);display:grid;place-items:center;
+  transition:transform .16s,background .16s}
+.shot .zoom svg{width:15px;height:15px}
+.shot .zoom:hover i{transform:scale(1.1)}
+.shot .zoom:active i{background:var(--ink);color:var(--paper)}
+.shot .zoom:focus-visible i{outline:2px solid var(--red);outline-offset:3px}
+.shot svg.face{display:block;width:100%;height:100%}
+.shot .no{position:absolute;left:8px;top:8px;font-family:var(--fm);font-size:11px;font-weight:600;
+  background:var(--card);border:2px solid var(--card-outline);border-radius:8px;padding:2px 7px}
+.shot .flags{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.shot .meter{position:absolute;left:0;right:0;bottom:0;height:26px;background:var(--scrim)}
+.shot .meter svg{display:block;width:100%;height:100%}
+.shot .listening-tag{position:absolute;left:8px;bottom:32px}
+
+.who{display:flex;flex-direction:column;gap:1px;min-width:0}
+.who .nm{font-family:var(--fd);font-weight:800;font-size:18px;letter-spacing:-.02em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who .rl{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tags{display:flex;flex-wrap:wrap;gap:6px;min-height:22px}
+
+/* per-dimension status: a tick, a cross or a caution for each thing that can
+   go wrong, always in the same order and the same place, so the eye learns
+   the positions and reads the row as a shape. Never colour alone — every
+   cell carries a glyph and a label. */
+.status{display:flex;border:2px solid var(--card-outline);border-radius:var(--r);
+  overflow:hidden;background:var(--card)}
+.status .cell{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;padding:7px 2px;border-right:2px solid var(--card-outline)}
+.status .cell:last-child{border-right:0}
+.status .cell .g{width:19px;height:19px;border-radius:50%;display:grid;place-items:center;flex:none}
+.status .cell .g svg{width:12px;height:12px;display:block}
+.status .cell .lb{font-family:var(--fb);font-weight:700;font-size:11px;letter-spacing:.05em;
+  color:var(--muted);white-space:nowrap}
+.status .cell.ok   .g{background:var(--ok-soft);color:var(--ok)}
+.status .cell.bad  .g{background:var(--out-soft);color:var(--t-out)}
+.status .cell.warn .g{background:var(--warn-soft);color:var(--warn)}
+.status .cell.unk  .g{background:var(--rep-soft);color:var(--rep)}
+.status .cell.bad  .lb{color:var(--t-out)}
+.status .cell.warn .lb{color:var(--warn)}
+/* an acknowledged alert does not disappear — it drops out of the takeover
+   and into the status area, so the card still says what happened and that
+   somebody has seen it. Acknowledging is not fixing. */
+.ackrow{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--r);
+  background:var(--out-soft);border:2px solid var(--out-soft);min-height:38px}
+.ackrow.warn{background:var(--warn-soft);border-color:var(--warn-soft)}
+.ackrow .ic{width:16px;height:16px;flex:none;color:var(--t-out)}
+.ackrow.warn .ic{color:var(--warn)}
+.ackrow .tx{min-width:0;display:flex;flex-direction:column;gap:1px}
+.ackrow .tx b{font-family:var(--fb);font-weight:700;font-size:12px;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ackrow .tx span{font-family:var(--fm);font-size:11px;color:var(--muted)}
+.ackrow .seen{margin-left:auto;flex:none;font-family:var(--fb);font-weight:700;font-size:11px;
+  letter-spacing:.05em;color:var(--muted);display:flex;align-items:center;gap:4px}
+.ackrow .seen svg{width:12px;height:12px}
+.ackrow .seen.unseen{color:var(--t-out)}
+.ackrow.unseen{border-style:dashed;border-color:var(--t-out)}
+.status .cell.bad{background:var(--out-soft)}
+.status .cell.warn{background:var(--warn-soft)}
+
+.chcard .status{margin-top:auto}
+
+/* ============================================================
+   PLAYER — the bottom bar is a transport for the selected channel.
+   Collapsed it is artwork, name, scrub and time, like a music player.
+   Expanded it adds that channel's whole timeline: audio, RF, link
+   quality and battery on one shared axis under one playhead.
+   ============================================================ */
+.nowbar{flex:0 0 auto;background:var(--paper-2);border-top:2px solid var(--line-2);
+  display:flex;flex-direction:column;transition:height .22s cubic-bezier(.16,1,.3,1);
+  height:152px;overflow:hidden}
+.nowbar[data-open=true]{height:420px}
+[data-view=ipad-p] .nowbar[data-open=true]{height:470px}
+
+/* --- graphs, revealed above the transport --- */
+.graphs{flex:1 1 auto;display:none;flex-direction:column;gap:0;padding:14px 22px 0;min-height:0;position:relative}
+.nowbar[data-open=true] .graphs{display:flex}
+.glane{display:flex;align-items:center;gap:14px;flex:1 1 0;min-height:0}
+.glane .k{width:74px;flex:none;font-family:var(--fb);font-weight:700;font-size:11px;
+  letter-spacing:.08em;color:var(--muted)}
+.glane .plot{flex:1 1 auto;min-width:0;height:100%;position:relative;
+  border-bottom:2px solid var(--line-2)}
+.glane:first-child .plot{border-top:2px solid var(--line-2)}
+.glane .plot svg{display:block;width:100%;height:100%}
+.glane .v{width:92px;flex:none;text-align:right;font-family:var(--fm);font-size:13px;font-weight:500}
+.glane .v small{display:block;font-size:11px;color:var(--faint);font-weight:400}
+.glane .ev{position:absolute;top:50%;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:7px;
+  display:grid;place-items:center;font-size:11px;background:var(--card);border:2px solid var(--card-outline)}
+/* one playhead across every graph, so the four lanes are read together */
+.winsel{position:absolute;left:50%;top:-1px;transform:translateX(-50%);display:flex;gap:2px}
+.winsel button{font-family:var(--fm);font-size:11px;color:var(--faint);padding:2px 7px;border-radius:99px}
+.winsel button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.plot .ph{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--red);
+  left:calc(var(--pos,1) * 100%);pointer-events:none;z-index:3}
+.plot .ah{position:absolute;top:0;bottom:0;right:0;left:calc(var(--pos,1) * 100%);
+  background:var(--paper);opacity:.66;pointer-events:none;z-index:2;display:none}
+.nowbar[data-replay=true] .plot .ah{display:block}
+.nowbar[data-replay=true] .plot .ph{background:var(--purple)}
+.nowbar[data-replay=true] .seek .done{background:var(--purple)}
+.nowbar[data-replay=true] .seek .knob{border-color:var(--purple)}
+.nowbar[data-replay=true]{background:var(--purple-soft);border-top-color:var(--purple)}
+.nowbar[data-replay=true] .tcode.live{color:var(--purple)}
+
+/* --- transport row --- */
+.player{flex:0 0 106px;display:flex;align-items:center;gap:14px;padding:0 22px}
+.art{width:64px;height:64px;border-radius:12px;border:2px solid var(--card-outline);overflow:hidden;flex:none}
+.art svg{display:block;width:100%;height:100%}
+.pmeta{flex:0 0 190px;min-width:0;display:flex;flex-direction:column;gap:3px}
+.pmeta b{font-family:var(--fd);font-weight:800;font-size:16px;letter-spacing:-.02em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pmeta .sub{font-family:var(--fm);font-size:11px;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbtns{display:flex;align-items:center;gap:8px;flex:none}
+.tbtn{width:46px;height:46px;border-radius:50%;border:2px solid var(--line-2);background:var(--card);
+  display:grid;place-items:center;transition:transform .12s,background .12s}
+.tbtn svg{width:17px;height:17px}
+.tbtn:hover{background:var(--paper-2)}
+.tbtn:active{transform:translateY(2px)}
+.tbtn.main{width:56px;height:56px;border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.tbtn.main svg{width:19px;height:19px}
+
+.seekrow{flex:0 0 46px;display:flex;align-items:center;gap:14px;padding:0 22px}
+.tcode{font-family:var(--fm);font-size:12.5px;color:var(--muted);flex:none;width:62px}
+button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
+.tcode.right{text-align:right}
+.tcode.live{color:var(--red);font-weight:600}
+.seek{flex:1 1 auto;min-width:120px;height:36px;position:relative;display:flex;align-items:center;cursor:pointer}
+.seek .rail{position:absolute;left:0;right:0;height:8px;border-radius:99px;background:var(--line-2)}
+.seek .done{position:absolute;left:0;height:8px;border-radius:99px;background:var(--red)}
+.seek .knob{position:absolute;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:var(--card);
+  border:3px solid var(--red);box-shadow:var(--sh-card)}
+.seek .marks{position:absolute;left:0;right:0;height:8px;pointer-events:none}
+.seek .marks i{position:absolute;top:-3px;width:3px;height:14px;border-radius:2px}
+.savebtn{flex:none;white-space:nowrap;padding:0 16px}
+.savebtn svg{width:16px;height:16px}
+.nowbar[data-replay=true] .savebtn{border-color:var(--purple);color:var(--purple)}
+.nowbar[data-replay=true] .savebtn:hover{background:var(--purple);color:#fff}
+/* what a save will actually write, shown before it writes it */
+.saveconfirm{position:absolute;right:22px;bottom:124px;z-index:8;width:330px;background:var(--card);
+  border:2px solid var(--card-outline);border-radius:var(--r-lg);box-shadow:var(--sh-hover);padding:16px;
+  display:none;flex-direction:column;gap:11px}
+.saveconfirm.open{display:flex}
+.saveconfirm h4{font-family:var(--fd);font-weight:800;font-size:16px}
+.saveconfirm dl{display:grid;grid-template-columns:72px 1fr;gap:3px 10px;font-family:var(--fm);font-size:11.5px}
+.saveconfirm dt{color:var(--faint)}
+.svwin{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:var(--r);
+  border:2px solid var(--card-outline);background:var(--paper-2)}
+.svrow{display:flex;align-items:center;gap:8px}
+.svrow .k{width:42px;flex:none;font-size:12.5px;color:var(--muted)}
+.svrow .v{margin-left:auto;font-size:13px}
+.tbtn.sm{width:auto;height:38px;padding:0 12px;border-radius:99px;font-size:12.5px;font-weight:600}
+.svlen{font-size:13px;color:var(--ink-2);padding-top:2px;border-top:2px solid var(--line-2)}
+.saveconfirm .row{display:flex;gap:8px;margin-top:2px}
+.saveconfirm .row .btn{flex:1 1 auto}
+.vol{display:flex;align-items:center;gap:10px;flex:none}
+.vol .v{font-family:var(--fm);font-size:15px;font-weight:600;width:40px;text-align:right}
+.bars{display:flex;gap:3px}
+.bars i{width:6px;height:26px;border-radius:2px;background:var(--line-2);display:block}
+.bars i.on{background:var(--ok)}
+.expand{flex:none;width:46px;height:46px;border-radius:50%;border:2px solid var(--ink);
+  display:grid;place-items:center;font-size:15px;transition:transform .2s}
+.nowbar[data-open=true] .expand{transform:rotate(180deg)}
+.groups{display:flex;gap:8px;flex:0 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none}
+.groups::-webkit-scrollbar{display:none}
+.gbtn{flex:none;min-height:46px;padding:0 13px;border-radius:99px;border:2px solid var(--line-2);
+  background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  font-family:var(--fb);font-weight:700;font-size:11px;color:var(--ink-2);transition:transform .12s}
+.gbtn i{width:20px;height:3px;border-radius:2px;display:block}
+.gbtn:active{transform:translateY(2px)}
+.vsep{width:2px;height:44px;background:var(--line-2);flex:none}
+
+/* ============================================================
+   DETAIL — everything a show needs about one channel, in one place.
+   This is where the depth lives, so the grid can stay sparse.
+   ============================================================ */
+.detail{position:absolute;inset:0;bottom:152px;z-index:9;background:var(--paper);
+  display:none;flex-direction:column;overflow:hidden}
+.detail.open{display:flex}
+.dhead{flex:0 0 auto;display:flex;align-items:center;gap:16px;padding:16px 22px;
+  border-bottom:2px solid var(--line-2);background:var(--paper-2)}
+.dhead .shot{width:104px;flex:none;cursor:default}
+.dhead .t{min-width:0;flex:1 1 auto}
+.dhead h2{font-size:26px;letter-spacing:-.02em}
+.dhead .sub{color:var(--muted);font-size:14px}
+.dhead .right{display:flex;gap:8px;align-items:center;flex:none}
+.dbody{flex:1 1 auto;overflow:auto;padding:18px 22px;display:grid;gap:16px;
+  grid-template-columns:repeat(auto-fit,minmax(272px,1fr));align-content:start}
+[data-view=ipad-p] .dbody{grid-template-columns:1fr 1fr}
+.dgroup{background:var(--card);border:2px solid var(--card-outline);border-radius:var(--r-lg);
+  box-shadow:var(--sh-card);padding:15px;display:flex;flex-direction:column;gap:10px}
+.dgroup h4{font-family:var(--fd);font-weight:800;font-size:12px;letter-spacing:.07em;
+  color:var(--muted)}
+.dgroup dl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;
+  font-family:var(--fm);font-size:12px;align-items:baseline}
+.dgroup dt{color:var(--faint);white-space:nowrap}
+.dgroup dd{color:var(--ink);text-align:right;font-weight:500}
+.dgroup dd.warn{color:var(--warn)}
+.dgroup dd.bad{color:var(--t-out)}
+.dgroup dd.ok{color:var(--ok)}
+/* antenna: which one is actually carrying the signal, and by how much */
+.ant{display:flex;flex-direction:column;gap:7px}
+.antrow{display:flex;align-items:center;gap:10px}
+.antrow .lab{width:58px;flex:none;font-family:var(--fm);font-size:11.5px;color:var(--faint)}
+.antrow .bar{flex:1 1 auto;height:16px;border-radius:5px;background:var(--paper-2);
+  border:2px solid var(--line-2);overflow:hidden;position:relative}
+.antrow .bar i{display:block;height:100%;background:var(--warn)}
+.antrow.active .bar i{background:var(--ok)}
+.antrow .val{width:62px;flex:none;text-align:right;font-family:var(--fm);font-size:11.5px}
+.antrow .tag{width:54px;flex:none;font-family:var(--fb);font-weight:700;font-size:11px;
+  letter-spacing:.05em;color:var(--faint)}
+.antrow.active .tag{color:var(--ok)}
+.sqline{position:absolute;top:0;bottom:0;width:2px;background:var(--t-out)}
+
+.a1bar{flex:0 0 auto;min-height:96px;display:flex;align-items:center;gap:18px;padding:0 22px;
+  background:var(--paper-2);border-top:2px solid var(--line-2)}
+.a1open{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:7px}
+.a1open .micro{font-family:var(--fm);font-size:11px;letter-spacing:.08em;color:var(--faint)}
+.a1list{display:flex;gap:10px;flex-wrap:wrap}
+
+/* A1 cards carry a standing instruction, because pressing one does something
+   different here than it does on the A2 grid. */
+.chcard.a1 .reportcue{font-family:var(--fb);font-weight:700;font-size:11px;letter-spacing:.07em;
+  color:var(--muted);text-align:center;padding-top:2px}
+.chcard.a1:hover .reportcue{color:var(--red)}
+/* A reported channel pulses until someone claims it. This is the one piece of
+   ambient motion in the product: it marks work that has been handed over and
+   not yet picked up, on both the view that sent it and the view that has to
+   answer it. It stops the moment somebody claims the report. */
+.chcard.reported{border-color:var(--warn);box-shadow:0 3px 0 var(--warn-700);
+  animation:reportpulse 1.9s ease-in-out infinite}
+@keyframes reportpulse{
+  0%,100%{box-shadow:0 3px 0 var(--warn-700), 0 0 0 0 var(--warn-soft)}
+  55%{box-shadow:0 3px 0 var(--warn-700), 0 0 0 7px var(--warn-soft)}
+}
+.chcard.reported.claimed{animation:none;border-color:var(--card-outline);box-shadow:var(--sh-card)}
+
+/* ============================================================
+   REPORT SHEET — the A1's whole job in one thumb.
+   Press a channel, press what is wrong. That is the report.
+   ============================================================ */
+.report{position:absolute;inset:0;z-index:12;display:none;background:var(--scrim)}
+.report.open{display:block}
+.rsheet{position:absolute;left:0;right:0;bottom:0;background:var(--paper);
+  border-top:2px solid var(--card-outline);border-radius:var(--r-lg) var(--r-lg) 0 0;
+  padding:18px 22px calc(22px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:16px;
+  max-height:100%;overflow:auto;animation:rup .22s cubic-bezier(.16,1,.3,1)}
+@keyframes rup{from{transform:translateY(14px)}to{transform:none}}
+.rhead{display:flex;align-items:center;gap:14px}
+.rhead .shot{width:72px;flex:none;cursor:default}
+.rhead .t{flex:1 1 auto;min-width:0}
+.rhead h3{font-family:var(--fd);font-weight:800;font-size:22px;letter-spacing:-.02em}
+.rhead .sub{color:var(--muted);font-size:13.5px}
+.rq{font-family:var(--fd);font-weight:800;font-size:17px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+[data-view=ipad-p] .fgrid{grid-template-columns:1fr}
+.fbtn{min-height:72px;border-radius:var(--r);border:2px solid var(--card-outline);background:var(--card);
+  box-shadow:var(--sh-card);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+  gap:2px;padding:0 18px;text-align:left;transition:transform .12s,box-shadow .12s,background .12s}
+.fbtn b{font-family:var(--fd);font-weight:800;font-size:16px;letter-spacing:-.01em}
+.fbtn span{font-size:12.5px;color:var(--muted)}
+.fbtn{position:relative;padding-right:52px}
+.fbtn:hover{transform:translateY(-2px);box-shadow:var(--sh-hover)}
+.fbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line-2)}
+/* selected, not pressed: an A1 often hears more than one thing at once */
+.fbtn .tick{position:absolute;right:16px;top:50%;transform:translateY(-50%);
+  width:26px;height:26px;border-radius:50%;border:2px solid var(--line-2);
+  display:grid;place-items:center;color:transparent;transition:background .12s,border-color .12s,color .12s}
+.fbtn .tick svg{width:14px;height:14px}
+.fbtn[aria-pressed=true]{background:var(--red);border-color:var(--red-700);color:#fff;
+  box-shadow:0 3px 0 var(--red-700)}
+.fbtn[aria-pressed=true] span{color:rgba(255,255,255,.82)}
+.fbtn[aria-pressed=true] .tick{background:#fff;border-color:#fff;color:var(--red)}
+.rfoot{position:sticky;bottom:0;background:var(--paper);padding-top:4px}
+.rfoot .btn[disabled]{opacity:.4;pointer-events:none}
+.rfoot{display:flex;gap:12px;align-items:center}
+.rfoot .btn{flex:1 1 auto;min-height:56px}
+
+/* what the A1 sees after pressing: it is already sent */
+.rsent{display:flex;flex-direction:column;gap:16px;align-items:flex-start}
+.rsent .big{font-family:var(--fd);font-weight:800;font-size:26px;letter-spacing:-.02em;color:var(--ok)}
+.rsent .who3{font-size:14px;color:var(--ink-2)}
+.rsent .row3{display:flex;gap:12px;width:100%;flex-wrap:wrap}
+.rsent .row3 .btn{flex:1 1 180px;min-height:56px}
+
+/* ---------- exceptions sheet ---------- */
+.sheet{position:absolute;top:0;right:0;bottom:96px;width:378px;background:var(--card);
+  border-left:2px solid var(--card-outline);padding:20px;display:flex;flex-direction:column;gap:12px;overflow:auto;
+  transform:translateX(102%);transition:transform .22s cubic-bezier(.16,1,.3,1);z-index:6}
+.sheet.open{transform:none}
+[data-view=ipad-p] .sheet{width:100%}
+.sheet h3{font-size:19px}
+.sheet .close{align-self:flex-start}
+.exrow{border:2px solid var(--card-outline);border-radius:var(--r);background:var(--card);box-shadow:var(--sh-card);
+  padding:13px;display:flex;flex-direction:column;gap:8px;text-align:left;transition:transform .12s,box-shadow .12s}
+.exrow:hover{transform:translateY(-2px);box-shadow:var(--sh-hover)}
+.exrow:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line-2)}
+.exrow .t{font-family:var(--fd);font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px}
+.exrow .m{font-size:13px;color:var(--muted)}
+.exrow .r{display:flex;gap:8px}
+.notecard{border-left:3px solid var(--warn);padding-left:12px}
+.notecard p{font-family:var(--fh);font-weight:700;font-size:16px;color:var(--ink-2);line-height:1.35}
+.notecard .by{font-size:11px;color:var(--faint);font-family:var(--fb);font-weight:600;margin-top:4px}
+
+.surface{display:none;flex-direction:column;flex:1 1 auto;min-height:0}
+[data-surface=a2] #s-a2,[data-surface=a1] #s-a1,
+[data-surface=check] #s-check,[data-surface=replay] #s-replay{display:flex}
+@media (prefers-reduced-motion:reduce){*{transition-duration:0ms!important;animation-duration:0ms!important}}
+</style>
+</head>
+<body>
+<div class="specbar">
+  <div class="t">A2 Monitor <span>— surfaces on the RVLT design language</span></div>
+  <div class="seg" role="group" aria-label="Surface">
+    <button data-s="a2" aria-pressed="true">A2 grid</button>
+    <button data-s="a1" aria-pressed="false">A1 mix</button>
+    <button data-s="check" aria-pressed="false">Mic check</button>
+    <button data-s="replay" aria-pressed="false">Replay</button>
+  </div>
+  <div class="seg" role="group" aria-label="Viewport">
+    <button data-v="fit" aria-pressed="true">Fit window</button>
+    <button data-v="desktop" aria-pressed="false">Desktop</button>
+    <button data-v="ipad-l" aria-pressed="false">iPad landscape</button>
+    <button data-v="ipad-p" aria-pressed="false">iPad portrait</button>
+  </div>
+  <div class="seg" role="group" aria-label="Theme">
+    <button data-t="light" aria-pressed="true">Paper</button>
+    <button data-t="dark" aria-pressed="false">Dark</button>
+  </div>
+  <span class="note">Fabricated data — not a real production.</span>
+</div>
+
+<div class="stage"><div class="device" id="device">
+
+  <!-- ===================== A2 GRID ===================== -->
+  <section class="surface" id="s-a2">
+    <header class="top">
+      <div class="brand"><span class="mark">▲</span> A2 <span class="wm">Monitor</span></div>
+      <div class="show"><b>The Winter Circus</b><span>Northgate Playhouse · Preview 3</span></div>
+      <div class="cue">
+        <div class="blk"><span class="k">Node</span><span class="v" style="color:var(--ok)">64 ch · 48k</span></div>
+        <div class="blk"><span class="k">You</span><span class="v">SL · J. Marsh</span></div>
+        <span class="badge b-rep" title="Cue tracking is off. Turn it on in Manager if you run a cue list.">
+          <i class="dot"></i>No cue source</span>
+      </div>
+      <div class="right">
+        <button class="count out" data-ackcount data-sheet>3 to acknowledge</button>
+        <button class="count warn">2 to do</button>
+        <button class="count">3 unchecked</button>
+      </div>
+    </header>
+
+    <div class="filters" role="group" aria-label="Filters">
+      <span class="lbl">Showing</span>
+      <button class="chipf" aria-pressed="true">All channels <span class="n">64</span></button>
+      <button class="chipf" aria-pressed="false">Needs someone <span class="n">4</span></button>
+      <button class="chipf" aria-pressed="false">Wireless <span class="n">48</span></button>
+      <button class="chipf" aria-pressed="false">Wired <span class="n">16</span></button>
+      <button class="chipf" aria-pressed="false">My zone <span class="n">9</span></button>
+      <button class="chipf" aria-pressed="false">Unchecked <span class="n">3</span></button>
+      <button class="chipf" aria-pressed="false">Spares <span class="n">6</span></button>
+      <button class="chipf" aria-pressed="false">Rack A <span class="n">32</span></button>
+      <button class="chipf" aria-pressed="false">Rack B <span class="n">32</span></button>
+    </div>
+
+    <main class="body">
+      <div class="gridhead">
+        <h2>All channels</h2>
+        <span class="sub">64 sources · press a card to listen · the expand button opens detail</span>
+      </div>
+      <div class="grid" id="a2grid"></div>
+    </main>
+
+    <section class="detail" id="detail" aria-label="Channel detail">
+      <div class="dhead">
+        <div class="shot" id="d-shot"></div>
+        <div class="t">
+          <h2 id="d-name">Eleanor Vance</h2>
+          <div class="sub" id="d-sub">Marguerite Hale · principal · RX 4 · ant B · in 27</div>
+          <div id="d-status" style="margin-top:9px;max-width:420px"></div>
+        </div>
+        <div class="right">
+          <button class="btn btn-line">Run a check</button>
+          <button class="btn btn-line">Prepare spare</button>
+          <button class="btn btn-primary">Swap…</button>
+          <button class="btn btn-line" data-detailclose>Close</button>
+        </div>
+      </div>
+      <div class="dbody" id="d-body"></div>
+    </section>
+
+    <aside class="sheet" id="sheet" aria-label="Show-wide exceptions">
+      <button class="btn btn-line close" data-sheet>Close</button>
+      <h3>Needs someone</h3>
+      <button class="exrow">
+        <div class="t"><span class="badge b-out"><i class="dot"></i>Critical</span> 27 · Eleanor Vance</div>
+        <div class="m">RF quality collapsed 0:40 ago. Level is normal. <b>Cause not observed.</b></div>
+        <div class="r"><span class="btn btn-primary">Listen</span><span class="btn btn-line">Claim</span></div>
+      </button>
+      <button class="exrow">
+        <div class="t"><span class="badge b-warn"><i class="dot"></i>Battery</span> 12 · Dov Halpern</div>
+        <div class="m">0:41 left — the shortest on the rig by some way.</div>
+        <div class="r"><span class="btn btn-primary">Listen</span><span class="btn btn-line">Make a task</span></div>
+      </button>
+      <button class="exrow">
+        <div class="t"><span class="badge b-rep"><i class="dot"></i>STALE</span> Rack B</div>
+        <div class="m">No telemetry for 42s. Eight sources are showing last-known RF.</div>
+      </button>
+      <div class="notecard">
+        <p>tape lifting on Eleanor again — 3rd time this week, ask wardrobe for a different anchor</p>
+        <div class="by">J. Marsh · 19:42</div>
+      </div>
+    </aside>
+
+    <footer class="nowbar" id="nowbar" data-open="false">
+
+      <div class="graphs" id="graphs">
+
+        <div class="glane">
+          <span class="k">Audio</span>
+          <div class="plot"><svg viewBox="0 0 900 60" preserveAspectRatio="none" data-g="audio"></svg><span class="ah"></span><span class="ph"></span></div>
+          <span class="v" id="g-audio">−18.2<small>dBFS peak</small></span>
+        </div>
+        <div class="glane">
+          <span class="k">RF level</span>
+          <div class="plot"><svg viewBox="0 0 900 60" preserveAspectRatio="none" data-g="rf"></svg><span class="ah"></span><span class="ph"></span></div>
+          <span class="v" id="g-rf">−62<small>dBm</small></span>
+        </div>
+        <div class="glane">
+          <span class="k">Link quality</span>
+          <div class="plot">
+            <svg viewBox="0 0 900 60" preserveAspectRatio="none" data-g="q"></svg>
+            <span class="ev" style="left:80%;color:var(--t-out)">✕</span>
+            <span class="ah"></span><span class="ph"></span>
+          </div>
+          <span class="v" id="g-q">31<small>%</small></span>
+        </div>
+        <div class="glane">
+          <span class="k">Battery</span>
+          <div class="plot"><svg viewBox="0 0 900 60" preserveAspectRatio="none" data-g="batt"></svg><span class="ah"></span><span class="ph"></span></div>
+          <span class="v" id="g-batt">2:14<small>remaining</small></span>
+        </div>
+        <div class="glane" style="flex:0 0 22px">
+          <span class="k"></span>
+          <div class="plot" id="axis" style="border:0;position:relative">
+            <span data-t="1" style="position:absolute;left:0;top:2px;font-family:var(--fm);font-size:11px;color:var(--faint)">−30:00</span>
+            <span data-t="0.66" style="position:absolute;left:33%;top:2px;font-family:var(--fm);font-size:11px;color:var(--faint)">−20:00</span>
+            <span data-t="0.33" style="position:absolute;left:66%;top:2px;font-family:var(--fm);font-size:11px;color:var(--faint)">−10:00</span>
+            <span style="position:absolute;right:0;top:2px;font-family:var(--fm);font-size:11px;color:var(--red);font-weight:600">Live</span>
+            <span class="winsel" role="group" aria-label="Replay window">
+              <button data-win="10" aria-pressed="false">10m</button>
+              <button data-win="30" aria-pressed="true">30m</button>
+              <button data-win="60" aria-pressed="false">60m</button>
+            </span>
+          </div>
+          <span class="v"></span>
+        </div>
+      </div>
+
+      <div class="seekrow">
+        <span class="tcode" id="t-pos">−00:00</span>
+        <div class="seek" id="seek">
+          <div class="rail"></div>
+          <div class="done" style="width:100%"></div>
+          <div class="marks">
+            <i style="left:80%;background:var(--t-out)" title="link quality dropped"></i>
+            <i style="left:88%;background:var(--warn)" title="your note"></i>
+          </div>
+          <div class="knob" style="left:100%"></div>
+        </div>
+        <button class="tcode right live" id="t-end">Live</button>
+      </div>
+
+      <div class="player">
+        <div class="art" id="np-pic"></div>
+        <div class="pmeta">
+          <b id="np-name">Eleanor Vance</b>
+          <span class="sub" id="np-rx">RX 4 · ant B · in 27</span>
+          <span class="badge b-live" style="align-self:flex-start"><i class="dot live-dot"></i>Listening</span>
+        </div>
+
+        <div class="tbtns">
+          <button class="tbtn" aria-label="Previous channel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 20 9 12l10-8zM5 19V5"/></svg></button>
+          <button class="tbtn" aria-label="Back ten seconds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4v6h6"/><path d="M3.5 10a9 9 0 1 1 1.6 6"/></svg></button>
+          <button class="tbtn main" aria-label="Currently live — press to pause and enter replay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14"/><path d="M6.5 8.5v7M17.5 8.5v7"/></svg></button>
+          <button class="tbtn" aria-label="Forward ten seconds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4v6h-6"/><path d="M20.5 10a9 9 0 1 0-1.6 6"/></svg></button>
+          <button class="tbtn" aria-label="Next channel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4l10 8-10 8zM19 5v14"/></svg></button>
+        </div>
+
+
+        <button class="btn btn-line savebtn" id="savebtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/></svg><span id="savelbl">Save replay</span></button>
+
+        <div class="vsep"></div>
+        <div class="vol">
+          <button class="tbtn" id="mutebtn" aria-label="Mute">M</button>
+          <span class="v mono">−18</span>
+          <div class="bars" id="outbars"></div>
+        </div>
+        <div class="vsep"></div>
+        <button class="btn btn-line" style="flex:none">Groups</button>
+        <button class="expand" id="expand" aria-label="Show the full timeline" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button>
+      </div>
+
+      <div class="saveconfirm" id="saveconfirm" role="dialog" aria-label="Save replay">
+        <h4>Save this replay?</h4>
+        <dl>
+          <dt>channel</dt><dd id="sv-ch">27 · Eleanor Vance</dd>
+          <dt>from</dt><dd id="sv-from">21:04:06</dd>
+          <dt>includes</dt><dd>audio, RF, battery, events</dd>
+        </dl>
+        <div class="svwin">
+          <div class="svrow">
+            <span class="k">Start</span>
+            <button class="tbtn sm" data-win-adj="in,-5">−5s</button>
+            <button class="tbtn sm" data-win-adj="in,5">+5s</button>
+            <span class="v mono" id="sv-in">−30s</span>
+          </div>
+          <div class="svrow">
+            <span class="k">End</span>
+            <button class="tbtn sm" data-win-adj="out,-5">−5s</button>
+            <button class="tbtn sm" data-win-adj="out,5">+5s</button>
+            <span class="v mono" id="sv-out">+30s</span>
+          </div>
+          <div class="svlen">Clip length <b class="mono" id="sv-len">60s</b></div>
+        </div>
+        <p style="font-size:12.5px;color:var(--muted)">This writes audio off the appliance.
+          Marking a moment does not — use <b>Mark</b> if you only need to find it again later.</p>
+        <div class="row">
+          <button class="btn btn-line" data-savecancel>Cancel</button>
+          <button class="btn btn-primary" data-savecancel>Save</button>
+        </div>
+      </div>
+    </footer>
+  </section>
+
+  <!-- ===================== A1 MIX ===================== -->
+  <section class="surface" id="s-a1">
+    <header class="top">
+      <div class="brand"><span class="mark">▲</span> A2 <span class="wm">Monitor</span></div>
+      <div class="show"><b>The Winter Circus</b><span>A1 · mix confidence</span></div>
+      <div class="cue">
+        <div class="blk"><span class="k">Node</span><span class="v" style="color:var(--ok)">64 ch · 48k</span></div>
+        <div class="blk"><span class="k">Clock</span><span class="v" style="color:var(--ok)">locked</span></div>
+      </div>
+      <div class="right">
+        <button class="count out" data-sheet>1 critical</button>
+        <button class="count">2 requests</button>
+      </div>
+    </header>
+
+    <div class="filters" role="group" aria-label="Filters">
+      <span class="lbl">Showing</span>
+      <button class="chipf" aria-pressed="true">All channels <span class="n">64</span></button>
+      <button class="chipf" aria-pressed="false">Needs someone <span class="n">4</span></button>
+      <button class="chipf" aria-pressed="false">Being worked <span class="n">2</span></button>
+      <button class="chipf" aria-pressed="false">Vocals <span class="n">24</span></button>
+    </div>
+
+    <main class="body">
+      <div class="exrow" style="border-color:var(--t-out);margin-bottom:18px;flex-direction:row;align-items:center;gap:14px">
+        <span class="badge b-out"><i class="dot live-dot"></i>Critical</span>
+        <div style="flex:1 1 auto">
+          <div class="t" style="font-size:16px">27 · Eleanor Vance</div>
+          <div class="m">RF quality collapsed. J. Marsh is on it — 0:40 so far.</div>
+        </div>
+        <span class="btn btn-line">Follow</span>
+      </div>
+      <div class="gridhead"><h2>All channels</h2><span class="sub">press a card to report a fault · the expand button opens detail</span></div>
+      <div class="grid" id="a1grid"></div>
+    </main>
+
+    <aside class="sheet" aria-label="Critical exceptions">
+      <button class="btn btn-line close" data-sheet>Close</button>
+      <h3>Critical · whole show</h3>
+      <button class="exrow">
+        <div class="t"><span class="badge b-out"><i class="dot"></i>RF</span> 27 · Eleanor Vance</div>
+        <div class="m">J. Marsh · investigating · 0:40</div>
+      </button>
+      <button class="exrow">
+        <div class="t"><span class="badge b-rep"><i class="dot"></i>OFFSTAGE</span> 51 · Ines Okonjo</div>
+        <div class="m">Telemetry stale 42s. Shown here although not on stage.</div>
+      </button>
+    </aside>
+
+    <footer class="a1bar">
+      <div class="a1open">
+        <span class="micro">Your open reports</span>
+        <div class="a1list">
+          <span class="badge b-warn"><i class="dot"></i>27 Eleanor · J. Marsh is on it</span>
+          <span class="badge b-rep"><i class="dot"></i>33 Ines · A. Dunne claimed</span>
+        </div>
+      </div>
+      <button class="btn btn-line lg" style="flex:none">See all</button>
+    </footer>
+
+    <div class="report" id="report" role="dialog" aria-label="Report a fault">
+      <div class="rsheet" id="rsheet"></div>
+    </div>
+  </section>
+
+  <!-- ===================== MIC CHECK ===================== -->
+  <section class="surface" id="s-check">
+    <header class="top">
+      <div class="brand"><span class="mark">▲</span> Mic <span class="wm">check</span></div>
+      <div class="show"><b>SL wing track</b><span>J. Marsh · started 18:31</span></div>
+      <div class="cue"><div class="blk"><span class="k">Position</span><span class="v">7 of 22</span></div></div>
+      <div class="right">
+        <button class="count">Left-handed</button>
+        <button class="count">Pause</button>
+        <button class="count" data-goto="a2">Exit</button>
+      </div>
+    </header>
+
+    <main class="body" style="display:flex;gap:26px">
+      <div style="flex:1 1 46%;display:flex;flex-direction:column;gap:16px">
+        <div class="chcard" style="cursor:default;gap:14px">
+          <div class="shot" data-static-face style="aspect-ratio:4/3"></div>
+          <div class="who"><div class="nm" style="font-size:26px">Eleanor Vance</div><div class="rl">Marguerite Hale · principal</div></div>
+          <div class="tags">
+            <span class="badge b-warn"><i class="dot"></i>Quick change at cue 52</span>
+            <span class="badge b-rep"><i class="dot"></i>Spare not prepared</span>
+          </div>
+          <dl style="display:grid;grid-template-columns:70px 1fr;gap:3px 10px;font-family:var(--fm);font-size:12px">
+            <dt style="color:var(--faint)">receiver</dt><dd>RX 4 · ant B · in 27</dd>
+            <dt style="color:var(--faint)">pack</dt><dd>A2-114</dd>
+            <dt style="color:var(--faint)">element</dt><dd>MKE-1 beige · E-221</dd>
+          </dl>
+          <div class="notecard">
+            <p>tape lifting again, 3rd time this week — try the anchor under the wig cap</p>
+            <div class="by">J. Marsh · Tuesday</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:1 1 54%;display:flex;flex-direction:column;gap:14px">
+        <div>
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px">
+            <h2 style="font-size:22px">3 · Captured audio heard</h2>
+            <span class="badge b-rep"><i class="dot"></i>Waiting on A1 · on the console</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+            <button class="btn btn-line" style="height:76px;font-size:16px" data-verdict>Pass</button>
+            <button class="btn btn-line" style="height:76px;font-size:16px" data-verdict>Fail</button>
+            <button class="btn btn-line" style="height:76px;font-size:16px" data-verdict>Recheck</button>
+          </div>
+          <p style="font-size:13px;color:var(--muted);margin-top:8px">The A1 checks this one
+            through PFL at the desk and taps pass or fail there. It stays outstanding here;
+            it does not block the rest of the check.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:2px;margin-top:4px" id="mclist"></div>
+      </div>
+    </main>
+
+    <footer class="nowbar" data-open="false" style="height:96px">
+      <div class="nowrow">
+        <button class="btn btn-line lg">Previous</button>
+        <button class="btn btn-line lg">Skip — absent, costumed or blocked</button>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
+          <span class="badge b-warn">2 exceptions held</span>
+          <div style="width:190px;height:10px;border-radius:99px;background:var(--line-2);overflow:hidden">
+            <i style="display:block;height:100%;width:32%;background:var(--ok)"></i></div>
+          <b class="mono" style="font-size:17px">7 / 22</b>
+        </div>
+      </div>
+    </footer>
+  </section>
+
+  <!-- ===================== REPLAY ===================== -->
+  <section class="surface" id="s-replay">
+    <header class="top" style="background:var(--purple-soft);border-bottom-color:var(--purple)">
+      <div class="brand"><span class="mark" style="color:var(--purple)">⟲</span> <span class="wm">Replay</span></div>
+      <div class="show"><b class="mono" style="font-size:19px">−4m 12s</b><span>epoch 3 · 21:04:18 · incident #114</span></div>
+      <div class="cue">
+        <div class="blk"><span class="k">Live now</span><span class="v" style="color:var(--t-out)">27 · RF fault</span></div>
+      </div>
+      <div class="right">
+        <button class="count out">Go to live fault</button>
+        <button class="btn btn-primary lg" data-goto="a2">Back to live</button>
+      </div>
+    </header>
+
+    <main class="body" style="display:flex;gap:22px">
+      <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:16px">
+        <div class="chcard" style="cursor:default;max-width:330px;border-color:var(--purple);box-shadow:0 3px 0 var(--purple)">
+          <div class="shot" data-static-face>
+            <span class="no">27</span>
+            <span class="listening-tag badge b-replay"><i class="dot"></i>Historical</span>
+            <div class="meter"><svg viewBox="0 0 240 26" preserveAspectRatio="none" data-np="replayaf"></svg></div>
+          </div>
+          <div class="who"><div class="nm">Eleanor Vance</div><div class="rl">Marguerite Hale · 21:04:18</div></div>
+        </div>
+
+        <div class="np-tl" style="gap:7px">
+          <div class="lane"><span class="k">Audio</span><div class="t"><svg viewBox="0 0 900 32" preserveAspectRatio="none" data-np="raudio"></svg></div><span class="v">−18.2 dBFS</span></div>
+          <div class="lane"><span class="k">RF level</span><div class="t"><svg viewBox="0 0 900 32" preserveAspectRatio="none" data-np="rrf"></svg></div><span class="v">−62 dBm</span></div>
+          <div class="lane"><span class="k">Quality</span><div class="t"><svg viewBox="0 0 900 32" preserveAspectRatio="none" data-np="rq"></svg></div><span class="v">31 %</span></div>
+          <div class="lane"><span class="k">Events</span><div class="t cuelane">
+            <span class="ev" style="left:53%;color:var(--t-out)">■</span>
+            <span class="ev" style="left:59%;color:var(--warn)">▲</span>
+            <span class="ev hand" style="left:66%;color:var(--warn)">✎</span>
+            <span class="ev" style="left:71%;color:var(--ink-2)">⇄</span>
+          </div><span class="v">21:04</span></div>
+          <div class="scrubber">
+            <span class="k"></span>
+            <div class="track"><div class="fill" style="width:86%;background:var(--purple)"></div>
+              <div class="knob" style="left:86%;border-color:var(--purple)">−4m</div></div>
+            <span class="v"></span>
+          </div>
+          <div class="ticks"><span>−30m</span><span>−20m</span><span>−10m</span><span>−5m</span><span>now</span></div>
+          <div style="display:flex;gap:10px;margin-top:10px">
+            <button class="btn btn-line">−10s</button>
+            <button class="btn btn-line">Play</button>
+            <button class="btn btn-line">+10s</button>
+            <button class="btn btn-line">Mark</button>
+            <button class="btn btn-line">Export…</button>
+          </div>
+        </div>
+      </div>
+
+      <aside style="flex:0 0 320px;display:flex;flex-direction:column;gap:12px">
+        <h3 style="font-size:19px">Incident #114</h3>
+        <div class="tags">
+          <span class="badge b-warn"><i class="dot"></i>Investigating</span>
+          <span class="badge b-rep">J. Marsh has it</span>
+        </div>
+        <div class="exrow">
+          <div class="t"><span class="badge b-out">Observed</span></div>
+          <div class="m mono" style="font-size:11.5px">21:04:18 · quality 92% → 31%, RSSI −61 → −62 dBm</div>
+        </div>
+        <div class="exrow" style="border-style:dashed">
+          <div class="t"><span class="badge b-warn">Likely — not confirmed</span></div>
+          <div class="m">Interference in the SL zone. Level held while quality fell.</div>
+        </div>
+        <div class="notecard">
+          <p>swapped to A2-119, quality back to 90 — old pack bagged for RF to look at</p>
+          <div class="by">J. Marsh · 21:09</div>
+        </div>
+        <div style="margin-top:4px">
+          <div style="font-size:12px;color:var(--faint);margin-bottom:8px">Resolve with confidence</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <button class="btn btn-line" style="padding:9px 6px;font-size:12px">Observed</button>
+            <button class="btn btn-line" style="padding:9px 6px;font-size:12px">Likely</button>
+            <button class="btn btn-line" style="padding:9px 6px;font-size:12px">Unconfirmed</button>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </section>
+
+</div></div>
+
+<script>
+(() => {
+"use strict";
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const html=document.documentElement;
+
+/* Fabricated show data. Not a claim about any real production. */
+const AV=["--blue","--green","--amber","--purple","--coral","--teal","--pink","--lime"];
+const CH=[
+ {no:27,g:0,nm:"Eleanor Vance",rl:"Marguerite Hale",af:-18.2,st:"on",
+  s:{rf:"bad",audio:"ok",batt:"ok",chk:"warn"},
+  alert:{kind:"RF drop",what:"Link quality fell from 92% to 31%. RF level did not move, so this is not range.",when:"21:04:18 · 0:40 ago"},
+  say:["<b>RF quality collapsed</b> 0:40 ago. Level normal.","crit"],crit:true,live:true},
+ {no:12,g:1,nm:"Dov Halpern",rl:"Auguste Renaud",af:-12.4,st:"on",
+  s:{rf:"ok",audio:"ok",batt:"warn",chk:"ok"},
+  alert:{kind:"Battery low",what:"41 minutes left. Below the one-hour threshold for this show.",when:"20:58:10 · 6:48 ago"},
+  say:["<b>Battery 0:41</b> left. Shortest on the rig.","warn"]},
+ {no:33,g:2,nm:"Ines Okonjo",rl:"Vera Castellan",af:-24.0,st:"on",
+  s:{rf:"ok",audio:"ok",batt:"ok",chk:"ok"},
+  say:["Checked 18:55. Nothing outstanding.",""]},
+ {no:41,g:3,nm:"Tobias Renn",rl:"Ensemble 4",af:null,st:"silent",
+  s:{rf:"ok",audio:"unk",batt:"ok",chk:"ok"},
+  say:["No audio for 6m. Silence alerts are off for this channel.",""]},
+ {no:19,g:4,nm:"Priya Nandakumar",rl:"Swing · covering Marguerite",af:-31.5,st:"on",
+  s:{rf:"ok",audio:"ok",batt:"ok",chk:"bad"},
+  say:["<b>Not verified</b> since the 17:12 swap.","warn"]},
+ {no:51,g:5,nm:"Marcus Bell",rl:"Ensemble 9",af:-20.1,st:"stale",
+  s:{rf:"unk",audio:"ok",batt:"unk",chk:"ok"},
+  say:["Rack B has gone quiet. Showing last-known RF.",""]},
+ {no:8,g:6,nm:"Reed Kovac",rl:"Bandleader · keys vox",af:-9.8,st:"on",
+  s:{rf:"na",audio:"ok",batt:"na",chk:"ok"},
+  say:["Wired input. Checked 18:41.",""]},
+ {no:36,g:7,nm:"Anneke Vos",rl:"Célestine",af:null,st:"mute",
+  s:{rf:"ok",audio:"bad",batt:"ok",chk:"ok"},
+  alert:{kind:"Audio drop",what:"Muted at the pack. No audio for 3 minutes and nobody has touched it.",when:"21:01:52 · 3:06 ago"},
+  say:["<b>Muted at the pack</b> for 3m. Nobody has touched it.","crit"],crit:true},
+ {no:22,g:1,nm:"Halim Ferrer",rl:"Ensemble 2",af:-26.7,st:"on",
+  s:{rf:"ok",audio:"ok",batt:"ok",chk:"ok"},
+  say:["Checked 18:48. Nothing outstanding.",""]},
+ {no:14,g:0,nm:"Solomon Adeyemi",rl:"Le Directeur",af:-15.9,st:"on",
+  s:{rf:"warn",audio:"ok",batt:"ok",chk:"ok"},
+  say:["<em>Likely</em> interference in SL. Quality fell, level did not.","warn"]},
+ {no:45,g:5,nm:"Stage radio 1",rl:"DSM · comms tap",af:-38.0,st:"on",
+  s:{rf:"ok",audio:"ok",batt:"ok",chk:"ok"},
+  say:["Nothing outstanding.",""]},
+ {no:60,g:3,nm:"Juno Park",rl:"Swing · unassigned",af:null,st:"silent",
+  s:{rf:"ok",audio:"unk",batt:"ok",chk:"ok"},
+  say:["Prepared spare. Verified and ready to swap in.",""]},
+];
+
+/* A stand-in for a real approved headshot: the exact frame, crop and weight a
+   photograph gets. Only the pixels are fabricated, because a design file must
+   not ship pictures of real people. Manager's managed image pipeline supplies
+   the real ones. */
+function face(ch){
+  const c=`var(${AV[ch.g%8]})`, y=30+(ch.no%6), x=40+((ch.no%5)-2)*2;
+  return `<svg class="face" viewBox="0 0 80 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect width="80" height="100" fill="color-mix(in srgb, ${c} 16%, var(--paper-2))"/>
+    <ellipse cx="${x}" cy="${y}" rx="15" ry="18" fill="color-mix(in srgb, ${c} 38%, var(--paper-2))"/>
+    <path d="M${x} ${y+20} c-19 0-30 13-33 34 h66 c-3-21-14-34-33-34 z"
+      fill="color-mix(in srgb, ${c} 30%, var(--paper-2))"/></svg>`;
+}
+
+/* traces: a shape, not a chart. Redrawn at the data rate, never transitioned. */
+const seeds=new Map();
+function ser(k,n,b,sp){ if(!seeds.has(k)) seeds.set(k,Array.from({length:n},()=>b+(Math.random()-.5)*sp)); return seeds.get(k); }
+function adv(k,b,sp){ const a=seeds.get(k); if(a){a.shift();a.push(b+(Math.random()-.5)*sp);} }
+function bars(a,w,h,c){ const n=a.length,bw=w/n;
+  return a.map((v,i)=>{const hh=Math.max(1.5,Math.min(1,Math.max(0,v))*h);
+  return `<rect x="${(i*bw).toFixed(2)}" y="${(h-hh).toFixed(2)}" width="${(bw*.6).toFixed(2)}" height="${hh.toFixed(2)}" fill="${c}"/>`;}).join(""); }
+function line(a,w,h,c){ const n=a.length;
+  const p=a.map((v,i)=>`${(i*(w/(n-1))).toFixed(1)},${(h-Math.min(1,Math.max(0,v))*h).toFixed(1)}`).join(" ");
+  return `<polyline points="${p}" fill="none" stroke="${c}" stroke-width="2.5" stroke-linejoin="round"/>`; }
+const C={ok:"var(--ok)",warn:"var(--warn)",out:"var(--t-out)",rep:"var(--rep)",rp:"var(--purple)",cream:"#F5EFE2"};
+
+function afTrace(ch,w=240,h=26){
+  if(ch.st==="mute") return `<line x1="0" y1="${h/2}" x2="${w}" y2="${h/2}" stroke="${C.out}" stroke-width="2.5"/>`;
+  if(ch.st==="silent") return bars(ser("af"+ch.no,44,.07,.05),w,h,C.cream);
+  return bars(ser("af"+ch.no,44,.5,.8),w,h,ch.st==="stale"?C.rep:C.ok);
+}
+
+/* One glyph per verdict. Drawn, not typed, so they hold their weight at 12px. */
+const GLYPH={
+  ok:  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.4 12 13 4.5"/></svg>',
+  bad: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
+  warn:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.4 15 14H1z"/><path d="M8 6.6v3.2"/><path d="M8 11.9h.01" stroke-width="2.6"/></svg>',
+  unk: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 8h8"/></svg>',
+  na:  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".5"><path d="M4.5 11.5 11.5 4.5"/></svg>'
+};
+const DIMS=[["rf","RF","RF link"],["audio","Audio","Audio"],["batt","Battery","Battery"],["chk","Check","Mic check"]];
+const VERDICT={ok:"good",bad:"fault",warn:"caution",unk:"unknown",na:"not applicable"};
+function statusStrip(ch){
+  return `<div class="status" role="group" aria-label="Status by dimension">` +
+    DIMS.map(([k,label,full])=>{
+      const v = (ch.s && ch.s[k]) || "unk";
+      const cls = v==="na" ? "unk" : v;
+      return `<div class="cell ${cls}" title="${full}: ${VERDICT[v]}">
+        <span class="g" aria-hidden="true">${GLYPH[v]}</span>
+        <span class="lb">${label}</span>
+        <span class="sr">${full}: ${VERDICT[v]}</span>
+      </div>`;
+    }).join("") + `</div>`;
+}
+
+const ALERTICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 22 20H2z"/><path d="M12 9.5v4.5"/><path d="M12 17h.01"/></svg>';
+/* the fault says what it is in one picture and two words. no explanation,
+   no timestamp, no actions beyond acknowledging — the operator troubleshoots. */
+const BIGICON={
+ rf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9.5a16 16 0 0 1 19 0"/><path d="M5.5 13a11.5 11.5 0 0 1 13 0"/><path d="M8.5 16.4a7 7 0 0 1 7 0"/><circle cx="12" cy="20" r="1.1" fill="currentColor"/></svg>',
+ audio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>',
+ batt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="10" rx="2.5"/><path d="M21 10.5v3"/><path d="M5.5 10.5v3"/></svg>'};
+const ALERTKIND={"RF drop":["rf","Low RF"],"Audio drop":["audio","No audio"],"Battery low":["batt","Low battery"]};
+/* How long an unacknowledged alert holds the card. Production policy, per
+   alert severity. The overlay expires; the alert does not. */
+let ALERT_OVERLAY_SECONDS = 300;
+function alertOverlay(ch,i){
+  if(!ch.alert || ch.acked) return "";
+  const [icon,label]=ALERTKIND[ch.alert.kind]||["rf",ch.alert.kind];
+  const warn = ch.alert.kind==="Battery low";
+  /* critical holds the card until somebody acknowledges it; the absence of a
+     countdown is the signal that this one is not going away on its own */
+  const critical = ch.alert.kind !== "Battery low";
+  const dur = ALERT_OVERLAY_SECONDS;
+  /* the overlay itself listens, so an alert never stands between an operator
+     and the audio they need to hear to judge it */
+  return `<button class="alertover ${warn?'warn':''}" data-ack="${i}" style="--dur:${dur}s"
+      aria-label="${ch.alert.kind} on ${ch.nm}, channel ${ch.no}. Press to acknowledge and listen.">
+    <span class="mark">
+      <span class="glyph" aria-hidden="true">${BIGICON[icon]}</span>
+      <span class="kind">${label}</span>
+      <span class="press">Press to acknowledge</span>
+    </span>
+    ${critical ? "" : `<span class="timer" aria-hidden="true"><i></i></span>`}
+  </button>`;
+}
+
+const TICK='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.4 12 13 4.5"/></svg>';
+/* Kept for the detail view's history list; the card no longer carries it —
+   the failed dimension is already in the status strip, and a second row
+   repeating it cost more height than it earned. */
+function ackRow(ch){
+  if(!ch.alert || !(ch.acked || ch.expired)) return "";
+  const warn = ch.alert.kind === "Battery low";
+  /* an alert nobody saw must never look like one somebody saw */
+  const badge = ch.acked
+    ? `<span class="seen">${TICK} Seen</span>`
+    : `<span class="seen unseen">Not acknowledged</span>`;
+  return `<div class="ackrow ${warn?'warn':''} ${ch.acked?'':'unseen'}">
+    <span class="ic" aria-hidden="true">${ALERTICON}</span>
+    <span class="tx"><b>${ch.alert.kind}</b><span>${ch.alert.when}</span></span>
+    ${badge}
+  </div>`;
+}
+
+/* ------------------------------------------------------------------
+   The A1 never listens on this product — they are mixing, and the
+   console is where they hear things. Their card is for glancing at,
+   and pressing it reports a fault rather than auditioning a source.
+   ------------------------------------------------------------------ */
+const FAULTS=[
+  ["Dropping out","signal is cutting"],
+  ["Crackling","intermittent noise"],
+  ["Distorted","clipping or breaking up"],
+  ["Too quiet","level has fallen"],
+  ["Clothing noise","rustle or handling"],
+  ["Popping","plosives or wind"],
+  ["Hum or buzz","constant tone"],
+  ["Nothing at all","dead channel"],
+];
+function a1card(ch,i){
+  const working = ch.owner || (ch.alert && ch.acked);
+  return `<article class="chcard a1 ${ch.crit?'critical':''} ${ch.reported&&!ch.claimed?'reported':''}" data-i="${i}">
+    <button class="hit" data-report="${i}" aria-label="Report a fault on ${ch.nm}, channel ${ch.no}"></button>
+    <div class="tile">
+      <div class="shot">
+        ${face(ch)}
+        <span class="no">${String(ch.no).padStart(2,"0")}</span>
+        ${ch.reported?`<span class="listening-tag badge b-warn"><i class="dot live-dot"></i>Reported${ch.reported.length>1?` ×${ch.reported.length}`:""}</span>`:
+          working?`<span class="listening-tag badge b-rep"><i class="dot"></i>Being worked</span>`:""}
+        <button class="zoom" data-detail="${i}" aria-label="Open details for ${ch.nm}"><i><svg viewBox="0 0 16 16"
+          fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2H2v4M10 14h4v-4M14 6V2h-4M2 10v4h4"/></svg></i></button>
+        <div class="meter"><svg viewBox="0 0 240 26" preserveAspectRatio="none" data-af="${ch.no}">${afTrace(ch)}</svg></div>
+      </div>
+      <div class="who"><div class="nm">${ch.nm}</div><div class="rl">${ch.rl}</div></div>
+    </div>
+    ${statusStrip(ch)}
+    <div class="reportcue">Press to report a fault</div>
+  </article>`;
+}
+
+function card(ch,i){
+  const alerting = ch.alert && !ch.acked;
+  return `<article class="chcard ${ch.live?'listening':''} ${ch.crit?'critical':''} ${alerting?'alert':''} ${ch.reported&&!ch.claimed?'reported':''}" data-i="${i}">
+    <button class="hit" data-listen="${i}" aria-label="Listen to ${ch.nm}, channel ${ch.no}"></button>
+    ${alertOverlay(ch,i)}
+    <div class="tile">
+    <div class="shot">
+      ${face(ch)}
+      <span class="no">${String(ch.no).padStart(2,"0")}</span>
+      ${ch.reported&&!ch.claimed
+        ? `<span class="listening-tag badge b-warn"><i class="dot live-dot"></i>Reported${ch.reported.length>1?` ×${ch.reported.length}`:""}</span>`
+        : ch.live?`<span class="listening-tag badge b-live"><i class="dot live-dot"></i>Listening</span>`:""}
+      <button class="zoom" data-detail="${i}" aria-label="Open details for ${ch.nm}"><i><svg viewBox="0 0 16 16"
+        fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 2H2v4M10 14h4v-4M14 6V2h-4M2 10v4h4"/></svg></i></button>
+      <div class="meter"><svg viewBox="0 0 240 26" preserveAspectRatio="none" data-af="${ch.no}">${afTrace(ch)}</svg></div>
+    </div>
+    <div class="who"><div class="nm">${ch.nm}</div><div class="rl">${ch.rl}</div></div>
+    </div>
+    ${statusStrip(ch)}
+  </article>`;
+}
+
+function renderGrids(){
+  const a2=$("#a2grid"); if(a2) a2.innerHTML = CH.map(card).join("");
+  const a1=$("#a1grid"); if(a1) a1.innerHTML = CH.slice(0,8).map((c,i)=>a1card(c,i)).join("");
+}
+renderGrids();
+
+/* An alert belongs to a fault. When the fault clears, the alert goes with it —
+   acknowledged or not — because an operator should never be asked to dismiss
+   something that is no longer true. The event stays in the channel's history. */
+function resolveAlert(i){
+  const ch=CH[i]; if(!ch || !ch.alert) return;
+  ch.alert=null; ch.acked=false; ch.expired=false; ch.crit=false;
+  renderGrids();
+  const n=CH.filter(c=>c.alert&&!c.acked).length;
+  $$("[data-ackcount]").forEach(x=>{
+    x.textContent = n ? `${n} to acknowledge` : "all acknowledged";
+    x.classList.toggle("out", n>0); });
+}
+/* demonstration: the muted pack gets unmuted, so its alert clears itself */
+setTimeout(()=>{
+  const i=CH.findIndex(c=>c.alert && c.alert.kind==="Audio drop");
+  if(i>-1){ CH[i].st="on"; CH[i].af=-21.4; CH[i].s.audio="ok"; resolveAlert(i); }
+}, 12000);
+
+/* the overlay times out on its own; the alert stays unacknowledged */
+CH.forEach((ch,i)=>{
+  if(!ch.alert || ch.alert.kind !== "Battery low") return;   /* critical never expires */
+  setTimeout(()=>{ if(!ch.acked){ ch.expired=true; renderGrids(); } }, ALERT_OVERLAY_SECONDS*1000);
+});
+$$("[data-static-pic]").forEach(el=>el.innerHTML=face(CH[0]));
+{ const p=$("#np-pic"); if(p) p.innerHTML=face(CH[0]); }
+$$("[data-static-face]").forEach(el=>el.insertAdjacentHTML("afterbegin",face(CH[0])));
+$$(".bars").forEach(b=>b.innerHTML=Array.from({length:8},(_,i)=>`<i class="${i<5?'on':''}"></i>`).join(""));
+$("#mclist").innerHTML=[["Identity and label","done"],["RF and link in the zone","done"],
+ ["Captured audio heard","now"],["Transmitter mute and control",""],["Spare pack",""],
+ ["Battery for the show window",""],["Placement and costume",""],["Operator sign-off",""]]
+ .map(([t,s],i)=>`<div style="display:flex;align-items:center;gap:12px;min-height:46px;padding:0 12px;border-radius:10px;
+   ${s==='now'?'background:var(--paper-2);box-shadow:inset 0 0 0 2px var(--ink)':''}">
+   <span class="mono" style="font-size:12px;color:var(--faint);width:14px">${i+1}</span>
+   <span style="font-weight:${s==='now'?700:500};color:${s==='done'?'var(--muted)':'var(--ink)'}">${t}</span>
+   <span style="margin-left:auto">${s==='done'?'<span class="badge b-ok">Pass</span>':s==='now'?'<span class="badge b-live">Now</span>':''}</span></div>`).join("");
+
+/* ------------------------------------------------------------------
+   Receiver and transmitter detail. A2 Monitor is meant to be the one
+   screen a show needs, so everything an operator would otherwise open
+   Wireless Workbench or WSM for lives here — read-only, at the channel
+   level. Values below are fabricated but the fields are the real ones.
+   ------------------------------------------------------------------ */
+function rxDetail(ch){
+  const seed=ch.no, r=(n,m)=>((seed*37)%(m-n))+n;
+  const freq=(470+((seed*7.3)%130)).toFixed(3);
+  const antA=-(52+((seed*3)%22)), antB=-(48+((seed*5)%20));
+  const activeB = antB>=antA;
+  const wired = ch.s && ch.s.rf==="na";
+  return {wired, freq, antA, antB, activeB,
+    grp:`G${r(1,12)}`, chn:`CH${r(1,24)}`,
+    qual: ch.s.rf==="bad"?31:ch.s.rf==="warn"?68:94,
+    txpwr:[10,25,50][seed%3], sq:-86, div: activeB?"B carrying":"A carrying",
+    rxModel:"Sennheiser EW-DX EM4", rxSlot:`RX ${r(1,9)}`, rxIp:`10.0.4.${r(20,99)}`, rxFw:"4.2.1",
+    txModel:"SK-DX bodypack", txSerial:`A2-${100+seed}`, txFw:"4.2.1",
+    battType:"2× AA lithium", battPct: ch.s.batt==="warn"?14:68,
+    battTime: ch.s.batt==="warn"?"0:41":"2:14", battTemp:"31 °C", battCycles:"—",
+    lock:"RF + menu locked", txMute: ch.st==="mute" ? "muted at pack" : "unmuted",
+    gain:`${-(3+(seed%9))} dB`, afLevel: ch.af===null? "—" : ch.af.toFixed(1)+" dBFS",
+    trim:"+0 dB", encr:"AES-256 on", warnings: ch.s.rf==="bad"?"link quality":"none"};
+}
+function detailHTML(ch){
+  const d=rxDetail(ch);
+  const pct=v=>Math.max(0,Math.min(100,(v+100)*1.6));
+  const g=(t,rows)=>`<div class="dgroup"><h4>${t}</h4><dl>${rows.map(([k,v,c])=>
+    `<dt>${k}</dt><dd class="${c||''}">${v}</dd>`).join("")}</dl></div>`;
+  const antenna = d.wired ? "" : `<div class="dgroup"><h4>Antennas and diversity</h4>
+    <div class="ant">
+      <div class="antrow ${d.activeB?'':'active'}"><span class="lab">ANT A</span>
+        <div class="bar"><i style="width:${pct(d.antA)}%"></i><span class="sqline" style="left:${pct(d.sq)}%"></span></div>
+        <span class="val">${d.antA} dBm</span><span class="tag">${d.activeB?'':'ACTIVE'}</span></div>
+      <div class="antrow ${d.activeB?'active':''}"><span class="lab">ANT B</span>
+        <div class="bar"><i style="width:${pct(d.antB)}%"></i><span class="sqline" style="left:${pct(d.sq)}%"></span></div>
+        <span class="val">${d.antB} dBm</span><span class="tag">${d.activeB?'ACTIVE':''}</span></div>
+    </div>
+    <dl><dt>diversity</dt><dd>${d.div}</dd>
+        <dt>squelch</dt><dd>${d.sq} dBm</dd>
+        <dt>link quality</dt><dd class="${d.qual<50?'bad':d.qual<80?'warn':'ok'}">${d.qual} %</dd>
+        <dt>warnings</dt><dd class="${d.warnings==='none'?'':'bad'}">${d.warnings}</dd></dl>
+    <p style="font-size:11.5px;color:var(--muted);line-height:1.35">The red mark on each bar is the
+      squelch threshold. Level and quality are shown separately on purpose: interference pulls quality
+      down without moving level.</p></div>`;
+  return (d.wired ? "" : antenna) +
+    (d.wired ? "" : g("Frequency", [["frequency",d.freq+" MHz"],["group",d.grp],["channel",d.chn],
+      ["TX power",d.txpwr+" mW"],["encryption",d.encr,"ok"]])) +
+    g("Audio", [["captured level",d.afLevel],["receiver gain",d.gain],["trim",d.trim],
+      ["TX mute",d.txMute, ch.st==="mute"?"bad":"ok"],["input",`in ${ch.no}`]]) +
+    (d.wired ? "" : g("Transmitter", [["model",d.txModel],["asset",d.txSerial],["firmware",d.txFw],
+      ["lock",d.lock],["battery",d.battType]])) +
+    (d.wired ? "" : g("Battery", [["remaining",d.battTime, ch.s.batt==="warn"?"warn":"ok"],
+      ["charge",d.battPct+" %", ch.s.batt==="warn"?"warn":"ok"],["temperature",d.battTemp],
+      ["cycles",d.battCycles],["changed","17:40 · pre-show"]])) +
+    g("Receiver", [["model",d.rxModel],["slot",d.rxSlot],["address",d.rxIp],["firmware",d.rxFw],
+      ["telemetry", ch.st==="stale" ? "42s old" : "live", ch.st==="stale"?"warn":"ok"]]) +
+    g("Show assignment", [["performer",ch.nm],["role",ch.rl],["element","MKE-1 beige · E-221"],
+      ["placement","hairline, left temple"],["spare","A2-119 · prepared"],["last check","18:55 · J. Marsh"]]);
+}
+function openDetailSheet(ch){
+  const d=$("#detail"); if(!d) return;
+  $("#d-shot").innerHTML=face(ch);
+  $("#d-name").textContent=ch.nm;
+  $("#d-sub").textContent=`${ch.rl} · channel ${ch.no}`;
+  $("#d-status").innerHTML=statusStrip(ch);
+  $("#d-body").innerHTML=detailHTML(ch);
+  d.classList.add("open");
+}
+
+/* ------------------------------------------------------------------
+   The player's timeline. Four measurements over one shared window, so
+   they are read together: audio, RF level, link quality and battery.
+   ------------------------------------------------------------------ */
+const L=(sel,html)=>{const e=$(sel); if(e)e.innerHTML=html;};
+function paintLanes(){
+  L('[data-g=audio]', bars(Array.from({length:150},(_,k)=>.18+Math.abs(Math.sin(k/7))*.6*Math.random()+.1),900,60,C.ok));
+  L('[data-g=rf]',    line(Array.from({length:150},(_,k)=>k>118?.34:.62+(Math.random()-.5)*.07),900,60,C.warn));
+  L('[data-g=q]',     bars(Array.from({length:150},(_,k)=>k>118?.19:.84+(Math.random()-.5)*.08),900,60,C.out));
+  /* battery is a slow line over hours, so it reads flat and falling */
+  L('[data-g=batt]',  line(Array.from({length:150},(_,k)=>.86-k*.0034),900,60,"var(--blue)"));
+  L('[data-np=raudio]',bars(Array.from({length:110},(_,k)=>.22+Math.abs(Math.sin(k/6))*.55*Math.random()+.12),900,32,C.rp));
+  L('[data-np=rrf]',   line(Array.from({length:110},(_,k)=>k>62&&k<76?.12:.6+(Math.random()-.5)*.08),900,32,C.rp));
+  L('[data-np=rq]',    bars(Array.from({length:110},(_,k)=>k>62&&k<80?.18:.82+(Math.random()-.5)*.09),900,32,C.rp));
+  L('[data-np=replayaf]', bars(Array.from({length:44},()=>.2+Math.random()*.7),240,26,C.rp));
+}
+paintLanes();
+
+/* ------------------------------------------------------------------
+   Scrubbing. Dragging the seek bar back is how an operator listens
+   back: position 1 is live, anything less is replay on this channel
+   at that offset. The window length is configurable.
+   ------------------------------------------------------------------ */
+let POS=1, WIN=30;                                  /* 1 = live; WIN in minutes */
+const pad=n=>String(n).padStart(2,"0");
+function fmt(min){ const t=Math.round(min*60); return `−${pad(Math.floor(t/60))}:${pad(t%60)}`; }
+function applyPos(){
+  const bar=$("#nowbar"); if(!bar) return;
+  const live = POS>=0.999;
+  bar.dataset.replay = String(!live);
+  const done=$(".seek .done",bar), knob=$(".seek .knob",bar);
+  if(done) done.style.width=(POS*100)+"%";
+  if(knob) knob.style.left=(POS*100)+"%";
+  const gr=$("#graphs"); if(gr) gr.style.setProperty("--pos", POS);
+  const sl=$("#savelbl");
+  if(sl) sl.textContent = live ? "Save replay" : "Save from here";
+  const pos=$("#t-pos"), end=$("#t-end");
+  if(pos) pos.textContent = live ? "−00:00" : fmt((1-POS)*WIN);
+  if(end){ end.textContent = live ? "Live" : "Back to live"; }
+  const main=$(".tbtn.main",bar);
+  if(main) main.setAttribute("aria-label", live
+    ? "Currently live — scrub back to listen to what already happened"
+    : `Replaying ${fmt((1-POS)*WIN)} behind live — press to return to live`);
+}
+function seekFrom(e,el){
+  const r=el.getBoundingClientRect();
+  if(!r.width) return;
+  POS=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
+  if(POS>0.985) POS=1;
+  applyPos();
+}
+$$(".seek").forEach(el=>{
+  let down=false;
+  el.addEventListener("pointerdown",e=>{down=true;el.setPointerCapture(e.pointerId);seekFrom(e,el);});
+  el.addEventListener("pointermove",e=>{if(down)seekFrom(e,el);});
+  ["pointerup","pointercancel"].forEach(ev=>el.addEventListener(ev,()=>{down=false;}));
+});
+document.addEventListener("click",e=>{
+  const rep=e.target.closest("[data-report]");
+  if(rep){ openReport(+rep.dataset.report); return; }
+  const pk=e.target.closest("[data-pick]");
+  if(pk){
+    const k=+pk.dataset.pick;
+    const on = pk.getAttribute("aria-pressed")!=="true";
+    pk.setAttribute("aria-pressed", String(on));
+    if(on) PICKED.add(k); else PICKED.delete(k);
+    refreshSend(); return;
+  }
+  const sd=e.target.closest("[data-send]");
+  if(sd){ sendReport(+sd.dataset.send); return; }
+  if(e.target.closest("[data-rclose]")){ $("#report").classList.remove("open"); return; }
+  const un=e.target.closest("[data-undo]");
+  if(un){ const i=+un.dataset.undo; CH[i].reported=null; renderGrids();
+    $("#report").classList.remove("open"); return; }
+  const ug=e.target.closest("[data-urgent]");
+  if(ug){ ug.textContent="Urgent — now an incident"; ug.className="btn btn-primary";
+    const w=$(".rsent .who3"); if(w) w.insertAdjacentHTML("beforeend",
+      `<div style="margin-top:8px;color:var(--t-out)"><b>Promoted to an incident.</b>
+       It will come back to you to confirm the symptom has gone.</div>`);
+    return; }
+  const ak=e.target.closest("[data-ack]");
+  if(ak){
+    e.stopPropagation();
+    /* first press acknowledges and nothing else. the card returns to normal,
+       so a second press listens — the same press that listens to any other
+       channel. acknowledging is never mixed with changing what is in your ears. */
+    const i=+ak.dataset.ack; CH[i].acked=true; CH[i].expired=false;
+    /* acknowledging is not fixing: the fault stays in the status strip, and the
+       alert moves into the card's status area rather than vanishing */
+    renderGrids();
+    const n=CH.filter(c=>c.alert&&!c.acked).length;   /* expiry does not reduce this */
+    $$("[data-ackcount]").forEach(x=>{
+      x.textContent = n ? `${n} to acknowledge` : "all acknowledged";
+      x.classList.toggle("out", n>0); });
+    return;
+  }
+  if(e.target.closest("#savebtn")){
+    const ch=CH.find(c=>c.live)||CH[0];
+    const set=(id,v)=>{const el=$(id); if(el)el.textContent=v;};
+    set("#sv-ch",`${ch.no} · ${ch.nm}`);
+    set("#sv-from", POS>=0.999 ? "the last 30 seconds" : fmt((1-POS)*WIN)+" behind live");
+    SVWIN.in=-30; SVWIN.out=30; refreshWin();
+    $("#saveconfirm").classList.add("open"); return;
+  }
+  const wa=e.target.closest("[data-win-adj]");
+  if(wa){ const [edge,delta]=wa.dataset.winAdj.split(",");
+    if(edge==="in") SVWIN.in=Math.min(-5, SVWIN.in + (+delta));
+    else SVWIN.out=Math.max(5, SVWIN.out + (+delta));
+    refreshWin(); return; }
+  if(e.target.closest("[data-savecancel]")){ $("#saveconfirm").classList.remove("open"); return; }
+  if(e.target.closest("[data-detailclose]")){ $("#detail").classList.remove("open"); return; }
+  if(e.target.closest("#t-end")||e.target.closest(".tbtn.main")){ POS=1; applyPos(); }
+  const w=e.target.closest("[data-win]");
+  if(w){ WIN=+w.dataset.win;
+    $$("[data-win]").forEach(o=>o.setAttribute("aria-pressed",String(o===w)));
+    $$("#axis span[data-t]").forEach(sp=>{
+      const f=+sp.dataset.t; sp.textContent = f===0 ? "LIVE" : `−${pad(Math.round(WIN*f))}:00`; });
+    applyPos(); }
+});
+applyPos();
+
+setInterval(()=>{
+  CH.forEach(ch=>{
+    if(ch.st==="on") adv("af"+ch.no,.5,.8); else if(ch.st==="silent") adv("af"+ch.no,.07,.05);
+    $$(`[data-af="${ch.no}"]`).forEach(s=>s.innerHTML=afTrace(ch));
+  });
+  $$(".bars").forEach(m=>{const lit=3+Math.floor(Math.random()*4);
+    [...m.children].forEach((b,i)=>b.classList.toggle("on",i<lit));});
+},280);
+
+/* press a card -> you are listening to that channel, and the bar fills in */
+function listen(i){
+  const ch=CH[i]; if(!ch) return;
+  CH.forEach(c=>c.live=false); ch.live=true;
+  $$(".chcard").forEach(el=>{
+    const on=+el.dataset.i===i;
+    el.classList.toggle("listening",on);
+    const tag=$(".listening-tag",el);
+    if(on && !tag) $(".shot",el).insertAdjacentHTML("beforeend",
+      `<span class="listening-tag badge b-live"><i class="dot live-dot"></i>Listening</span>`);
+    if(!on && tag) tag.remove();
+  });
+  const pic=$("#np-pic"); if(pic) pic.innerHTML=face(ch);
+  const set=(id,v)=>{const e=$(id); if(e)e.textContent=v;};
+  set("#np-name",ch.nm);
+  const rd=rxDetail(ch);
+  set("#np-rx", rd.wired ? `wired · in ${ch.no}` : `${rd.rxSlot} · ant ${rd.activeB?"B":"A"} · in ${ch.no}`);
+  const tg=$("#np-tags");
+  if(tg) tg.innerHTML=statusStrip(ch);
+  paintLanes(); applyPos();
+}
+/* ------------------------------------------------------------------
+   Reporting a fault, from the A1's side of the room. One press to open,
+   one press to send. The fault buttons are the send: mid-show, a
+   confirmation step is a step too many, so the report goes immediately
+   and stays undoable for a few seconds instead.
+   ------------------------------------------------------------------ */
+/* the clip window, pre-set to 30 seconds either side of the playhead. a drag on
+   touch is imprecise and this is an export, so the handles also step in fives
+   and the resulting duration is always shown as a number. */
+const SVWIN={in:-30,out:30};
+function refreshWin(){
+  const set=(id,v)=>{const e=$(id); if(e)e.textContent=v;};
+  set("#sv-in", `${SVWIN.in}s`);
+  set("#sv-out", `+${SVWIN.out}s`);
+  set("#sv-len", `${SVWIN.out - SVWIN.in}s`);
+}
+let undoTimer=null;
+function openReport(i){
+  const ch=CH[i]; if(!ch) return;
+  const r=$("#report"), sh=$("#rsheet"); if(!r||!sh) return;
+  sh.innerHTML = `
+    <div class="rhead">
+      <div class="shot">${face(ch)}</div>
+      <div class="t"><h3>${ch.nm}</h3><div class="sub">${ch.rl} · console ${String(ch.no).padStart(2,"0")}</div></div>
+      <button class="btn btn-line" data-rclose>Cancel</button>
+    </div>
+    <div class="rq">What are you hearing? <span style="font-weight:500;color:var(--muted);font-size:14px;font-family:var(--fb)">Pick as many as apply.</span></div>
+    <div class="fgrid">
+      ${FAULTS.map((f,k)=>`<button class="fbtn" data-pick="${k}" aria-pressed="false">
+        <b>${f[0]}</b><span>${f[1]}</span>
+        <span class="tick" aria-hidden="true">${TICK}</span></button>`).join("")}
+      <button class="fbtn" data-pick="8" aria-pressed="false">
+        <b>Something else</b><span>dictate a note</span>
+        <span class="tick" aria-hidden="true">${TICK}</span></button>
+    </div>
+    <div class="rfoot">
+      <button class="btn btn-line" data-rclose style="flex:0 0 140px">Not now</button>
+      <button class="btn btn-primary" id="rsend" data-send="${i}" disabled>Send report</button>
+    </div>`;
+  PICKED.clear();
+  r.classList.add("open");
+}
+const PICKED=new Set();
+function refreshSend(){
+  const b=$("#rsend"); if(!b) return;
+  const n=PICKED.size;
+  b.disabled = n===0;
+  b.textContent = n===0 ? "Send report" : n===1 ? "Send 1 issue" : `Send ${n} issues`;
+}
+function sendReport(i){
+  const ch=CH[i]; if(!ch) return;
+  const names=[...PICKED].sort((a,b)=>a-b).map(k=> k===8 ? "a dictated note" : FAULTS[k][0]);
+  if(!names.length) return;
+  ch.reported = names;
+  renderGrids();
+  const list = names.length===1 ? `<b>${names[0]}</b>`
+    : names.slice(0,-1).map(n=>`<b>${n}</b>`).join(", ") + ` and <b>${names.at(-1)}</b>`;
+  const sh=$("#rsheet");
+  sh.innerHTML = `
+    <div class="rsent">
+      <div class="big">Sent to backstage</div>
+      <div class="who3">${list} on ${ch.no} · ${ch.nm}.
+        This is a <b>task</b> for the A2 on that zone — you will see who claims it on the card,
+        and you will not be asked about it again unless it turns into an incident.</div>
+      <div class="row3">
+        <button class="btn btn-line" data-undo="${i}">Undo</button>
+        <button class="btn btn-line" data-urgent="${i}">Mark urgent — it is on air now</button>
+        <button class="btn btn-primary" data-rclose>Done</button>
+      </div>
+    </div>`;
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(()=>{ const u=$("[data-undo]"); if(u) u.remove(); }, 6000);
+}
+
+/* pressing the expand button opens the detailed display for that channel */
+function openDetail(i){
+  listen(i);
+  const bar=$("#nowbar"); if(bar) bar.dataset.open="true";
+  const ex=$("#expand"); if(ex) ex.setAttribute("aria-expanded","true");
+  openDetailSheet(CH[i]);
+}
+document.addEventListener("click",e=>{
+  const d=e.target.closest("[data-detail]");
+  if(d){ openDetail(+d.dataset.detail); return; }
+  const c=e.target.closest("[data-listen]");
+  if(c){ listen(+c.dataset.listen); return; }
+  const sh=e.target.closest("[data-sheet]");
+  if(sh){ const s=sh.closest("section").querySelector(".sheet"); if(s) s.classList.toggle("open"); }
+  const ex=e.target.closest(".expand");
+  if(ex){ const bar=ex.closest(".nowbar"); const open=bar.dataset.open!=="true";
+    bar.dataset.open=String(open); ex.setAttribute("aria-expanded",String(open)); if(open) paintLanes(); }
+  const v=e.target.closest("[data-verdict]");
+  if(v){ $$("[data-verdict]").forEach(o=>{o.className="btn btn-line";o.style.height="76px";o.style.fontSize="16px";});
+    v.className="btn btn-primary"; v.style.height="76px"; v.style.fontSize="16px"; }
+  const g=e.target.closest("[data-goto]");
+  if(g){ go(g.dataset.goto); }
+});
+function go(s){ $$(".seg [data-s]").forEach(o=>o.setAttribute("aria-pressed",String(o.dataset.s===s))); html.dataset.surface=s; }
+$$(".seg [data-s]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.s)));
+$$(".seg [data-v]").forEach(b=>b.addEventListener("click",()=>{
+  $$(".seg [data-v]").forEach(o=>o.setAttribute("aria-pressed",String(o===b)));
+  html.dataset.view=b.dataset.v;
+  try{ localStorage.setItem("a2-view", b.dataset.v); }catch(e){}
+}));
+try{
+  const v=localStorage.getItem("a2-view");
+  if(v){ html.dataset.view=v;
+    $$(".seg [data-v]").forEach(o=>o.setAttribute("aria-pressed",String(o.dataset.v===v))); }
+}catch(e){}
+function setTheme(t){
+  $$(".seg [data-t]").forEach(o=>o.setAttribute("aria-pressed",String(o.dataset.t===t)));
+  html.setAttribute("data-theme", t);
+  try{ localStorage.setItem("a2-theme", t); }catch(e){}
+}
+$$(".seg [data-t]").forEach(b=>b.addEventListener("click",()=>setTheme(b.dataset.t)));
+try{
+  const saved=localStorage.getItem("a2-theme");
+  setTheme(saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+}catch(e){}
+$$(".chipf,#mutebtn").forEach(b=>b.addEventListener("click",()=>
+  b.setAttribute("aria-pressed",String(b.getAttribute("aria-pressed")!=="true"))));
+})();
+</script>
+</body>
+</html>

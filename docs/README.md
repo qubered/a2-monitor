@@ -30,6 +30,7 @@ must remain understandable without access to the original conversation.
 - [Domain model](architecture/domain-model.md)
 - [Operator workflows](product/operator-workflows.md)
 - [Phase capability matrix](product/phase-capability-matrix.md)
+- [Design language](design/DESIGN.md)
 - [Receiver integration standard](integrations/README.md)
 - [Shure wireless integration](integrations/shure-wireless.md)
 - [Sennheiser EW-DX integration](integrations/sennheiser-ew-dx.md)
@@ -49,7 +50,8 @@ must remain understandable without access to the original conversation.
 ## Decisions
 
 ADRs 0001-0003 are accepted. ADRs 0004-0018 are hypotheses with no
-supporting evidence; their status lines say so individually.
+supporting evidence; their status lines say so individually. ADR 0019 is an
+accepted product decision rather than a technical hypothesis.
 
 - [Component boundaries](decisions/0001-three-component-boundary.md)
 - [WebRTC and Opus transport](decisions/0002-webrtc-opus.md)
@@ -69,6 +71,7 @@ supporting evidence; their status lines say so individually.
 - [Shared-memory and Protobuf local IPC](decisions/0016-shared-memory-and-protobuf-local-ipc.md)
 - [`str0m` WebRTC media worker](decisions/0017-str0m-webrtc-media-worker.md)
 - [Workspaces, testing and native packaging](decisions/0018-workspaces-testing-and-native-packaging.md)
+- [Cue-optional operation and show-time scope](decisions/0019-cue-optional-and-show-time-scope.md)
 
 ## Reference
 
