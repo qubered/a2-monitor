@@ -23,6 +23,15 @@ show-ready unless the release lead selects a documented previous-browser/native
 fallback. Feature probes run at every preflight but never replace the named
 compatibility matrix.
 
+## Initial appliance CPU profile
+
+Phase 0 qualifies Windows 11 x86-64 and Apple-silicon macOS first, each on an
+exact in-support OS build. macOS x86-64 and Windows ARM64 remain portable build
+targets, not support claims, until their own audio-device and installer HIL
+profiles pass. Windows ARM64 cannot be a DVS profile while Audinate does not
+support DVS on that architecture; this does not prevent a separately qualified
+USB-device profile later.
+
 ## Appliance resource order
 
 The enforced order is:

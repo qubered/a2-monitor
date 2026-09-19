@@ -44,5 +44,15 @@ lease. The node reports disconnection, keeps the active revision and performance
 overlay, and reconciles state after reconnect. New sessions, inventory creation,
 and privileged configuration fail safely until the backend returns.
 
-Implementation language, driver library, IPC, and WebRTC stack require ADRs
-from the Phase 0A/0B spikes.
+## Implementation baseline
+
+- Rust 2024 on the repository-pinned stable toolchain;
+- a project-owned host interface with CPAL as the Phase 0A ASIO/WASAPI/Core
+  Audio adapter;
+- fixed shared-memory PCM rings and bounded Protobuf pipe/socket control IPC;
+- upstream `libopus` and `str0m` in an isolated Phase 0B media worker;
+- bundled `rusqlite` for the node control ledger; and
+- supervised Rust replay and receiver-adapter workers.
+
+CPAL and `str0m` are reference implementations, not compatibility claims. ADR
+0014 and ADR 0017 define the evidence and targeted replacement rules.

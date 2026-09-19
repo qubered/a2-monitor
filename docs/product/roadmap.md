@@ -6,6 +6,49 @@ Dates begin only when the named team, representative hardware, vendor access,
 and test network are available. Every phase ends in evidence and a go/no-go
 decision; calendar completion alone does not advance the product.
 
+## Technology baseline
+
+Implementation begins from the accepted baseline in the
+[technology stack study](../research/technology-stack-selection.md): Rust for
+the native node/workers, CPAL as the replaceable Phase 0A audio-host adapter,
+`str0m` plus `libopus` as the replaceable Phase 0B media implementation,
+TypeScript/Node/Fastify for management, separate React/Vite Manager and Live
+applications, and local SQLite authority.
+
+Selection is not validation. CPAL is promoted only by the named Phase 0A
+device/driver evidence, and `str0m` only by the Phase 0B browser/network
+evidence. Their project-owned interfaces and fallback spikes keep a failure
+local rather than restarting framework selection for the whole product.
+
+## Phase 0T: scaffold the selected stack — 1 to 2 weeks
+
+Create the buildable skeleton described by the
+[implementation structure](../architecture/implementation-structure.md).
+
+Deliverables:
+
+- pinned Node/Rust toolchains, npm/Cargo workspaces and committed lockfiles;
+- Windows/macOS CI for format, lint, unit, contract and independent web builds;
+- deterministic JSON Schema/OpenAPI/AsyncAPI/Protobuf generation with a dirty-
+  diff gate and cross-language golden vectors;
+- synthetic `AudioHost` to fixed PCM-ring handoff with allocation/lock guards;
+- supervised native worker startup/health/shutdown and bounded control-IPC ping;
+- Fastify health/snapshot API plus independent Manager and Live shell builds;
+- evidence schemas updated with required implementation/build identifiers;
+- dependency/licence inventory including ASIO, CPAL, Opus, `str0m`, SQLite and
+  installer inputs; and
+- unsigned development MSI/pkg smoke artifacts with no automatic installation.
+
+Exit gate:
+
+- a clean checkout builds and tests on Windows 11 x86-64 and Apple-silicon
+  macOS using documented commands;
+- generated contracts are reproducible and current/previous compatibility
+  fixtures pass;
+- process crash, malformed IPC and full-queue tests fail boundedly; and
+- no licensed SDK, credential, certificate or unsupported hardware claim is in
+  the repository or artifact.
+
 ## Phase 0A: prove capture and time — 4 to 6 weeks
 
 Build a disposable, instrumented cross-platform audio core.
@@ -13,7 +56,11 @@ Build a disposable, instrumented cross-platform audio core.
 Deliverables:
 
 - frozen machine-readable evidence manifest plus signed result artifacts;
+- exact Rust, CPAL, host adapter, SQLite and build identifiers captured in each
+  evidence tuple;
 - pinned Windows/macOS CI builds, contract tests and real-time callback guards;
+- Windows 11 x86-64 and Apple-silicon macOS reference appliance builds on exact
+  in-support OS versions; other CPU profiles remain unclaimed until HIL passes;
 - Windows and macOS node builds sharing one capture contract;
 - ASIO, WASAPI, and Core Audio evaluation;
 - DVS plus a representative professional USB/Thunderbolt device on each OS;
@@ -22,8 +69,10 @@ Deliverables:
 - capture epochs, device identity, discontinuity and loss/recovery behavior;
 - bounded callback-to-worker handoffs and initial resource envelope;
 - 12-hour capture soak and physical input-to-node measurement; and
-- ADRs selecting implementation language, host library, IPC, and reference
-  hardware.
+- implementation of ADR 0014's Rust/audio-host boundary and ADR 0016's IPC ABI;
+- a CPAL-versus-targeted-fallback comparison for any failed named tuple; and
+- reference hardware selection recorded from the evidence rather than assumed
+  from the framework decision.
 
 Exit gate:
 
@@ -41,7 +90,11 @@ as production-ready.
 Deliverables:
 
 - frozen Phase 0B manifest for every named tuple, fault and pass/fail threshold;
+- exact `str0m`, `libopus`, backend, browser-build and generated-contract
+  identifiers captured in each evidence tuple;
 - per-client server-side bus and WebRTC/Opus playback;
+- `str0m` media-worker implementation with a reproducible `libdatachannel`
+  fallback comparison path;
 - physical gesture-to-ear and capture-to-ear measurements on the named browser
   field kit;
 - multi-NIC ICE/interface/firewall validation with no hardware-network leakage;
@@ -64,6 +117,10 @@ Deliverables:
 - combined capture/replay/receiver/media load plus chat fan-out, upload/hostile
   decode, page storm, disk pressure and impairment; and
 - a second 12-hour end-to-end soak.
+
+The Phase 0B application slice also scaffolds the accepted Node/Fastify backend,
+independent React/Vite Manager and Live bundles, SQLite storage worker,
+generated JSON/Protobuf contracts, and Windows/macOS packaging smoke tests.
 
 Exit gate:
 

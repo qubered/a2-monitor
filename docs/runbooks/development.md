@@ -2,16 +2,33 @@
 
 ## Repository setup
 
-Until component toolchains are selected, only Git and a POSIX shell are
-required.
+The selected toolchains are Node.js 24 LTS with npm and the repository-pinned
+stable Rust toolchain with Cargo, rustfmt and Clippy. Until runnable workspaces
+are scaffolded, the existing contract checks still require only Node/npm, Git
+and a POSIX shell.
 
 ```sh
 git status --short --branch
 ./scripts/check-repo.sh
 ```
 
-Component READMEs will own their exact setup and checks. Do not add a root task
-runner until at least two real components need shared orchestration.
+Component READMEs own their exact setup and checks. The root may expose thin
+orchestration scripts once at least two real components need them, but it must
+not hide the underlying Cargo/npm commands or hardware evidence profile.
+
+The intended workspace commands after scaffolding are:
+
+```sh
+npm ci
+npm run check --workspaces --if-present
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+```
+
+ASIO builds additionally require the reviewed Steinberg SDK/licensing path and
+LLVM/Clang documented by the selected CPAL version. Do not download an SDK from
+a build script in release CI.
 
 ## Local topology
 
@@ -34,6 +51,10 @@ Before adding a production dependency:
 - add an ADR if it establishes a framework or runtime boundary.
 
 Never vendor Dante/vendor SDK binaries or credentials into Git.
+
+Production dependencies use exact lockfile resolution. Rust and Node toolchain
+changes, CPAL/`str0m`/Opus/SQLite changes and native package changes require
+their relevant Phase 0 regression evidence, not only a successful compile.
 
 ## Test artifacts
 

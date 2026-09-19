@@ -4,8 +4,9 @@
 
 The Manager and Live applications use the same documented API available to
 approved local integrations. UI-only hidden behavior is not permitted. OpenAPI
-describes request/response resources and AsyncAPI or an equivalent schema
-describes subscriptions once the implementation stack is selected.
+describes request/response resources and AsyncAPI describes the selected
+WebSocket subscription/event surface. Both reference the authoritative JSON
+Schemas in `packages/protocol`.
 
 ## Surfaces
 

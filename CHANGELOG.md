@@ -10,6 +10,13 @@ externally tested release.
 
 ### Added
 
+- Selected and documented the implementation baseline: Rust with a replaceable
+  CPAL audio-host layer, shared-memory/Protobuf IPC, `str0m` plus `libopus`, a
+  TypeScript/Fastify backend, independent React/Vite applications, pinned
+  SQLite, Cargo/npm workspaces, cross-browser testing and native signed
+  Windows/macOS packages. Hardware-sensitive choices remain evidence-gated.
+- Added the target workspace/dependency map and a Phase 0T scaffold gate before
+  hardware capture work.
 - Initial product, architecture, quality, and repository-management baseline.
 - Closed the third independent-review design findings with safe takeover
   fencing, exact Live lease/data-channel semantics, persistence and media-

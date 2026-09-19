@@ -38,6 +38,7 @@ required_files=(
   docs/README.md
   docs/product/vision.md
   docs/architecture/overview.md
+  docs/architecture/implementation-structure.md
   docs/architecture/collaboration-contract.md
   docs/decisions/0004-active-performance-command-authority.md
   docs/decisions/0005-cue-authority-and-occurrences.md
@@ -49,6 +50,12 @@ required_files=(
   docs/decisions/0011-untrusted-media-sandbox.md
   docs/decisions/0012-node-process-confinement.md
   docs/decisions/0013-offline-pki-and-key-lifecycle.md
+  docs/decisions/0014-rust-audio-runtime-and-host-boundary.md
+  docs/decisions/0015-typescript-fastify-react-application-stack.md
+  docs/decisions/0016-shared-memory-and-protobuf-local-ipc.md
+  docs/decisions/0017-str0m-webrtc-media-worker.md
+  docs/decisions/0018-workspaces-testing-and-native-packaging.md
+  docs/research/technology-stack-selection.md
   docs/architecture/performance-lifecycle.md
   docs/architecture/runtime-command-contract.md
   docs/architecture/temporal-identity-and-swap.md

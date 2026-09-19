@@ -1,7 +1,7 @@
 # System architecture
 
-**Status:** Accepted as the initial boundary model; implementation technologies
-remain proposed.
+**Status:** Accepted boundary and technology baseline; audio/media library
+compatibility remains evidence-gated.
 
 ## Central decision
 
@@ -149,8 +149,9 @@ built web bundles:
 
 The frontend host serves independent Manager and Live artifacts.
 
-The node/backend transport and ownership model require a later ADR after
-latency and failure-mode testing. The node should establish an outbound,
+The node's internal PCM/control IPC is selected by ADR 0016; its exact ABI is
+validated in Phase 0A. The node/backend network transport remains versioned and
+evidence-gated. The node should establish an outbound,
 mutually authenticated control connection when split across hosts. It must
 reject unbounded client creation or configuration changes that would violate
 its declared resource envelope.
@@ -202,5 +203,9 @@ its declared resource envelope.
 See [single-device capture](../decisions/0003-cross-platform-single-capture-device.md),
 [active-performance authority](../decisions/0004-active-performance-command-authority.md),
 [appliance resource isolation](../decisions/0007-appliance-resource-isolation.md),
+[native runtime/audio host](../decisions/0014-rust-audio-runtime-and-host-boundary.md),
+[application stack](../decisions/0015-typescript-fastify-react-application-stack.md),
+[local IPC](../decisions/0016-shared-memory-and-protobuf-local-ipc.md),
+[media worker](../decisions/0017-str0m-webrtc-media-worker.md),
 [time and replay](time-and-replay.md), and
 [failure/degraded modes](failure-and-degraded-modes.md).

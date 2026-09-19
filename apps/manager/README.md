@@ -29,3 +29,10 @@ key. The backend routes the envelope but does not persist or decrypt it.
 
 Manager uses the same documented `/api/v1` resources and command schemas made
 available to authorized local integrations; it has no private mutation API.
+
+## Implementation baseline
+
+Manager is a strict TypeScript React application built with Vite. It is a
+separate npm workspace and deployable static bundle. It shares generated
+protocol clients, accessible headless UI primitives and design tokens with
+Live, but not Live's show-time entry point or media session code.

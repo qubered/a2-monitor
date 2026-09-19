@@ -33,6 +33,18 @@ cannot preserve capture/live-media reservations, backend and attachment workers
 move to a separate control host or rich collaboration is disabled during an
 active performance.
 
+The first packaged profile uses a dedicated show operating-system account. The
+Rust node supervisor runs in that logged-in user's audio session through a
+Windows logon-triggered task or macOS LaunchAgent. A machine that has booted but
+has no active show-user session is `node_waiting_for_user_session`, never
+`audio_ready`. This is an explicit product state exposed to Manager and Live.
+
+Windows is distributed as a signed WiX/MSI package; macOS as a signed,
+hardened, notarized and stapled flat package. Both install independent native
+workers, the Node/Fastify backend, static Manager/Live bundles and their pinned
+runtimes/dependencies. They do not download build/runtime dependencies during a
+show or first launch. See [ADR 0018](../decisions/0018-workspaces-testing-and-native-packaging.md).
+
 Recommended network attachment:
 
 - dedicated wired interface for Dante/audio;

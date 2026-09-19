@@ -18,8 +18,11 @@ Expected responsibilities:
 - diagnostics export and factory recovery; and
 - single-host and split-host installation profiles.
 
-Do not add infrastructure automation before the supported OS and packaging
-model are selected through an ADR.
+The initial packaging model is selected in ADR 0018: signed WiX/MSI on Windows
+and a signed, hardened, notarized/stapled flat package on macOS. The audio-node
+supervisor starts in the dedicated logged-in show-user session using a Windows
+logon task or macOS LaunchAgent. Boot without that user session is not reported
+as audio ready.
 
 Windows and macOS are both product targets. Their service supervision,
 keystore, firewall, update, and recovery profiles may differ while preserving

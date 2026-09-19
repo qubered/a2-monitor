@@ -24,12 +24,16 @@ signature is ES256 IEEE-P1363 over RFC 8785 bytes of the object excluding its
 pass fixture and contract tests define the implementation behavior.
 
 0A freezes the exact Windows/macOS device/driver/firmware/rate/block/channel
-tuple and uses a seeded channel/frame integrity oracle. The nominal profile is
-three 12-hour trials; device/clock change testing proves a new capture epoch and
-no silent repatch.
+tuple plus Rust, audio-host adapter, CPAL, SQLite and build identifiers, and uses
+a seeded channel/frame integrity oracle. The manifest schemas must gain those
+required implementation fields before the first runnable Phase 0A result is
+accepted. The nominal profile is three 12-hour trials; device/clock change
+testing proves a new capture epoch and no silent repatch.
 
 0B freezes clients, output kit, browser, network, limits and fault schedule. It
-covers wired/Wi-Fi impairment, combined resource load, power-fenced takeover,
+also freezes `str0m`, `libopus`, backend, browser-build and generated-contract
+identifiers before the first runnable Phase 0B result is accepted. It covers
+wired/Wi-Fi impairment, combined resource load, power-fenced takeover,
 cue shadow qualification, reconnect level, latched-listen cancellation and
 intercom coexistence. Media artifacts include field-kit acoustic/output-route
 measurements. Exact thresholds live in the catalogue so prose cannot silently

@@ -52,3 +52,15 @@ interrupt monitoring. Voice recording is likewise profile-gated.
 Manager-only screens, dependencies, and mutation paths must not be bundled into
 Live. Emergency operational changes must be explicitly designed rather than
 silently exposing the entire Manager inside the show UI.
+
+## Implementation baseline
+
+Live is a strict TypeScript React application built with Vite as an independent
+npm workspace and static bundle. REST supplies snapshots/commands, WebSocket
+supplies bounded state deltas and signaling, and direct WebRTC supplies the
+continuous monitor track plus its leased control channel.
+
+High-rate audio/RF meters and timelines use bounded external stores plus a
+Canvas/WebGL render scheduler rather than a React render per sample. A service
+worker may cache only the app shell; it cannot cache credentials, API state,
+mutations or media, and it does not change the foreground-only contract.

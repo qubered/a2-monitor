@@ -67,6 +67,14 @@ external pilot.
   license, contribution terms, and third-party notices are approved.
 - Release signing, update signing, and deployment approval are separate roles
   once team size permits.
+- Rust and Node toolchains are pinned; Cargo and npm lockfiles are committed.
+- The shipped SQLite library is bundled and runtime-verified at 3.51.3 or newer.
+- CPAL, `str0m`, Opus, SQLite or audio-driver dependency updates run their named
+  hardware/browser/power regression subset before promotion.
+- ASIO redistribution and JUCE fallback use are blocked until their licence path
+  is recorded against the project's eventual software licence.
+- WiX release tooling is blocked until its current EULA/maintenance-fee terms
+  are approved; an old unsupported major is not used to avoid those terms.
 
 ## Compatibility lifecycle
 
