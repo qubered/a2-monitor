@@ -9,10 +9,13 @@ When hosted, `main` requires:
 
 - pull requests rather than direct pushes;
 - passing repository, unit, contract, security, and component checks;
-- at least one independent approval;
-- audio-domain approval for capture, clock, DSP, codec, routing, or replay time;
-- security/platform approval for auth, protocol, network, update, secret,
-  import/export, sandbox, or appliance changes;
+- no mandatory GitHub approval during the named single-maintainer, pre-pilot
+  phase; each pull request records a deliberate self-review;
+- independent audio-domain review for capture, clock, DSP, codec, routing, or
+  replay support claims before external use;
+- independent security/platform review for auth, protocol, network, update,
+  secret, import/export, sandbox, or appliance release claims before external
+  use;
 - resolved review conversations and signed commits/releases under the selected
   organization policy; and
 - no administrator bypass except a documented incident with retrospective
@@ -20,6 +23,12 @@ When hosted, `main` requires:
 
 CODEOWNERS identities cannot be invented locally. They are configured with the
 actual maintainers when the repository host and team accounts exist.
+
+The required-approval branch rule is restored when a second qualified
+maintainer becomes active and no later than the first external pilot. Required
+checks, pull-request-only changes and administrator enforcement remain active
+during the solo phase. Removing an impossible approval gate does not waive any
+machine evidence, hardware qualification, operator trial or release sign-off.
 
 ## Accountable role matrix
 

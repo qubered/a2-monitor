@@ -18,6 +18,9 @@ externally tested release.
   hermetic ASIO builds, accountable release roles and conditional WiX use.
 - Rebased Phase 0 into a prerequisite closure slice, stack scaffold, capture
   proof and three attributable Phase 0B media/appliance/integration gates.
+- Aligned branch governance with the current single-maintainer phase: pull
+  requests and required cross-platform checks remain enforced, while the
+  impossible second-person approval gate returns before an external pilot.
 
 - Selected and documented the implementation baseline: Rust with a replaceable
   CPAL audio-host layer, shared-memory/Protobuf IPC, `str0m` plus `libopus`, a

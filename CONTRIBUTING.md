@@ -8,11 +8,11 @@
 3. Keep changes small enough to review and roll back safely.
 4. Run repository and component checks locally.
 5. Open a pull request using the repository template.
-6. Require at least one approving review; require an audio-domain reviewer for
-   real-time, clocking, codec, or routing changes.
-   Require a security/platform reviewer for authentication, authorization,
-   protocol, network, update, secret, import/export, sandbox, or appliance
-   changes.
+6. During the single-maintainer pre-pilot phase, record a deliberate self-review
+   in the pull request; a second GitHub approval is not required. When another
+   qualified maintainer is active—or before any external pilot—restore required
+   independent review. Audio and security-sensitive changes still carry their
+   domain evidence and sign-off gates before a support or release claim.
 7. Merge only with passing checks and resolved review comments.
 
 Direct commits to `main` should be disabled once the repository is hosted.
