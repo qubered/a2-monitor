@@ -288,6 +288,38 @@ in [operator workflows](../product/operator-workflows.md) states the opposite
 and needs reconciling. Those are product changes, not design ones, and are not
 made here.
 
+## Product findings from round 6
+
+**The tool replaces the reason to open WWB and WSM.** Stated by the product
+owner: A2 Monitor should carry the same data a show may need, and the channel
+detail is the right place for it. That makes the detail view a genuine
+single-source screen rather than a summary, and it is why the grid can stay as
+sparse as it is — the depth has somewhere to go.
+
+It also puts pressure on two non-goals in [the vision](../product/vision.md).
+Read-only display does not conflict with "no frequency coordination or firmware
+management", but it does sit awkwardly against "not replacing Wireless Systems
+Manager". The distinction that resolves it — **display is not management** — is
+worth writing into the vision rather than leaving implied.
+
+A practical consequence: the detail view is capability-driven. Receivers report
+different fields, and a field a receiver does not report must render as unknown
+rather than as a plausible default. The integration layer needs a per-model
+capability map for display, not only for control.
+
+**Alerts require acknowledgement, and acknowledgement is not resolution.** An
+unacknowledged alert takes over the whole card. It does not time out and it does
+not clear when the underlying fault clears — somebody says they have seen it.
+On acknowledgement it moves into the card's status area as a compact row while
+the failed dimension stays failed in the status strip.
+
+The design rule that came out of building it: **the takeover must itself be a
+listen target.** The first thing any operator does with "RF drop on 27" is
+listen to 27, and an alert that blocks that would be worse than no alert. The
+implementation had this wrong at first — the card's listen-everywhere rule
+disabled pointer events on the overlay — which is exactly the kind of mistake
+that would have shipped as "the alert is unclickable" without a prototype.
+
 ## Open design questions
 
 These need an operator in a room, not more desk research.
@@ -320,4 +352,12 @@ These need an operator in a room, not more desk research.
 13. With cue context demoted, what orders the default grid of 64 channels —
     channel number, rack, zone, or most-recently-in-trouble?
 14. Is one "Listen" button per card plus the whole card being pressable
-    redundant, or is the explicit button what makes it obvious?
+    redundant, or is the explicit button what makes it obvious? *(Resolved in
+    round 6: the button is gone and the whole card listens.)*
+15. With several alerts unacknowledged at once, does a wall of takeover cards
+    stop being readable? A storm is exactly when the grid matters most, and the
+    plan already requires alert storms to collapse into a grouped incident.
+16. Should acknowledgement be per-operator or per-show? Two A2s working
+    different zones may both need to see an alert before it is considered seen.
+17. Does the detail view need a compare mode — two channels side by side — for
+    the common "is it this pack or this zone" question?

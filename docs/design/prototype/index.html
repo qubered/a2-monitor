@@ -166,7 +166,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    pointer events, so a press anywhere that is not the photo lands here. */
 .chcard .hit{position:absolute;inset:0;z-index:1;border-radius:var(--r-lg);background:none}
 .chcard .hit:focus-visible{outline:2px solid var(--red);outline-offset:3px}
-.chcard > *:not(.hit):not(.shot){pointer-events:none}
+.chcard > *:not(.hit):not(.shot):not(.alertover){pointer-events:none}
 .chcard:hover{transform:translateY(-3px);box-shadow:var(--sh-hover)}
 .chcard:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line-2)}
 .chcard:focus-visible{outline:2px solid var(--red);outline-offset:3px}
@@ -174,6 +174,36 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .chcard.listening{border-color:var(--red);box-shadow:0 3px 0 var(--red-700)}
 .chcard.listening:hover{box-shadow:0 7px 0 var(--red-700)}
 .chcard.critical{border-color:var(--t-out)}
+
+/* ============================================================
+   ALERT TAKEOVER — an unacknowledged alert owns the whole card,
+   the way WaveTool's SCP overlay does. It cannot be missed from
+   across a wing, and it does not clear itself: someone says they
+   have seen it. Acknowledging is not fixing — the fault stays in
+   the status strip afterwards.
+   ============================================================ */
+.chcard.alert{border-color:var(--t-out);box-shadow:0 3px 0 var(--red-700)}
+.alertover{position:absolute;inset:0;z-index:4;border-radius:calc(var(--r-lg) - 2px);
+  background:var(--out-soft);display:flex;flex-direction:column;gap:9px;padding:14px;
+  align-items:flex-start;justify-content:center;text-align:left;width:100%;border:none;cursor:pointer}
+.alertover .kind{display:inline-flex;align-items:center;gap:7px;font-family:var(--fd);font-weight:800;
+  font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--t-out)}
+.alertover .kind svg{width:17px;height:17px}
+.alertover .who2{font-family:var(--fd);font-weight:800;font-size:19px;letter-spacing:-.02em;color:var(--ink)}
+.alertover .what{font-size:13.5px;color:var(--ink-2);line-height:1.35}
+.alertover .when{font-family:var(--fm);font-size:11px;color:var(--muted)}
+.alertover .row2{display:flex;gap:8px;width:100%;margin-top:4px}
+.alertover .ackbtn{flex:1 1 auto;background:var(--red);color:#fff;box-shadow:0 3px 0 var(--red-700);
+  border-radius:99px;font-family:var(--fb);font-weight:700;font-size:14px;min-height:46px;
+  display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s,box-shadow .12s}
+.alertover .ackbtn:hover{transform:translateY(-1px)}
+.alertover .ackbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--red-700)}
+.alertover .listenbtn{flex:none;border:2px solid var(--ink);border-radius:99px;min-height:46px;padding:0 15px;
+  font-weight:600;font-size:13px;background:transparent}
+.alertover .listenbtn:hover{background:var(--ink);color:var(--paper)}
+.alertover .hint{font-size:11px;color:var(--muted)}
+@keyframes alertpulse{0%,100%{box-shadow:0 3px 0 var(--red-700)}50%{box-shadow:0 3px 0 var(--red-700),0 0 0 4px var(--red-soft)}}
+.chcard.alert{animation:alertpulse 2.2s ease-in-out infinite}
 
 /* the photo is its own target: it opens the channel's detailed display */
 .shot{position:relative;z-index:2;display:block;width:100%;padding:0;
@@ -218,6 +248,21 @@ button.shot:focus-visible{outline:2px solid var(--red);outline-offset:3px}
 .status .cell.unk  .g{background:var(--rep-soft);color:var(--rep)}
 .status .cell.bad  .lb{color:var(--t-out)}
 .status .cell.warn .lb{color:var(--warn)}
+/* an acknowledged alert does not disappear — it drops out of the takeover
+   and into the status area, so the card still says what happened and that
+   somebody has seen it. Acknowledging is not fixing. */
+.ackrow{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--r);
+  background:var(--out-soft);border:2px solid var(--out-soft);min-height:38px}
+.ackrow.warn{background:var(--warn-soft);border-color:var(--warn-soft)}
+.ackrow .ic{width:16px;height:16px;flex:none;color:var(--t-out)}
+.ackrow.warn .ic{color:var(--warn)}
+.ackrow .tx{min-width:0;display:flex;flex-direction:column;gap:1px}
+.ackrow .tx b{font-family:var(--fb);font-weight:700;font-size:12px;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ackrow .tx span{font-family:var(--fm);font-size:10.5px;color:var(--muted)}
+.ackrow .seen{margin-left:auto;flex:none;font-family:var(--fb);font-weight:700;font-size:9.5px;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:4px}
+.ackrow .seen svg{width:12px;height:12px}
 .status .cell.bad{background:var(--out-soft)}
 .status .cell.warn{background:var(--warn-soft)}
 
@@ -325,6 +370,48 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
 .gbtn:active{transform:translateY(2px)}
 .vsep{width:2px;height:44px;background:var(--line-2);flex:none}
 
+/* ============================================================
+   DETAIL — everything a show needs about one channel, in one place.
+   This is where the depth lives, so the grid can stay sparse.
+   ============================================================ */
+.detail{position:absolute;inset:0;bottom:152px;z-index:9;background:var(--paper);
+  display:none;flex-direction:column;overflow:hidden}
+.detail.open{display:flex}
+.dhead{flex:0 0 auto;display:flex;align-items:center;gap:16px;padding:16px 22px;
+  border-bottom:2px solid var(--line-2);background:var(--paper-2)}
+.dhead .shot{width:104px;flex:none;cursor:default}
+.dhead .t{min-width:0;flex:1 1 auto}
+.dhead h2{font-size:26px;letter-spacing:-.02em}
+.dhead .sub{color:var(--muted);font-size:14px}
+.dhead .right{display:flex;gap:8px;align-items:center;flex:none}
+.dbody{flex:1 1 auto;overflow:auto;padding:18px 22px;display:grid;gap:16px;
+  grid-template-columns:repeat(auto-fit,minmax(272px,1fr));align-content:start}
+[data-view=ipad-p] .dbody{grid-template-columns:1fr 1fr}
+.dgroup{background:var(--card);border:2px solid var(--card-outline);border-radius:var(--r-lg);
+  box-shadow:var(--sh-card);padding:15px;display:flex;flex-direction:column;gap:10px}
+.dgroup h4{font-family:var(--fd);font-weight:800;font-size:12px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--muted)}
+.dgroup dl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;
+  font-family:var(--fm);font-size:12px;align-items:baseline}
+.dgroup dt{color:var(--faint);white-space:nowrap}
+.dgroup dd{color:var(--ink);text-align:right;font-weight:500}
+.dgroup dd.warn{color:var(--warn)}
+.dgroup dd.bad{color:var(--t-out)}
+.dgroup dd.ok{color:var(--ok)}
+/* antenna: which one is actually carrying the signal, and by how much */
+.ant{display:flex;flex-direction:column;gap:7px}
+.antrow{display:flex;align-items:center;gap:10px}
+.antrow .lab{width:58px;flex:none;font-family:var(--fm);font-size:11.5px;color:var(--faint)}
+.antrow .bar{flex:1 1 auto;height:16px;border-radius:5px;background:var(--paper-2);
+  border:2px solid var(--line-2);overflow:hidden;position:relative}
+.antrow .bar i{display:block;height:100%;background:var(--warn)}
+.antrow.active .bar i{background:var(--ok)}
+.antrow .val{width:62px;flex:none;text-align:right;font-family:var(--fm);font-size:11.5px}
+.antrow .tag{width:54px;flex:none;font-family:var(--fb);font-weight:700;font-size:10px;
+  letter-spacing:.05em;color:var(--faint)}
+.antrow.active .tag{color:var(--ok)}
+.sqline{position:absolute;top:0;bottom:0;width:2px;background:var(--t-out)}
+
 /* ---------- exceptions sheet ---------- */
 .sheet{position:absolute;top:0;right:0;bottom:96px;width:378px;background:var(--card);
   border-left:2px solid var(--card-outline);padding:20px;display:flex;flex-direction:column;gap:12px;overflow:auto;
@@ -385,7 +472,7 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
           <i class="dot"></i>NO CUE SOURCE</span>
       </div>
       <div class="right">
-        <button class="count out" data-sheet>1 critical</button>
+        <button class="count out" data-ackcount data-sheet>3 to acknowledge</button>
         <button class="count warn">2 to do</button>
         <button class="count">3 unchecked</button>
       </div>
@@ -411,6 +498,24 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
       </div>
       <div class="grid" id="a2grid"></div>
     </main>
+
+    <section class="detail" id="detail" aria-label="Channel detail">
+      <div class="dhead">
+        <div class="shot" id="d-shot"></div>
+        <div class="t">
+          <h2 id="d-name">Eleanor Vance</h2>
+          <div class="sub" id="d-sub">Marguerite Hale · principal · RX 4 · ant B · in 27</div>
+          <div id="d-status" style="margin-top:9px;max-width:420px"></div>
+        </div>
+        <div class="right">
+          <button class="btn btn-line">Run a check</button>
+          <button class="btn btn-line">Prepare spare</button>
+          <button class="btn btn-primary">Swap…</button>
+          <button class="btn btn-line" data-detailclose>Close</button>
+        </div>
+      </div>
+      <div class="dbody" id="d-body"></div>
+    </section>
 
     <aside class="sheet" id="sheet" aria-label="Show-wide exceptions">
       <button class="btn btn-line close" data-sheet>Close</button>
@@ -776,9 +881,11 @@ const AV=["--blue","--green","--amber","--purple","--coral","--teal","--pink","-
 const CH=[
  {no:27,g:0,nm:"Eleanor Vance",rl:"Marguerite Hale",af:-18.2,st:"on",
   s:{rf:"bad",audio:"ok",batt:"ok",chk:"warn"},
+  alert:{kind:"RF drop",what:"Link quality fell from 92% to 31%. RF level did not move, so this is not range.",when:"21:04:18 · 0:40 ago"},
   say:["<b>RF quality collapsed</b> 0:40 ago. Level normal.","crit"],crit:true,live:true},
  {no:12,g:1,nm:"Dov Halpern",rl:"Auguste Renaud",af:-12.4,st:"on",
   s:{rf:"ok",audio:"ok",batt:"warn",chk:"ok"},
+  alert:{kind:"Battery low",what:"41 minutes left. Below the one-hour threshold for this show.",when:"20:58:10 · 6:48 ago"},
   say:["<b>Battery 0:41</b> left. Shortest on the rig.","warn"]},
  {no:33,g:2,nm:"Ines Okonjo",rl:"Vera Castellan",af:-24.0,st:"on",
   s:{rf:"ok",audio:"ok",batt:"ok",chk:"ok"},
@@ -797,6 +904,7 @@ const CH=[
   say:["Wired input. Checked 18:41.",""]},
  {no:36,g:7,nm:"Anneke Vos",rl:"Célestine",af:null,st:"mute",
   s:{rf:"ok",audio:"bad",batt:"ok",chk:"ok"},
+  alert:{kind:"Audio drop",what:"Muted at the pack. No audio for 3 minutes and nobody has touched it.",when:"21:01:52 · 3:06 ago"},
   say:["<b>Muted at the pack</b> for 3m. Nobody has touched it.","crit"],crit:true},
  {no:22,g:1,nm:"Halim Ferrer",rl:"Ensemble 2",af:-26.7,st:"on",
   s:{rf:"ok",audio:"ok",batt:"ok",chk:"ok"},
@@ -866,8 +974,39 @@ function statusStrip(ch){
     }).join("") + `</div>`;
 }
 
+const ALERTICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 22 20H2z"/><path d="M12 9.5v4.5"/><path d="M12 17h.01"/></svg>';
+function alertOverlay(ch,i){
+  if(!ch.alert || ch.acked) return "";
+  /* the overlay itself listens, so an alert never stands between an operator
+     and the audio they need to hear to judge it */
+  return `<button class="alertover" data-listen="${i}" aria-label="Listen to ${ch.nm} — unacknowledged ${ch.alert.kind}">
+    <span class="kind">${ALERTICON}${ch.alert.kind}</span>
+    <span class="who2">${ch.no} · ${ch.nm}</span>
+    <span class="what">${ch.alert.what}</span>
+    <span class="when">${ch.alert.when}</span>
+    <span class="row2">
+      <span class="ackbtn" role="button" data-ack="${i}">Acknowledge</span>
+      <span class="listenbtn" role="button" data-detail="${i}">Details</span>
+    </span>
+    <span class="hint">Press anywhere else on the card to listen.</span>
+  </button>`;
+}
+
+const TICK='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.4 12 13 4.5"/></svg>';
+function ackRow(ch){
+  if(!ch.alert || !ch.acked) return "";
+  const warn = ch.alert.kind === "Battery low";
+  return `<div class="ackrow ${warn?'warn':''}">
+    <span class="ic" aria-hidden="true">${ALERTICON}</span>
+    <span class="tx"><b>${ch.alert.kind}</b><span>${ch.alert.when}</span></span>
+    <span class="seen">${TICK} Seen</span>
+  </div>`;
+}
+
 function card(ch,i){
-  return `<article class="chcard ${ch.live?'listening':''} ${ch.crit?'critical':''}" data-i="${i}">
+  const alerting = ch.alert && !ch.acked;
+  return `<article class="chcard ${ch.live?'listening':''} ${ch.crit?'critical':''} ${alerting?'alert':''}" data-i="${i}">
+    ${alertOverlay(ch,i)}
     <button class="hit" data-listen="${i}" aria-label="Listen to ${ch.nm}, channel ${ch.no}"></button>
     <button class="shot" data-detail="${i}" aria-label="Open details for ${ch.nm}">
       ${face(ch)}
@@ -880,11 +1019,15 @@ function card(ch,i){
     </button>
     <div class="who"><div class="nm">${ch.nm}</div><div class="rl">${ch.rl}</div></div>
     ${statusStrip(ch)}
+    ${ackRow(ch)}
   </article>`;
 }
 
-$("#a2grid").innerHTML = CH.map(card).join("");
-$("#a1grid").innerHTML = CH.slice(0,8).map((c,i)=>card(c,i)).join("");
+function renderGrids(){
+  const a2=$("#a2grid"); if(a2) a2.innerHTML = CH.map(card).join("");
+  const a1=$("#a1grid"); if(a1) a1.innerHTML = CH.slice(0,8).map((c,i)=>card(c,i)).join("");
+}
+renderGrids();
 $$("[data-static-pic]").forEach(el=>el.innerHTML=face(CH[0]));
 { const p=$("#np-pic"); if(p) p.innerHTML=face(CH[0]); }
 $$("[data-static-face]").forEach(el=>el.insertAdjacentHTML("afterbegin",face(CH[0])));
@@ -897,6 +1040,76 @@ $("#mclist").innerHTML=[["Identity and label","done"],["RF and link in the zone"
    <span class="mono" style="font-size:12px;color:var(--faint);width:14px">${i+1}</span>
    <span style="font-weight:${s==='now'?700:500};color:${s==='done'?'var(--muted)':'var(--ink)'}">${t}</span>
    <span style="margin-left:auto">${s==='done'?'<span class="badge b-ok">PASS</span>':s==='now'?'<span class="badge b-live">NOW</span>':''}</span></div>`).join("");
+
+/* ------------------------------------------------------------------
+   Receiver and transmitter detail. A2 Monitor is meant to be the one
+   screen a show needs, so everything an operator would otherwise open
+   Wireless Workbench or WSM for lives here — read-only, at the channel
+   level. Values below are fabricated but the fields are the real ones.
+   ------------------------------------------------------------------ */
+function rxDetail(ch){
+  const seed=ch.no, r=(n,m)=>((seed*37)%(m-n))+n;
+  const freq=(470+((seed*7.3)%130)).toFixed(3);
+  const antA=-(52+((seed*3)%22)), antB=-(48+((seed*5)%20));
+  const activeB = antB>=antA;
+  const wired = ch.s && ch.s.rf==="na";
+  return {wired, freq, antA, antB, activeB,
+    grp:`G${r(1,12)}`, chn:`CH${r(1,24)}`,
+    qual: ch.s.rf==="bad"?31:ch.s.rf==="warn"?68:94,
+    txpwr:[10,25,50][seed%3], sq:-86, div: activeB?"B carrying":"A carrying",
+    rxModel:"Sennheiser EW-DX EM4", rxSlot:`RX ${r(1,9)}`, rxIp:`10.0.4.${r(20,99)}`, rxFw:"4.2.1",
+    txModel:"SK-DX bodypack", txSerial:`A2-${100+seed}`, txFw:"4.2.1",
+    battType:"2× AA lithium", battPct: ch.s.batt==="warn"?14:68,
+    battTime: ch.s.batt==="warn"?"0:41":"2:14", battTemp:"31 °C", battCycles:"—",
+    lock:"RF + menu locked", txMute: ch.st==="mute" ? "muted at pack" : "unmuted",
+    gain:`${-(3+(seed%9))} dB`, afLevel: ch.af===null? "—" : ch.af.toFixed(1)+" dBFS",
+    trim:"+0 dB", encr:"AES-256 on", warnings: ch.s.rf==="bad"?"link quality":"none"};
+}
+function detailHTML(ch){
+  const d=rxDetail(ch);
+  const pct=v=>Math.max(0,Math.min(100,(v+100)*1.6));
+  const g=(t,rows)=>`<div class="dgroup"><h4>${t}</h4><dl>${rows.map(([k,v,c])=>
+    `<dt>${k}</dt><dd class="${c||''}">${v}</dd>`).join("")}</dl></div>`;
+  const antenna = d.wired ? "" : `<div class="dgroup"><h4>Antennas and diversity</h4>
+    <div class="ant">
+      <div class="antrow ${d.activeB?'':'active'}"><span class="lab">ANT A</span>
+        <div class="bar"><i style="width:${pct(d.antA)}%"></i><span class="sqline" style="left:${pct(d.sq)}%"></span></div>
+        <span class="val">${d.antA} dBm</span><span class="tag">${d.activeB?'':'ACTIVE'}</span></div>
+      <div class="antrow ${d.activeB?'active':''}"><span class="lab">ANT B</span>
+        <div class="bar"><i style="width:${pct(d.antB)}%"></i><span class="sqline" style="left:${pct(d.sq)}%"></span></div>
+        <span class="val">${d.antB} dBm</span><span class="tag">${d.activeB?'ACTIVE':''}</span></div>
+    </div>
+    <dl><dt>diversity</dt><dd>${d.div}</dd>
+        <dt>squelch</dt><dd>${d.sq} dBm</dd>
+        <dt>link quality</dt><dd class="${d.qual<50?'bad':d.qual<80?'warn':'ok'}">${d.qual} %</dd>
+        <dt>warnings</dt><dd class="${d.warnings==='none'?'':'bad'}">${d.warnings}</dd></dl>
+    <p style="font-size:11.5px;color:var(--muted);line-height:1.35">The red mark on each bar is the
+      squelch threshold. Level and quality are shown separately on purpose: interference pulls quality
+      down without moving level.</p></div>`;
+  return (d.wired ? "" : antenna) +
+    (d.wired ? "" : g("Frequency", [["frequency",d.freq+" MHz"],["group",d.grp],["channel",d.chn],
+      ["TX power",d.txpwr+" mW"],["encryption",d.encr,"ok"]])) +
+    g("Audio", [["captured level",d.afLevel],["receiver gain",d.gain],["trim",d.trim],
+      ["TX mute",d.txMute, ch.st==="mute"?"bad":"ok"],["input",`in ${ch.no}`]]) +
+    (d.wired ? "" : g("Transmitter", [["model",d.txModel],["asset",d.txSerial],["firmware",d.txFw],
+      ["lock",d.lock],["battery",d.battType]])) +
+    (d.wired ? "" : g("Battery", [["remaining",d.battTime, ch.s.batt==="warn"?"warn":"ok"],
+      ["charge",d.battPct+" %", ch.s.batt==="warn"?"warn":"ok"],["temperature",d.battTemp],
+      ["cycles",d.battCycles],["changed","17:40 · pre-show"]])) +
+    g("Receiver", [["model",d.rxModel],["slot",d.rxSlot],["address",d.rxIp],["firmware",d.rxFw],
+      ["telemetry", ch.st==="stale" ? "42s old" : "live", ch.st==="stale"?"warn":"ok"]]) +
+    g("Show assignment", [["performer",ch.nm],["role",ch.rl],["element","MKE-1 beige · E-221"],
+      ["placement","hairline, left temple"],["spare","A2-119 · prepared"],["last check","18:55 · J. Marsh"]]);
+}
+function openDetailSheet(ch){
+  const d=$("#detail"); if(!d) return;
+  $("#d-shot").innerHTML=face(ch);
+  $("#d-name").textContent=ch.nm;
+  $("#d-sub").textContent=`${ch.rl} · channel ${ch.no}`;
+  $("#d-status").innerHTML=statusStrip(ch);
+  $("#d-body").innerHTML=detailHTML(ch);
+  d.classList.add("open");
+}
 
 /* ------------------------------------------------------------------
    The player's timeline. Four measurements over one shared window, so
@@ -956,6 +1169,19 @@ $$(".seek").forEach(el=>{
   ["pointerup","pointercancel"].forEach(ev=>el.addEventListener(ev,()=>{down=false;}));
 });
 document.addEventListener("click",e=>{
+  const ak=e.target.closest("[data-ack]");
+  if(ak){
+    e.stopPropagation();
+    const i=+ak.dataset.ack; CH[i].acked=true;
+    /* acknowledging is not fixing: the fault stays in the status strip, and the
+       alert moves into the card's status area rather than vanishing */
+    renderGrids();
+    const n=CH.filter(c=>c.alert&&!c.acked).length;
+    $$("[data-ackcount]").forEach(x=>{
+      x.textContent = n ? `${n} to acknowledge` : "all acknowledged";
+      x.classList.toggle("out", n>0); });
+    return;
+  }
   if(e.target.closest("#savebtn")){
     const ch=CH.find(c=>c.live)||CH[0];
     const set=(id,v)=>{const el=$(id); if(el)el.textContent=v;};
@@ -965,6 +1191,7 @@ document.addEventListener("click",e=>{
     $("#saveconfirm").classList.add("open"); return;
   }
   if(e.target.closest("[data-savecancel]")){ $("#saveconfirm").classList.remove("open"); return; }
+  if(e.target.closest("[data-detailclose]")){ $("#detail").classList.remove("open"); return; }
   if(e.target.closest("#t-end")||e.target.closest(".tbtn.main")){ POS=1; applyPos(); }
   const w=e.target.closest("[data-win]");
   if(w){ WIN=+w.dataset.win;
@@ -998,7 +1225,9 @@ function listen(i){
   });
   const pic=$("#np-pic"); if(pic) pic.innerHTML=face(ch);
   const set=(id,v)=>{const e=$(id); if(e)e.textContent=v;};
-  set("#np-name",ch.nm); set("#np-role",ch.rl);
+  set("#np-name",ch.nm);
+  const rd=rxDetail(ch);
+  set("#np-rx", rd.wired ? `wired · in ${ch.no}` : `${rd.rxSlot} · ant ${rd.activeB?"B":"A"} · in ${ch.no}`);
   const tg=$("#np-tags");
   if(tg) tg.innerHTML=statusStrip(ch);
   paintLanes(); applyPos();
@@ -1008,6 +1237,7 @@ function openDetail(i){
   listen(i);
   const bar=$("#nowbar"); if(bar) bar.dataset.open="true";
   const ex=$("#expand"); if(ex) ex.setAttribute("aria-expanded","true");
+  openDetailSheet(CH[i]);
 }
 document.addEventListener("click",e=>{
   const d=e.target.closest("[data-detail]");

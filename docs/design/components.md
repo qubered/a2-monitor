@@ -99,6 +99,44 @@ everywhere it is seen.
 - **Critical** — `--t-out` outline, plus the faulted cell in the strip.
 - **Stale** — dashes in the affected cells with the age in the sentence.
 
+## Alert takeover
+
+An alert that nobody has acknowledged **owns the whole card**, the way WaveTool's
+SCP overlay owns a channel. It is not a badge and not a row: it replaces the
+card's contents with the alert type, the channel, what happened, and when.
+
+```
+┌────────────────────────────────┐
+│ ⚠ BATTERY LOW                  │
+│ 12 · Dov Halpern               │
+│ 41 minutes left. Below the     │
+│ one-hour threshold for this    │
+│ show.                          │
+│ 20:58:10 · 6:48 ago            │
+│ ┌──────────────┐ ┌───────────┐ │
+│ │ Acknowledge  │ │  Details  │ │
+│ └──────────────┘ └───────────┘ │
+│ Press anywhere else to listen. │
+└────────────────────────────────┘
+```
+
+Three rules make it safe:
+
+1. **The takeover is still a listen target.** Pressing anywhere on the overlay
+   that is not a button listens to that channel. An alert must never stand
+   between an operator and the audio they need to judge it — the first thing
+   anyone does with "RF drop on 27" is listen to 27.
+2. **It does not clear itself.** No timeout, no auto-dismiss on the fault
+   clearing. Somebody says they have seen it.
+3. **Acknowledging is not fixing.** On acknowledgement the alert leaves the
+   takeover and moves into the card's **status area** as a compact row — type,
+   time, and a *Seen* mark — while the underlying dimension stays failed in the
+   status strip. A channel whose RF is still broken still reads `✕ RF` after
+   acknowledgement, because it is still broken.
+
+The header carries a live count of unacknowledged alerts, which is the number an
+operator is working down.
+
 ## The player
 
 The bottom bar is a player for the selected channel, and it behaves like one.
@@ -164,6 +202,38 @@ confused and only one of them has a privacy consequence.
 Export is separately permissioned from listening and from marking
 ([operator workflows](../product/operator-workflows.md)). A user who can hear a
 channel cannot necessarily take a copy of it away.
+
+## Detail
+
+Opened by pressing a channel's photograph. This is where the depth lives, which
+is what lets the grid stay sparse.
+
+A2 Monitor is intended to be the one screen a show needs, so everything an
+operator would otherwise open Wireless Workbench or Wireless Systems Manager to
+see is here, at the channel level:
+
+- **Antennas and diversity** — level per antenna with the squelch threshold
+  marked on each bar, which antenna is currently carrying, and link quality as
+  its own figure. Level and quality are never merged, because interference pulls
+  quality down without moving level.
+- **Frequency** — frequency, group, channel, TX power, encryption state.
+- **Audio** — captured level, receiver gain, trim, transmitter mute state, input.
+- **Transmitter** — model, asset, firmware, lock state, battery type.
+- **Battery** — remaining time, charge, temperature, cycles, when it was changed.
+- **Receiver** — model, slot, address, firmware, telemetry freshness.
+- **Show assignment** — performer, role, element, placement, spare, last check.
+
+The set is capability-driven: a receiver that does not report a field shows it as
+unknown rather than as a plausible default, and a wired input drops the RF,
+transmitter and battery groups rather than showing false values.
+
+**This is read-only.** Displaying what a receiver reports is not the same as
+managing it. Frequency coordination, scanning, deployment and firmware
+management stay in the vendor tools, and are listed as non-goals in the
+[product vision](../product/vision.md). See the note in the
+[README](README.md) — the vision's wording needs revisiting, because "the one
+screen a show needs" and "not replacing WSM" are in tension even if read-only
+display resolves most of it.
 
 ## Filter band
 

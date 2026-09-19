@@ -55,6 +55,26 @@ undifferentiated 128-channel wall". That document has not been changed here,
 because the change is a product decision rather than a design one and belongs in
 its own pull request. **One of the two needs to move.**
 
+## Scope note: one screen, and what that does not mean
+
+A2 Monitor is intended as the single screen a show needs, replacing the reasons
+an operator reaches for Wireless Workbench or Wireless Systems Manager during a
+performance. The channel detail therefore carries the full picture: per-antenna
+level and which one is carrying, squelch, frequency, group and channel, TX power
+and lock, encryption, gain and trim, battery charge, temperature and cycles,
+firmware and telemetry freshness.
+
+That is **display**, not **management**. Frequency coordination, scanning,
+deployment and firmware updates stay in the vendor tools.
+
+[Product vision](../product/vision.md) currently lists "replacing the console,
+Wireless Systems Manager, or Dante Controller" and "frequency coordination or
+receiver firmware management" as explicit non-goals for version one. Read-only
+display of everything a receiver reports is compatible with the second of those
+and arguably not with the spirit of the first. **The vision's wording needs
+revisiting**, and that is a product change rather than a design one, so it is
+not made here.
+
 ## Read in this order
 
 1. [Principles](principles.md) — what we optimise for, and what we refuse.
