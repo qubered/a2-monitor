@@ -43,6 +43,7 @@ must remain understandable without access to the original conversation.
 - [A1/A2 independent review](reviews/2026-09-18-a1-a2-independent-review.md)
 - [Independent plan review: round 3](reviews/2026-09-19-independent-review-round-3.md)
 - [Round 3 response and closure ledger](reviews/2026-09-19-round-3-response.md)
+- [Independent plan review: round 4](reviews/2026-09-19-independent-review-round-4.md)
 
 ## Accepted decisions
 
