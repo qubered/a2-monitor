@@ -35,9 +35,29 @@ published. This document records the domain mapping on top of it and nothing
 else. Where RVLT and this document disagree, RVLT wins and this document is
 wrong.
 
-Source: [RVLT design language](https://rvlt-labs.github.io/rvlt-designlanguage/),
-[component preview](https://rvlt-labs.github.io/rvlt-designlanguage/preview);
-accessed 2026-09-19.
+Source of record:
+[RVLT-Labs/rvlt-designlanguage `DESIGN.md`](https://github.com/RVLT-Labs/rvlt-designlanguage/blob/main/DESIGN.md).
+The sibling product [gearflow `DESIGN.md`](https://github.com/TwoToned/gearflow/blob/main/DESIGN.md)
+is the precedent for how a second product adopts the language, and this document
+follows it where it diverges from the marketing site. Both accessed 2026-09-19.
+
+### 1.1.1 Where A2 Monitor deliberately diverges
+
+Two, and only two. Both are recorded here so they read as decisions rather than
+drift.
+
+- **Paper is the default surface.** RVLT's primary is the dark "Espresso" theme
+  with Paper as the opt-in alternate. This product inverts that: it is an
+  operational tool read in short glances, the light surface tested better for
+  that, and dark remains a straight theme switch. RVLT's `.lightui` treatment —
+  the product UI as a self-lit light island on a dark page — is the same instinct
+  and is what the marketing site would use to show this product.
+- **The hand carries a semantic, not only a flourish.** RVLT restricts Kalam to
+  eyebrows, doodles and empty states, and **bans it in alert, compliance,
+  overdue and conflict contexts**. This product keeps that ban, and additionally
+  uses the hand for one thing RVLT does not: an operator's own written note, as
+  the counterpart to mono for a machine measurement ([§2.3](#2-principles)). A
+  note never appears inside an alert overlay or a critical notice.
 
 ### 1.2 The operator
 
@@ -166,6 +186,16 @@ leaving only `prefers-color-scheme`.
   `--veil` and `--veil-ink` tokens per theme, or the alert renders white on white
   in dark.
 
+### 3.2.1 Never inline a value
+
+RVLT §3.6, and a MUST: **a component never names a raw hex, px or radius — it
+references a token.** Raw values appear only in the theme blocks, which are
+theme-mapped, so `var(--red)` resolves correctly on both surfaces and a hardcoded
+value cannot leak from one theme into the other. Where this product needed a
+surface RVLT does not name — a pressed control, a recessed well behind a trace —
+it adds a token per theme (`--elev-2`, `--elev-3`, `--elev-4`, `--well`,
+`--veil`, `--veil-ink`) rather than inlining a colour at the component.
+
 ### 3.3 Domain mapping
 
 The audio domain gets no new palette. It gets RVLT's existing roles.
@@ -190,25 +220,64 @@ carries a state and never appears on a meter, a badge or a border.
 
 ## 4. Typography
 
-RVLT's four roles, unchanged.
+Four families, from RVLT §5. **Display = personality. Body = quiet. Handwriting
+= the human touch. Baloo 2 = the wordmark only.**
 
-| Role | Family | Job here |
-| --- | --- | --- |
-| Display | **Archivo** 700/800, `-.02em` | Names, headings, the big figure |
-| Body | **Hanken Grotesk** 400–700 | Everything read as language |
-| Mono | **JetBrains Mono**, tabular | Anything a machine measured |
-| Hand | **Kalam** 700 | Anything a person wrote |
+| Role | Family | Weights | Job here |
+| --- | --- | --- | --- |
+| Display | **Archivo** | 700 / 800 / 900 | Page titles, panel headers, names, the one bright figure |
+| Body | **Hanken Grotesk** | 400 / 500 / 600 / 700 | Everything read as language; all UI text, labels, controls |
+| Data mono | **JetBrains Mono**, `tabular-nums` | 400 / 500 / 600 | Anything a machine measured — levels, frequencies, times, asset IDs. Data cells only. |
+| Handwriting | **Kalam** | 700 | An operator's own note, and empty-state captions. Nothing else. |
+| Wordmark | **Baloo 2** | 700 | The product lockup only. Never a headline, never UI. |
 
-The mono/hand split is load-bearing and is the one place this product leans on a
-type rule harder than RVLT needs to: an operator must be able to tell at a glance
-whether `−18.2 dBFS` came from a meter or `tape lifting again` came from a
-colleague.
+### 4.1 App type ramp (LOCKED — do not invent UI sizes)
+
+RVLT §5.5, used verbatim. The marketing scale in RVLT §5.1 does not apply to this
+product; every surface here is dense app UI.
+
+| Role | Size / line / tracking | Family · weight | Use |
+| --- | --- | --- | --- |
+| App page title | 24 / 1.2 / −.02em | display 800 | the one `h1` on a screen |
+| Section / panel header | 18 / 1.25 / −.01em | display 700 | card and section headers |
+| Card / widget title | 15 / 1.3 | display 700 *or* body 600 | channel name on a card |
+| Reading body | 16 / 1.5 | body 400 | descriptions, help, long text |
+| UI text / label | 14 / 1.4 | body 500 | controls, nav, form labels, buttons |
+| Table cell | 13.5 / 1.4 | body 400, mono for figures | rows, detail values |
+| Caption / meta | 12 / 1.35 | body 500 | secondary meta, timestamps |
+| Badge / micro | 11 (floor) | body 700 | status pills, counts, tags |
+
+- **11px is an absolute floor.** Nothing in this product is smaller, including
+  status-strip labels and axis ticks.
+- Buttons are UI text, 14px, weight 600. Mono matches the cell it sits in.
+- Weights: display 700–800 for titles; body 400 read / 500 UI / 600 emphasis /
+  700 badge. No others.
+- Keep the high-contrast jump: a 24px display title over 13.5px quiet rows. Do
+  not flatten everything to one size.
+
+### 4.2 Casing
+
+**Sentence case everywhere. `text-transform: uppercase` is banned** (RVLT §5.2 —
+uppercase is the rejected industrial misfire). That includes the places an
+operational tool reaches for it by reflex: status-strip labels, badges, section
+overlines, filter-band labels, the alert overlay, transport labels and column
+headers. An overline is 11px / 600, sentence case, `--muted` — never 10px,
+never uppercase.
+
+### 4.3 The mono and hand split
+
+If a machine measured it, it is mono. If a person wrote it, it is the hand. This
+is load-bearing and is the one place this product leans on type harder than RVLT
+needs to: an operator must be able to tell at a glance whether `−18.2 dBFS` came
+from a meter or `tape lifting again` came from a colleague.
+
+The hand is never used for a value, a unit, a time, or anything that must be read
+precisely — and never inside an alert, a critical notice or a destructive
+confirmation ([§1.1.1](#111-where-a2-monitor-deliberately-diverges)).
 
 Figures are tabular everywhere. A readout that shifts horizontally as it changes
-is unreadable in motion. Minimum interface text is 13px; minimum input text is
-16px, so iOS does not zoom on focus.
-
----
+is unreadable in motion. Reading body stays ≥16px; functional UI text steps down
+per the ramp, which is allowed and is not a violation of the body-size rule.
 
 ## 5. Shape and elevation
 
@@ -240,7 +309,10 @@ transitioning a live value makes it lie about when it changed.
 `prefers-reduced-motion: reduce` removes every transition and animation. State
 remains legible because it is carried by colour, glyph and word, not by movement.
 
-The single exception to §2.6 is the report pulse ([§10.7](#107-reported-state)).
+RVLT §8 allows **at most two signature loops**. This product spends both: the
+live dot's `pulse 1.7s`, and the report pulse on an unclaimed fault report
+([§10.7](#107-reported-state)). There is no third, and adding one means removing
+one.
 
 ---
 

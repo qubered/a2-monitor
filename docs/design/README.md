@@ -9,6 +9,9 @@ Three things live here.
   WaveTool and what is deliberately changed, the five visual rounds that were
   rejected and what each one taught, and the open questions that need an operator
   in a room rather than more desk work.
+- **[mockups/](mockups/)** — rendered pictures of the reference build, one per
+  state worth having a picture of, regenerated with
+  `node scripts/render-mockups.mjs`.
 - **[prototype/index.html](prototype/index.html)** — the reference build. Open it
   directly in a browser; no build step, no dependencies beyond web fonts. It
   opens fit to the window, with fixed desktop and iPad viewports for checking

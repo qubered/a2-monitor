@@ -6,7 +6,7 @@
 <title>A2 Monitor — surfaces</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Baloo+2:wght@700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    A2 MONITOR — built on the RVLT design language.
@@ -31,6 +31,8 @@
   --purple-soft:#ECE6FA;
   --scrim:rgba(40,30,15,.45); --select:rgba(193,34,41,.16); --link:#2F6BD6;
   --veil:rgba(255,253,248,.44); --veil-ink:rgba(255,253,248,.85); --card-lit:none;
+  --elev-2:#F7F2E6; --elev-3:#F1EADA; --elev-4:#E9E0CC; --well:#FBF7EE;
+  --warn-700:#9C6A0E;
   --sh-card:0 3px 0 var(--line-2); --sh-hover:0 7px 0 var(--line-2);
   --sh-stk:2px 4px 0 rgba(40,30,15,.13);
   --card-outline:var(--ink);
@@ -57,7 +59,9 @@
   --cream:#F5EFE2; --cream-ink:#1D1A15;
   --r:14px; --r-lg:20px; --radius:0.875rem;
   --veil:rgba(20,18,16,.50); --veil-ink:rgba(10,9,8,.85); --card-lit:var(--lit);
-  --fd:"Archivo",sans-serif;
+  --elev-2:#262320; --elev-3:#2D2A25; --elev-4:#332F2A; --well:#171512;
+  --warn-700:#9C6A0E;
+  --fd:"Archivo",sans-serif; --fw:"Baloo 2",cursive;
   --fb:"Hanken Grotesk",system-ui,sans-serif;
   --fh:"Kalam",cursive; --fm:"JetBrains Mono",ui-monospace,monospace;
   --card-outline:var(--line-2);
@@ -80,7 +84,9 @@
   --cream:#F5EFE2; --cream-ink:#1D1A15;
   --r:14px; --r-lg:20px; --radius:0.875rem;
   --veil:rgba(20,18,16,.50); --veil-ink:rgba(10,9,8,.85); --card-lit:var(--lit);
-  --fd:"Archivo",sans-serif;
+  --elev-2:#262320; --elev-3:#2D2A25; --elev-4:#332F2A; --well:#171512;
+  --warn-700:#9C6A0E;
+  --fd:"Archivo",sans-serif; --fw:"Baloo 2",cursive;
   --fb:"Hanken Grotesk",system-ui,sans-serif;
   --fh:"Kalam",cursive; --fm:"JetBrains Mono",ui-monospace,monospace;
   --card-outline:var(--line-2);
@@ -150,14 +156,17 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* ---------- top bar ---------- */
 .top{flex:0 0 auto;height:68px;display:flex;align-items:center;gap:20px;padding:0 22px;
   background:var(--paper-2);border-bottom:2px solid var(--line-2)}
-.brand{display:flex;align-items:center;gap:10px;font-family:var(--fd);font-weight:800;font-size:19px;flex:none}
+.brand{display:flex;align-items:center;gap:9px;font-family:var(--fd);font-weight:800;font-size:19px;
+  letter-spacing:-.01em;flex:none}
+/* Baloo 2 is the wordmark face and nothing else (RVLT 5.3) */
+.brand .wm{font-family:var(--fw);font-weight:700;letter-spacing:-.01em;font-size:21px}
 .brand .mark{color:var(--red);letter-spacing:.02em}
 .show{display:flex;flex-direction:column;line-height:1.2;padding-left:18px;border-left:2px solid var(--line-2)}
 .show b{font-family:var(--fd);font-weight:700;font-size:15px}
 .show span{font-size:12px;color:var(--muted)}
 .cue{display:flex;align-items:center;gap:14px;margin-left:4px}
 .cue .blk{display:flex;flex-direction:column;gap:1px}
-.cue .k{font-family:var(--fm);font-size:10px;color:var(--faint);letter-spacing:.08em}
+.cue .k{font-family:var(--fm);font-size:11px;color:var(--faint);letter-spacing:.08em}
 .cue .v{font-family:var(--fm);font-size:15px;font-weight:600}
 .top .right{margin-left:auto;display:flex;align-items:center;gap:8px}
 .count{display:inline-flex;align-items:center;gap:7px;border-radius:99px;padding:8px 14px;min-height:44px;
@@ -239,7 +248,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .alertover.warn .glyph{color:var(--warn)}
 .alertover .glyph svg{width:46px;height:46px;filter:drop-shadow(0 1px 0 var(--veil-ink))}
 .alertover .kind{font-family:var(--fd);font-weight:800;font-size:18px;letter-spacing:.02em;
-  text-transform:uppercase;color:var(--t-out);text-shadow:0 1px 0 var(--veil-ink)}
+  color:var(--t-out);text-shadow:0 1px 0 var(--veil-ink)}
 .alertover.warn .kind{color:var(--warn)}
 /* the overlay clears itself after a configurable time. the alert does not:
    it drops into the status area still marked unacknowledged. */
@@ -250,8 +259,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   transform-origin:left;animation:alertexpire var(--dur,300s) linear forwards}
 .alertover.warn .timer i{background:var(--warn)}
 @keyframes alertexpire{from{transform:scaleX(1)}to{transform:scaleX(0)}}
-.alertover .press{font-family:var(--fb);font-weight:700;font-size:10px;letter-spacing:.07em;
-  text-transform:uppercase;color:var(--t-out);opacity:.7;margin-top:4px;
+.alertover .press{font-family:var(--fb);font-weight:700;font-size:11px;letter-spacing:.07em;
+  color:var(--t-out);opacity:.7;margin-top:4px;
   text-shadow:0 1px 0 var(--veil-ink)}
 .alertover.warn .press{color:var(--warn)}
 .alertover:active{background:color-mix(in srgb, var(--t-out) 20%, var(--veil))}
@@ -298,8 +307,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .status .cell:last-child{border-right:0}
 .status .cell .g{width:19px;height:19px;border-radius:50%;display:grid;place-items:center;flex:none}
 .status .cell .g svg{width:12px;height:12px;display:block}
-.status .cell .lb{font-family:var(--fb);font-weight:700;font-size:9.5px;letter-spacing:.05em;
-  color:var(--muted);text-transform:uppercase;white-space:nowrap}
+.status .cell .lb{font-family:var(--fb);font-weight:700;font-size:11px;letter-spacing:.05em;
+  color:var(--muted);white-space:nowrap}
 .status .cell.ok   .g{background:var(--ok-soft);color:var(--ok)}
 .status .cell.bad  .g{background:var(--out-soft);color:var(--t-out)}
 .status .cell.warn .g{background:var(--warn-soft);color:var(--warn)}
@@ -317,9 +326,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .ackrow .tx{min-width:0;display:flex;flex-direction:column;gap:1px}
 .ackrow .tx b{font-family:var(--fb);font-weight:700;font-size:12px;color:var(--ink);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ackrow .tx span{font-family:var(--fm);font-size:10.5px;color:var(--muted)}
-.ackrow .seen{margin-left:auto;flex:none;font-family:var(--fb);font-weight:700;font-size:9.5px;
-  letter-spacing:.05em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:4px}
+.ackrow .tx span{font-family:var(--fm);font-size:11px;color:var(--muted)}
+.ackrow .seen{margin-left:auto;flex:none;font-family:var(--fb);font-weight:700;font-size:11px;
+  letter-spacing:.05em;color:var(--muted);display:flex;align-items:center;gap:4px}
 .ackrow .seen svg{width:12px;height:12px}
 .ackrow .seen.unseen{color:var(--t-out)}
 .ackrow.unseen{border-style:dashed;border-color:var(--t-out)}
@@ -344,19 +353,19 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .graphs{flex:1 1 auto;display:none;flex-direction:column;gap:0;padding:14px 22px 0;min-height:0;position:relative}
 .nowbar[data-open=true] .graphs{display:flex}
 .glane{display:flex;align-items:center;gap:14px;flex:1 1 0;min-height:0}
-.glane .k{width:74px;flex:none;font-family:var(--fb);font-weight:700;font-size:10px;
-  letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.glane .k{width:74px;flex:none;font-family:var(--fb);font-weight:700;font-size:11px;
+  letter-spacing:.08em;color:var(--muted)}
 .glane .plot{flex:1 1 auto;min-width:0;height:100%;position:relative;
   border-bottom:2px solid var(--line-2)}
 .glane:first-child .plot{border-top:2px solid var(--line-2)}
 .glane .plot svg{display:block;width:100%;height:100%}
 .glane .v{width:92px;flex:none;text-align:right;font-family:var(--fm);font-size:13px;font-weight:500}
-.glane .v small{display:block;font-size:10px;color:var(--faint);font-weight:400}
+.glane .v small{display:block;font-size:11px;color:var(--faint);font-weight:400}
 .glane .ev{position:absolute;top:50%;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:7px;
-  display:grid;place-items:center;font-size:10px;background:var(--card);border:2px solid var(--card-outline)}
+  display:grid;place-items:center;font-size:11px;background:var(--card);border:2px solid var(--card-outline)}
 /* one playhead across every graph, so the four lanes are read together */
 .winsel{position:absolute;left:50%;top:-1px;transform:translateX(-50%);display:flex;gap:2px}
-.winsel button{font-family:var(--fm);font-size:10.5px;color:var(--faint);padding:2px 7px;border-radius:99px}
+.winsel button{font-family:var(--fm);font-size:11px;color:var(--faint);padding:2px 7px;border-radius:99px}
 .winsel button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
 .plot .ph{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--red);
   left:calc(var(--pos,1) * 100%);pointer-events:none;z-index:3}
@@ -432,7 +441,7 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
 .groups::-webkit-scrollbar{display:none}
 .gbtn{flex:none;min-height:46px;padding:0 13px;border-radius:99px;border:2px solid var(--line-2);
   background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  font-family:var(--fb);font-weight:700;font-size:10.5px;color:var(--ink-2);transition:transform .12s}
+  font-family:var(--fb);font-weight:700;font-size:11px;color:var(--ink-2);transition:transform .12s}
 .gbtn i{width:20px;height:3px;border-radius:2px;display:block}
 .gbtn:active{transform:translateY(2px)}
 .vsep{width:2px;height:44px;background:var(--line-2);flex:none}
@@ -457,7 +466,7 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
 .dgroup{background:var(--card);border:2px solid var(--card-outline);border-radius:var(--r-lg);
   box-shadow:var(--sh-card);padding:15px;display:flex;flex-direction:column;gap:10px}
 .dgroup h4{font-family:var(--fd);font-weight:800;font-size:12px;letter-spacing:.07em;
-  text-transform:uppercase;color:var(--muted)}
+  color:var(--muted)}
 .dgroup dl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;
   font-family:var(--fm);font-size:12px;align-items:baseline}
 .dgroup dt{color:var(--faint);white-space:nowrap}
@@ -474,7 +483,7 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
 .antrow .bar i{display:block;height:100%;background:var(--warn)}
 .antrow.active .bar i{background:var(--ok)}
 .antrow .val{width:62px;flex:none;text-align:right;font-family:var(--fm);font-size:11.5px}
-.antrow .tag{width:54px;flex:none;font-family:var(--fb);font-weight:700;font-size:10px;
+.antrow .tag{width:54px;flex:none;font-family:var(--fb);font-weight:700;font-size:11px;
   letter-spacing:.05em;color:var(--faint)}
 .antrow.active .tag{color:var(--ok)}
 .sqline{position:absolute;top:0;bottom:0;width:2px;background:var(--t-out)}
@@ -482,23 +491,23 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
 .a1bar{flex:0 0 auto;min-height:96px;display:flex;align-items:center;gap:18px;padding:0 22px;
   background:var(--paper-2);border-top:2px solid var(--line-2)}
 .a1open{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:7px}
-.a1open .micro{font-family:var(--fm);font-size:10.5px;letter-spacing:.08em;color:var(--faint)}
+.a1open .micro{font-family:var(--fm);font-size:11px;letter-spacing:.08em;color:var(--faint)}
 .a1list{display:flex;gap:10px;flex-wrap:wrap}
 
 /* A1 cards carry a standing instruction, because pressing one does something
    different here than it does on the A2 grid. */
-.chcard.a1 .reportcue{font-family:var(--fb);font-weight:700;font-size:10px;letter-spacing:.07em;
-  text-transform:uppercase;color:var(--muted);text-align:center;padding-top:2px}
+.chcard.a1 .reportcue{font-family:var(--fb);font-weight:700;font-size:11px;letter-spacing:.07em;
+  color:var(--muted);text-align:center;padding-top:2px}
 .chcard.a1:hover .reportcue{color:var(--red)}
 /* A reported channel pulses until someone claims it. This is the one piece of
    ambient motion in the product: it marks work that has been handed over and
    not yet picked up, on both the view that sent it and the view that has to
    answer it. It stops the moment somebody claims the report. */
-.chcard.reported{border-color:var(--warn);box-shadow:0 3px 0 #9C6A0E;
+.chcard.reported{border-color:var(--warn);box-shadow:0 3px 0 var(--warn-700);
   animation:reportpulse 1.9s ease-in-out infinite}
 @keyframes reportpulse{
-  0%,100%{box-shadow:0 3px 0 #9C6A0E, 0 0 0 0 var(--warn-soft)}
-  55%{box-shadow:0 3px 0 #9C6A0E, 0 0 0 7px var(--warn-soft)}
+  0%,100%{box-shadow:0 3px 0 var(--warn-700), 0 0 0 0 var(--warn-soft)}
+  55%{box-shadow:0 3px 0 var(--warn-700), 0 0 0 7px var(--warn-soft)}
 }
 .chcard.reported.claimed{animation:none;border-color:var(--card-outline);box-shadow:var(--sh-card)}
 
@@ -602,13 +611,13 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
   <!-- ===================== A2 GRID ===================== -->
   <section class="surface" id="s-a2">
     <header class="top">
-      <div class="brand"><span class="mark">▲</span> A2 MONITOR</div>
+      <div class="brand"><span class="mark">▲</span> A2 <span class="wm">Monitor</span></div>
       <div class="show"><b>The Winter Circus</b><span>Northgate Playhouse · Preview 3</span></div>
       <div class="cue">
-        <div class="blk"><span class="k">NODE</span><span class="v" style="color:var(--ok)">64 ch · 48k</span></div>
-        <div class="blk"><span class="k">YOU</span><span class="v">SL · J. Marsh</span></div>
+        <div class="blk"><span class="k">Node</span><span class="v" style="color:var(--ok)">64 ch · 48k</span></div>
+        <div class="blk"><span class="k">You</span><span class="v">SL · J. Marsh</span></div>
         <span class="badge b-rep" title="Cue tracking is off. Turn it on in Manager if you run a cue list.">
-          <i class="dot"></i>NO CUE SOURCE</span>
+          <i class="dot"></i>No cue source</span>
       </div>
       <div class="right">
         <button class="count out" data-ackcount data-sheet>3 to acknowledge</button>
@@ -618,7 +627,7 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
     </header>
 
     <div class="filters" role="group" aria-label="Filters">
-      <span class="lbl">SHOWING</span>
+      <span class="lbl">Showing</span>
       <button class="chipf" aria-pressed="true">All channels <span class="n">64</span></button>
       <button class="chipf" aria-pressed="false">Needs someone <span class="n">4</span></button>
       <button class="chipf" aria-pressed="false">Wireless <span class="n">48</span></button>
@@ -660,12 +669,12 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
       <button class="btn btn-line close" data-sheet>Close</button>
       <h3>Needs someone</h3>
       <button class="exrow">
-        <div class="t"><span class="badge b-out"><i class="dot"></i>CRITICAL</span> 27 · Eleanor Vance</div>
+        <div class="t"><span class="badge b-out"><i class="dot"></i>Critical</span> 27 · Eleanor Vance</div>
         <div class="m">RF quality collapsed 0:40 ago. Level is normal. <b>Cause not observed.</b></div>
         <div class="r"><span class="btn btn-primary">Listen</span><span class="btn btn-line">Claim</span></div>
       </button>
       <button class="exrow">
-        <div class="t"><span class="badge b-warn"><i class="dot"></i>BATTERY</span> 12 · Dov Halpern</div>
+        <div class="t"><span class="badge b-warn"><i class="dot"></i>Battery</span> 12 · Dov Halpern</div>
         <div class="m">0:41 left — the shortest on the rig by some way.</div>
         <div class="r"><span class="btn btn-primary">Listen</span><span class="btn btn-line">Make a task</span></div>
       </button>
@@ -710,10 +719,10 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
         <div class="glane" style="flex:0 0 22px">
           <span class="k"></span>
           <div class="plot" id="axis" style="border:0;position:relative">
-            <span data-t="1" style="position:absolute;left:0;top:2px;font-family:var(--fm);font-size:10.5px;color:var(--faint)">−30:00</span>
-            <span data-t="0.66" style="position:absolute;left:33%;top:2px;font-family:var(--fm);font-size:10.5px;color:var(--faint)">−20:00</span>
-            <span data-t="0.33" style="position:absolute;left:66%;top:2px;font-family:var(--fm);font-size:10.5px;color:var(--faint)">−10:00</span>
-            <span style="position:absolute;right:0;top:2px;font-family:var(--fm);font-size:10.5px;color:var(--red);font-weight:600">LIVE</span>
+            <span data-t="1" style="position:absolute;left:0;top:2px;font-family:var(--fm);font-size:11px;color:var(--faint)">−30:00</span>
+            <span data-t="0.66" style="position:absolute;left:33%;top:2px;font-family:var(--fm);font-size:11px;color:var(--faint)">−20:00</span>
+            <span data-t="0.33" style="position:absolute;left:66%;top:2px;font-family:var(--fm);font-size:11px;color:var(--faint)">−10:00</span>
+            <span style="position:absolute;right:0;top:2px;font-family:var(--fm);font-size:11px;color:var(--red);font-weight:600">Live</span>
             <span class="winsel" role="group" aria-label="Replay window">
               <button data-win="10" aria-pressed="false">10m</button>
               <button data-win="30" aria-pressed="true">30m</button>
@@ -735,7 +744,7 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
           </div>
           <div class="knob" style="left:100%"></div>
         </div>
-        <button class="tcode right live" id="t-end">LIVE</button>
+        <button class="tcode right live" id="t-end">Live</button>
       </div>
 
       <div class="player">
@@ -743,7 +752,7 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
         <div class="pmeta">
           <b id="np-name">Eleanor Vance</b>
           <span class="sub" id="np-rx">RX 4 · ant B · in 27</span>
-          <span class="badge b-live" style="align-self:flex-start"><i class="dot live-dot"></i>LISTENING</span>
+          <span class="badge b-live" style="align-self:flex-start"><i class="dot live-dot"></i>Listening</span>
         </div>
 
         <div class="tbtns">
@@ -803,11 +812,11 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
   <!-- ===================== A1 MIX ===================== -->
   <section class="surface" id="s-a1">
     <header class="top">
-      <div class="brand"><span class="mark">▲</span> A2 MONITOR</div>
+      <div class="brand"><span class="mark">▲</span> A2 <span class="wm">Monitor</span></div>
       <div class="show"><b>The Winter Circus</b><span>A1 · mix confidence</span></div>
       <div class="cue">
-        <div class="blk"><span class="k">NODE</span><span class="v" style="color:var(--ok)">64 ch · 48k</span></div>
-        <div class="blk"><span class="k">CLOCK</span><span class="v" style="color:var(--ok)">locked</span></div>
+        <div class="blk"><span class="k">Node</span><span class="v" style="color:var(--ok)">64 ch · 48k</span></div>
+        <div class="blk"><span class="k">Clock</span><span class="v" style="color:var(--ok)">locked</span></div>
       </div>
       <div class="right">
         <button class="count out" data-sheet>1 critical</button>
@@ -816,7 +825,7 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
     </header>
 
     <div class="filters" role="group" aria-label="Filters">
-      <span class="lbl">SHOWING</span>
+      <span class="lbl">Showing</span>
       <button class="chipf" aria-pressed="true">All channels <span class="n">64</span></button>
       <button class="chipf" aria-pressed="false">Needs someone <span class="n">4</span></button>
       <button class="chipf" aria-pressed="false">Being worked <span class="n">2</span></button>
@@ -825,7 +834,7 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
 
     <main class="body">
       <div class="exrow" style="border-color:var(--t-out);margin-bottom:18px;flex-direction:row;align-items:center;gap:14px">
-        <span class="badge b-out"><i class="dot live-dot"></i>CRITICAL</span>
+        <span class="badge b-out"><i class="dot live-dot"></i>Critical</span>
         <div style="flex:1 1 auto">
           <div class="t" style="font-size:16px">27 · Eleanor Vance</div>
           <div class="m">RF quality collapsed. J. Marsh is on it — 0:40 so far.</div>
@@ -851,10 +860,10 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
 
     <footer class="a1bar">
       <div class="a1open">
-        <span class="micro">YOUR OPEN REPORTS</span>
+        <span class="micro">Your open reports</span>
         <div class="a1list">
-          <span class="badge b-warn"><i class="dot"></i>27 ELEANOR · J. MARSH IS ON IT</span>
-          <span class="badge b-rep"><i class="dot"></i>33 INES · A. DUNNE CLAIMED</span>
+          <span class="badge b-warn"><i class="dot"></i>27 Eleanor · J. Marsh is on it</span>
+          <span class="badge b-rep"><i class="dot"></i>33 Ines · A. Dunne claimed</span>
         </div>
       </div>
       <button class="btn btn-line lg" style="flex:none">See all</button>
@@ -868,9 +877,9 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
   <!-- ===================== MIC CHECK ===================== -->
   <section class="surface" id="s-check">
     <header class="top">
-      <div class="brand"><span class="mark">▲</span> MIC CHECK</div>
+      <div class="brand"><span class="mark">▲</span> Mic <span class="wm">check</span></div>
       <div class="show"><b>SL wing track</b><span>J. Marsh · started 18:31</span></div>
-      <div class="cue"><div class="blk"><span class="k">POSITION</span><span class="v">7 of 22</span></div></div>
+      <div class="cue"><div class="blk"><span class="k">Position</span><span class="v">7 of 22</span></div></div>
       <div class="right">
         <button class="count">Left-handed</button>
         <button class="count">Pause</button>
@@ -884,8 +893,8 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
           <div class="shot" data-static-face style="aspect-ratio:4/3"></div>
           <div class="who"><div class="nm" style="font-size:26px">Eleanor Vance</div><div class="rl">Marguerite Hale · principal</div></div>
           <div class="tags">
-            <span class="badge b-warn"><i class="dot"></i>QUICK CHANGE CUE 52</span>
-            <span class="badge b-rep"><i class="dot"></i>SPARE NOT PREPARED</span>
+            <span class="badge b-warn"><i class="dot"></i>Quick change at cue 52</span>
+            <span class="badge b-rep"><i class="dot"></i>Spare not prepared</span>
           </div>
           <dl style="display:grid;grid-template-columns:70px 1fr;gap:3px 10px;font-family:var(--fm);font-size:12px">
             <dt style="color:var(--faint)">receiver</dt><dd>RX 4 · ant B · in 27</dd>
@@ -903,7 +912,7 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
         <div>
           <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px">
             <h2 style="font-size:22px">3 · Captured audio heard</h2>
-            <span class="badge b-rep"><i class="dot"></i>WAITING ON A1 · ON THE CONSOLE</span>
+            <span class="badge b-rep"><i class="dot"></i>Waiting on A1 · on the console</span>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
             <button class="btn btn-line" style="height:76px;font-size:16px" data-verdict>Pass</button>
@@ -923,7 +932,7 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
         <button class="btn btn-line lg">Previous</button>
         <button class="btn btn-line lg">Skip — absent, costumed or blocked</button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
-          <span class="badge b-warn">2 EXCEPTIONS HELD</span>
+          <span class="badge b-warn">2 exceptions held</span>
           <div style="width:190px;height:10px;border-radius:99px;background:var(--line-2);overflow:hidden">
             <i style="display:block;height:100%;width:32%;background:var(--ok)"></i></div>
           <b class="mono" style="font-size:17px">7 / 22</b>
@@ -935,10 +944,10 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
   <!-- ===================== REPLAY ===================== -->
   <section class="surface" id="s-replay">
     <header class="top" style="background:var(--purple-soft);border-bottom-color:var(--purple)">
-      <div class="brand"><span class="mark" style="color:var(--purple)">⟲</span> REPLAY</div>
+      <div class="brand"><span class="mark" style="color:var(--purple)">⟲</span> <span class="wm">Replay</span></div>
       <div class="show"><b class="mono" style="font-size:19px">−4m 12s</b><span>epoch 3 · 21:04:18 · incident #114</span></div>
       <div class="cue">
-        <div class="blk"><span class="k">LIVE NOW</span><span class="v" style="color:var(--t-out)">27 · RF fault</span></div>
+        <div class="blk"><span class="k">Live now</span><span class="v" style="color:var(--t-out)">27 · RF fault</span></div>
       </div>
       <div class="right">
         <button class="count out">Go to live fault</button>
@@ -951,7 +960,7 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
         <div class="chcard" style="cursor:default;max-width:330px;border-color:var(--purple);box-shadow:0 3px 0 var(--purple)">
           <div class="shot" data-static-face>
             <span class="no">27</span>
-            <span class="listening-tag badge b-replay"><i class="dot"></i>HISTORICAL</span>
+            <span class="listening-tag badge b-replay"><i class="dot"></i>Historical</span>
             <div class="meter"><svg viewBox="0 0 240 26" preserveAspectRatio="none" data-np="replayaf"></svg></div>
           </div>
           <div class="who"><div class="nm">Eleanor Vance</div><div class="rl">Marguerite Hale · 21:04:18</div></div>
@@ -987,15 +996,15 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
       <aside style="flex:0 0 320px;display:flex;flex-direction:column;gap:12px">
         <h3 style="font-size:19px">Incident #114</h3>
         <div class="tags">
-          <span class="badge b-warn"><i class="dot"></i>INVESTIGATING</span>
-          <span class="badge b-rep">J. MARSH HAS IT</span>
+          <span class="badge b-warn"><i class="dot"></i>Investigating</span>
+          <span class="badge b-rep">J. Marsh has it</span>
         </div>
         <div class="exrow">
-          <div class="t"><span class="badge b-out">OBSERVED</span></div>
+          <div class="t"><span class="badge b-out">Observed</span></div>
           <div class="m mono" style="font-size:11.5px">21:04:18 · quality 92% → 31%, RSSI −61 → −62 dBm</div>
         </div>
         <div class="exrow" style="border-style:dashed">
-          <div class="t"><span class="badge b-warn">LIKELY — NOT CONFIRMED</span></div>
+          <div class="t"><span class="badge b-warn">Likely — not confirmed</span></div>
           <div class="m">Interference in the SL zone. Level held while quality fell.</div>
         </div>
         <div class="notecard">
@@ -1003,7 +1012,7 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
           <div class="by">J. Marsh · 21:09</div>
         </div>
         <div style="margin-top:4px">
-          <div style="font-size:12px;color:var(--faint);margin-bottom:8px">RESOLVE WITH CONFIDENCE</div>
+          <div style="font-size:12px;color:var(--faint);margin-bottom:8px">Resolve with confidence</div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
             <button class="btn btn-line" style="padding:9px 6px;font-size:12px">Observed</button>
             <button class="btn btn-line" style="padding:9px 6px;font-size:12px">Likely</button>
@@ -1105,7 +1114,7 @@ const GLYPH={
   unk: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 8h8"/></svg>',
   na:  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".5"><path d="M4.5 11.5 11.5 4.5"/></svg>'
 };
-const DIMS=[["rf","RF","RF link"],["audio","Audio","Audio"],["batt","Batt","Battery"],["chk","Check","Mic check"]];
+const DIMS=[["rf","RF","RF link"],["audio","Audio","Audio"],["batt","Battery","Battery"],["chk","Check","Mic check"]];
 const VERDICT={ok:"good",bad:"fault",warn:"caution",unk:"unknown",na:"not applicable"};
 function statusStrip(ch){
   return `<div class="status" role="group" aria-label="Status by dimension">` +
@@ -1193,8 +1202,8 @@ function a1card(ch,i){
       <div class="shot">
         ${face(ch)}
         <span class="no">${String(ch.no).padStart(2,"0")}</span>
-        ${ch.reported?`<span class="listening-tag badge b-warn"><i class="dot live-dot"></i>REPORTED${ch.reported.length>1?` ×${ch.reported.length}`:""}</span>`:
-          working?`<span class="listening-tag badge b-rep"><i class="dot"></i>BEING WORKED</span>`:""}
+        ${ch.reported?`<span class="listening-tag badge b-warn"><i class="dot live-dot"></i>Reported${ch.reported.length>1?` ×${ch.reported.length}`:""}</span>`:
+          working?`<span class="listening-tag badge b-rep"><i class="dot"></i>Being worked</span>`:""}
         <button class="zoom" data-detail="${i}" aria-label="Open details for ${ch.nm}"><i><svg viewBox="0 0 16 16"
           fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M6 2H2v4M10 14h4v-4M14 6V2h-4M2 10v4h4"/></svg></i></button>
@@ -1217,8 +1226,8 @@ function card(ch,i){
       ${face(ch)}
       <span class="no">${String(ch.no).padStart(2,"0")}</span>
       ${ch.reported&&!ch.claimed
-        ? `<span class="listening-tag badge b-warn"><i class="dot live-dot"></i>REPORTED${ch.reported.length>1?` ×${ch.reported.length}`:""}</span>`
-        : ch.live?`<span class="listening-tag badge b-live"><i class="dot live-dot"></i>LISTENING</span>`:""}
+        ? `<span class="listening-tag badge b-warn"><i class="dot live-dot"></i>Reported${ch.reported.length>1?` ×${ch.reported.length}`:""}</span>`
+        : ch.live?`<span class="listening-tag badge b-live"><i class="dot live-dot"></i>Listening</span>`:""}
       <button class="zoom" data-detail="${i}" aria-label="Open details for ${ch.nm}"><i><svg viewBox="0 0 16 16"
         fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M6 2H2v4M10 14h4v-4M14 6V2h-4M2 10v4h4"/></svg></i></button>
@@ -1270,7 +1279,7 @@ $("#mclist").innerHTML=[["Identity and label","done"],["RF and link in the zone"
    ${s==='now'?'background:var(--paper-2);box-shadow:inset 0 0 0 2px var(--ink)':''}">
    <span class="mono" style="font-size:12px;color:var(--faint);width:14px">${i+1}</span>
    <span style="font-weight:${s==='now'?700:500};color:${s==='done'?'var(--muted)':'var(--ink)'}">${t}</span>
-   <span style="margin-left:auto">${s==='done'?'<span class="badge b-ok">PASS</span>':s==='now'?'<span class="badge b-live">NOW</span>':''}</span></div>`).join("");
+   <span style="margin-left:auto">${s==='done'?'<span class="badge b-ok">Pass</span>':s==='now'?'<span class="badge b-live">Now</span>':''}</span></div>`).join("");
 
 /* ------------------------------------------------------------------
    Receiver and transmitter detail. A2 Monitor is meant to be the one
@@ -1380,7 +1389,7 @@ function applyPos(){
   if(sl) sl.textContent = live ? "Save replay" : "Save from here";
   const pos=$("#t-pos"), end=$("#t-end");
   if(pos) pos.textContent = live ? "−00:00" : fmt((1-POS)*WIN);
-  if(end){ end.textContent = live ? "LIVE" : "BACK TO LIVE"; }
+  if(end){ end.textContent = live ? "Live" : "Back to live"; }
   const main=$(".tbtn.main",bar);
   if(main) main.setAttribute("aria-label", live
     ? "Currently live — scrub back to listen to what already happened"
@@ -1481,7 +1490,7 @@ function listen(i){
     el.classList.toggle("listening",on);
     const tag=$(".listening-tag",el);
     if(on && !tag) $(".shot",el).insertAdjacentHTML("beforeend",
-      `<span class="listening-tag badge b-live"><i class="dot live-dot"></i>LISTENING</span>`);
+      `<span class="listening-tag badge b-live"><i class="dot live-dot"></i>Listening</span>`);
     if(!on && tag) tag.remove();
   });
   const pic=$("#np-pic"); if(pic) pic.innerHTML=face(ch);
