@@ -1,5 +1,9 @@
 # Protocol contracts
 
+This package contains the protocol-v0 normative schemas, transition catalogue
+and golden vectors. Envelopes are strict and closed; public API adapters
+translate at the boundary rather than leaking API naming into canonical history.
+
 This package will contain versioned, implementation-neutral contracts for:
 
 - audio-node registration, capability, health, and configuration;

@@ -145,20 +145,21 @@ permissions and resulting display.
 Every physical assignment uses the normative automaton in
 [temporal identity and physical swap](../architecture/temporal-identity-and-swap.md):
 
-`reserved -> prepared -> change-in-progress -> installed-unverified -> verified -> complete`
+`reserved -> prepared -> change-in-progress -> partial -> installed-unverified -> verified -> complete`
 
-with explicit expiry, failure, abandon, revert, fallback and A1-unavailable
-paths. `RecordInstalledBoundary` is the sole identity-effective transition; it
-atomically closes old intervals and opens new ones at the observed boundary.
+with explicit expiry, no-current-path, failure, abandon, revert, fallback and
+A1-unavailable paths. Component disconnect/install commands close and open
+element, transmitter, receiver-path and captured-input intervals at their actual
+boundaries; performer/role intent never makes removed hardware appear current.
 
 The product distinguishes its identity assignment from operator-confirmed
 external actions: fitted element/pack, transmitter/receiver association,
 receiver channel, Dante route and console/input label. It never labels an
 external action complete solely because a database commit succeeded.
 
-A fully fitted/synced/checked reserved spare can use one-action promotion, which
-atomically closes/opens identity intervals at the observed boundary and marks
-only its still-valid prechecks complete. When physical safety requires acting
+A fully fitted/synced/checked reserved spare can use a guided fast-promotion
+workflow, which records the same disconnect/install boundaries and marks only
+its still-valid prechecks complete. When physical safety requires acting
 first, the operator may record the transaction afterward using actual effective
 capture frame/time plus uncertainty and a later recorded-at timestamp. This is
 an audited late entry, not a rewrite.

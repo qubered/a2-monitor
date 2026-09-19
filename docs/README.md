@@ -21,6 +21,7 @@ must remain understandable without access to the original conversation.
 - [Temporal identity and physical swap](architecture/temporal-identity-and-swap.md)
 - [Cue and operator state machines](architecture/cue-and-operator-state-machines.md)
 - [Control-ledger reconciliation](architecture/ledger-reconciliation.md)
+- [Performance lifecycle](architecture/performance-lifecycle.md)
 - [Stable domain glossary](architecture/domain-glossary.md)
 - [Observability and operational evidence](architecture/observability.md)
 - [Domain model](architecture/domain-model.md)
@@ -31,6 +32,8 @@ must remain understandable without access to the original conversation.
 - [Sennheiser EW-DX integration](integrations/sennheiser-ew-dx.md)
 - [Performance baselines](quality/performance-baselines.md)
 - [Phase 0 evidence contract](quality/phase0-evidence-contract.md)
+- [Phase 1 operator evidence contract](quality/phase1-operator-evidence-contract.md)
+- [Personal listening safety](quality/listening-safety.md)
 - [Client and appliance profiles](quality/client-and-appliance-profiles.md)
 - [Reference validation matrix](quality/validation-matrix.md)
 - [Threat model](quality/threat-model.md)
@@ -44,6 +47,7 @@ must remain understandable without access to the original conversation.
 - [Independent plan review: round 3](reviews/2026-09-19-independent-review-round-3.md)
 - [Round 3 response and closure ledger](reviews/2026-09-19-round-3-response.md)
 - [Independent plan review: round 4](reviews/2026-09-19-independent-review-round-4.md)
+- [Round 4 response and closure ledger](reviews/2026-09-19-round-4-response.md)
 
 ## Accepted decisions
 
@@ -56,6 +60,8 @@ must remain understandable without access to the original conversation.
 - [Live control lease and data channel](decisions/0009-live-control-lease-and-data-channel.md)
 - [Persistence, recovery, and migrations](decisions/0010-persistence-recovery-and-migrations.md)
 - [Untrusted media sandbox](decisions/0011-untrusted-media-sandbox.md)
+- [Node process confinement](decisions/0012-node-process-confinement.md)
+- [Offline PKI and key lifecycle](decisions/0013-offline-pki-and-key-lifecycle.md)
 
 ## Reference
 

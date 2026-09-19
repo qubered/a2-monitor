@@ -1,6 +1,6 @@
 # Independent plan review: round 4
 
-**Status:** Open findings; reviewed plan unchanged
+**Status:** Findings addressed in the [Round 4 response](2026-09-19-round-4-response.md)
 
 **Reviewed:** 2026-09-19
 
@@ -38,10 +38,9 @@ exact tuples, three 12-hour 0A trials, prescribed 0B profiles/faults, numeric
 assertions and content-addressed evidence. The input schema instead permits one
 60-second trial, empty client/fault arrays and arbitrary untyped hardware,
 network, limits, load and metric names
-([input schema](../../tests/manifests/phase0-evidence.schema.json), lines 30–68
-and 81–92). The result schema permits `outcome: pass` with failed/not-run
-assertions, no artifacts and arbitrary deviations
-([result schema](../../tests/manifests/phase0-result.schema.json), lines 20–48).
+(the retired generic input schema at reviewed commit `6bfdebd`, lines 30–68 and
+81–92). The retired generic result schema permitted `outcome: pass` with
+failed/not-run assertions, no artifacts and arbitrary deviations (lines 20–48).
 It does not define the signature projection, so its own signed hash may be
 circular or runner-specific.
 

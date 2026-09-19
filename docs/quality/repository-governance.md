@@ -29,6 +29,21 @@ unit/contract tests, dependency and secret scanning, SAST, SBOM/provenance, and
 artifact verification. A green documentation-only check is not represented as
 a secure product build.
 
+## Architecture-review exit rule
+
+Round 5 is the final general architecture-loop review if it finds no P0 blocker,
+every remaining P1 has an owner and phase gate, and schemas, vectors, transition
+catalogues, evidence verifier and repository checks agree. Review then moves to
+evidence-bearing milestones: Phase 0A, Phase 0B, each Phase 1A slice and release/
+security readiness. Another broad review is not requested by default.
+
+The architecture loop reopens only when scope materially changes, a test
+falsifies an architectural assumption, a security incident changes the threat
+model, or an ADR changes authority, timing, persistence, confinement or physical
+identity. P2 polish and owned, phase-gated P1 work do not hold it open. The
+release lead owns closure; security and theatre-operation owners may veto their
+domains with a concrete failed gate.
+
 ## Severity policy
 
 | Severity | Meaning | Release effect |
@@ -59,4 +74,3 @@ Published support identifies exact OS, driver, audio device, browser, network,
 receiver, firmware, schema, and node/backend pairs. Each profile has an owner,
 last-tested date, deprecation notice period, and security-support window.
 Unobtainable hardware remains unverified rather than receiving a waived gate.
-

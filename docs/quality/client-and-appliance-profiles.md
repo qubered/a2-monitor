@@ -4,13 +4,16 @@
 
 ## Browser lifecycle
 
-The client states are `preflight`, `show-ready`, `suspect`, `interrupted`,
-`recovering`, `resyncing` and `show-ready-restored`. Only server-observed
-heartbeat plus advancing RTP/media statistics can retain `show-ready`; a hidden
-or suspended page cannot certify itself. On return, the server supplies the last
+The client states are `preflight`, `transport-ready`, `suspect`, `interrupted`,
+`recovering`, `resyncing` and `transport-ready-restored`. Server-observed
+heartbeat plus advancing RTP/media statistics can retain `transport-ready`; they
+cannot prove audible rendering, physical sink, system gain or worn headphones.
+A hidden or suspended page cannot certify itself. On return, the server supplies the last
 healthy timestamp and the UI reconstructs and displays the blind interval before
 resync. Listen control is blocked until route identity, gain, media sequence and
-state snapshot agree.
+state snapshot agree. The operator must confirm the qualified output route and
+audibility at preflight and after every route/reconnect interruption; only that
+local confirmation may label the workstation `listen-confirmed`.
 
 The compatibility owner is the release lead. Supported profiles pin OS major/
 minor, browser family and tested minimum/maximum build, MDM/single-app posture,

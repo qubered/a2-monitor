@@ -17,19 +17,20 @@ Every connection starts with component identity, build, supported protocol
 major/minor range, feature flags, hard message limits, and active schema IDs.
 Peers reject incompatible major versions with a useful error. A release must
 support its documented current and previous deployment pair so node/backend
-rollback is possible. Additive unknown fields are retained or ignored safely;
-unknown required features fail closed.
+rollback is possible. Protocol v0 command/event envelopes are closed: unknown
+top-level fields and required features fail closed. Additions require an
+explicitly negotiated extension schema or a new protocol minor.
 
-Unknown enum values are preserved as opaque values by storage/forwarding layers
-and surfaced as unsupported by semantic consumers; they never fall through to a
-default command/state. Immutable raw durable events retain original bytes plus
+Unknown enum values in raw vendor/forwarding records are preserved as opaque
+and surfaced as unsupported; canonical semantic schemas reject them and never
+fall through to a default command/state. Immutable raw durable events retain original bytes plus
 schema identity. Projection upcasters and snapshot migrations are versioned and
 covered by current/previous-pair fixtures; down-conversion is allowed only when
 the sender can prove no required meaning is lost.
 
 ## Envelope and bounds
 
-Every message includes:
+Every canonical command, result and event includes or is bound by:
 
 - protocol version and message type;
 - sender/node/session ID;
@@ -66,6 +67,12 @@ returns the recorded result; another payload is an error. Conflicting revisions
 fail without partial application. Timeouts report unknown outcome until queried
 from the authoritative result ledger.
 
+The exact canonical command is a two-member `signed`/`signature` object. The
+signature covers only the RFC 8785 encoding of `signed`. Closed command bodies,
+multi-aggregate revision preconditions, result/ACK chain and result query are
+defined by the v0 schemas. Canonical and coalescible media controls use the
+separate channels and route-handover rules in ADR 0009.
+
 ## Show activation
 
 Activation is prepare/commit:
@@ -87,6 +94,8 @@ the prepared result. Version one does not promise atomic multi-node activation.
 The exact lease, client-key, WebRTC data-channel, handshake, signed command,
 counter, restart and partial-partition protocol is defined by
 [ADR 0009](../../docs/decisions/0009-live-control-lease-and-data-channel.md).
+Every node commit also validates the in-memory boot authority grant defined by
+[ADR 0008](../../docs/decisions/0008-safe-authority-takeover.md).
 Node restart invalidates every direct-control lease/session and requires the
 backend. Leases cannot edit
 the immutable show revision, credentials, users, policy, cue definitions or

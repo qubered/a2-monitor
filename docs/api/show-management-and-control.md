@@ -13,7 +13,7 @@ describes subscriptions once the implementation stack is selected.
 
 HTTPS under `/api/v1` owns draft and administrative resources:
 
-- productions, shows, revisions and performances;
+- productions, immutable show revisions and performances;
 - people, roles, cast alternatives and assignments;
 - microphone elements, transmitters, kits, spares and inventory state;
 - receiver/audio inputs and binding plans;
@@ -46,6 +46,14 @@ Initial route families are:
 
 Exact pluralization is frozen with the first OpenAPI contract; the resource and
 transaction boundaries are the durable decision.
+
+The public HTTP API uses lower-camel JSON fields and kebab-case action routes;
+all IDs are UUID strings. Boundary adapters map them explicitly to canonical
+protocol snake_case fields and PascalCase commands. No API body is signed or
+stored as a canonical command until that mapping validates against the shared
+schema; generated mapping tests cover every command and reject unmapped fields.
+`production`, `show revision` and `performance` are the only lifecycle terms;
+there is no separate mutable `show` aggregate.
 
 ### Show-control command API
 
@@ -88,12 +96,12 @@ Representative resource shape:
 
 ```json
 {
-  "commandId": "01J...",
+  "commandId": "9f5e6682-1452-4f5b-82ba-fec50af5f968",
   "authorityEpoch": "00000000000000000000000000000007",
   "expectedOverlayRevision": "42",
   "effective": { "kind": "now" },
-  "roleId": "role.elphaba",
-  "replacementPersonId": "person.cover-2",
+  "roleId": "74025a2f-acac-46da-ac05-23c40d78b454",
+  "replacementPersonId": "ed2987c4-cb03-467b-968e-86a3370b9fb3",
   "microphoneDisposition": "keep-with-role",
   "reason": "mid-show understudy takeover"
 }

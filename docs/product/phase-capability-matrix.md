@@ -20,7 +20,8 @@ radio remains the urgent path in every Phase 1 slice.
 | Chat/conversations/pages | hidden | hidden | hidden | text/pages | rich media |
 | Managed headshot/placement images | placeholder/text | placeholder/text | sandboxed asset pipeline | same | same |
 | Message attachments/voice/dictation | hidden | hidden | hidden | hidden | profile-gated |
-| Import/backup/update/spare restore | manual fixture | staging only | qualified | qualified | qualified |
+| Ledger import/head reconciliation | minimum live path | hardened | qualified | qualified | qualified |
+| Backup/update/spare restore | manual fixture | staging only | qualified | qualified | qualified |
 | Supervised dress rehearsal | no | no | exit gate | repeat combined gate | repeat combined gate |
 
 ## 1A slices
@@ -29,7 +30,9 @@ radio remains the urgent path in every Phase 1 slice.
 
 Implement monitoring, safe output/listen control, receiver state, explicit
 performer/role/mic/path identity, guided mic check and one prepared-spare
-promotion. Cue-derived automation, complex swaps and collaboration are off.
+promotion, plus the minimum ledger import/head comparison needed to reconcile
+offline identity mutation. Cue-derived automation, complex swaps and
+collaboration are off.
 
 ### 1A.2 — operate and intervene
 
@@ -40,7 +43,7 @@ intercom/radio and a rehearsed acknowledgement phrase.
 
 ### 1A.3 — recover and rehearse
 
-Add reconciliation, migration/restore/import, managed image assets, appliance
+Harden pruning, backup barriers, migration/restore/import, managed image assets, appliance
 hardening, printable pack and the full two-operator failure rehearsal. Only this
 slice may seek the Phase 1A exit decision. Each slice receives a fresh estimate
 after Phase 0B; the former combined 12–16 week estimate is withdrawn.

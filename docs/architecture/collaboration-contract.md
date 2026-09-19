@@ -30,9 +30,10 @@ There is no chat-only “Resolved” quick phrase.
 | `claimed`, `blocked` | `reassign-task` | `claimed` | old/new assignee, reason, expected task revision |
 | `claimed` | `block-task` | `blocked` | reason, next action/owner |
 | `blocked` | `unblock-task` | `open` or `claimed` | reason, optional assignee |
-| `open`, `claimed`, `blocked` | `complete-task` | `done` | completion evidence, actor |
-| any nonterminal | `cancel-task` | `cancelled` | reason, actor |
-| `done`, `cancelled` | `reopen-task` | `open` | reason, permission |
+| `claimed` | `complete-task` | `completed` | completion evidence, assignee, expected revision |
+| `completed` | `verify-task` | `verified` | independent verifier or policy-authorized self-verification, evidence |
+| `open`, `claimed`, `blocked`, `completed` | `cancel-task` | `cancelled` | reason, actor |
+| `verified`, `cancelled` | `reopen-task` | `open` | reason, permission |
 
 Reassignment is explicit and audited. Exclusive claims use the task revision;
 parallel work is represented as child tasks rather than two silent assignees.
@@ -53,14 +54,16 @@ claim is a separate coordinator relationship.
 | any nonterminal with coordinator | `release-incident` | unchanged | coordinator, reason, expected revision |
 | `open`, `deferred` | `start-investigation` | `investigating` | coordinator or reason |
 | `open`, `investigating`, `deferred` | `mark-mitigated` | `mitigated` | action, evidence, residual risk/next action |
-| `open`, `investigating`, `mitigated`, `deferred` | `resolve-incident` | `resolved` | action, evidence, confidence, A1 confirmation or explanation |
+| `open`, `investigating`, `mitigated`, `deferred` | `resolve-incident` | `resolved` | named coordinator, action, evidence, confidence, A1 confirmation or explanation |
 | `open`, `investigating`, `mitigated` | `defer-incident` | `deferred` | reason, owner, due occurrence/time |
 | `open`, `investigating` | `mark-false-positive` | `false-positive` | evidence and confidence |
 | any terminal state | `reopen-incident` | `open` | reason and permission |
 
 `mitigated` is optional, not a mandatory route to resolution. One incident
 coordinator owns the operational summary while several task assignees may work
-in parallel. `mark-incident-seen`, `acknowledge-page`, `acknowledge-alert`,
+in parallel. Resolution without a coordinator requires a separate authorized-
+forced command, reason and audit record; ordinary `resolve-incident` cannot use
+that path. `mark-incident-seen`, `acknowledge-page`, `acknowledge-alert`,
 `advance-read-cursor` and `confirm-impact` are distinct commands/receipts.
 
 Shift handoff is its own revisioned aggregate, not a page or conversation

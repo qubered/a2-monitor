@@ -1,0 +1,20 @@
+{
+  "protocol": "runtime-control.v0",
+  "message_type": "command-result",
+  "command_id": "10101010-1010-4010-8010-101010101010",
+  "idempotency_key": "33333333-3333-4333-8333-333333333333",
+  "channel_id": "22222222-2222-4222-8222-222222222222",
+  "channel_counter": "1",
+  "authority_epoch": "00000000000000000000000000000001",
+  "status": "committed",
+  "result": {
+    "status": "component-disconnected",
+    "updated_revisions": [
+      {"type": "PhysicalAssignment", "id": "60606060-6060-4060-8060-606060606060", "revision": "8"}
+    ]
+  },
+  "result_hash": "b51861dfa6f7d65781ea18ecf26d01cddefdb2346313fe95f51832e627e9a851",
+  "previous_ack_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "ack_hash": "0bc5e587ec6e1d23b0c0bdd45ac42d2fb84b0c27e2a2b18f023e77fd4f8b24ea",
+  "committed_utc": "2026-09-19T12:00:00.010Z"
+}

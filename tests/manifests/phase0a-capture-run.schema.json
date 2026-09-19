@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.audio.invalid/tests/phase0a-capture-run.schema.json",
+  "title": "Frozen Phase 0A capture run",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "manifest_id", "test_id", "commit", "tuple", "audio", "trials", "faults", "assertion_ids", "artifact_kinds", "integrity_oracle"],
+  "properties": {
+    "schema_version": {"const": "phase0a-capture-run/v0"},
+    "manifest_id": {"type": "string", "format": "uuid"},
+    "test_id": {"enum": ["capture.64ch.48k.nominal-soak.v1", "capture.device-clock-change.v1"]},
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "tuple": {"$ref": "#/$defs/tuple"},
+    "audio": {"$ref": "#/$defs/audio"},
+    "trials": {"$ref": "#/$defs/trials"},
+    "faults": {"type": "array", "maxItems": 128, "items": {"$ref": "#/$defs/fault"}},
+    "assertion_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z0-9_.]+$"}},
+    "artifact_kinds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z0-9-]+$"}},
+    "integrity_oracle": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "seed", "detect"],
+      "properties": {
+        "algorithm": {"const": "per-channel-sequence-v0"},
+        "seed": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "detect": {
+          "type": "array", "minItems": 6, "maxItems": 6, "uniqueItems": true,
+          "items": {"enum": ["permutation", "duplication", "omission", "inserted_frames", "lost_frames", "cross_channel_contamination"]}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "tuple": {
+      "type": "object", "additionalProperties": false,
+      "required": ["os", "os_version", "cpu", "ram_bytes", "storage", "filesystem", "power_profile"],
+      "properties": {
+        "os": {"enum": ["windows", "macos"]},
+        "os_version": {"type": "string", "minLength": 1, "maxLength": 64},
+        "cpu": {"type": "string", "minLength": 1, "maxLength": 128},
+        "ram_bytes": {"type": "integer", "minimum": 4294967296},
+        "storage": {"type": "string", "minLength": 1, "maxLength": 128},
+        "filesystem": {"type": "string", "minLength": 1, "maxLength": 32},
+        "power_profile": {"type": "string", "minLength": 1, "maxLength": 64}
+      }
+    },
+    "audio": {
+      "type": "object", "additionalProperties": false,
+      "required": ["device", "driver", "driver_version", "firmware", "sample_rate_hz", "block_frames", "inputs"],
+      "properties": {
+        "device": {"type": "string", "minLength": 1, "maxLength": 128},
+        "driver": {"type": "string", "minLength": 1, "maxLength": 128},
+        "driver_version": {"type": "string", "minLength": 1, "maxLength": 64},
+        "firmware": {"type": "string", "minLength": 1, "maxLength": 64},
+        "sample_rate_hz": {"const": 48000},
+        "block_frames": {"type": "integer", "minimum": 16, "maximum": 4096},
+        "inputs": {"type": "integer", "minimum": 32, "maximum": 64}
+      }
+    },
+    "trials": {
+      "type": "object", "additionalProperties": false,
+      "required": ["count", "duration_s", "warmup_s"],
+      "properties": {
+        "count": {"type": "integer", "minimum": 1, "maximum": 100},
+        "duration_s": {"type": "integer", "minimum": 60, "maximum": 172800},
+        "warmup_s": {"type": "integer", "minimum": 0, "maximum": 3600}
+      }
+    },
+    "fault": {
+      "type": "object", "additionalProperties": false,
+      "required": ["at_s", "kind", "duration_s"],
+      "properties": {
+        "at_s": {"type": "integer", "minimum": 0},
+        "kind": {"enum": ["device-disconnect", "clock-discontinuity"]},
+        "duration_s": {"type": "integer", "minimum": 0, "maximum": 600}
+      }
+    }
+  }
+}

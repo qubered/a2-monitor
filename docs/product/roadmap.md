@@ -52,8 +52,10 @@ Deliverables:
 - backend local HTTPS/CA provisioning, node enrollment, pinned WebRTC DTLS,
   reliable ordered control data channel, signed lease and secret-envelope spikes;
 - active-node authority epoch, externally fenced takeover, unprivileged client
-  gateway, exact proof-of-possession, durable idempotency/control-ledger and
+  gateway, boot authority grant, exact proof-of-possession, durable idempotency/control-ledger and
   partition/quarantine spikes;
+- minimum chunk seal/import, signed receipt, ledger-head rollback comparison and
+  projection-rebuild spike;
 - replay-reader/prefetch isolation and concurrent seek cancellation;
 - foreground wake-lock field profile plus camera, microphone/voice capture,
   notification sink and audio-route continuity tests;
@@ -86,12 +88,15 @@ is the [phase capability matrix](phase-capability-matrix.md).
 
 - Manager activation, people/role/asset identities and performance overlay;
 - foreground-safe Live audio, meters, receiver state, replay and output control;
+- minimum live ledger import, head comparison and projection rebuild for every
+  offline canonical identity mutation;
 - A1 mix-confidence and A2 identity/exception views over shared truth;
 - resumable guided mic check and one prepared-spare promotion path; and
 - protocol, persistence and CI foundations required by those paths.
 
 Gate: named operators complete monitoring, identity, mic-check and single-pack
-drills without wrong-source actions or historical-identity corruption. Cue-
+drills under the signed Phase 1 operator manifest without wrong-source actions
+or historical-identity corruption. Cue-
 derived automation, complex swaps and collaboration controls remain hidden.
 
 ### Phase 1A.2: operate and intervene
@@ -104,11 +109,14 @@ derived automation, complex swaps and collaboration controls remain hidden.
 
 Gate: cue loss/rebase, 10–20 second pack change, swing cascade, simultaneous
 faults, post-hoc physical truth and absent-operator handoff pass timed drills.
+The labeled alert gate passes its frozen miss/false-alarm/flood and human-action
+thresholds before alerts are relied upon.
 There is no chat or product page; working intercom/radio is mandatory.
 
 ### Phase 1A.3: recover and rehearse
 
-- crash-safe ledger reconciliation/pruning, import/export and projection rebuild;
+- exact pruning/backup barrier, compaction recovery, import/export and migration
+  hardening (minimum live reconciliation already shipped in 1A.1);
 - signed update/rollback, backup/restore, factory recovery and spare procedure;
 - OS-sandboxed managed headshot/placement-image pipeline;
 - appliance/resource hardening and browser/profile qualification; and

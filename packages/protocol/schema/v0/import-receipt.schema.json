@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.audio.invalid/protocol/v0/import-receipt.schema.json",
+  "title": "Ledger import receipt v0", "type": "object", "additionalProperties": false,
+  "required": ["signed", "signature"],
+  "properties": {
+    "signed": {"type": "object", "additionalProperties": false, "required": ["receipt_id", "chunk_hash", "authority_epoch", "first_sequence", "last_sequence", "projection_version", "backup_generation", "imported_utc"], "properties": {
+      "receipt_id": {"type": "string", "format": "uuid"}, "chunk_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "authority_epoch": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+      "first_sequence": {"type": "string", "format": "u64-string"}, "last_sequence": {"type": "string", "format": "u64-string"}, "projection_version": {"type": "string", "minLength": 1, "maxLength": 128},
+      "backup_generation": {"type": "string", "minLength": 1, "maxLength": 128}, "imported_utc": {"type": "string", "format": "utc-date-time"}
+    }},
+    "signature": {"$ref": "https://local.audio.invalid/protocol/v0/runtime-command.schema.json#/$defs/signature"}
+  }
+}

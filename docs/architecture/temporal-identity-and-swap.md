@@ -29,45 +29,71 @@ and mutation stops; epoch, recorded order or wall clock is not a silent
 tie-breaker. Cross-epoch ordering uses canonical reconciliation order after the
 takeover quarantine decision, not raw timestamps.
 
-## Physical-swap aggregate
+## Physical-change aggregate and component truth
 
-Each physical assignment, not the whole cast plan, follows this automaton:
+Performer/role intent and physical component truth are separate projections. A
+performer may remain assigned to a role while no element, transmitter, receiver
+association or captured path is currently present. The product must show that
+gap rather than retaining the removed component as “current.”
+
+Each component relationship—element, transmitter, receiver path and captured
+input—has its own valid interval. These commands are the only physical
+boundaries:
+
+- `RecordComponentDisconnected` closes the named component interval at its
+  observed boundary;
+- `RecordComponentInstalled` opens the replacement component interval at its
+  observed boundary; and
+- `RecordSignalPathState` records `no-current-path`, `partial`,
+  `associated-unverified`, `captured-unverified` or `audible-verified` without
+  inventing a component boundary.
+
+One command may contain several component boundaries only when the operator and
+capture evidence support the same effective frame/time. Ordinary pack changes
+use separate disconnect and install events. A projection with no open component
+interval returns explicit `none`, never the most recently closed row.
+
+The overall intervention follows:
 
 | State | Meaning | Allowed next states |
 | --- | --- | --- |
-| `reserved` | intended asset/role/path is exclusively reserved | `prepared`, `expired`, `abandoned` |
-| `prepared` | required parts and applicable reusable checks are ready | `change-in-progress`, `expired`, `abandoned` |
-| `change-in-progress` | operator has begun physical work; old identity remains current | `installed-unverified`, `failed`, `abandoned` |
-| `installed-unverified` | **identity-effective boundary recorded atomically**; new identity is current | `verified`, `failed`, `reverted`, `fallback-active` |
-| `verified` | required RF/audio/fit/mute/battery dimensions satisfied | `a1-receipt-pending`, `complete`, `failed`, `reverted` |
+| `reserved` | intended assets/paths are exclusively reserved | `prepared`, `expired`, `abandoned` |
+| `prepared` | parts and reusable checks are ready | `change-in-progress`, `expired`, `abandoned` |
+| `change-in-progress` | operator began work; component intervals still determine truth | `partial`, `installed-unverified`, `failed`, `abandoned` |
+| `partial` | one or more disconnect/install boundaries occurred; path may be absent | `partial`, `installed-unverified`, `failed`, `abandoned`, `reverted`, `fallback-active` |
+| `installed-unverified` | intended component set is present; RF/audio remain unverified | `verified`, `failed`, `reverted`, `fallback-active` |
+| `verified` | required fit/association/RF/audio/mute/battery checks pass | `a1-receipt-pending`, `complete`, `failed`, `reverted` |
 | `a1-receipt-pending` | policy asks A1 for mix-path receipt | `complete`, `complete-receipt-unavailable`, `failed` |
 | terminal | `complete`, `complete-receipt-unavailable`, `failed`, `abandoned`, `expired`, `reverted`, `fallback-active` | compensating transaction only |
 
-`RecordInstalledBoundary` is the sole identity-effective transition. In one
-node transaction it closes all old exclusive intervals, opens the new intervals,
-increments every affected assignment revision and records capture boundary plus
-uncertainty. Database preparation, physical touch, RF visibility and A1 receipt
-are not substitutes.
-
-A multi-role cast plan atomically commits intentions and reservations so it can
-detect duplicate/uncovered tracks. Physical changes then progress independently;
-uninstalled roles remain on their old current identity. A dashboard shows plan
-progress without pretending staggered installations were simultaneous.
+A multi-role cast plan atomically commits intentions and reservations to detect
+duplicate/uncovered tracks. Every physical component then changes independently.
+The dashboard shows role intent, each open component interval and observed path
+state, so staggered work is never presented as simultaneous.
 
 ### Exceptional paths
 
-- **Fast spare promotion:** allowed from `prepared` directly through the same
-  installed-boundary transaction, retaining only still-valid checks.
-- **Physical-first emergency:** creates `installed-unverified` post-hoc with the
-  operator's best boundary and uncertainty; recorded time remains later.
-- **Failure before installation:** old identity remains current; release or
-  quarantine reservations/assets explicitly.
+- **Fast spare promotion:** one UI workflow guides the same disconnect/install/
+  observe/check events; it never bypasses component boundaries. Still-valid
+  checks are retained by tuple policy.
+- **Physical-first emergency:** records each known component boundary post-hoc
+  with the operator's best time/frame and uncertainty; recorded time remains
+  later. Unknown gaps stay unknown.
+- **Failure before any disconnection:** old component intervals remain current;
+  release or quarantine reservations/assets explicitly.
+- **Failure after disconnection:** the closed component stays closed and the path
+  may remain `no-current-path` until a real reinstallation/fallback boundary.
 - **Failure after installation:** new identity remains current but unverified
   until `reverted` or a `fallback-active` boundary records another physical
   truth. A red state never silently rolls identity back.
 - **A1 unavailable:** an authorized operator records reason and conventional
   intercom attempt; policy determines whether `complete-receipt-unavailable` is
-  allowed. Physical effectiveness does not wait for the UI.
+allowed. Physical effectiveness does not wait for the UI.
+
+Replay resolves performer/role and every component/path independently at the
+requested boundary. During a change it may correctly display “performer assigned;
+transmitter: none; captured path: none” and associate the dropout with the
+physical change transaction.
 
 ## Verification reuse
 

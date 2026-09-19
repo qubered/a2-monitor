@@ -1,4 +1,4 @@
-# ADR 0008: Safe authority takeover requires external fencing
+# ADR 0008: Version-one takeover uses power fencing and boot grants
 
 - **Status:** Accepted
 - **Date:** 2026-09-19
@@ -7,60 +7,65 @@
 
 ## Context
 
-An unreachable node cannot observe a newly allocated authority epoch. If it can
-still reach a client and still owns an unexpired lease, an epoch stored only in
-the backend cannot stop it from committing. A higher number is an ordering tool,
-not a fence.
+An unreachable node cannot observe a newer backend epoch. A higher epoch orders
+history but cannot stop an isolated old node serving an old client. A temporary
+network rule is also not a durable fence when another interface, switch path or
+later rule change can restore contact.
 
 ## Decision
 
-Version one has no logical takeover of an unreachable writer. A replacement
-node may become runtime command authority only after an authorized operator
-records one of these externally verifiable fences against the former node:
+Version one permits replacement authority only after the former node is
+physically powered down or power-cycled and its chassis identity is witnessed.
+Managed-switch quarantine may help an operator reach or shut down the node, but
+is not independently sufficient. Removable-key and network-only fencing are
+deferred until every canonical commit can synchronously validate a separately
+owned fencing service.
 
-1. power removed and chassis identity witnessed;
-2. old node ports quarantined by a managed switch/firewall rule whose active
-   state is read back from the enforcing device;
-3. the old node's removable control identity/device path physically removed;
-   or
-4. a future shared fencing service that every canonical commit must synchronously
-   consult and whose failure stops mutation.
+Every canonical commit also requires an in-memory, backend-signed
+`BootAuthorityGrant` matching node ID, random boot ID, authority epoch,
+performance ID and active show revision. The grant is delivered only after
+activation or a completed takeover, is never persisted, and is destroyed on
+process exit, restart, sleep/resume ambiguity, grant expiry, performance close
+or authority loss. The commit path validates the grant signature, scope and
+monotonic deadline for every mutation; uncertainty fails closed before ledger
+append. Capture and listening may continue read-only.
 
-The first three are the only version-one mechanisms. They require two named
-operators, or one administrator plus machine-verifiable enforcement evidence.
-The takeover record contains old/new node IDs and boot IDs, last known ledger
-positions, fence kind, evidence hash, witnesses, reason and UTC/monotonic times.
-If the fence cannot be proved, capture/listening may continue on an independently
-safe path, but cue, assignment and verification mutation remains stopped.
+Takeover is a durable state machine:
 
-`authorityEpoch` is a fixed-width, 32-character lowercase hexadecimal string
-representing an unsigned 128-bit counter. Fixed width makes bytewise and numeric
-ordering identical and avoids JSON/JavaScript integer loss. The backend allocates
-the next value in a durable serializable transaction after accepting the fence.
-`ffffffffffffffffffffffffffffffff` is terminal: no wrap or reset is permitted.
+`requested -> old-power-removed -> witnessed -> epoch-allocated -> new-grant-issued -> active`
 
-An old node that returns enters `quarantined-authority` before any reconciliation.
-Its post-fence tail is never imported into canonical projections automatically.
-An administrator must classify each tail command as already represented,
-evidence-only, or rejected-conflict; a corrective command on the current
-authority records any required physical truth. History is never silently merged
-by timestamp or epoch preference.
+Cancellation is allowed before grant issue. Any contradiction enters
+`fence-uncertain`, revokes the new grant and blocks mutation. Two named operators,
+or one administrator plus machine-verifiable switched-PDU evidence, attest the
+old node ID/boot ID, chassis and power boundary. The backend enumerates all
+known management, media and control interfaces in the record, marks the old
+epoch retired, allocates the next epoch in a serializable transaction, and only
+then signs a grant for the replacement boot.
+
+`authority_epoch` is a fixed-width 32-character lowercase hexadecimal unsigned
+128-bit counter. It never wraps. An old chassis restarted after takeover has a
+new boot ID and no grant; an old process restored from memory cannot pass grant
+deadline and retired-epoch checks once connected. Old-epoch tails import only
+to quarantine for explicit classification, never directly to projections.
 
 ## Consequences
 
-- A spare cannot provide zero-touch failover, but split-brain identity is
-  prevented by an observable operational procedure.
-- Epochs still fence restored snapshots and connected stale nodes after the
-  physical/network fence is in place.
-- Productions need a printed takeover checklist and tested switch/power access.
+- Version one deliberately has no zero-touch failover.
+- Power control and a printed two-person takeover checklist are part of the
+  supported appliance profile.
+- Network isolation remains defence in depth, not the safety proof.
+- A node without a currently valid boot grant is a read-only monitor.
 
 ## Validation
 
-- keep an old client and old node exchanging valid leased commands while the
-  backend attempts takeover; activation must refuse until the fence is proven;
-- after replacement activation, replay every old lease/command against both
-  nodes and prove that only the new authority can create canonical history;
-- remove the quarantine rule and reconnect the old node with an unimported tail;
-  prove automatic projection/import is impossible; and
-- crash before and after fence evidence, epoch allocation and activation and
-  prove there is never more than one enabled writer.
+- keep an old client/node connected while takeover is requested; replacement
+  activation must refuse before witnessed power removal;
+- remove each network quarantine path and prove it never substitutes for power
+  evidence;
+- restart both old and new nodes and prove neither can mutate until the backend
+  issues the exact boot-scoped grant;
+- expire, revoke, corrupt and remove the in-memory grant between validation and
+  append; the sequencer must fail closed without a canonical event;
+- replay old grants, leases and commands against both boots and epochs; and
+- crash at every takeover transition and prove at most one unexpired grant can
+  be issued for the performance/epoch.

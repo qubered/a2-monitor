@@ -32,12 +32,13 @@
       "uniqueItems": true,
       "items": {
         "enum": [
-          "AdvanceCue", "BackCue", "SkipCue", "HoldCue", "ResumeCue",
+          "EnableCueAuthority", "DisableCueAuthority", "AdvanceCue", "BackCue", "SkipCue", "HoldCue", "ResumeCue",
           "BeginCueRebase", "CommitCueRebase", "TransferCueAuthority",
           "PrepareAssignmentPlan", "CommitAssignmentIntent",
-          "BeginPhysicalChange", "RecordInstalledBoundary",
-          "RecordVerification", "RecordA1Receipt", "FailChange",
-          "AbandonChange", "RevertAssignment", "PromoteFallback",
+          "BeginPhysicalChange", "RecordComponentDisconnected",
+          "RecordComponentInstalled", "RecordSignalPathState",
+          "RecordVerification", "RecordA1Receipt", "FailPhysicalChange",
+          "AbandonPhysicalChange", "RevertAssignment", "PromoteFallback",
           "StartMicCheck", "AdvanceMicCheck", "RecordCheckDimension",
           "CloseMicCheck"
         ]

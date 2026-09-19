@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.audio.invalid/protocol/v0/migration-manifest.schema.json",
+  "title": "Projection migration manifest v0", "type": "object", "additionalProperties": false,
+  "required": ["migration_id", "from_schema_ids", "to_schema_ids", "source_head", "target_projection_version", "binary_hash", "rollback_supported"],
+  "properties": {
+    "migration_id": {"type": "string", "format": "uuid"},
+    "from_schema_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "format": "uri"}},
+    "to_schema_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "format": "uri"}},
+    "source_head": {"type": "object", "additionalProperties": false, "required": ["authority_epoch", "sequence", "event_hash"], "properties": {"authority_epoch": {"type": "string", "pattern": "^[0-9a-f]{32}$"}, "sequence": {"type": "string", "format": "u64-string"}, "event_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}},
+    "target_projection_version": {"type": "string", "minLength": 1, "maxLength": 128}, "binary_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "rollback_supported": {"type": "boolean"}
+  }
+}

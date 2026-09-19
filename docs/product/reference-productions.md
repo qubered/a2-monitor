@@ -35,10 +35,11 @@ The representative show must exercise:
 - investigation using synchronized live audio, RF, battery, warnings, notes,
   incident ownership, and replay.
 
-The first detailed acceptance fixture should model one real or realistically
-anonymized production with named crew roles, representative channel count,
-receiver mix, cue sequence, spares, zones, and common faults. Its values become
-test data, not universal product limits.
+The first acceptance fixture is `theatre-reference/v1`: 32 performers, 40 roles,
+48 captured and receiver paths, six prepared spares, eight zones and at least
+120 cue definitions, with named crew roles and blinded common faults. These are
+qualification fixture values, not universal product limits. Its executable gate
+is the [Phase 1 operator evidence contract](../quality/phase1-operator-evidence-contract.md).
 
 See [cast, microphone, image, and cue workflows](cast-mics-cues.md) for the
 time-bounded assignment and swap model used by this fixture.

@@ -1,0 +1,16 @@
+{
+  "name": "audio-monitoring-contracts",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "scripts": {
+    "test": "node --test tests/contracts/*.test.mjs",
+    "check:contracts": "node scripts/check-contracts.mjs"
+  },
+  "devDependencies": {
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1"
+  }
+}

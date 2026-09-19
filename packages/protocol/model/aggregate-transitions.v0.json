@@ -1,0 +1,104 @@
+{
+  "schema_version": "aggregate-transitions/v0",
+  "aggregates": {
+    "Performance": {
+      "initial": "planned",
+      "terminal": ["cancelled", "completed", "aborted"],
+      "transitions": [
+        {"command": "PrepareActivation", "from": ["planned"], "to": "configuring"},
+        {"command": "CommitActivation", "from": ["configuring"], "to": "activated"},
+        {"command": "RollbackActivation", "from": ["configuring"], "to": "planned"},
+        {"command": "CancelPerformance", "from": ["planned", "configuring"], "to": "cancelled"},
+        {"command": "EnterPreflight", "from": ["activated"], "to": "preflight"},
+        {"command": "MarkPerformanceReady", "from": ["preflight"], "to": "ready"},
+        {"command": "StartPerformance", "from": ["ready"], "to": "active"},
+        {"command": "EnterInterval", "from": ["active"], "to": "interval"},
+        {"command": "ResumePerformance", "from": ["interval"], "to": "active"},
+        {"command": "BeginPerformanceClose", "from": ["active", "interval"], "to": "closing"},
+        {"command": "CompletePerformance", "from": ["closing"], "to": "completed"},
+        {"command": "EnterPerformanceRecovery", "from": ["activated", "preflight", "ready", "active", "interval", "closing"], "to": "recovery-required"},
+        {"command": "RecoverPerformance", "from": ["recovery-required"], "to": "$recorded_prior_state"},
+        {"command": "AbortPerformance", "from": ["activated", "preflight", "ready", "active", "interval", "recovery-required"], "to": "aborted"}
+      ]
+    },
+    "PhysicalChange": {
+      "initial": "reserved",
+      "terminal": ["complete", "complete-receipt-unavailable", "failed", "abandoned", "expired", "reverted", "fallback-active"],
+      "transitions": [
+        {"command": "PrepareAssignmentPlan", "from": ["reserved"], "to": "prepared"},
+        {"command": "CommitAssignmentIntent", "from": ["prepared"], "to": "prepared"},
+        {"command": "BeginPhysicalChange", "from": ["prepared"], "to": "change-in-progress"},
+        {"command": "RecordComponentDisconnected", "from": ["change-in-progress", "partial"], "to": "partial"},
+        {"command": "RecordComponentInstalled", "from": ["change-in-progress", "partial"], "to": "partial"},
+        {"command": "RecordSignalPathState", "from": ["change-in-progress", "partial"], "to": "$observed_path_state"},
+        {"command": "RecordVerification", "from": ["installed-unverified", "verified"], "to": "$verification_projection"},
+        {"command": "RecordA1Receipt", "from": ["verified", "a1-receipt-pending"], "to": "$receipt_projection"},
+        {"command": "FailPhysicalChange", "from": ["reserved", "prepared", "change-in-progress", "partial", "installed-unverified", "verified", "a1-receipt-pending"], "to": "failed"},
+        {"command": "AbandonPhysicalChange", "from": ["reserved", "prepared", "change-in-progress", "partial"], "to": "abandoned"},
+        {"command": "RevertAssignment", "from": ["partial", "installed-unverified", "verified"], "to": "reverted"},
+        {"command": "PromoteFallback", "from": ["partial", "installed-unverified", "verified"], "to": "fallback-active"}
+      ]
+    },
+    "CueAuthority": {
+      "initial": "disabled",
+      "terminal": [],
+      "transitions": [
+        {"command": "EnableCueAuthority", "from": ["disabled"], "to": "$selected_mode_healthy"},
+        {"command": "AdvanceCue", "from": ["manual-healthy"], "to": "manual-healthy"},
+        {"command": "BackCue", "from": ["manual-healthy"], "to": "manual-healthy"},
+        {"command": "SkipCue", "from": ["manual-healthy"], "to": "manual-healthy"},
+        {"command": "HoldCue", "from": ["manual-healthy"], "to": "manual-healthy"},
+        {"command": "ResumeCue", "from": ["manual-healthy"], "to": "manual-healthy"},
+        {"command": "MarkCueAuthorityStale", "from": ["external-healthy"], "to": "external-stale"},
+        {"command": "RequireCueResync", "from": ["external-stale"], "to": "resync-required"},
+        {"command": "BeginCueRebase", "from": ["external-stale", "resync-required"], "to": "resync-required"},
+        {"command": "CommitCueRebase", "from": ["resync-required"], "to": "external-healthy"},
+        {"command": "TransferCueAuthority", "from": ["external-stale", "resync-required", "manual-healthy"], "to": "$selected_mode_healthy"},
+        {"command": "DisableCueAuthority", "from": ["external-healthy", "external-stale", "resync-required", "manual-healthy"], "to": "disabled"}
+      ]
+    },
+    "Task": {
+      "initial": "open",
+      "terminal": ["verified", "cancelled"],
+      "transitions": [
+        {"command": "ClaimTask", "from": ["open", "blocked"], "to": "claimed"},
+        {"command": "ReleaseTask", "from": ["claimed", "blocked"], "to": "open"},
+        {"command": "ReassignTask", "from": ["claimed", "blocked"], "to": "claimed"},
+        {"command": "BlockTask", "from": ["claimed"], "to": "blocked"},
+        {"command": "UnblockTask", "from": ["blocked"], "to": "$open_or_claimed"},
+        {"command": "CompleteTask", "from": ["claimed"], "to": "completed"},
+        {"command": "VerifyTask", "from": ["completed"], "to": "verified"},
+        {"command": "CancelTask", "from": ["open", "claimed", "blocked", "completed"], "to": "cancelled"},
+        {"command": "ReopenTask", "from": ["verified", "cancelled"], "to": "open"}
+      ]
+    },
+    "Incident": {
+      "initial": "open",
+      "terminal": ["resolved", "false-positive"],
+      "transitions": [
+        {"command": "ClaimIncident", "from": ["open", "investigating", "mitigated", "deferred"], "to": "$unchanged"},
+        {"command": "HandoffIncident", "from": ["open", "investigating", "mitigated", "deferred"], "to": "$unchanged"},
+        {"command": "ReleaseIncident", "from": ["open", "investigating", "mitigated", "deferred"], "to": "$unchanged"},
+        {"command": "StartInvestigation", "from": ["open", "deferred"], "to": "investigating"},
+        {"command": "MarkIncidentMitigated", "from": ["open", "investigating", "deferred"], "to": "mitigated"},
+        {"command": "ResolveIncident", "from": ["open", "investigating", "mitigated", "deferred"], "to": "resolved"},
+        {"command": "DeferIncident", "from": ["open", "investigating", "mitigated"], "to": "deferred"},
+        {"command": "MarkIncidentFalsePositive", "from": ["open", "investigating"], "to": "false-positive"},
+        {"command": "ReopenIncident", "from": ["resolved", "false-positive"], "to": "open"}
+      ]
+    },
+    "Handoff": {
+      "initial": "draft",
+      "terminal": ["incoming-accepted", "authorized-forced"],
+      "transitions": [
+        {"command": "AttestHandoff", "from": ["draft"], "to": "outgoing-attested"},
+        {"command": "AcceptHandoff", "from": ["outgoing-attested", "resolved"], "to": "incoming-accepted"},
+        {"command": "DisputeHandoff", "from": ["outgoing-attested", "incoming-accepted"], "to": "disputed"},
+        {"command": "ResolveHandoffDispute", "from": ["disputed"], "to": "resolved"},
+        {"command": "MarkHandoffStale", "from": ["outgoing-attested", "incoming-accepted"], "to": "stale"},
+        {"command": "ReattestHandoff", "from": ["stale"], "to": "outgoing-attested"},
+        {"command": "ForceHandoff", "from": ["draft", "outgoing-attested", "disputed", "stale"], "to": "authorized-forced"}
+      ]
+    }
+  }
+}

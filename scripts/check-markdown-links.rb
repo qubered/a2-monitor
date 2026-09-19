@@ -4,6 +4,8 @@
 errors = []
 
 Dir.glob("**/*.md", File::FNM_DOTMATCH).sort.each do |file|
+  next if file.start_with?(".git/", "node_modules/", "dist/", "build/", "target/")
+
   File.read(file).scan(/\[[^\]]*\]\(([^)]+)\)/).flatten.each do |raw|
     link = raw.strip.delete_prefix("<").delete_suffix(">")
     next if link.match?(%r{^(https?://|mailto:|#)})

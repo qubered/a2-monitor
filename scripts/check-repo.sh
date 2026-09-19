@@ -35,17 +35,25 @@ required_files=(
   docs/decisions/0009-live-control-lease-and-data-channel.md
   docs/decisions/0010-persistence-recovery-and-migrations.md
   docs/decisions/0011-untrusted-media-sandbox.md
+  docs/decisions/0012-node-process-confinement.md
+  docs/decisions/0013-offline-pki-and-key-lifecycle.md
+  docs/architecture/performance-lifecycle.md
   docs/architecture/runtime-command-contract.md
   docs/architecture/temporal-identity-and-swap.md
   docs/architecture/cue-and-operator-state-machines.md
   docs/architecture/ledger-reconciliation.md
   docs/product/phase-capability-matrix.md
   docs/quality/phase0-evidence-contract.md
+  docs/quality/phase1-operator-evidence-contract.md
+  docs/quality/listening-safety.md
   docs/quality/definition-of-done.md
   docs/quality/security-baseline.md
   docs/quality/threat-model.md
   docs/quality/validation-matrix.md
   packages/protocol/specification.md
+  packages/protocol/model/aggregate-transitions.v0.json
+  tests/catalog/evidence-tests.v0.json
+  tests/catalog/operator-tests.v0.json
 )
 
 for path in "${required_files[@]}"; do
@@ -56,6 +64,7 @@ for path in "${required_files[@]}"; do
 done
 
 while IFS= read -r path; do
+  [[ -e "$path" ]] || continue
   size="$(wc -c < "$path" | tr -d ' ')"
   if (( size > 10485760 )); then
     echo "Tracked file exceeds 10 MiB; use an approved artifact store or Git LFS: $path" >&2
@@ -70,6 +79,13 @@ if command -v ruby >/dev/null 2>&1; then
   done < <(find packages tests -type f -name '*.json' -print | sort)
 else
   echo "Ruby is required for local Markdown and JSON validation." >&2
+  exit 1
+fi
+
+if command -v npm >/dev/null 2>&1; then
+  npm run check:contracts
+else
+  echo "Node.js/npm is required for schema, signature, and evidence validation." >&2
   exit 1
 fi
 

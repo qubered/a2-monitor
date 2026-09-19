@@ -4,42 +4,42 @@
   "title": "Signed canonical runtime command v0",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "protocol", "lease_id", "node_boot_id", "authority_epoch", "channel_id",
-    "channel_counter", "previous_ack_hash", "idempotency_key", "aggregate",
-    "expected_revision", "deadline_utc", "command_type", "payload",
-    "payload_hash", "signature"
-  ],
+  "required": ["signed", "signature"],
   "properties": {
-    "protocol": {"const": "runtime-control.v0"},
-    "lease_id": {"type": "string", "pattern": "^[A-Za-z0-9_-]{22,64}$"},
-    "node_boot_id": {"type": "string", "format": "uuid"},
-    "authority_epoch": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
-    "channel_id": {"type": "string", "format": "uuid"},
-    "channel_counter": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"},
-    "previous_ack_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-    "idempotency_key": {"type": "string", "format": "uuid"},
-    "aggregate": {
+    "signed": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "id"],
+      "required": ["protocol", "message_type", "command_id", "lease_id", "node_boot_id", "authority_epoch", "channel_id", "channel_counter", "previous_ack_hash", "idempotency_key", "actor_id", "session_id", "correlation_id", "causation_id", "deadline_utc", "expected_revisions", "command"],
       "properties": {
-        "type": {"enum": ["Activation", "CueRuntime", "PerformanceOverlay", "PhysicalAssignment", "MicCheckSession"]},
-        "id": {"type": "string", "format": "uuid"}
+        "protocol": {"const": "runtime-control.v0"},
+        "message_type": {"const": "canonical-command"},
+        "command_id": {"type": "string", "format": "uuid"},
+        "lease_id": {"type": "string", "pattern": "^[A-Za-z0-9_-]{22,64}$"},
+        "node_boot_id": {"type": "string", "format": "uuid"},
+        "authority_epoch": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+        "channel_id": {"type": "string", "format": "uuid"},
+        "channel_counter": {"type": "string", "format": "u64-string"},
+        "previous_ack_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "idempotency_key": {"type": "string", "format": "uuid"},
+        "actor_id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "session_id": {"type": "string", "format": "uuid"},
+        "correlation_id": {"type": "string", "format": "uuid"},
+        "causation_id": {"oneOf": [{"type": "string", "format": "uuid"}, {"type": "null"}]},
+        "deadline_utc": {"type": "string", "format": "utc-date-time"},
+        "expected_revisions": {"type": "array", "minItems": 1, "maxItems": 256, "items": {"$ref": "https://local.audio.invalid/protocol/v0/common.schema.json#/$defs/aggregateRevision"}},
+        "command": {"$ref": "https://local.audio.invalid/protocol/v0/commands/runtime-command-body.schema.json"}
       }
     },
-    "expected_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"},
-    "deadline_utc": {"type": "string", "format": "date-time"},
-    "command_type": {"type": "string", "minLength": 1, "maxLength": 64},
-    "payload": {"type": "object", "maxProperties": 64},
-    "payload_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "signature": {"$ref": "#/$defs/signature"}
+  },
+  "$defs": {
     "signature": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["alg", "jws"],
+      "type": "object", "additionalProperties": false,
+      "required": ["alg", "kid", "value"],
       "properties": {
         "alg": {"const": "ES256"},
-        "jws": {"type": "string", "maxLength": 4096}
+        "kid": {"type": "string", "minLength": 1, "maxLength": 128},
+        "value": {"type": "string", "pattern": "^[A-Za-z0-9_-]{86}$"}
       }
     }
   }

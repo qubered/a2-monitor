@@ -18,3 +18,7 @@ externally tested release.
 - Recorded a fourth independent review of that baseline without changing the
   reviewed plan; it found remaining evidence-schema, signed-wire, continuous-
   fence, physical-transition, lifecycle, confinement and operator-gate blockers.
+- Implemented the Round 4 response: executable evidence promotion, signed
+  command/result contracts and vectors, component-level swap/performance state
+  machines, power-fenced boot authority, platform confinement/offline PKI,
+  reconciliation objects, listening/operator gates and a bounded review exit rule.

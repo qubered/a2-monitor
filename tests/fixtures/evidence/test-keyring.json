@@ -1,0 +1,23 @@
+{
+  "schema_version": "test-keyring/v0",
+  "keys": [
+    {
+      "key_id": "test-runner-2026",
+      "alg": "ES256",
+      "status": "test-only",
+      "public_jwk": {
+        "kty": "EC",
+        "x": "MqYdTZPJX5wXI5gLUVC3MogSAWBRBThROF60BC34MJQ",
+        "y": "1dOsajfOk__2EkRJwFUDyg-6SG6FJJ3GrMUNMEIhA4A",
+        "crv": "P-256"
+      },
+      "private_jwk": {
+        "kty": "EC",
+        "x": "MqYdTZPJX5wXI5gLUVC3MogSAWBRBThROF60BC34MJQ",
+        "y": "1dOsajfOk__2EkRJwFUDyg-6SG6FJJ3GrMUNMEIhA4A",
+        "crv": "P-256",
+        "d": "OSW-m1gSkRNTcOkODwZ1Lfh1PkLzoT6mO1QCDfn9_r4"
+      }
+    }
+  ]
+}

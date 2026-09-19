@@ -11,7 +11,8 @@
     "u64": {
       "type": "string",
       "pattern": "^(0|[1-9][0-9]{0,19})$",
-      "maxLength": 20
+      "format": "u64-string",
+      "description": "Canonical decimal unsigned 64-bit value; the required format validator enforces <= 18446744073709551615."
     },
     "authorityEpoch": {
       "type": "string",
@@ -23,8 +24,44 @@
     },
     "dateTime": {
       "type": "string",
-      "format": "date-time",
+      "format": "utc-date-time",
       "maxLength": 35
+    },
+    "aggregateRevision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id", "expected_revision"],
+      "properties": {
+        "type": {"enum": ["Activation", "Performance", "CueRuntime", "PerformanceOverlay", "PhysicalAssignment", "MicCheckSession"]},
+        "id": {"$ref": "#/$defs/uuid"},
+        "expected_revision": {"$ref": "#/$defs/u64"}
+      }
+    },
+    "effectiveBoundary": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "capture_epoch", "capture_frame"],
+          "properties": {
+            "kind": {"const": "capture-frame"},
+            "capture_epoch": {"$ref": "#/$defs/uuid"},
+            "capture_frame": {"$ref": "#/$defs/u64"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "timebase_boot_id", "monotonic_ns", "utc", "uncertainty_ms"],
+          "properties": {
+            "kind": {"const": "mapped-time"},
+            "timebase_boot_id": {"$ref": "#/$defs/uuid"},
+            "monotonic_ns": {"$ref": "#/$defs/u64"},
+            "utc": {"$ref": "#/$defs/dateTime"},
+            "uncertainty_ms": {"type": "integer", "minimum": 0, "maximum": 86400000}
+          }
+        }
+      ]
     },
     "error": {
       "type": "object",

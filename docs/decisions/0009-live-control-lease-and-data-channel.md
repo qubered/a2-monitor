@@ -1,109 +1,105 @@
-# ADR 0009: Live control lease and WebRTC data-channel binding
+# ADR 0009: Live control lease and WebRTC channel binding
 
 - **Status:** Accepted
 - **Date:** 2026-09-19
 - **Owners:** Project team
-- **Supersedes:** The underspecified browser/node path in protocol v0
 
 ## Context
 
-Live must retain narrowly scoped control during a backend restart without adding
-an independently trusted browser HTTPS/WebSocket origin on every node. The prior
-plan named proof of possession and anti-replay without defining the claims,
-signed bytes or restart behavior.
+Live needs narrowly scoped control through a backend restart without creating a
+second browser HTTPS origin on every node. Proof-of-possession, signed bytes,
+retry behavior, time handling and media-control head-of-line behavior must be
+identical across implementations.
 
 ## Decision
 
-The browser loads only from the backend's HTTPS origin. Direct node control uses
-one reliable, ordered WebRTC `RTCDataChannel` named `runtime-control.v0` on the
-same `RTCPeerConnection` as monitored audio. The node exposes no browser-facing
-HTTPS control origin in version one. Signaling pins the node certificate
-fingerprint; control becomes usable only after DTLS, SCTP and the lease handshake
-all succeed.
+The browser loads only from the backend HTTPS origin. It uses two WebRTC data
+channels on the monitored-audio peer connection:
+
+- reliable/ordered `runtime-canonical.v0` for canonical and bounded session
+  commands; and
+- `runtime-media-control.v0` for coalescible newest-wins listen, gain, pan, dim
+  and scrub intent. It is unordered/partially reliable where supported;
+  otherwise application coalescing retains at most one pending value per
+  control.
+
+Canonical commands never share the media-control application queue. Phase 0B
+measures both channels under loss and a saturated scrub/gain stream. The node
+exposes no browser-facing HTTPS control origin. Signaling pins its certificate
+fingerprint; control opens only after DTLS, SCTP and the lease handshake pass.
 
 ### Client key and lease
 
-On a dedicated show device, Live creates a non-exportable WebCrypto P-256 signing
-key. The public JWK and its RFC 7638 thumbprint are registered through the
-authenticated backend session. A backend-signed compact JWS lease contains:
+Live creates a non-exportable WebCrypto P-256 key on a dedicated show device.
+The public JWK/RFC 7638 thumbprint are registered through the authenticated
+backend session. A backend-signed compact JWS lease contains issuer, exact node,
+user, random lease ID, performance/show revision, authority epoch, node boot,
+client session, key thumbprint, closed command allow-list, UTC validity,
+monotonic maximum boot age, byte/rate/offline-command limits and key ID.
 
-| Claim | Meaning |
-| --- | --- |
-| `iss`, `aud` | backend installation ID; exact node ID |
-| `sub` | user ID |
-| `jti` | 128-bit random lease ID |
-| `performance_id`, `show_revision_id` | activated scope |
-| `authority_epoch`, `node_boot_id` | exact authority and process boot |
-| `client_session_id`, `cnf.jkt` | Live session and client-key thumbprint |
-| `commands` | closed allow-list of command types |
-| `iat`, `nbf`, `exp`, `max_boot_age_s` | UTC validity and monotonic boot-age cap |
-| `limits` | bytes, command rates and offline canonical-command count |
+Node restart creates a new random boot ID and invalidates all leases and control
+sessions. Nothing persisted resurrects direct browser control.
 
-Node restart creates a new random boot ID and invalidates every prior lease and
-control session. A fresh backend-issued lease is required; persisted clock logic
-is therefore not used to resurrect browser control after restart.
+### Handshake, time and signed bytes
 
-### Channel handshake and command proof
+The node sends a one-use 256-bit challenge and random channel ID after the
+canonical channel opens. The client signs an RFC 8785 object containing protocol
+label, lease hash/ID, client session, node/boot IDs, DTLS fingerprint, challenge,
+channel ID, 128-bit client nonce and issued-at time. ES256 uses IEEE-P1363 raw
+`r || s`, base64url without padding, and the lease-selected `kid`.
 
-The node sends a 256-bit random challenge after the data channel opens. The
-client signs an RFC 8785 JCS object containing protocol label, lease SHA-256,
-lease ID, client session ID, node ID, boot ID, DTLS certificate fingerprint,
-challenge, a 128-bit client nonce and issued-at time. The JWS header is
-`{"alg":"ES256","typ":"show-control+jws","jwk":...}`. The node validates
-the lease signature and scope, client-key thumbprint, proof signature, challenge,
-fingerprint and a 30-second proof window, then consumes the challenge exactly
-once.
+On acceptance the node records a monotonic deadline: the minimum of signed
+boot-age allowance and UTC expiry translated through the current wall/monotonic
+offset. UTC correction can shorten or invalidate but never extend it. Sleep,
+resume ambiguity, monotonic discontinuity or boot change closes the session.
 
-Every canonical command carries a decimal-string `channel_counter`, idempotency
-key and JCS payload hash. The client signs the JCS object:
+Every canonical command is exactly `{signed,signature}`. `signature` covers the
+RFC 8785 bytes of `signed`; all authority, lease, scope, deadline, revision,
+idempotency, channel-counter, previous-ACK and closed command-body fields are in
+that nonrecursive projection. The initial previous-ACK hash is 64 zeroes.
 
-`{lease_id,node_boot_id,channel_id,channel_counter,previous_ack_hash,command}`.
+The node accepts only the next decimal-string u64 counter and expected ACK
+chain. A new idempotency key commits once. The same key plus identical signed
+command hash returns the stored result/ACK. The same key with a different hash
+is a conflict and closes the channel. The node durably commits command, result,
+counter and ACK before sending. `ResultQuery` resolves lost ACKs on the direct
+or backend route. The ACK hash covers the result envelope excluding `ack_hash`.
+Counter exhaustion closes the session.
 
-The node accepts only the next counter on this reliable ordered channel, the
-expected acknowledgement-chain hash and an unused idempotency key. It durably
-commits the canonical command/result/counter before acknowledging. A lost ACK is
-resolved by querying the idempotency key; it is never guessed. Counters are
-decimal strings and have a maximum of `2^64-1`; exhaustion closes the session.
+Ephemeral media-control messages use a separate volatile sequence and cannot
+mutate canonical state. Session selections are bounded/recoverable but are not
+evidence.
 
-Ephemeral listen, gain, pan, dim and replay-scrub messages are authenticated by
-the established DTLS/data-channel session, use a separate volatile sequence and
-may be coalesced. They cannot mutate canonical state. Session-state commands
-such as selected sources are bounded and recoverable but not evidence.
+### Route handover and outage
 
-Backend revocation closes the channel when reachable. During a backend outage,
-an established channel remains valid only until the earliest of lease expiry,
-boot-age cap, command-count cap, authority change, heartbeat loss or local
-capacity floor. New sessions and replacement-node sessions require the backend.
+Only one canonical submission route is active. Backend-to-direct handover first
+drains or queries all in-flight keys, reads the durable node counter/ACK head,
+then opens direct admission. Direct-to-backend handover closes direct admission,
+resolves every submitted key and publishes the final head before backend
+mutation begins. An asymmetric partition reports `unknown-outcome` and permits
+result queries only; it never retries the action under another key.
 
-This profile follows the replay-resistant structure of DPoP—unique proof ID,
-key binding, signed request context and server nonce—but is a distinct protocol,
-not an assertion of RFC 9449 interoperability.
+Backend revocation closes the channel when reachable. During backend loss an
+established channel survives only until the earliest lease deadline, boot-age/
+command cap, authority/grant change, heartbeat loss or capacity floor. New and
+replacement-node sessions require the backend.
 
-## Browser trust bootstrap
+## Browser trust and limits
 
-The backend has a production DNS name and certificate trusted on field devices.
-Offline private deployments install the production CA through MDM/Apple
-Configurator (preferred) or a documented manual ceremony; ephemeral self-signed
-exceptions are unsupported. Provisioning records CA version, SAN, expiry and
-rotation overlap. Phase 0B captures DNS, HTTPS, signaling, ICE, DTLS and data-
-channel traffic on a freshly provisioned offline device and proves the bounded
-UDP range and intended interface selection.
-
-## Security limits
-
-Proof of possession limits token theft; it cannot make an actively compromised
-browser/XSS safe because malicious same-origin code can ask the key to sign.
-Live therefore also requires strict CSP, Trusted Types where supported, no
-third-party show-mode script, short leases, least privilege and a dedicated
-device profile.
+Offline installations provision the production CA through MDM/Configurator or
+a documented ceremony; ephemeral self-signed exceptions are unsupported. The
+profile records CA version, SAN, expiry and rotation overlap. Proof of possession
+does not make compromised same-origin code safe, so Live also requires strict
+CSP, Trusted Types where available, no third-party show-mode script, short
+leases, least privilege and a dedicated-device profile.
 
 ## Validation
 
-- golden lease/handshake/command vectors, altered-field and canonicalization
-  tests in browser and node implementations;
-- duplicate, skipped, reordered, exhausted and concurrent counters;
-- stolen lease without key, stolen proof, reused challenge and wrong DTLS
-  fingerprint;
-- backend loss before/after channel establishment and node restart;
-- revocation delay, expiry, capacity floor and takeover tests; and
-- offline first-use/renewal/CA-rotation tests on each supported field profile.
+- golden lease, handshake, command, result and query vectors in browser/node;
+- altered-field/canonicalization, wrong `kid`, signature-format and initial-chain
+  cases;
+- duplicate/different-payload keys and skipped/reordered/exhausted counters;
+- lost ACK and both route handovers under asymmetric partitions;
+- wall-clock jumps, suspend/resume, expiry, backend loss and node restart;
+- media-control flood proving bounded canonical latency; and
+- first-use, renewal, revocation and CA rotation on every supported profile.

@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.audio.invalid/protocol/v0/commands/runtime-command-body.schema.json",
+  "title": "Closed runtime command body variants v0",
+  "oneOf": [
+    {"$ref": "#/$defs/performanceTransition"},
+    {"$ref": "#/$defs/assignmentPlan"},
+    {"$ref": "#/$defs/componentBoundary"},
+    {"$ref": "#/$defs/pathObservation"},
+    {"$ref": "#/$defs/verification"},
+    {"$ref": "#/$defs/cueCommand"},
+    {"$ref": "#/$defs/micCheckCommand"}
+  ],
+  "$defs": {
+    "performanceTransition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "payload"],
+      "properties": {
+        "type": {"enum": ["PrepareActivation", "CommitActivation", "RollbackActivation", "EnterPreflight", "MarkPerformanceReady", "StartPerformance", "EnterInterval", "ResumePerformance", "BeginPerformanceClose", "CompletePerformance", "CancelPerformance", "EnterPerformanceRecovery", "RecoverPerformance", "AbortPerformance"]},
+        "payload": {
+          "type": "object", "additionalProperties": false,
+          "required": ["performance_id", "expected_state", "target_state", "reason"],
+          "properties": {
+            "performance_id": {"type": "string", "format": "uuid"},
+            "expected_state": {"enum": ["planned", "configuring", "activated", "preflight", "ready", "active", "interval", "closing", "recovery-required"]},
+            "target_state": {"enum": ["planned", "configuring", "activated", "preflight", "ready", "active", "interval", "closing", "completed", "cancelled", "aborted", "recovery-required"]},
+            "reason": {"type": "string", "minLength": 1, "maxLength": 512},
+            "prepared_token": {"type": "string", "minLength": 16, "maxLength": 512}
+          }
+        }
+      }
+    },
+    "assignmentPlan": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "payload"],
+      "properties": {
+        "type": {"enum": ["PrepareAssignmentPlan", "CommitAssignmentIntent", "BeginPhysicalChange", "FailPhysicalChange", "AbandonPhysicalChange", "RevertAssignment", "PromoteFallback"]},
+        "payload": {
+          "type": "object", "additionalProperties": false,
+          "required": ["transaction_id", "assignment_ids", "reason"],
+          "properties": {
+            "transaction_id": {"type": "string", "format": "uuid"},
+            "assignment_ids": {"type": "array", "minItems": 1, "maxItems": 128, "uniqueItems": true, "items": {"type": "string", "format": "uuid"}},
+            "prepared_token": {"type": "string", "minLength": 16, "maxLength": 512},
+            "reason": {"type": "string", "minLength": 1, "maxLength": 512}
+          }
+        }
+      }
+    },
+    "componentBoundary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "payload"],
+      "properties": {
+        "type": {"enum": ["RecordComponentDisconnected", "RecordComponentInstalled"]},
+        "payload": {
+          "type": "object", "additionalProperties": false,
+          "required": ["transaction_id", "physical_assignment_id", "component_kind", "component_id", "boundary", "observed_by"],
+          "properties": {
+            "transaction_id": {"type": "string", "format": "uuid"},
+            "physical_assignment_id": {"type": "string", "format": "uuid"},
+            "component_kind": {"enum": ["element", "transmitter", "receiver-path", "captured-input"]},
+            "component_id": {"type": "string", "format": "uuid"},
+            "boundary": {"$ref": "https://local.audio.invalid/protocol/v0/common.schema.json#/$defs/effectiveBoundary"},
+            "observed_by": {"type": "string", "minLength": 1, "maxLength": 128}
+          }
+        }
+      }
+    },
+    "pathObservation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "payload"],
+      "properties": {
+        "type": {"const": "RecordSignalPathState"},
+        "payload": {
+          "type": "object", "additionalProperties": false,
+          "required": ["transaction_id", "physical_assignment_id", "state", "boundary", "observed_by"],
+          "properties": {
+            "transaction_id": {"type": "string", "format": "uuid"},
+            "physical_assignment_id": {"type": "string", "format": "uuid"},
+            "state": {"enum": ["no-current-path", "partial", "associated-unverified", "captured-unverified", "audible-verified"]},
+            "boundary": {"$ref": "https://local.audio.invalid/protocol/v0/common.schema.json#/$defs/effectiveBoundary"},
+            "observed_by": {"type": "string", "minLength": 1, "maxLength": 128}
+          }
+        }
+      }
+    },
+    "verification": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "payload"],
+      "properties": {
+        "type": {"enum": ["RecordVerification", "RecordA1Receipt"]},
+        "payload": {
+          "type": "object", "additionalProperties": false,
+          "required": ["physical_assignment_id", "dimension", "status", "actor_id", "recorded_utc"],
+          "properties": {
+            "physical_assignment_id": {"type": "string", "format": "uuid"},
+            "dimension": {"enum": ["fit", "association", "rf", "battery", "audio", "mute", "a1-receipt"]},
+            "status": {"enum": ["pass", "fail", "unavailable", "waived"]},
+            "actor_id": {"type": "string", "minLength": 1, "maxLength": 128},
+            "recorded_utc": {"type": "string", "format": "utc-date-time"},
+            "reason": {"type": "string", "maxLength": 512}
+          }
+        }
+      }
+    },
+    "cueCommand": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "payload"],
+      "properties": {
+        "type": {"enum": ["EnableCueAuthority", "DisableCueAuthority", "AdvanceCue", "BackCue", "SkipCue", "HoldCue", "ResumeCue", "BeginCueRebase", "CommitCueRebase", "TransferCueAuthority"]},
+        "payload": {
+          "type": "object", "additionalProperties": false,
+          "required": ["cue_runtime_id", "authority_generation", "actor_id"],
+          "properties": {
+            "cue_runtime_id": {"type": "string", "format": "uuid"},
+            "authority_generation": {"type": "string", "format": "u64-string"},
+            "actor_id": {"type": "string", "minLength": 1, "maxLength": 128},
+            "target_definition_id": {"type": "string", "format": "uuid"},
+            "external_cursor": {"type": "string", "maxLength": 256},
+            "target_mode": {"enum": ["external", "manual", "none"]},
+            "reason": {"type": "string", "maxLength": 512}
+          }
+        }
+      }
+    },
+    "micCheckCommand": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "payload"],
+      "properties": {
+        "type": {"enum": ["StartMicCheck", "AdvanceMicCheck", "RecordCheckDimension", "CloseMicCheck"]},
+        "payload": {
+          "type": "object", "additionalProperties": false,
+          "required": ["session_id", "controller_id", "track_id", "track_cursor"],
+          "properties": {
+            "session_id": {"type": "string", "format": "uuid"},
+            "controller_id": {"type": "string", "minLength": 1, "maxLength": 128},
+            "track_id": {"type": "string", "format": "uuid"},
+            "track_cursor": {"type": "string", "format": "u64-string"},
+            "target_state": {"enum": ["not-ready", "ready", "checking", "waiting", "blocked", "skipped", "needs-recheck", "complete", "failed"]},
+            "dimension": {"enum": ["fit", "association", "rf", "battery", "audio", "mute", "a1-receipt"]},
+            "status": {"enum": ["pass", "fail", "unavailable", "waived"]},
+            "reason": {"type": "string", "maxLength": 512}
+          }
+        }
+      }
+    }
+  }
+}

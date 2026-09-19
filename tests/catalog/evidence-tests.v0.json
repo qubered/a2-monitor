@@ -1,0 +1,133 @@
+{
+  "schema_version": "evidence-test-catalog/v0",
+  "phase_requirements": {
+    "0A": [
+      "capture.64ch.48k.nominal-soak.v1",
+      "capture.device-clock-change.v1"
+    ],
+    "0B": [
+      "media.wired.impairment.v1",
+      "media.wifi.impairment.v1",
+      "system.combined-soak.v1",
+      "control.takeover-partition.v1",
+      "cue.qlab-shadow.v1"
+    ]
+  },
+  "tests": {
+    "capture.64ch.48k.nominal-soak.v1": {
+      "phase": "0A",
+      "manifest_schema": "phase0a-capture-run/v0",
+      "minimum_trials": 3,
+      "minimum_duration_s": 43200,
+      "minimum_clients": 0,
+      "required_faults": [],
+      "required_assertions": [
+        "audio.callback_underruns.zero",
+        "audio.frame_loss.zero",
+        "audio.frame_insertion.zero",
+        "audio.channel_permutation.zero",
+        "audio.channel_duplication.zero",
+        "audio.cross_channel_contamination.zero",
+        "audio.callback_p99_fraction.lte_0_50",
+        "audio.callback_max_fraction.lt_0_80"
+      ],
+      "required_artifacts": ["runner-log", "integrity-oracle", "callback-metrics", "hardware-manifest"]
+    },
+    "capture.device-clock-change.v1": {
+      "phase": "0A",
+      "manifest_schema": "phase0a-capture-run/v0",
+      "minimum_trials": 20,
+      "minimum_duration_s": 60,
+      "minimum_clients": 0,
+      "required_faults": ["device-disconnect", "clock-discontinuity"],
+      "required_assertions": [
+        "audio.device_change_detected.all",
+        "audio.capture_epoch_changed.all",
+        "audio.silent_repatch.zero"
+      ],
+      "required_artifacts": ["runner-log", "integrity-oracle", "event-ledger", "hardware-manifest"]
+    },
+    "media.wired.impairment.v1": {
+      "phase": "0B",
+      "manifest_schema": "phase0b-run/v0",
+      "minimum_trials": 3,
+      "minimum_duration_s": 7200,
+      "minimum_clients": 1,
+      "required_client_classes": ["wired"],
+      "required_faults": ["packet-loss", "jitter", "backend-restart"],
+      "required_assertions": [
+        "media.capture_to_ear_p95_ms.lte_75",
+        "media.gesture_to_audible_p95_ms.lte_100",
+        "client.transport_recovery_ms.lte_5000",
+        "client.blind_interval_reported.all",
+        "listen.reconnect_gain_safe.all",
+        "listen.latched_cancel_on_route_change.all",
+        "listen.intercom_coexistence.all"
+      ],
+      "required_artifacts": ["runner-log", "webrtc-stats", "packet-capture", "latency-measurement", "client-manifest", "field-kit-acoustic-report"]
+    },
+    "media.wifi.impairment.v1": {
+      "phase": "0B",
+      "manifest_schema": "phase0b-run/v0",
+      "minimum_trials": 3,
+      "minimum_duration_s": 7200,
+      "minimum_clients": 1,
+      "required_client_classes": ["wifi6"],
+      "required_faults": ["packet-loss", "jitter", "roam", "backend-restart"],
+      "required_assertions": [
+        "media.capture_to_ear_p95_ms.lte_120",
+        "media.gesture_to_audible_p95_ms.lte_100",
+        "client.transport_recovery_ms.lte_5000",
+        "client.blind_interval_reported.all",
+        "listen.reconnect_gain_safe.all",
+        "listen.latched_cancel_on_route_change.all",
+        "listen.intercom_coexistence.all"
+      ],
+      "required_artifacts": ["runner-log", "webrtc-stats", "packet-capture", "latency-measurement", "client-manifest", "field-kit-acoustic-report"]
+    },
+    "system.combined-soak.v1": {
+      "phase": "0B",
+      "manifest_schema": "phase0b-run/v0",
+      "minimum_trials": 1,
+      "minimum_duration_s": 43200,
+      "minimum_clients": 2,
+      "required_faults": ["disk-pressure", "replay-seek-storm", "receiver-reconnect-storm", "hostile-image-decode"],
+      "required_assertions": [
+        "audio.callback_underruns.zero",
+        "ledger.accepted_event_loss.zero",
+        "resource.priority_shedding.correct"
+      ],
+      "required_artifacts": ["runner-log", "resource-metrics", "ledger-audit", "integrity-oracle"]
+    },
+    "control.takeover-partition.v1": {
+      "phase": "0B",
+      "manifest_schema": "phase0b-run/v0",
+      "minimum_trials": 20,
+      "minimum_duration_s": 600,
+      "minimum_clients": 2,
+      "required_faults": ["backend-partition", "old-node-power-off", "old-node-restart", "lease-replay"],
+      "required_assertions": [
+        "authority.concurrent_writers.zero",
+        "authority.old_boot_commit.zero",
+        "authority.stale_tail_projection.zero"
+      ],
+      "required_artifacts": ["runner-log", "control-ledger", "fence-evidence", "packet-capture"]
+    },
+    "cue.qlab-shadow.v1": {
+      "phase": "0B",
+      "manifest_schema": "phase0b-run/v0",
+      "minimum_trials": 3,
+      "minimum_duration_s": 3600,
+      "minimum_clients": 1,
+      "required_faults": ["qlab-reconnect", "duplicate-event", "late-event", "audition-event", "panic-reset"],
+      "required_assertions": [
+        "cue.missed_authoritative_events.zero",
+        "cue.false_authoritative_events.zero",
+        "cue.duplicate_advances.zero",
+        "cue.fenced_late_advances.zero",
+        "cue.stale_unarms_automation.all"
+      ],
+      "required_artifacts": ["runner-log", "qlab-raw-log", "normalized-cue-log", "manual-called-cue-log"]
+    }
+  }
+}

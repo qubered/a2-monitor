@@ -17,6 +17,7 @@ The authority state machine is:
 
 | State | Accepted operation | Result |
 | --- | --- | --- |
+| `disabled` | `EnableCueAuthority` with selected external/manual mode and absolute starting definition | new authority generation; selected healthy state |
 | `external-healthy` | normalized external occurrence | new occurrence; remain healthy |
 | `external-healthy` | heartbeat loss, gap, restart ambiguity | `external-stale` and unarm cue-derived behavior |
 | `external-stale` | connection returns | `resync-required`; events buffered as untrusted |
@@ -24,12 +25,19 @@ The authority state machine is:
 | `external-stale`/`resync-required` | `TransferCueAuthority` to named Cue Tracker and selected definition | new transfer occurrence; `manual-healthy` |
 | `manual-healthy` | go/back/skip/hold/resume | new manual occurrence/quality transition |
 | `manual-healthy` | deliberate transfer back with external rebase | new transfer occurrence; `external-healthy` |
-| any healthy state | explicit disable | `none` |
+| any non-disabled state | `DisableCueAuthority` | `disabled`; cue-derived behavior unarmed |
 
 There is no automatic external-to-manual promotion or switch-back. Late events
 from a fenced adapter generation are retained as evidence and cannot alter the
 cursor. Every transition carries adapter generation, prior/new mode, actor,
 reason, selected absolute cue snapshot and expected revision.
+
+External authority cannot arm cue-derived production behavior merely because the
+adapter connects. The exact production mapping must pass the closed
+`cue.qlab-shadow.v1` evidence test: at least three full runs with zero missed or
+false authoritative occurrences, zero duplicate advances, zero fenced-late
+advances and correct stale unarming across reconnect, audition and panic/reset
+faults. Any mapping/QLab workspace change invalidates that qualification.
 
 `hold` freezes scheduled-condition evaluation but does not delete the current
 occurrence. `resume` creates a quality event and continues from that occurrence.
@@ -58,11 +66,19 @@ complete or a named authorized waiver per dimension.
 ## Shift handoff
 
 The handoff aggregate is `draft -> outgoing-attested -> incoming-accepted`.
-`disputed` can follow attestation or acceptance and requires resolution plus
-re-acceptance. `authorized-forced` is terminal only for absent/incapacitated
-outgoing staff and records authorizer/reason. Every item explicitly transfers,
-remains with outgoing, is released to the queue, or is reassigned to a named
-operator.
+`disputed` requires `ResolveHandoffDispute` and re-acceptance. Late imports mark
+it `stale`, requiring `ReattestHandoff`. `authorized-forced` is terminal only for
+an absent/incapacitated outgoing operator and records authorizer/reason. If the
+incoming operator is absent/late, the handoff remains open and explicitly records
+a `coverage-gap`; an authorized temporary operator must accept coverage before
+the outgoing operator releases responsibility.
+
+Every current item explicitly transfers, remains with outgoing, is released to
+the queue, or is reassigned. The same transaction covers future track/zone
+responsibility, intervention plans, prepared-spare custody and physical asset/
+key custody. A handoff cannot be accepted while any required coverage/custody
+row has no responsible person, except an authorized forced gap with a deadline
+and conventional-radio escalation.
 
 The outgoing attestation freezes a composite watermark: latest canonical node
 ledger sequence/epoch plus latest imported backend event sequence. Late node
