@@ -61,10 +61,17 @@ interfaces, client field kit, UPS, and fallback monitor path.
 
 ## Live operation
 
-Live defaults to exceptions and cue context, not an undifferentiated
-128-channel wall. Operators can filter by On Stage, Up Next, assigned group,
-warning, stale state, and unverified change while retaining a searchable all-
-channel view.
+**Live defaults to every channel.** Cue tracking is an opt-in layer, not the
+spine of the product: most productions will not have somebody tagging every
+stage movement, and a default view that depends on one is degraded for most of
+the people who install this. See
+[ADR 0019](../decisions/0019-cue-optional-and-show-time-scope.md).
+
+Operators filter by assigned group, zone, rack, wired or wireless, warning,
+stale state, unchecked and unverified change, over a searchable all-channel
+view. Where a cue source *is* connected, On Stage, Up Next and quick-change
+filters appear alongside those and the show may choose one of them as its
+default; without a cue source they are absent rather than empty.
 
 Listen controls support momentary and latched audition, previous source,
 clear-all, mute, dim, safe maximum level, gain, pan, and keyboard/touch paths.
@@ -102,14 +109,24 @@ acknowledgement and remain distinct from ownership.
 
 Every rule defines scope, arming condition, threshold, duration, debounce,
 hysteresis, cooldown, deduplication key, severity, and required capability.
-Rules may be scene/cue/zone aware: silence can be expected offstage, RF can be
-evaluated against a zone baseline, and battery runtime can be compared with the
-next safe change opportunity. Alert storms collapse into a visible grouped
-incident without discarding underlying evidence.
+**Silence alerting is a per-channel setting**, not a cue-derived conclusion.
+Each source carries its own arm/disarm for silence, set when the show is built
+and changeable during it, because a spare, a backup capsule, an announce mic and
+a talkback tap are all legitimately quiet for long stretches and none of that
+depends on a cue list. A channel that is disarmed for silence says so on its
+card rather than reading as healthy.
 
-When cue authority is stale, unknown or awaiting resync, cue-derived arming,
-expected silence and intervention-window conclusions become unknown/unarmed.
-They never continue from the last cue as though it were current.
+Rules may additionally be zone aware — RF evaluated against a zone baseline,
+battery runtime compared with the next safe change opportunity. Where a cue
+source is connected, rules may also be scene/cue aware and silence arming may
+follow the cue; that is an enhancement to the per-channel setting, never a
+replacement for it. Alert storms collapse into a visible grouped incident
+without discarding underlying evidence.
+
+When cue authority is stale, unknown or awaiting resync, cue-derived arming and
+intervention-window conclusions become unknown/unarmed. They never continue from
+the last cue as though it were current. Per-channel silence arming is unaffected,
+because it never depended on the cue in the first place.
 
 The UI shows why a rule fired, which measurements were missing, and whether a
 cause is observed or inferred. Automatic diagnosis remains out of scope until

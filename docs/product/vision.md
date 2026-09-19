@@ -96,8 +96,23 @@ incident records, and support for mixed receiver fleets.
 - Full show building or user administration on the audio node.
 - Simultaneous or aggregate audio devices and transparent switching between
   independent device clocks.
-- Replacing the console, Wireless Systems Manager, or Dante Controller.
+- Replacing the console or Dante Controller.
 - Claiming automatic fault diagnosis before a labeled evidence base exists.
+
+## Relationship to Wireless Workbench and Wireless Systems Manager
+
+A2 Monitor is a **soft replacement** for the vendor wireless tools, and the line
+is time, not capability: **during a performance, the work happens here.** An
+operator running a show should not be hopping between programs to find out what
+a receiver is doing, and every value those tools would show them during a show
+is in this product's channel detail.
+
+Frequency coordination, scanning, deployment planning and firmware management
+stay in the vendor tools, and stay listed above as non-goals. Those are
+before-the-show and after-the-show work, done sitting down, and they are not
+what the hopping problem is about.
+
+See [ADR 0019](../decisions/0019-cue-optional-and-show-time-scope.md).
 
 ## Differentiation
 

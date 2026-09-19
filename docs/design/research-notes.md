@@ -281,12 +281,19 @@ So: every channel is the default view, and cue-derived behaviour is an opt-in
 layer that appears only when a cue source is connected. The QLab observer
 remains valuable; it stops being load-bearing.
 
-This has consequences past the design directory. Alert arming that is defined
-against cue state needs a defined non-cue behaviour; "expected silent" needs a
-per-channel setting rather than a scene-derived one; and the reference workflow
-in [operator workflows](../product/operator-workflows.md) states the opposite
-and needs reconciling. Those are product changes, not design ones, and are not
-made here.
+**Resolved.** Both consequences were decided by the product owner and are now
+recorded in [ADR 0019](../decisions/0019-cue-optional-and-show-time-scope.md):
+Live defaults to every channel, and silence alerting is a per-channel setting
+rather than a scene-derived conclusion. `operator-workflows.md` and `vision.md`
+have been updated to match.
+
+The vendor-tool boundary was resolved in the same pass, and the product owner's
+formulation is better than the one these notes first proposed. "Display is not
+management" is nearly right but answers the wrong question: operators do not hop
+between programs because of a capability boundary, they hop because of *when*
+they need something. The line is **time** — during a performance the work happens
+here; coordination, scanning and firmware are before-and-after work and stay in
+the vendor tools.
 
 ## Product findings from round 6
 
@@ -380,7 +387,8 @@ These need an operator in a room, not more desk research.
     at any brightness ruin an operator's dark adaptation and force the dark
     theme for Live?
 13. With cue context demoted, what orders the default grid of 64 channels —
-    channel number, rack, zone, or most-recently-in-trouble?
+    channel number, rack, zone, or most-recently-in-trouble? Still open, and now
+    carried as a negative consequence in ADR 0019.
 14. Is one "Listen" button per card plus the whole card being pressable
     redundant, or is the explicit button what makes it obvious? *(Resolved in
     round 6: the button is gone and the whole card listens.)*

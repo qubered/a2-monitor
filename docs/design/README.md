@@ -40,40 +40,18 @@ attempted a *bespoke* language "inspired by" the references. The brief was to
 use the existing one. Rounds 1–4 differ from each other in finish; round 5
 differs in kind.
 
-## Cue tracking is optional
+## Two product decisions this design rests on
 
-A2 Monitor does **not** assume a cue list. The default view is every channel,
-and cue-derived features — On Stage, Up Next, expected-silence arming, cue-aware
-alert windows — are an opt-in layer that appears only when a cue source is
-connected. Most productions will never have someone who meticulously tags every
-stage movement, and a product that degrades without one is a product that fails
-for most of its users.
+Both are now recorded in
+[ADR 0019](../decisions/0019-cue-optional-and-show-time-scope.md), and the
+product documents have been updated to match.
 
-This contradicts [operator workflows](../product/operator-workflows.md), which
-currently says Live "defaults to exceptions and cue context, not an
-undifferentiated 128-channel wall". That document has not been changed here,
-because the change is a product decision rather than a design one and belongs in
-its own pull request. **One of the two needs to move.**
-
-## Scope note: one screen, and what that does not mean
-
-A2 Monitor is intended as the single screen a show needs, replacing the reasons
-an operator reaches for Wireless Workbench or Wireless Systems Manager during a
-performance. The channel detail therefore carries the full picture: per-antenna
-level and which one is carrying, squelch, frequency, group and channel, TX power
-and lock, encryption, gain and trim, battery charge, temperature and cycles,
-firmware and telemetry freshness.
-
-That is **display**, not **management**. Frequency coordination, scanning,
-deployment and firmware updates stay in the vendor tools.
-
-[Product vision](../product/vision.md) currently lists "replacing the console,
-Wireless Systems Manager, or Dante Controller" and "frequency coordination or
-receiver firmware management" as explicit non-goals for version one. Read-only
-display of everything a receiver reports is compatible with the second of those
-and arguably not with the spirit of the first. **The vision's wording needs
-revisiting**, and that is a product change rather than a design one, so it is
-not made here.
+- **Live defaults to every channel.** Cue tracking is an opt-in layer, and
+  silence alerting is a per-channel setting rather than a cue-derived
+  conclusion.
+- **The product owns show time.** During a performance the work happens here and
+  an operator should not be hopping between programs; coordination, scanning and
+  firmware stay in the vendor tools.
 
 ## Read in this order
 
