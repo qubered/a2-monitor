@@ -882,14 +882,16 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
         <div>
           <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px">
             <h2 style="font-size:22px">3 · Captured audio heard</h2>
-            <span class="badge b-rep">A1 DECIDES THIS ONE</span>
+            <span class="badge b-rep"><i class="dot"></i>WAITING ON A1 · ON THE CONSOLE</span>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
             <button class="btn btn-line" style="height:76px;font-size:16px" data-verdict>Pass</button>
             <button class="btn btn-line" style="height:76px;font-size:16px" data-verdict>Fail</button>
             <button class="btn btn-line" style="height:76px;font-size:16px" data-verdict>Recheck</button>
           </div>
-          <button class="btn btn-primary lg" style="width:100%;margin-top:10px">Hold to listen</button>
+          <p style="font-size:13px;color:var(--muted);margin-top:8px">The A1 checks this one
+            through PFL at the desk and taps pass or fail there. It stays outstanding here;
+            it does not block the rest of the check.</p>
         </div>
         <div style="display:flex;flex-direction:column;gap:2px;margin-top:4px" id="mclist"></div>
       </div>
@@ -1391,7 +1393,11 @@ document.addEventListener("click",e=>{
   if(un){ const i=+un.dataset.undo; CH[i].reported=null; renderGrids();
     $("#report").classList.remove("open"); return; }
   const ug=e.target.closest("[data-urgent]");
-  if(ug){ ug.textContent="Marked urgent"; ug.className="btn btn-primary"; return; }
+  if(ug){ ug.textContent="Urgent — now an incident"; ug.className="btn btn-primary";
+    const w=$(".rsent .who3"); if(w) w.insertAdjacentHTML("beforeend",
+      `<div style="margin-top:8px;color:var(--t-out)"><b>Promoted to an incident.</b>
+       It will come back to you to confirm the symptom has gone.</div>`);
+    return; }
   const ak=e.target.closest("[data-ack]");
   if(ak){
     e.stopPropagation();
@@ -1510,7 +1516,8 @@ function sendReport(i){
     <div class="rsent">
       <div class="big">Sent to backstage</div>
       <div class="who3">${list} on ${ch.no} · ${ch.nm}.
-        The A2 on that zone has it, and you will see who claims it on the card.</div>
+        This is a <b>task</b> for the A2 on that zone — you will see who claims it on the card,
+        and you will not be asked about it again unless it turns into an incident.</div>
       <div class="row3">
         <button class="btn btn-line" data-undo="${i}">Undo</button>
         <button class="btn btn-line" data-urgent="${i}">Mark urgent — it is on air now</button>

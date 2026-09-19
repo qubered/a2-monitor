@@ -507,6 +507,14 @@ removes the motion; the amber outline stays.
 - **Badges** — RVLT §3.3: pill, 700 weight, 11px, soft-tinted, with a dot.
 - **Buttons** — RVLT §15.2. `--red` primary is reserved for the one live or
   destructive action in view.
+- **Groups** — the transport's press-to-listen buttons come from two places.
+  **Show groups** are authored in Manager with the show file: principals,
+  ensemble, band, radio mics. They are stable across a run and identical for
+  every operator. **Personal groups** are slots each operator fills themselves
+  during the show — my zone, my quick changes, the three I am watching — and are
+  not shared. Both appear in the same rail, with personal groups after show
+  groups. Editing a show group is a Manager action and is blocked by show lock;
+  editing a personal group is not.
 - **Filter band** — one horizontal row under the header, 42px pill chips with
   live counts, pressed state `--ink` filled. **Default is All channels.**
   Cue-derived filters appear only when a cue source is connected.
@@ -589,6 +597,17 @@ Two presses and no typing. The report carries the channel, the performer, the
 faults in plain words, the time and the sender — no identity translation, no
 readback.
 
+**A report creates a task**, not an incident: requested work with a requester, an
+assignee, a due time and completion evidence, which is what "go and look at 33"
+actually is. It **auto-promotes to an incident** when the A1 marks it urgent, or
+when telemetry already shows a fault on that channel — because a report that
+agrees with the receiver is an observed problem, not a request. Promotion keeps
+the request history rather than replacing it.
+
+That distinction matters for the A1: a task they raised can be claimed, done and
+closed without them being consulted again, whereas an incident will come back to
+them for confirmation that the symptom is gone.
+
 The bottom bar is not a player: it is the A1's open reports and who has them, so
 "did anyone pick that up" is always answered on screen. Cards pulse until
 claimed ([§10.7](#107-reported-state)).
@@ -613,6 +632,18 @@ control · primary and spare pack · battery for the show window · placement an
 costume acknowledged · operator sign-off. Each records **who** verified it and
 **when**.
 
+**Captured audio heard is the A1's verdict, and the A1 hears it on the console.**
+This is the one dimension that must not be confirmed by the person who fitted the
+microphone: the point of it is that what reaches the desk is what the A2 thinks
+it is. The A1 checks it through PFL as they always have — the app adds nothing to
+how they hear — and the product only records the verdict.
+
+So this dimension has a third state the others do not: **waiting on A1**. The
+A2's check screen shows it outstanding and moves on rather than blocking, and the
+A1 gets a small pass/fail prompt on their own surface, which is the only place
+the A1 view carries a verdict control. It does not carry a listen control, before
+or during the show ([§11.2](#112-a1-mix-confidence)).
+
 - Work is ordered by A2 track or zone, not channel number.
 - Progress persists across a break, a reload, a device change and a backend
   restart.
@@ -625,6 +656,16 @@ costume acknowledged · operator sign-off. Each records **who** verified it and
 - Fail opens a one-tap reason list. Dictation is available; typing never required.
 
 ### 11.4 Replay and incidents
+
+There are two replay mechanisms and they do different jobs.
+
+**The player** ([§10.4](#104-the-player)) is replay in the moment: one channel,
+scrubbed back, while the show runs. It is the common case and it is not a place
+you go.
+
+**This surface** is for working an incident, usually afterwards: several lanes at
+once, markers, ownership, evidence and resolution. Reaching for it is a
+deliberate act, and entering it is a mode change.
 
 Replay is a **mode**, and the most dangerous state in the product: an operator
 hearing the past while a show happens in the present.
