@@ -357,6 +357,30 @@ implementation had this wrong at first — the card's listen-everywhere rule
 disabled pointer events on the overlay — which is exactly the kind of mistake
 that would have shipped as "the alert is unclickable" without a prototype.
 
+## Consequences for the plan, from the round-7 decisions
+
+Two of the answers above reach past the design directory and are noted here so
+they are not lost.
+
+**Fault reports survive a backend outage on the node path.**
+[A1/A2 views](../product/a1-a2-views-and-collaboration.md) currently says
+incident and task lifecycle wait for the backend, and that the node does not
+become a collaboration server. Both remain true: what moves onto the leased-node
+path is the *delivery* of a report, which is a bounded safety-relevant event of
+the same kind as a check result or a local evidence marker, already on that list.
+Claiming, assignment, ownership and promotion still wait. That distinction needs
+writing into the collaboration document and into whatever eventually replaces the
+withdrawn control contract, because "the report arrived but nobody owns it yet"
+is a state the UI already describes and the protocol does not.
+
+**A fault report banners on every surface.** This is a deliberate exception to
+the attention policy in the same document, which keeps ordinary traffic out of
+the way. The justification is that a report is assigned work from the one person
+in the building who can hear the programme, and an A2 finishing a five-minute mic
+check before noticing it costs more than the interruption does. If rehearsal
+shows the banner is disruptive during a check, the fallback is urgent-only, not
+silence.
+
 ## Open design questions
 
 These need an operator in a room, not more desk research.
@@ -398,10 +422,16 @@ These need an operator in a room, not more desk research.
 16. With no Acknowledge button, is "press to acknowledge" discoverable enough on
     a first shift, or does the hint need to stay permanently? It is the only
     place in the product where a press means something other than listen.
-17. What is the right default expiry per severity? Five minutes is a guess. A
+17. Does a report banner on every surface disrupt a mic check enough to be worth
+    downgrading to urgent-only? Decided as all-reports; worth measuring.
+18. Is a critical alert that never expires the right call on a 64-channel rig
+    during a storm, or does the grouped-incident collapse need to arrive at the
+    same time to stop the grid filling?
+19. What is the right default expiry per severity? Decided as: critical never
+    expires, everything else five minutes. The five is still a guess. Five minutes is a guess. A
     critical audio loss probably deserves longer than a battery warning, and the
     number should come from watching operators rather than from taste.
-18. Should acknowledgement be per-operator or per-show? Two A2s working
+20. Should acknowledgement be per-operator or per-show? Two A2s working
     different zones may both need to see an alert before it is considered seen.
-19. Does the detail view need a compare mode — two channels side by side — for
+21. Does the detail view need a compare mode — two channels side by side — for
     the common "is it this pack or this zone" question?

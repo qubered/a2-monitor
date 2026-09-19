@@ -411,6 +411,13 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
 .saveconfirm h4{font-family:var(--fd);font-weight:800;font-size:16px}
 .saveconfirm dl{display:grid;grid-template-columns:72px 1fr;gap:3px 10px;font-family:var(--fm);font-size:11.5px}
 .saveconfirm dt{color:var(--faint)}
+.svwin{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:var(--r);
+  border:2px solid var(--card-outline);background:var(--paper-2)}
+.svrow{display:flex;align-items:center;gap:8px}
+.svrow .k{width:42px;flex:none;font-size:12.5px;color:var(--muted)}
+.svrow .v{margin-left:auto;font-size:13px}
+.tbtn.sm{width:auto;height:38px;padding:0 12px;border-radius:99px;font-size:12.5px;font-weight:600}
+.svlen{font-size:13px;color:var(--ink-2);padding-top:2px;border-top:2px solid var(--line-2)}
 .saveconfirm .row{display:flex;gap:8px;margin-top:2px}
 .saveconfirm .row .btn{flex:1 1 auto}
 .vol{display:flex;align-items:center;gap:10px;flex:none}
@@ -766,9 +773,23 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
         <dl>
           <dt>channel</dt><dd id="sv-ch">27 · Eleanor Vance</dd>
           <dt>from</dt><dd id="sv-from">21:04:06</dd>
-          <dt>length</dt><dd id="sv-len">30 seconds</dd>
           <dt>includes</dt><dd>audio, RF, battery, events</dd>
         </dl>
+        <div class="svwin">
+          <div class="svrow">
+            <span class="k">Start</span>
+            <button class="tbtn sm" data-win-adj="in,-5">−5s</button>
+            <button class="tbtn sm" data-win-adj="in,5">+5s</button>
+            <span class="v mono" id="sv-in">−30s</span>
+          </div>
+          <div class="svrow">
+            <span class="k">End</span>
+            <button class="tbtn sm" data-win-adj="out,-5">−5s</button>
+            <button class="tbtn sm" data-win-adj="out,5">+5s</button>
+            <span class="v mono" id="sv-out">+30s</span>
+          </div>
+          <div class="svlen">Clip length <b class="mono" id="sv-len">60s</b></div>
+        </div>
         <p style="font-size:12.5px;color:var(--muted)">This writes audio off the appliance.
           Marking a moment does not — use <b>Mark</b> if you only need to find it again later.</p>
         <div class="row">
@@ -1114,6 +1135,9 @@ function alertOverlay(ch,i){
   if(!ch.alert || ch.acked) return "";
   const [icon,label]=ALERTKIND[ch.alert.kind]||["rf",ch.alert.kind];
   const warn = ch.alert.kind==="Battery low";
+  /* critical holds the card until somebody acknowledges it; the absence of a
+     countdown is the signal that this one is not going away on its own */
+  const critical = ch.alert.kind !== "Battery low";
   const dur = ALERT_OVERLAY_SECONDS;
   /* the overlay itself listens, so an alert never stands between an operator
      and the audio they need to hear to judge it */
@@ -1124,7 +1148,7 @@ function alertOverlay(ch,i){
       <span class="kind">${label}</span>
       <span class="press">Press to acknowledge</span>
     </span>
-    <span class="timer" aria-hidden="true"><i></i></span>
+    ${critical ? "" : `<span class="timer" aria-hidden="true"><i></i></span>`}
   </button>`;
 }
 
@@ -1232,7 +1256,7 @@ setTimeout(()=>{
 
 /* the overlay times out on its own; the alert stays unacknowledged */
 CH.forEach((ch,i)=>{
-  if(!ch.alert) return;
+  if(!ch.alert || ch.alert.kind !== "Battery low") return;   /* critical never expires */
   setTimeout(()=>{ if(!ch.acked){ ch.expired=true; renderGrids(); } }, ALERT_OVERLAY_SECONDS*1000);
 });
 $$("[data-static-pic]").forEach(el=>el.innerHTML=face(CH[0]));
@@ -1419,9 +1443,14 @@ document.addEventListener("click",e=>{
     const set=(id,v)=>{const el=$(id); if(el)el.textContent=v;};
     set("#sv-ch",`${ch.no} · ${ch.nm}`);
     set("#sv-from", POS>=0.999 ? "the last 30 seconds" : fmt((1-POS)*WIN)+" behind live");
-    set("#sv-len", POS>=0.999 ? "30 seconds" : "30 seconds from the playhead");
+    SVWIN.in=-30; SVWIN.out=30; refreshWin();
     $("#saveconfirm").classList.add("open"); return;
   }
+  const wa=e.target.closest("[data-win-adj]");
+  if(wa){ const [edge,delta]=wa.dataset.winAdj.split(",");
+    if(edge==="in") SVWIN.in=Math.min(-5, SVWIN.in + (+delta));
+    else SVWIN.out=Math.max(5, SVWIN.out + (+delta));
+    refreshWin(); return; }
   if(e.target.closest("[data-savecancel]")){ $("#saveconfirm").classList.remove("open"); return; }
   if(e.target.closest("[data-detailclose]")){ $("#detail").classList.remove("open"); return; }
   if(e.target.closest("#t-end")||e.target.closest(".tbtn.main")){ POS=1; applyPos(); }
@@ -1470,6 +1499,16 @@ function listen(i){
    confirmation step is a step too many, so the report goes immediately
    and stays undoable for a few seconds instead.
    ------------------------------------------------------------------ */
+/* the clip window, pre-set to 30 seconds either side of the playhead. a drag on
+   touch is imprecise and this is an export, so the handles also step in fives
+   and the resulting duration is always shown as a number. */
+const SVWIN={in:-30,out:30};
+function refreshWin(){
+  const set=(id,v)=>{const e=$(id); if(e)e.textContent=v;};
+  set("#sv-in", `${SVWIN.in}s`);
+  set("#sv-out", `+${SVWIN.out}s`);
+  set("#sv-len", `${SVWIN.out - SVWIN.in}s`);
+}
 let undoTimer=null;
 function openReport(i){
   const ch=CH[i]; if(!ch) return;

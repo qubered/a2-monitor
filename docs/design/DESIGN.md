@@ -407,10 +407,14 @@ Behaviour:
    Acknowledge button. The first press clears the alert and returns the card to
    normal, so a **second press listens** — the same press that listens to any
    other channel. One gesture, one consequence.
-2. **The overlay expires; the alert does not.** It holds the card for a
-   configurable time — default five minutes, per severity by production policy —
-   then clears, so an unattended screen does not end the night as a wall of red.
-   A countdown along the bottom edge shows this is coming.
+2. **The overlay expires; the alert does not** — except at critical, which does
+   not expire at all. A critical alert (audio loss, RF loss) holds the card until
+   somebody acknowledges it: a show-stopping fault that nobody has seen is
+   exactly the thing that must keep arguing. Everything below critical clears
+   itself after **five minutes** by default, so an unattended screen does not end
+   the night as a wall of red. A countdown along the bottom edge shows expiry
+   coming; a critical overlay has no countdown, and its absence is the signal
+   that this one is not going away on its own. Both are production policy.
 3. **Expiry is not acknowledgement.** A timed-out alert still counts in the
    header's outstanding total. An alert nobody saw must never look like one
    somebody saw.
@@ -457,10 +461,19 @@ TO LIVE** — one press, from anywhere. Event marks sit on the rail at the time
 they happened, so an operator can aim rather than hunt.
 
 **Save replay** is a permissioned action with its own button, never automatic and
-never a side effect. Pressing it states, before writing anything, which channel,
-from when, how long, and what is included — and says plainly that **Mark** does
-not export audio, because the two get confused and only one has a privacy
-consequence. Export is separately permissioned from listening and from marking.
+never a side effect.
+
+The operator sets the window. Pressing Save opens in and out handles on the scrub
+rail, **pre-set to 30 seconds either side of the playhead**, so accepting the
+default is one further press and adjusting is a drag. Because a drag on touch is
+imprecise and this is an export, each handle also has −5s / +5s steppers and the
+resulting duration is shown as a number: nobody should discover the clip was the
+wrong length after it was written.
+
+Before writing anything the sheet states which channel, from when, how long, and
+what is included — and says plainly that **Mark** does not export audio, because
+the two get confused and only one has a privacy consequence. Export is separately
+permissioned from listening and from marking.
 
 **Transport row**, always visible: what you are hearing · previous · clear ·
 **mute** · **dim** · output level with its numeric value · groups · expand.
@@ -615,6 +628,21 @@ claimed ([§10.7](#107-reported-state)).
 Nothing on this surface steals focus. No modal opens unprompted, no sound plays,
 and no notification interrupts a cue.
 
+### 11.2.1 How the A2 hears about it
+
+An incoming report shows as a **persistent banner on whatever surface the A2 is
+on** — the grid, the detail, mid mic-check. Every report, not only urgent ones.
+
+This is a deliberate exception to the plan's attention policy, which keeps
+ordinary traffic out of the way. A fault report is not ordinary traffic: it is
+assigned work from the one person in the building who can hear the programme, and
+the cost of an A2 finishing a five-minute mic check before noticing it is higher
+than the cost of the interruption. The banner is dismissible, never covers a
+meter, and never plays a sound.
+
+Comms remains the authoritative urgent path. The banner is how the app stops a
+report sitting unseen; it is not a replacement for somebody saying it out loud.
+
 ### 11.3 Guided mic check
 
 The only surface operated while physically working on another human being. Its
@@ -698,9 +726,23 @@ explicit words — *observed*, *likely*, *unconfirmed* — not a slider.
   one." Never "No data available."
 - **Loading** — name what is being waited for: "Waiting for the audio node." No
   shimmer skeletons.
-- **Backend lost** — chat, tasks and ownership grey out with an explicit offline
-  banner; listening, replay, approved emergency swaps and check results continue
-  against the leased node. Unsent drafts are visibly unsent, never shown as sent.
+- **Backend lost** — listening, replay, approved emergency swaps and check
+  results continue against the leased node, and **fault reports go with them**.
+  Reporting is the A1's entire job on this product, and an outage is exactly when
+  something is most likely to be going wrong, so a report reaches the A2
+  immediately over the node path rather than queueing. What does wait for the
+  backend is the *lifecycle* around it — claiming, assignment, ownership and
+  promotion to an incident — which reconciles when the backend returns. The A1
+  sees that the report arrived and that ownership is pending, which is the honest
+  description of what has happened. Chat and ordinary task assignment still grey
+  out with an explicit offline banner, and unsent drafts are visibly unsent,
+  never shown as sent.
+
+  This extends the leased-node event set in
+  [A1/A2 views](../product/a1-a2-views-and-collaboration.md), which already
+  carries check results and local evidence markers needed for immediate show
+  safety. It does not make the node a collaboration server: a fault report is a
+  bounded, safety-relevant event of the same kind, not a message thread.
 - **Receiver telemetry stale** — per-lane hatch and age. Audio stays live; only
   the affected lanes degrade.
 - **Show lock** — identity, binding, alert-policy and scene edits disappear
