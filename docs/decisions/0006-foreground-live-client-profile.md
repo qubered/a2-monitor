@@ -39,6 +39,11 @@ A native client ADR is triggered if the product owner makes locked/background
 listening or reliable background pages a core promise, or if no foreground
 profile passes the show-duration, audio-route and recovery gates.
 
+The normative lifecycle, server-observed heartbeat/media evidence, blind-
+interval reconstruction, browser ownership and numeric duration/recovery gates
+are in [client and appliance profiles](../quality/client-and-appliance-profiles.md)
+and the [Phase 0 evidence contract](../quality/phase0-evidence-contract.md).
+
 ## Consequences
 
 ### Positive

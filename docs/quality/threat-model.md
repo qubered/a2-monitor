@@ -36,8 +36,8 @@ The audio-node deployment component is split into supervised processes:
 5. **node supervisor:** owns enrollment, local policy, capability aggregation,
    worker lifecycle, and bounded IPC routing.
 
-An unprivileged client-control gateway terminates browser-to-node control,
-validates secure transport and lease proof of possession, enforces canonical
+An unprivileged client-control gateway terminates the browser's WebRTC control
+data channel, validates DTLS/session binding and lease proof of possession, enforces canonical
 schemas/rates/replay state and forwards only typed bounded IPC. It cannot access
 the audio device, receiver credentials or general node administration.
 

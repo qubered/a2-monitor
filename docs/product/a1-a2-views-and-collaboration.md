@@ -75,6 +75,9 @@ Next, quick change, dressing track, stage/RF zone, assigned operator, rack,
 warning, unchecked state or spare status. Each compact card shows character,
 performer/headshot, next action/intervention window and route, strongest RF/
 audio/battery/identity exception, task/incident owner, and listen/claim actions.
+It also shows a badge/count for every other show-critical category (audio loss,
+RF, battery, identity, cue, client and system), so selecting one primary exception
+cannot hide a second independent critical fault.
 
 An inspector provides element/pack/receiver/input identity, detailed RF/link/
 diversity/interference data, captured versus receiver audio meters, battery,
@@ -224,6 +227,9 @@ or performance start for a new operator. It summarizes:
 Handoff records outgoing and incoming acceptance, calls out late-arriving
 offline events, and requires a verbal-brief reminder. Viewing it does not move
 the checkpoint, change ownership or mark unresolved work complete.
+The normative draft/attest/accept/dispute/forced transitions, item disposition,
+composite watermark and late-arrival re-acknowledgement rules are in
+[cue and operator state machines](../architecture/cue-and-operator-state-machines.md).
 
 ## Degraded behavior
 

@@ -56,6 +56,8 @@ Show-time changes are commands, not generic PATCH requests:
 - `preview-path-repatch` / `commit-path-repatch`;
 - `cue-go`, `cue-select-resync`, `cue-back`, `cue-skip`, `cue-hold` and
   `cue-resume` in manual-authority mode;
+- `begin-cue-rebase`, `commit-cue-rebase` and `transfer-cue-authority` for
+  explicit external recovery/manual handover;
 - `record-check`, `record-battery-change` and `record-placement`;
 - the complete task/incident commands defined in the
   [collaboration contract](../architecture/collaboration-contract.md); and
@@ -87,8 +89,8 @@ Representative resource shape:
 ```json
 {
   "commandId": "01J...",
-  "authorityEpoch": 7,
-  "expectedOverlayRevision": 42,
+  "authorityEpoch": "00000000000000000000000000000007",
+  "expectedOverlayRevision": "42",
   "effective": { "kind": "now" },
   "roleId": "role.elphaba",
   "replacementPersonId": "person.cover-2",
@@ -145,8 +147,9 @@ API clients can:
 - subscribe to current cue and derived On Stage/Up Next/expected-silent state;
 - select one authority mode: mapped external observer, named manual coarse-scene
   tracker, or no cue authority;
-- advance/resync only in manual mode with a scoped permission and idempotency
-  key; and
+- advance/select in manual mode, explicitly rebase a stale external cursor, or
+  transfer authority to/from a named manual tracker with scoped permission,
+  expected revision and idempotency key; and
 - map stable external workspace/cue IDs without using labels as keys.
 
 Concurrent cue commands use the current runtime sequence and authority epoch as
@@ -154,7 +157,9 @@ preconditions. The node returns the authoritative occurrence after every
 command. QLab 5 read-only OSC show-control broadcast is the first reference
 external observer. GO, start, audition, playhead and reset remain distinct. A
 stale/unknown observer unarms cue-derived automation until an explicit resync.
-See [ADR 0005](../decisions/0005-cue-authority-and-occurrences.md).
+Late events from the fenced adapter generation cannot advance state. See
+[ADR 0005](../decisions/0005-cue-authority-and-occurrences.md) and the
+[cue authority automaton](../architecture/cue-and-operator-state-machines.md).
 
 ## Attachment API
 

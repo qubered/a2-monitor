@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.audio.invalid/protocol/v0/common.schema.json",
+  "title": "Protocol v0 common types",
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "maxLength": 36
+    },
+    "u64": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,19})$",
+      "maxLength": 20
+    },
+    "authorityEpoch": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "dateTime": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 35
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code"],
+      "properties": {
+        "code": {
+          "enum": [
+            "INVALID_ARGUMENT", "UNAUTHORIZED", "FORBIDDEN",
+            "STALE_REVISION", "STALE_AUTHORITY", "LEASE_EXPIRED",
+            "LEASE_BOOT_MISMATCH", "REPLAY_DETECTED",
+            "IDEMPOTENCY_CONFLICT", "PREPARE_EXPIRED",
+            "PHYSICAL_STATE_CONFLICT", "CAPACITY_FLOOR",
+            "DEPENDENCY_STALE", "UNSUPPORTED_SCHEMA", "OUTCOME_UNKNOWN",
+            "TAKEOVER_FENCE_REQUIRED"
+          ]
+        },
+        "message": {"type": "string", "maxLength": 1024},
+        "current_revision": {"$ref": "#/$defs/u64"},
+        "correlation_id": {"$ref": "#/$defs/uuid"}
+      }
+    }
+  }
+}

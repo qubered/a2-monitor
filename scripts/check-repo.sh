@@ -31,6 +31,16 @@ required_files=(
   docs/decisions/0005-cue-authority-and-occurrences.md
   docs/decisions/0006-foreground-live-client-profile.md
   docs/decisions/0007-appliance-resource-isolation.md
+  docs/decisions/0008-safe-authority-takeover.md
+  docs/decisions/0009-live-control-lease-and-data-channel.md
+  docs/decisions/0010-persistence-recovery-and-migrations.md
+  docs/decisions/0011-untrusted-media-sandbox.md
+  docs/architecture/runtime-command-contract.md
+  docs/architecture/temporal-identity-and-swap.md
+  docs/architecture/cue-and-operator-state-machines.md
+  docs/architecture/ledger-reconciliation.md
+  docs/product/phase-capability-matrix.md
+  docs/quality/phase0-evidence-contract.md
   docs/quality/definition-of-done.md
   docs/quality/security-baseline.md
   docs/quality/threat-model.md
@@ -55,8 +65,11 @@ done < <(git ls-files --cached --others --exclude-standard)
 
 if command -v ruby >/dev/null 2>&1; then
   ruby scripts/check-markdown-links.rb
+  while IFS= read -r path; do
+    ruby -rjson -e 'JSON.parse(File.read(ARGV.fetch(0)))' "$path"
+  done < <(find packages tests -type f -name '*.json' -print | sort)
 else
-  echo "Ruby is required for local Markdown link validation." >&2
+  echo "Ruby is required for local Markdown and JSON validation." >&2
   exit 1
 fi
 

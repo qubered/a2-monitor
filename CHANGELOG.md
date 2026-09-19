@@ -11,3 +11,7 @@ externally tested release.
 ### Added
 
 - Initial product, architecture, quality, and repository-management baseline.
+- Closed the third independent-review design findings with safe takeover
+  fencing, exact Live lease/data-channel semantics, persistence and media-
+  sandbox ADRs, runtime/cue/swap/handoff/reconciliation state machines,
+  machine-readable protocol/evidence schemas, and a three-slice Phase 1A plan.

@@ -12,10 +12,18 @@ This package will contain versioned, implementation-neutral contracts for:
 - cue runtime, image relationships, incident ownership, and audit events; and
 - backend/frontend API types.
 
-The serialization format is not yet selected. Contracts must define units,
-time domains, optional/unknown behavior, compatibility, bounds, and idempotency
-before code generation is introduced.
+JSON is the protocol-v0 control/event representation and RFC 8785 JCS is its
+hash/signature representation. Large counters are strings. Binary media and
+meter transport remain separate. Contracts must define units, time domains,
+optional/unknown behavior, compatibility, bounds, and idempotency before code
+generation is introduced.
 
 The proposed semantics, including negotiation, snapshots/deltas, command
 idempotency, atomic single-node activation, event delivery, imports, and Live
 leases, are in [protocol v0](specification.md).
+
+Initial machine-readable contracts are in [`schema/v0`](schema/v0), with golden
+fixtures under [`tests/fixtures/protocol/v0`](../../tests/fixtures/protocol/v0).
+They cover the safety-critical envelope first. OpenAPI/AsyncAPI documents are
+generated from the frozen domain schemas when concrete HTTP/subscription routes
+are implemented; hand-written copies may not diverge from these schemas.

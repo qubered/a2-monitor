@@ -1,6 +1,7 @@
 # Independent plan review: round 3
 
-**Status:** Open findings; reviewed plan unchanged
+**Status:** Reviewed baseline unchanged; design response recorded in
+[the round 3 closure ledger](2026-09-19-round-3-response.md)
 
 **Reviewed:** 2026-09-19
 

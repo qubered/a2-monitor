@@ -31,8 +31,12 @@ quality. Repeating or returning to a definition creates another occurrence.
 Scheduled changes target an occurrence condition, not a cue label alone, and
 are revalidated immediately before execution.
 
-The cue authority has `healthy`, `stale`, `unknown`, `held` and `resync-required`
-quality. On stale/unknown/resync-required:
+The cue authority has mode and quality as separate state. External observation
+progresses through `external-healthy`, `external-stale` and `resync-required`;
+manual tracking is a deliberate named transfer, never an automatic fallback.
+The complete handover/rebase and late-event fencing automaton is in
+[cue and operator state machines](../architecture/cue-and-operator-state-machines.md).
+On stale/unknown/resync-required:
 
 - cue-derived alerts and automatic state transitions fail to unarmed/unknown;
 - last context remains visibly historical, never current truth;
@@ -50,6 +54,11 @@ Mappings use workspace and cue unique IDs; cue number/name are display data.
 Preview/audition is ignored for live performance state unless an explicit
 rehearsal policy says otherwise. Heartbeat/connection loss makes authority
 stale.
+
+The QLab observer is a supervised node-side, sandboxed non-real-time worker with
+an allow-listed show-control network path, `/listen` renewal, heartbeat,
+generation/cursor, normalization and bounded dedupe/reorder behavior. It cannot
+send QLab control. Backend restart therefore does not move cue authority.
 
 ## Consequences
 

@@ -3,7 +3,9 @@
 - **Status:** Accepted
 - **Date:** 2026-09-18
 - **Owners:** Project team
-- **Supersedes:** None
+- **Superseded in part by:** [ADR 0008](0008-safe-authority-takeover.md)
+  for takeover fencing and [ADR 0009](0009-live-control-lease-and-data-channel.md)
+  for the browser/node lease protocol
 
 ## Context
 
@@ -20,23 +22,26 @@ performance's runtime cue occurrence and assignment-overlay aggregates.
 - Healthy clients normally send runtime commands to the backend, which
   authorizes and forwards them to that node. The backend does not commit a
   second copy independently.
-- An established Live session may use the same node command endpoint directly
-  with a signed lease during a backend interruption.
+- An established Live session may use the same node sequencer through its
+  lease-bound WebRTC control data channel during a backend interruption.
 - Every activation creates a persistent, monotonically increasing
   `authorityEpoch`. Every prepare, commit, lease, command result and emitted
   event carries it. A node rejects stale epochs.
 - Preview and commit terminate at the same authority. A prepared transaction
   binds node, authority epoch, aggregate revision, observed-hardware manifest
   hash, payload hash and expiry.
-- The node maintains one durable idempotency/result ledger for commands received
-  through either route. Reusing a key with another payload is an error.
+- The node maintains one durable idempotency/result ledger for **canonical**
+  commands received through either route. Reusing a key with another payload is
+  an error. Bounded session state and ephemeral media controls are separate
+  persistence classes; see the
+  [runtime command contract](../architecture/runtime-command-contract.md).
 - Browser control terminates in an unprivileged node client gateway, never the
   audio engine. The gateway authenticates the secure transport and lease proof
   of possession, canonicalizes/bounds schemas, persists nonce/sequence replay
   state and forwards only typed bounded IPC to the sequencer.
 - A lease has an absolute validity window plus a maximum monotonic age for the
-  current boot. Node restart requires persisted replay state and trustworthy
-  clock/certificate validation; otherwise emergency mutations fail closed.
+  current boot. Node restart invalidates the lease and session; a backend-issued
+  replacement is required, so emergency mutations fail closed until reconnect.
   Backend revocation takes effect immediately when reachable and otherwise at
   lease expiry—the unavoidable partition trade-off is shown to administrators.
 - Runtime aggregates use their own revisions: performance overlay, cue runtime,
@@ -53,10 +58,11 @@ node exposes remaining offline-mutation capacity and stops accepting new
 offline mutations before it can lose canonical history; capture and monitoring
 continue.
 
-A replacement node cannot silently assume the old epoch. Spare-appliance
-activation requires an authorized takeover, a higher authority epoch, physical
-identity verification and explicit closure of any unreachable old authority.
-Version one has no automatic multi-node failover or quorum.
+A replacement node cannot silently assume the old epoch. A higher epoch does
+not fence an unreachable writer. Spare-appliance activation requires the
+externally verified isolation, quarantine and tail-classification procedure in
+[ADR 0008](0008-safe-authority-takeover.md). Version one has no automatic
+multi-node failover or quorum.
 
 ## Consequences
 

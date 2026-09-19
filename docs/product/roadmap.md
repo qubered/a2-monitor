@@ -12,6 +12,8 @@ Build a disposable, instrumented cross-platform audio core.
 
 Deliverables:
 
+- frozen machine-readable evidence manifest plus signed result artifacts;
+- pinned Windows/macOS CI builds, contract tests and real-time callback guards;
 - Windows and macOS node builds sharing one capture contract;
 - ASIO, WASAPI, and Core Audio evaluation;
 - DVS plus a representative professional USB/Thunderbolt device on each OS;
@@ -38,6 +40,7 @@ as production-ready.
 
 Deliverables:
 
+- frozen Phase 0B manifest for every named tuple, fault and pass/fail threshold;
 - per-client server-side bus and WebRTC/Opus playback;
 - physical gesture-to-ear and capture-to-ear measurements on the named browser
   field kit;
@@ -46,10 +49,11 @@ Deliverables:
 - one real EW-DX SSCv2 profile and one representative Shure rack profile;
 - sandboxed adapter failure and reconnect-storm test;
 - a minimal preallocated replay ring proving the timeline/storage architecture;
-- node enrollment, local HTTPS, certificate, signed lease, and secret-envelope
-  spikes;
-- active-node authority epoch, unprivileged client gateway, proof-of-possession,
-  durable idempotency/control-ledger and partition/takeover spikes;
+- backend local HTTPS/CA provisioning, node enrollment, pinned WebRTC DTLS,
+  reliable ordered control data channel, signed lease and secret-envelope spikes;
+- active-node authority epoch, externally fenced takeover, unprivileged client
+  gateway, exact proof-of-possession, durable idempotency/control-ledger and
+  partition/quarantine spikes;
 - replay-reader/prefetch isolation and concurrent seek cancellation;
 - foreground wake-lock field profile plus camera, microphone/voice capture,
   notification sink and audio-route continuity tests;
@@ -71,58 +75,50 @@ Exit gate:
   authority/control ledger cannot fork or evict accepted runtime mutations; and
 - the security/process architecture has no unresolved P0 design blocker.
 
-## Phase 1A: operational rehearsal core — 12 to 16 weeks
+## Phase 1A: operational rehearsal core — three independently gated slices
 
-The reference production for this phase is theatre or musical theatre.
+The reference production is theatre or musical theatre. The former combined
+12–16 week estimate is withdrawn: every slice is estimated only after Phase 0B
+evidence, staffing and hardware availability. The exact feature/dependency table
+is the [phase capability matrix](phase-capability-matrix.md).
 
-Deliverables:
+### Phase 1A.1: monitor and identify
 
-- Manager inventory, show revision, activation diff, and identity-safe binding;
-- people, roles, headshots, cast alternatives, performance instances,
-  microphone elements/transmitters/kits, spares, and privacy metadata;
-- Live exception/cue views, listen controls, output safety, foreground-device
-  status, show-mode client preflight and health state;
-- distinct A1 mix-confidence and A2 performer/intervention workspaces over the
-  same shared state, with user/production layouts independent of permissions;
-- QLab 5 read-only cue observer, manual coarse-scene fallback, cue occurrence/
-  stale/resync semantics and cue-derived automation fail-safe;
-- guided mic check, intervention plans/quick changes, battery change, atomic
-  multi-role cast plan, physical-stage microphone swaps, preverified spare
-  promotion, show lock, emergency remap and post-hoc physical-first entry;
-- **Request check** tasks and **Report fault** incidents with explicit state,
-  coordinator/workers, evidence and accepted shift handoff—without general chat;
-- capability-aware alerts with duration, hysteresis, cooldown, deduplication,
-  cue/zone arming, and explainable evidence;
-- versioned protocol v0, atomic single-node activation, authority epoch,
-  durable runtime control ledger and physically verified reconciliation;
-- documented `/api/v1` management/command API, service accounts, subscriptions,
-  optimistic concurrency, preview/commit, and conformance tests;
-- local RBAC, audit, certificate/secret lifecycle, and degraded-mode contract;
-- signed offline update, rollback, backup, factory recovery, and spare restore;
-- minimum 10-minute replay at 64 inputs with replay/live safety UX; the full
-  30-minute/128-input promise remains Phase 2;
-- portable core show import/export with hostile-input defenses;
-- safe image upload, metadata stripping, thumbnail variants, and active-show
-  caching for headshots and placement references;
-- versioned printable/offline show pack and emergency change log; and
-- a timed two-operator A1/A2 dress-rehearsal/failure script with working theatre
-  crew.
+- Manager activation, people/role/asset identities and performance overlay;
+- foreground-safe Live audio, meters, receiver state, replay and output control;
+- A1 mix-confidence and A2 identity/exception views over shared truth;
+- resumable guided mic check and one prepared-spare promotion path; and
+- protocol, persistence and CI foundations required by those paths.
 
-Exit gate:
+Gate: named operators complete monitoring, identity, mic-check and single-pack
+drills without wrong-source actions or historical-identity corruption. Cue-
+derived automation, complex swaps and collaboration controls remain hidden.
 
-- an A2 can build, verify, mic-check, operate, recover, replay, remap, and hand
-  off a representative show without corrupting source identity;
-- an A1 can preserve mix/cue focus while requesting and tracking intervention,
-  and both workspaces converge on the same task/incident truth;
-- scheduled and mid-show understudy plus microphone-swap scenarios preserve
-  correct historical identity and reconcile after a backend outage;
-- cue loss/resync, 10–20 second pack change, simultaneous faults, locked client,
-  swing cascade and physical-first swap drills meet their measured criteria;
-- every failure-matrix row assigned to Phase 1 meets its RTO/RPO;
-- no unresolved P0 security or show-safety defect remains;
-- repeated cold start, update/rollback, restore, and backend-loss tests pass; and
-- the build is approved only for internal rehearsal or supervised non-critical
-  use, not yet as a show-critical dependency.
+### Phase 1A.2: operate and intervene
+
+- node-side QLab observer and deliberate external/manual authority handover;
+- interventions, complex cast plans and the physical-swap identity automaton;
+- capability-aware alerts and A2 multi-critical-category visibility;
+- structured task/incident lifecycle, ownership and foreground receipts; and
+- handoff state, printable fallback and physical-first re-entry.
+
+Gate: cue loss/rebase, 10–20 second pack change, swing cascade, simultaneous
+faults, post-hoc physical truth and absent-operator handoff pass timed drills.
+There is no chat or product page; working intercom/radio is mandatory.
+
+### Phase 1A.3: recover and rehearse
+
+- crash-safe ledger reconciliation/pruning, import/export and projection rebuild;
+- signed update/rollback, backup/restore, factory recovery and spare procedure;
+- OS-sandboxed managed headshot/placement-image pipeline;
+- appliance/resource hardening and browser/profile qualification; and
+- full timed A1/A2 dress-rehearsal and failure script with working theatre crew.
+
+Gate: an A2 can build, verify, operate, recover, replay, remap and hand off a
+representative show; an A1 retains mix/cue focus; scheduled/mid-show understudy
+and mic swaps reconcile after backend loss; all assigned RTO/RPO and cold-start,
+power, update/rollback and restore tests pass. Approval remains internal rehearsal
+or supervised non-critical use, never a show-critical dependency.
 
 ## Phase 1B: bounded text collaboration — 6 to 8 weeks
 

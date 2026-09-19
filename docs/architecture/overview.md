@@ -142,7 +142,7 @@ The initial expectation is multiple supervised processes plus two separately
 built web bundles:
 
 1. a minimally privileged audio engine with exclusive access to one device;
-2. an unprivileged browser-control gateway plus node supervisor, media, replay,
+2. an unprivileged WebRTC data-channel control gateway plus node supervisor, media, replay,
    and adapter workers with least privilege;
 3. a management backend; and
 4. a static frontend host, which may be served by the backend package.
@@ -163,8 +163,9 @@ its declared resource envelope.
 2. The node writes samples into a user's persistent stereo mix bus.
 3. The backend authorizes the session and issues a scoped node-control lease.
 4. While healthy, Live sends bounded controls through the backend to the node;
-   during backend interruption an established client uses the same leased node
-   gateway. The node changes bus routing without changing the media track.
+   during backend interruption an established client uses the reliable ordered
+   data channel on the existing media peer connection. The node changes bus
+   routing without changing the media track.
 5. The node sends continuous Opus media directly to the client.
 6. The browser renders through the explicitly selected output device.
 

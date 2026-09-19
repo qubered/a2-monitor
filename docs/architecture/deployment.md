@@ -54,7 +54,7 @@ Requirements:
 
 - outbound mutually authenticated node-to-backend control connection;
 - direct client reachability to the node's authorized WebRTC endpoint;
-- direct, lease-authorized Live control reachability to the node;
+- direct Live reachability to the node's lease-bound WebRTC data channel;
 - explicit node enrollment and certificate rotation;
 - bounded reconnect/reconciliation behavior; and
 - no public-internet dependency for local show operation.
@@ -90,7 +90,7 @@ but no complexity should be added without a validated production need.
 | Manager | Backend | Show building and administration | HTTPS/WebSocket |
 | Live | Backend | State, commands, signaling | HTTPS/WebSocket |
 | Backend | Live | Signed node-control/media lease | HTTPS/WebSocket |
-| Live | Audio node | WebRTC media always; direct scoped commands only for an established session during backend interruption | Secure leased session |
+| Live | Audio node | WebRTC media plus reliable ordered lease-bound control for an established session | SRTP + SCTP/DTLS/UDP |
 | Audio node | Live | Personal monitor media | WebRTC/SRTP |
 
 The browser has no route or credential path to DVS, Dante control, or receiver
@@ -99,3 +99,7 @@ management APIs.
 The standard local profile uses interface-scoped host ICE candidates and no
 public STUN/TURN dependency. A split-site or routed deployment that needs a
 local TURN service requires a separate validated profile.
+
+The node does not expose a second browser HTTPS/WebSocket control origin in
+version one. The data-channel handshake and signed canonical commands are
+specified by [ADR 0009](../decisions/0009-live-control-lease-and-data-channel.md).

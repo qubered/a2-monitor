@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.audio.invalid/protocol/v0/runtime-event.schema.json",
+  "title": "Canonical runtime event envelope v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id", "schema_id", "stream_id", "stream_sequence",
+    "authority_epoch", "aggregate_type", "aggregate_id", "aggregate_revision",
+    "command_id", "actor_id", "recorded_utc", "payload", "payload_hash",
+    "previous_event_hash"
+  ],
+  "properties": {
+    "event_id": {"type": "string", "format": "uuid"},
+    "schema_id": {"type": "string", "pattern": "^[a-z0-9.-]+/v[0-9]+$", "maxLength": 96},
+    "stream_id": {"type": "string", "format": "uuid"},
+    "stream_sequence": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"},
+    "authority_epoch": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "aggregate_type": {"type": "string", "minLength": 1, "maxLength": 64},
+    "aggregate_id": {"type": "string", "format": "uuid"},
+    "aggregate_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"},
+    "command_id": {"type": "string", "format": "uuid"},
+    "actor_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "capture_epoch": {"type": "string", "format": "uuid"},
+    "capture_frame": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"},
+    "effective_utc": {"type": "string", "format": "date-time"},
+    "uncertainty_ms": {"type": "integer", "minimum": 0, "maximum": 86400000},
+    "recorded_utc": {"type": "string", "format": "date-time"},
+    "payload": {"type": "object", "maxProperties": 128},
+    "payload_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "previous_event_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

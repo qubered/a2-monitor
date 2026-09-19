@@ -9,19 +9,19 @@ the required fallback whenever this product is unavailable.
 ## Show-time control lease
 
 After backend authentication, Live receives a signed, node-scoped control lease
-bound to the user, active show revision, authority epoch, media session,
-permissions, expiry, nonce, and client key/fingerprint. Live then sends the
-small set of show-time
+bound to the user, active show revision, authority epoch, node boot, media
+session, permissions, expiry, limits, and client-key thumbprint. Live then sends the small set of show-time
 commands through the backend to the active-node sequencer while healthy. During
 a backend interruption, the same leased listen routing, personal gain/pan/dim,
-replay, cue and approved emergency-swap commands can reach the node's
-unprivileged client gateway directly. Manager operations and edits to the
+replay, cue and approved emergency-swap commands can reach the node over the
+existing WebRTC reliable ordered control data channel. Manager operations and edits to the
 immutable show definition always go through the backend.
 
 This preserves useful control for an established Live session during a short
 backend outage without adding a node management UI. A lease has a configured
 show-length maximum, can use only the activated alternatives/spare pool, is
-replay protected, and is revoked when connectivity exists. It cannot create
+replay protected, boot-bound, and is revoked when connectivity exists. Node
+restart invalidates it and new sessions always require the backend. It cannot create
 people/assets or make arbitrary bindings. Offline revocation is not possible;
 that tradeoff is visible in the security model.
 
@@ -32,7 +32,7 @@ Targets below are proposed until measured on reference hardware.
 | Failure | Automatic behavior | Operator capability | Proposed target |
 | --- | --- | --- | --- |
 | Public internet loss | No local service changes. | Full local operation. | Indefinite. |
-| Backend process restart | Node keeps capture, replay, receiver state, media, active performance and valid leased controls. Appliance service manager restarts backend. | Existing Live sessions can listen, replay, move cues and perform approved emergency swaps; Manager, collaboration and new sessions wait. | Backend healthy and control ledger reconciled within 30 s. |
+| Backend process restart | Node keeps capture, replay, receiver state, media, active performance and valid established leased controls. Appliance service manager restarts backend. | Existing Live sessions can listen, replay, move cues and perform approved emergency swaps; Manager, collaboration and new sessions wait. | Desired 30 s; hard supported-profile RTO 120 s. |
 | Collaboration database unavailable/corrupt | Stop accepting mutations before acknowledgement; preserve node/audio priorities. Isolate or restore the database. | Intercom/radio plus emergency paper log; monitoring and leased node commands continue. | No accepted commit lost; recovery/restore RTO is validated separately from process restart. |
 | Metadata disk full | Reserve control/database space, reject uploads/chat first, then nonessential state; never consume audio/replay reservations. | Monitoring continues; collaboration may be read-only/unavailable. | Warn before reserve; accepted commit RPO 0. |
 | Asset store/worker unavailable | Text/state continues; new attachments remain unavailable or visibly processing, never ready. | Use text/intercom; existing ready assets show explicit failure if missing. | No false ready/attachment delivery; worker RTO does not gate monitoring. |

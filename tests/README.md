@@ -11,6 +11,11 @@ shared test environment:
 - long-running soak and controlled network impairment; and
 - appliance upgrade/rollback tests.
 
+`manifests` contains machine-readable evidence input/result schemas. `fixtures`
+contains versioned protocol golden vectors. Both are validated by
+`scripts/check-repo.sh`; executable code must add semantic schema and
+cryptographic-vector validation rather than relying on JSON syntax alone.
+
 Component-local unit tests should live beside their component. Generated audio,
 captures, logs, databases, and performance reports belong in ignored artifact
 directories, not Git.

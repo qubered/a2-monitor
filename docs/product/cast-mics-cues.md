@@ -142,9 +142,14 @@ overlay revision/authority epoch. Preview validates asset availability,
 reservation, compatibility, receiver/audio identity, cue occurrence,
 permissions and resulting display.
 
-Every physical change progresses through:
+Every physical assignment uses the normative automaton in
+[temporal identity and physical swap](../architecture/temporal-identity-and-swap.md):
 
-`prepared -> physical-change-in-progress -> installed-unverified -> RF/audio-verified -> A1-confirmed`
+`reserved -> prepared -> change-in-progress -> installed-unverified -> verified -> complete`
+
+with explicit expiry, failure, abandon, revert, fallback and A1-unavailable
+paths. `RecordInstalledBoundary` is the sole identity-effective transition; it
+atomically closes old intervals and opens new ones at the observed boundary.
 
 The product distinguishes its identity assignment from operator-confirmed
 external actions: fitted element/pack, transmitter/receiver association,
@@ -157,6 +162,12 @@ only its still-valid prechecks complete. When physical safety requires acting
 first, the operator may record the transaction afterward using actual effective
 capture frame/time plus uncertainty and a later recorded-at timestamp. This is
 an audited late entry, not a rewrite.
+
+Prepared-check reuse is tuple- and time-bounded by component, performer,
+costume/build, placement, receiver/input path, zone, dimension, method and policy
+version. A1 confirmation is a policy receipt after physical effectiveness, with
+an authorized unavailable/reason path; it is never fabricated as a physical
+stage.
 
 ### Performer/understudy swap
 
@@ -177,8 +188,10 @@ A swing cascade previews and commits one atomic cast plan covering every
 affected role/person. Each microphone component may stay with performer, role,
 costume build, prepared kit or be explicitly replaced. Preview validates no
 uncovered or duplicate track, asset exclusivity, cue/scene expectations,
-placement builds, console labels and rollback feasibility. Partial commit is
-not allowed; physical actions and verification can then progress per assignment.
+placement builds, console labels and rollback feasibility. Partial plan commit
+is not allowed; physical actions and actual identity boundaries then progress
+per assignment, so unchanged/uninstalled roles retain their former current
+identity.
 
 ### Microphone swap
 

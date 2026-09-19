@@ -5,8 +5,11 @@
 ## Scope
 
 These rules apply to node/backend control, normalized telemetry, Live node
-control, show activation, and import/export envelopes. Transport encoding can
-be selected later, but it may not weaken these semantics.
+control, show activation, and import/export envelopes. Control and durable event
+encoding is I-JSON. Hashes and signatures use RFC 8785 JCS bytes and SHA-256;
+Unicode is preserved exactly, duplicate names and nonfinite numbers are rejected,
+and counters/revisions outside safe small numeric ranges are canonical decimal
+strings. Initial machine schemas live in `schema/v0`.
 
 ## Version negotiation
 
@@ -81,11 +84,11 @@ the prepared result. Version one does not promise atomic multi-node activation.
 
 ## Live node lease
 
-The backend issues a signed lease containing node, user, show revision, session,
-allowed commands, authority epoch, expiry, nonce, and proof-of-possession
-client/media binding. The node validates it locally and enforces per-command
-bounds and rate limits. Expiry/anti-replay behavior survives node restart and
-rejects clock rollback. Leases cannot edit
+The exact lease, client-key, WebRTC data-channel, handshake, signed command,
+counter, restart and partial-partition protocol is defined by
+[ADR 0009](../../docs/decisions/0009-live-control-lease-and-data-channel.md).
+Node restart invalidates every direct-control lease/session and requires the
+backend. Leases cannot edit
 the immutable show revision, credentials, users, policy, cue definitions or
 receiver configuration. A separately scoped emergency capability may apply a
 runtime cast/microphone assignment overlay, advance/select a cue and record
@@ -100,6 +103,10 @@ bounded telemetry/replay journals and survives until verified reconciliation.
 When remaining durable capacity reaches the reserve threshold, further offline
 mutations fail closed while monitoring continues. Arbitrary IDs, inventory
 creation and task/incident lifecycle mutation fail.
+
+Canonical evidence, bounded session state and ephemeral media controls are
+separate classes with the persistence/expiry/shedding rules in the
+[runtime command contract](../../docs/architecture/runtime-command-contract.md).
 
 ## Event delivery
 
@@ -137,7 +144,8 @@ before any current show state changes. Failed imports leave no partial state.
 
 ## Security
 
-Node/backend transport uses mutual authentication. Browser/backend and
-browser/node paths use secure contexts and scoped authorization. Raw vendor
+Node/backend transport uses mutual authentication. Browser/backend uses a
+trusted secure origin; browser/node control uses the DTLS/data-channel binding
+in ADR 0009 and scoped authorization. Raw vendor
 messages, receiver secrets, private keys, and privileged diagnostics are never
 part of the shared domain protocol.

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.audio.invalid/protocol/v0/runtime-command.schema.json",
+  "title": "Signed canonical runtime command v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "lease_id", "node_boot_id", "authority_epoch", "channel_id",
+    "channel_counter", "previous_ack_hash", "idempotency_key", "aggregate",
+    "expected_revision", "deadline_utc", "command_type", "payload",
+    "payload_hash", "signature"
+  ],
+  "properties": {
+    "protocol": {"const": "runtime-control.v0"},
+    "lease_id": {"type": "string", "pattern": "^[A-Za-z0-9_-]{22,64}$"},
+    "node_boot_id": {"type": "string", "format": "uuid"},
+    "authority_epoch": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "channel_id": {"type": "string", "format": "uuid"},
+    "channel_counter": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"},
+    "previous_ack_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "idempotency_key": {"type": "string", "format": "uuid"},
+    "aggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id"],
+      "properties": {
+        "type": {"enum": ["Activation", "CueRuntime", "PerformanceOverlay", "PhysicalAssignment", "MicCheckSession"]},
+        "id": {"type": "string", "format": "uuid"}
+      }
+    },
+    "expected_revision": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"},
+    "deadline_utc": {"type": "string", "format": "date-time"},
+    "command_type": {"type": "string", "minLength": 1, "maxLength": 64},
+    "payload": {"type": "object", "maxProperties": 64},
+    "payload_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alg", "jws"],
+      "properties": {
+        "alg": {"const": "ES256"},
+        "jws": {"type": "string", "maxLength": 4096}
+      }
+    }
+  }
+}

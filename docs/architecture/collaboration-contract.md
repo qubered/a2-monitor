@@ -26,6 +26,8 @@ There is no chat-only “Resolved” quick phrase.
 | --- | --- | --- | --- |
 | — | `create-task` | `open` | type, subject, requester, priority, optional due occurrence/time |
 | `open`, `blocked` | `claim-task` | `claimed` | assignee, expected task revision |
+| `claimed`, `blocked` | `release-task` | `open` | actor, reason, expected task revision |
+| `claimed`, `blocked` | `reassign-task` | `claimed` | old/new assignee, reason, expected task revision |
 | `claimed` | `block-task` | `blocked` | reason, next action/owner |
 | `blocked` | `unblock-task` | `open` or `claimed` | reason, optional assignee |
 | `open`, `claimed`, `blocked` | `complete-task` | `done` | completion evidence, actor |
@@ -47,6 +49,8 @@ claim is a separate coordinator relationship.
 | --- | --- | --- | --- |
 | — | `report-fault` | `open` | observed fact/impact, subject, reporter |
 | any nonterminal | `claim-incident` | unchanged | coordinator, expected revision |
+| any nonterminal with coordinator | `handoff-incident` | unchanged | old/new coordinator, reason, expected revision |
+| any nonterminal with coordinator | `release-incident` | unchanged | coordinator, reason, expected revision |
 | `open`, `deferred` | `start-investigation` | `investigating` | coordinator or reason |
 | `open`, `investigating`, `deferred` | `mark-mitigated` | `mitigated` | action, evidence, residual risk/next action |
 | `open`, `investigating`, `mitigated`, `deferred` | `resolve-incident` | `resolved` | action, evidence, confidence, A1 confirmation or explanation |
@@ -58,6 +62,11 @@ claim is a separate coordinator relationship.
 coordinator owns the operational summary while several task assignees may work
 in parallel. `mark-incident-seen`, `acknowledge-page`, `acknowledge-alert`,
 `advance-read-cursor` and `confirm-impact` are distinct commands/receipts.
+
+Shift handoff is its own revisioned aggregate, not a page or conversation
+reaction. Its draft/attest/accept/dispute/forced transitions, item disposition
+and composite late-event watermark are normative in
+[cue and operator state machines](cue-and-operator-state-machines.md).
 
 ## Revisions and ordering domains
 
@@ -115,6 +124,9 @@ An attachment is not ready until its content and ready metadata are both
 durable. Message creation can reference only ready attachment versions. Asset
 loss after ready is a service fault shown explicitly; it does not silently
 remove the message.
+The idempotent upload-intent, quarantine, content-addressed placement, metadata
+commit, ready publication, orphan collection and deletion/evidence-pin saga is
+defined in [ADR 0010](../decisions/0010-persistence-recovery-and-migrations.md).
 
 Recovery prioritizes node control-ledger reconciliation before ordinary chat
 replay. Process restart, database unavailable/corrupt, metadata disk full,
@@ -146,11 +158,15 @@ cache on the client at the next contact. Deny is the default.
 
 ## Priority-page states
 
-Each recipient has `accepted`, `dispatched`, `client-received` where provable,
-`displayed` where provable, `acknowledged`, `expired`, `cancelled`, or `failed`
-state. Backend acceptance is never called delivery. Acknowledgement is
-idempotent. Sender sees partial acknowledgement and the reminder to use
-intercom/radio for urgent contact. Pages expire; they do not auto-claim work.
+Each recipient stores cumulative milestone timestamps: `accepted_at`,
+`dispatched_at`, `client_received_at` where provable, `displayed_at` where
+provable and `acknowledged_at`. Terminal outcome is one of `expired`, `cancelled`
+or `failed`, also timestamped with reason; it cannot erase earlier milestones.
+Milestones advance in order except a terminal outcome may occur after any prior
+milestone. Acknowledgement is idempotent and cannot follow a terminal outcome
+without a new page. Backend acceptance is never called delivery. Sender sees
+partial acknowledgement and the reminder to use intercom/radio for urgent
+contact. Pages expire; they do not auto-claim work.
 
 Initial safety limits are six pages per minute per sender with a one-per-ten-
 second burst and thirty pages per minute per deployment. Limits are tunable
@@ -191,6 +207,11 @@ These are proposed hard safety limits, not validated capacity claims:
 | Resource | Initial limit |
 | --- | ---: |
 | Concurrent Live users | 8 |
+| Conversations per performance | 64 |
+| Concrete recipients per page | 32 |
+| Subscription topics per client | 64 |
+| Filters per subscription | 16 |
+| Fan-out deliveries per accepted message/page | 64 |
 | Open tasks plus incidents per performance | 500 |
 | Retained messages per performance | 10,000 |
 | Text message bytes | 8 KiB |
@@ -199,6 +220,7 @@ These are proposed hard safety limits, not validated capacity claims:
 | Concurrent attachment processing | 4 deployment-wide, 1 per client |
 | Ready attachment storage per performance | 2 GiB by default |
 | Message sends | 60/min/user, burst 20 |
+| Page audit/recipient records | 50,000 per performance |
 
 Crossing a limit rejects or archives lower-priority work; it never allocates
 unbounded resources or evicts canonical show-control history. Phase 1B/1C
