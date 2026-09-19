@@ -166,7 +166,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    pointer events, so a press anywhere that is not the photo lands here. */
 .chcard .hit{position:absolute;inset:0;z-index:1;border-radius:var(--r-lg);background:none}
 .chcard .hit:focus-visible{outline:2px solid var(--red);outline-offset:3px}
-.chcard > *:not(.hit):not(.shot):not(.alertover){pointer-events:none}
+.chcard > *:not(.hit):not(.tile){pointer-events:none}
+/* the photograph and the name. an alert veils this much and stops short of the
+   status strip, which stays readable underneath it. */
+.chcard .tile{position:relative;display:flex;flex-direction:column;gap:12px}
+.chcard .tile > *:not(.shot):not(.alertover){pointer-events:none}
 .chcard:hover{transform:translateY(-3px);box-shadow:var(--sh-hover)}
 .chcard:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line-2)}
 .chcard:focus-visible{outline:2px solid var(--red);outline-offset:3px}
@@ -183,25 +187,41 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    the status strip afterwards.
    ============================================================ */
 .chcard.alert{border-color:var(--t-out);box-shadow:0 3px 0 var(--red-700)}
-.alertover{position:absolute;inset:0;z-index:4;border-radius:calc(var(--r-lg) - 2px);
-  background:var(--out-soft);display:flex;flex-direction:column;gap:9px;padding:14px;
-  align-items:flex-start;justify-content:center;text-align:left;width:100%;border:none;cursor:pointer}
-.alertover .kind{display:inline-flex;align-items:center;gap:7px;font-family:var(--fd);font-weight:800;
-  font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--t-out)}
-.alertover .kind svg{width:17px;height:17px}
-.alertover .who2{font-family:var(--fd);font-weight:800;font-size:19px;letter-spacing:-.02em;color:var(--ink)}
-.alertover .what{font-size:13.5px;color:var(--ink-2);line-height:1.35}
-.alertover .when{font-family:var(--fm);font-size:11px;color:var(--muted)}
-.alertover .row2{display:flex;gap:8px;width:100%;margin-top:4px}
-.alertover .ackbtn{flex:1 1 auto;background:var(--red);color:#fff;box-shadow:0 3px 0 var(--red-700);
-  border-radius:99px;font-family:var(--fb);font-weight:700;font-size:14px;min-height:46px;
-  display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s,box-shadow .12s}
+/* A veil over the card, not a replacement for it. The operator can still see
+   whose channel it is, what the meter is doing and where the fault sits in the
+   status strip — which is what they need to start troubleshooting. The overlay
+   names the problem and nothing else. */
+.alertover{position:absolute;inset:-6px -4px -8px;z-index:4;border-radius:var(--r);
+  background:color-mix(in srgb, var(--t-out) 11%, rgba(255,253,248,.44));
+  display:flex;flex-direction:column;padding:10px 12px 12px;
+  align-items:center;justify-content:flex-start;text-align:center;width:100%;border:none;cursor:pointer}
+.alertover.warn{background:color-mix(in srgb, var(--warn) 13%, rgba(255,253,248,.44))}
+/* the mark sits over the photograph, the way WaveTool puts it on the tile,
+   so the name and the status strip underneath stay readable */
+.alertover .mark{flex:1 1 auto;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:4px}
+.alertover .ackbtn{margin-bottom:2px}
+.alertover .glyph{color:var(--t-out);opacity:.92;line-height:0}
+.alertover.warn .glyph{color:var(--warn)}
+.alertover .glyph svg{width:52px;height:52px;filter:drop-shadow(0 1px 0 rgba(255,253,248,.9))}
+.alertover .kind{font-family:var(--fd);font-weight:800;font-size:19px;letter-spacing:.02em;
+  text-transform:uppercase;color:var(--t-out);text-shadow:0 1px 0 rgba(255,253,248,.85)}
+.alertover.warn .kind{color:var(--warn)}
+/* the overlay clears itself after a configurable time. the alert does not:
+   it drops into the status area still marked unacknowledged. */
+.alertover .timer{position:absolute;left:14px;right:14px;bottom:4px;height:3px;border-radius:2px;
+  background:color-mix(in srgb, var(--t-out) 28%, transparent);overflow:hidden}
+.alertover.warn .timer{background:color-mix(in srgb, var(--warn) 32%, transparent)}
+.alertover .timer i{display:block;height:100%;background:var(--t-out);width:100%;
+  transform-origin:left;animation:alertexpire var(--dur,300s) linear forwards}
+.alertover.warn .timer i{background:var(--warn)}
+@keyframes alertexpire{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.alertover .ackbtn{background:var(--red);color:#fff;box-shadow:0 3px 0 var(--red-700);
+  border-radius:99px;font-family:var(--fb);font-weight:700;font-size:13.5px;min-height:44px;padding:0 22px;
+  display:flex;align-items:center;justify-content:center;transition:transform .12s,box-shadow .12s}
+.alertover.warn .ackbtn{background:var(--warn);box-shadow:0 3px 0 #9C6A0E}
 .alertover .ackbtn:hover{transform:translateY(-1px)}
 .alertover .ackbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--red-700)}
-.alertover .listenbtn{flex:none;border:2px solid var(--ink);border-radius:99px;min-height:46px;padding:0 15px;
-  font-weight:600;font-size:13px;background:transparent}
-.alertover .listenbtn:hover{background:var(--ink);color:var(--paper)}
-.alertover .hint{font-size:11px;color:var(--muted)}
 @keyframes alertpulse{0%,100%{box-shadow:0 3px 0 var(--red-700)}50%{box-shadow:0 3px 0 var(--red-700),0 0 0 4px var(--red-soft)}}
 .chcard.alert{animation:alertpulse 2.2s ease-in-out infinite}
 
@@ -263,6 +283,8 @@ button.shot:focus-visible{outline:2px solid var(--red);outline-offset:3px}
 .ackrow .seen{margin-left:auto;flex:none;font-family:var(--fb);font-weight:700;font-size:9.5px;
   letter-spacing:.05em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:4px}
 .ackrow .seen svg{width:12px;height:12px}
+.ackrow .seen.unseen{color:var(--t-out)}
+.ackrow.unseen{border-style:dashed;border-color:var(--t-out)}
 .status .cell.bad{background:var(--out-soft)}
 .status .cell.warn{background:var(--warn-soft)}
 
@@ -975,39 +997,55 @@ function statusStrip(ch){
 }
 
 const ALERTICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 22 20H2z"/><path d="M12 9.5v4.5"/><path d="M12 17h.01"/></svg>';
+/* the fault says what it is in one picture and two words. no explanation,
+   no timestamp, no actions beyond acknowledging — the operator troubleshoots. */
+const BIGICON={
+ rf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9.5a16 16 0 0 1 19 0"/><path d="M5.5 13a11.5 11.5 0 0 1 13 0"/><path d="M8.5 16.4a7 7 0 0 1 7 0"/><circle cx="12" cy="20" r="1.1" fill="currentColor"/></svg>',
+ audio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>',
+ batt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="10" rx="2.5"/><path d="M21 10.5v3"/><path d="M5.5 10.5v3"/></svg>'};
+const ALERTKIND={"RF drop":["rf","Low RF"],"Audio drop":["audio","No audio"],"Battery low":["batt","Low battery"]};
+/* How long an unacknowledged alert holds the card. Production policy, per
+   alert severity. The overlay expires; the alert does not. */
+let ALERT_OVERLAY_SECONDS = 300;
 function alertOverlay(ch,i){
   if(!ch.alert || ch.acked) return "";
+  const [icon,label]=ALERTKIND[ch.alert.kind]||["rf",ch.alert.kind];
+  const warn = ch.alert.kind==="Battery low";
+  const dur = ALERT_OVERLAY_SECONDS;
   /* the overlay itself listens, so an alert never stands between an operator
      and the audio they need to hear to judge it */
-  return `<button class="alertover" data-listen="${i}" aria-label="Listen to ${ch.nm} — unacknowledged ${ch.alert.kind}">
-    <span class="kind">${ALERTICON}${ch.alert.kind}</span>
-    <span class="who2">${ch.no} · ${ch.nm}</span>
-    <span class="what">${ch.alert.what}</span>
-    <span class="when">${ch.alert.when}</span>
-    <span class="row2">
-      <span class="ackbtn" role="button" data-ack="${i}">Acknowledge</span>
-      <span class="listenbtn" role="button" data-detail="${i}">Details</span>
+  return `<button class="alertover ${warn?'warn':''}" data-listen="${i}" style="--dur:${dur}s"
+      aria-label="Listen to ${ch.nm} — unacknowledged ${ch.alert.kind}">
+    <span class="mark">
+      <span class="glyph" aria-hidden="true">${BIGICON[icon]}</span>
+      <span class="kind">${label}</span>
     </span>
-    <span class="hint">Press anywhere else on the card to listen.</span>
+    <span class="ackbtn" role="button" data-ack="${i}">Acknowledge</span>
+    <span class="timer" aria-hidden="true"><i></i></span>
   </button>`;
 }
 
 const TICK='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.4 12 13 4.5"/></svg>';
 function ackRow(ch){
-  if(!ch.alert || !ch.acked) return "";
+  if(!ch.alert || !(ch.acked || ch.expired)) return "";
   const warn = ch.alert.kind === "Battery low";
-  return `<div class="ackrow ${warn?'warn':''}">
+  /* an alert nobody saw must never look like one somebody saw */
+  const badge = ch.acked
+    ? `<span class="seen">${TICK} Seen</span>`
+    : `<span class="seen unseen">Not acknowledged</span>`;
+  return `<div class="ackrow ${warn?'warn':''} ${ch.acked?'':'unseen'}">
     <span class="ic" aria-hidden="true">${ALERTICON}</span>
     <span class="tx"><b>${ch.alert.kind}</b><span>${ch.alert.when}</span></span>
-    <span class="seen">${TICK} Seen</span>
+    ${badge}
   </div>`;
 }
 
 function card(ch,i){
   const alerting = ch.alert && !ch.acked;
   return `<article class="chcard ${ch.live?'listening':''} ${ch.crit?'critical':''} ${alerting?'alert':''}" data-i="${i}">
-    ${alertOverlay(ch,i)}
     <button class="hit" data-listen="${i}" aria-label="Listen to ${ch.nm}, channel ${ch.no}"></button>
+    <div class="tile">
+    ${alertOverlay(ch,i)}
     <button class="shot" data-detail="${i}" aria-label="Open details for ${ch.nm}">
       ${face(ch)}
       <span class="no">${String(ch.no).padStart(2,"0")}</span>
@@ -1018,6 +1056,7 @@ function card(ch,i){
       <div class="meter"><svg viewBox="0 0 240 26" preserveAspectRatio="none" data-af="${ch.no}">${afTrace(ch)}</svg></div>
     </button>
     <div class="who"><div class="nm">${ch.nm}</div><div class="rl">${ch.rl}</div></div>
+    </div>
     ${statusStrip(ch)}
     ${ackRow(ch)}
   </article>`;
@@ -1028,6 +1067,12 @@ function renderGrids(){
   const a1=$("#a1grid"); if(a1) a1.innerHTML = CH.slice(0,8).map((c,i)=>card(c,i)).join("");
 }
 renderGrids();
+
+/* the overlay times out on its own; the alert stays unacknowledged */
+CH.forEach((ch,i)=>{
+  if(!ch.alert) return;
+  setTimeout(()=>{ if(!ch.acked){ ch.expired=true; renderGrids(); } }, ALERT_OVERLAY_SECONDS*1000);
+});
 $$("[data-static-pic]").forEach(el=>el.innerHTML=face(CH[0]));
 { const p=$("#np-pic"); if(p) p.innerHTML=face(CH[0]); }
 $$("[data-static-face]").forEach(el=>el.insertAdjacentHTML("afterbegin",face(CH[0])));
@@ -1172,11 +1217,11 @@ document.addEventListener("click",e=>{
   const ak=e.target.closest("[data-ack]");
   if(ak){
     e.stopPropagation();
-    const i=+ak.dataset.ack; CH[i].acked=true;
+    const i=+ak.dataset.ack; CH[i].acked=true; CH[i].expired=false;
     /* acknowledging is not fixing: the fault stays in the status strip, and the
        alert moves into the card's status area rather than vanishing */
     renderGrids();
-    const n=CH.filter(c=>c.alert&&!c.acked).length;
+    const n=CH.filter(c=>c.alert&&!c.acked).length;   /* expiry does not reduce this */
     $$("[data-ackcount]").forEach(x=>{
       x.textContent = n ? `${n} to acknowledge` : "all acknowledged";
       x.classList.toggle("out", n>0); });

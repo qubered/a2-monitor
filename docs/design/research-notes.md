@@ -308,10 +308,28 @@ rather than as a plausible default. The integration layer needs a per-model
 capability map for display, not only for control.
 
 **Alerts require acknowledgement, and acknowledgement is not resolution.** An
-unacknowledged alert takes over the whole card. It does not time out and it does
-not clear when the underlying fault clears — somebody says they have seen it.
-On acknowledgement it moves into the card's status area as a compact row while
-the failed dimension stays failed in the status strip.
+unacknowledged alert veils the channel's tile and name. On acknowledgement it
+moves into the card's status area as a compact row while the failed dimension
+stays failed in the status strip.
+
+Two corrections came out of review, and both improved it:
+
+- **The overlay is translucent, and it says almost nothing.** The first build
+  replaced the card's contents with the alert type, a sentence of explanation and
+  a timestamp. Wrong on both counts. WaveTool draws its fault overlay *over* the
+  channel so the operator can still see the tile, and it says only what the fault
+  is. The explanation was the product trying to do the troubleshooting; the
+  operator does that, and needs to see the meter and the status strip to do it.
+  The overlay now veils the photograph and name only, stopping short of the
+  status strip, and carries one icon and two words.
+- **The overlay expires on a configurable timer; the alert does not.** Stated
+  earlier in these notes as "it does not time out", which was wrong. An unattended
+  screen should not end the night as a wall of red. The overlay holds the card for
+  a configurable period — five minutes by default, per severity — then clears,
+  with a countdown along its bottom edge so the expiry is visible rather than
+  surprising. Critically, **expiry is not acknowledgement**: the alert drops into
+  the status area marked *Not acknowledged* with a dashed border and still counts
+  in the header total. An alert nobody saw must never look like one somebody saw.
 
 The design rule that came out of building it: **the takeover must itself be a
 listen target.** The first thing any operator does with "RF drop on 27" is
@@ -357,7 +375,10 @@ These need an operator in a room, not more desk research.
 15. With several alerts unacknowledged at once, does a wall of takeover cards
     stop being readable? A storm is exactly when the grid matters most, and the
     plan already requires alert storms to collapse into a grouped incident.
-16. Should acknowledgement be per-operator or per-show? Two A2s working
+16. What is the right default expiry per severity? Five minutes is a guess. A
+    critical audio loss probably deserves longer than a battery warning, and the
+    number should come from watching operators rather than from taste.
+17. Should acknowledgement be per-operator or per-show? Two A2s working
     different zones may both need to see an alert before it is considered seen.
-17. Does the detail view need a compare mode — two channels side by side — for
+18. Does the detail view need a compare mode — two channels side by side — for
     the common "is it this pack or this zone" question?

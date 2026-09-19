@@ -99,43 +99,56 @@ everywhere it is seen.
 - **Critical** — `--t-out` outline, plus the faulted cell in the strip.
 - **Stale** — dashes in the affected cells with the age in the sentence.
 
-## Alert takeover
+## Alert overlay
 
-An alert that nobody has acknowledged **owns the whole card**, the way WaveTool's
-SCP overlay owns a channel. It is not a badge and not a row: it replaces the
-card's contents with the alert type, the channel, what happened, and when.
+An alert that nobody has acknowledged veils the channel's tile and name, the way
+WaveTool draws its fault overlay on a channel strip.
 
 ```
 ┌────────────────────────────────┐
-│ ⚠ BATTERY LOW                  │
-│ 12 · Dov Halpern               │
-│ 41 minutes left. Below the     │
-│ one-hour threshold for this    │
-│ show.                          │
-│ 20:58:10 · 6:48 ago            │
-│ ┌──────────────┐ ┌───────────┐ │
-│ │ Acknowledge  │ │  Details  │ │
-│ └──────────────┘ └───────────┘ │
-│ Press anywhere else to listen. │
+│ ┌────────────────────────────┐ │
+│ │ 27      ((( ))))       ⤢   │ │ ← translucent veil: the photograph,
+│ │          LOW RF            │ │   the meter and the channel number
+│ │▁▂▅█▆▃▂▁▂▄▆█▇▄▂▁▂▃▅▇█▆▄▂▁▂▃▄│ │   are all still visible through it
+│ └────────────────────────────┘ │
+│ Eleanor Vance  ┌────────────┐  │
+│ Marguerite Hal │Acknowledge │  │
+│ ──────────────────────────────  │ ← the overlay's own countdown
+│ ┌─────┬─────┬─────┬─────┐      │
+│ │  ✕  │  ✓  │  ✓  │  ⚠  │      │ ← the status strip is NOT veiled
+│ │ RF  │AUDIO│ BATT│CHECK│      │
+│ └─────┴─────┴─────┴─────┘      │
 └────────────────────────────────┘
 ```
 
-Three rules make it safe:
+**It is a veil, not a replacement.** The operator can still see whose channel it
+is, what the meter is doing, and where the fault sits in the status strip
+underneath — which is what they need to start troubleshooting. The overlay is
+deliberately scoped to stop short of the status strip.
 
-1. **The takeover is still a listen target.** Pressing anywhere on the overlay
-   that is not a button listens to that channel. An alert must never stand
-   between an operator and the audio they need to judge it — the first thing
-   anyone does with "RF drop on 27" is listen to 27.
-2. **It does not clear itself.** No timeout, no auto-dismiss on the fault
-   clearing. Somebody says they have seen it.
-3. **Acknowledging is not fixing.** On acknowledgement the alert leaves the
-   takeover and moves into the card's **status area** as a compact row — type,
-   time, and a *Seen* mark — while the underlying dimension stays failed in the
-   status strip. A channel whose RF is still broken still reads `✕ RF` after
-   acknowledgement, because it is still broken.
+**It names the problem and nothing else.** One icon, two words — *Low RF*, *No
+audio*, *Low battery* — and an Acknowledge button. No explanation, no timestamp,
+no diagnosis, no action list. The operator troubleshoots; the product's job is to
+say which channel and which kind, fast, from across a wing.
 
-The header carries a live count of unacknowledged alerts, which is the number an
-operator is working down.
+Rules:
+
+1. **The overlay is itself a listen target.** Pressing anywhere on it that is not
+   the Acknowledge button listens to that channel. The first thing anyone does
+   with "low RF on 27" is listen to 27, and an alert that blocked that would be
+   worse than no alert.
+2. **The overlay expires; the alert does not.** It holds the card for a
+   configurable time — default five minutes, set per severity by production
+   policy — and then clears itself, so an unattended screen does not end the
+   night as a wall of red. A countdown along the bottom of the overlay shows this
+   is going to happen rather than surprising anyone.
+3. **Expiry is not acknowledgement.** An alert that timed out moves into the
+   card's status area marked **Not acknowledged**, with a dashed border, and
+   still counts in the header's outstanding total. An alert nobody saw must never
+   look like one somebody saw.
+4. **Acknowledging is not fixing.** An acknowledged alert moves into the same
+   status area marked *Seen*, while the failed dimension stays failed in the
+   status strip. A channel whose RF is still broken still reads `✕ RF`.
 
 ## The player
 
