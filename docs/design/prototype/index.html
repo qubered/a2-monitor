@@ -220,74 +220,110 @@ button.shot:focus-visible{outline:2px solid var(--red);outline-offset:3px}
 .status .cell.warn .lb{color:var(--warn)}
 .status .cell.bad{background:var(--out-soft)}
 .status .cell.warn{background:var(--warn-soft)}
-.saying{font-size:13px;color:var(--ink-2);display:flex;gap:7px;align-items:flex-start;min-height:38px}
-.saying b{color:var(--t-out);font-weight:700}
-.saying.warn b{color:var(--warn)}
-.saying{margin-top:auto}
+
+.chcard .status{margin-top:auto}
 
 /* ============================================================
-   NOW LISTENING BAR — press a card, it fills in here.
-   Expands to that channel's own timeline.
+   PLAYER — the bottom bar is a transport for the selected channel.
+   Collapsed it is artwork, name, scrub and time, like a music player.
+   Expanded it adds that channel's whole timeline: audio, RF, link
+   quality and battery on one shared axis under one playhead.
    ============================================================ */
 .nowbar{flex:0 0 auto;background:var(--paper-2);border-top:2px solid var(--line-2);
-  display:flex;flex-direction:column;transition:height .22s cubic-bezier(.16,1,.3,1);height:96px;overflow:hidden}
-.nowbar[data-open=true]{height:340px}
-[data-view=ipad-p] .nowbar[data-open=true]{height:400px}
-.nowrow{flex:0 0 96px;display:flex;align-items:center;gap:14px;padding:0 20px}
-.nowrow .np{display:flex;align-items:center;gap:12px;flex:none;min-width:220px}
-.nowrow .np .pic{width:56px;height:56px;border-radius:12px;border:2px solid var(--card-outline);overflow:hidden;flex:none}
-.nowrow .np .pic svg{display:block;width:100%;height:100%}
-.nowrow .np .lbl{display:flex;flex-direction:column;gap:3px;min-width:0}
-.nowrow .np .lbl b{font-family:var(--fd);font-weight:800;font-size:16px;letter-spacing:-.02em}
-.vsep{width:2px;height:48px;background:var(--line-2);flex:none}
-.level{display:flex;align-items:center;gap:10px;flex:none}
-.level .v{font-family:var(--fm);font-size:17px;font-weight:600;width:44px;text-align:right}
-.bars{display:flex;gap:3px}
-.bars i{width:7px;height:30px;border-radius:2px;background:var(--line-2);display:block}
-.bars i.on{background:var(--ok)}
-.groups{display:flex;gap:8px;flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none}
-.groups::-webkit-scrollbar{display:none}
-.gbtn{flex:none;min-height:52px;padding:0 15px;border-radius:99px;border:2px solid var(--line-2);
-  background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  font-family:var(--fb);font-weight:700;font-size:11px;color:var(--ink-2);transition:transform .12s}
-.gbtn i{width:22px;height:3px;border-radius:2px;display:block}
-.gbtn:active{transform:translateY(2px)}
-.expand{flex:none;width:52px;height:52px;border-radius:50%;border:2px solid var(--ink);display:grid;place-items:center;
-  font-size:16px;transition:transform .2s}
-.nowbar[data-open=true] .expand{transform:rotate(180deg)}
+  display:flex;flex-direction:column;transition:height .22s cubic-bezier(.16,1,.3,1);
+  height:152px;overflow:hidden}
+.nowbar[data-open=true]{height:420px}
+[data-view=ipad-p] .nowbar[data-open=true]{height:470px}
 
-.nowpanel{flex:1 1 auto;display:none;gap:22px;padding:4px 20px 18px;min-height:0}
-.nowbar[data-open=true] .nowpanel{display:flex}
-[data-view=ipad-p] .nowpanel{flex-direction:column;overflow:auto}
-.np-facts{flex:0 0 250px;display:flex;flex-direction:column;gap:8px}
-.np-facts dl{display:grid;grid-template-columns:66px 1fr;gap:3px 10px;font-family:var(--fm);font-size:11.5px}
-.np-facts dt{color:var(--faint)}
-.np-facts dd{color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.np-tl{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:6px;justify-content:center}
-.lane{display:flex;align-items:center;gap:12px;height:32px}
-.lane .k{width:62px;flex:none;font-size:11.5px;color:var(--faint);font-weight:600}
-.lane .t{flex:1 1 auto;height:100%;border:2px solid var(--line-2);border-radius:8px;background:var(--card);
-  overflow:hidden;position:relative}
-.lane .t svg{display:block;width:100%;height:100%}
-.lane .v{width:84px;text-align:right;flex:none;font-family:var(--fm);font-size:12px;color:var(--ink-2)}
-.cuelane{position:relative}
-.cuelane span.c{position:absolute;top:7px;font-family:var(--fm);font-size:11px;color:var(--muted)}
-.cuelane .ev{position:absolute;top:4px;width:20px;height:20px;border-radius:6px;display:grid;place-items:center;
-  font-size:10px;border:2px solid var(--card-outline);background:var(--card)}
-.scrubber{display:flex;align-items:center;gap:12px;margin-top:6px}
-.scrubber .k{width:62px;flex:none}
-.scrubber .track{flex:1 1 auto;height:8px;border-radius:99px;background:var(--line-2);position:relative}
-.scrubber .fill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:var(--red)}
-.scrubber .knob{position:absolute;top:-16px;width:40px;height:40px;margin-left:-20px;border-radius:50%;
-  background:var(--card);border:2px solid var(--ink);box-shadow:var(--sh-card);display:grid;place-items:center;
-  font-family:var(--fm);font-size:10px;font-weight:600}
-.scrubber .v{width:84px;flex:none}
-.ticks{display:flex;justify-content:space-between;margin-left:74px;margin-right:96px;
-  font-family:var(--fm);font-size:10.5px;color:var(--faint)}
-.np-acts{flex:0 0 190px;display:flex;flex-direction:column;gap:8px;justify-content:center}
-.np-acts .btn{width:100%;justify-content:flex-start}
-[data-view=ipad-p] .np-acts{flex-direction:row;flex-wrap:wrap}
-[data-view=ipad-p] .np-acts .btn{width:auto;flex:1 1 44%}
+/* --- graphs, revealed above the transport --- */
+.graphs{flex:1 1 auto;display:none;flex-direction:column;gap:0;padding:14px 22px 0;min-height:0;position:relative}
+.nowbar[data-open=true] .graphs{display:flex}
+.glane{display:flex;align-items:center;gap:14px;flex:1 1 0;min-height:0}
+.glane .k{width:74px;flex:none;font-family:var(--fb);font-weight:700;font-size:10px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.glane .plot{flex:1 1 auto;min-width:0;height:100%;position:relative;
+  border-bottom:2px solid var(--line-2)}
+.glane:first-child .plot{border-top:2px solid var(--line-2)}
+.glane .plot svg{display:block;width:100%;height:100%}
+.glane .v{width:92px;flex:none;text-align:right;font-family:var(--fm);font-size:13px;font-weight:500}
+.glane .v small{display:block;font-size:10px;color:var(--faint);font-weight:400}
+.glane .ev{position:absolute;top:50%;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:7px;
+  display:grid;place-items:center;font-size:10px;background:var(--card);border:2px solid var(--card-outline)}
+/* one playhead across every graph, so the four lanes are read together */
+.winsel{position:absolute;left:50%;top:-1px;transform:translateX(-50%);display:flex;gap:2px}
+.winsel button{font-family:var(--fm);font-size:10.5px;color:var(--faint);padding:2px 7px;border-radius:99px}
+.winsel button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.plot .ph{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--red);
+  left:calc(var(--pos,1) * 100%);pointer-events:none;z-index:3}
+.plot .ah{position:absolute;top:0;bottom:0;right:0;left:calc(var(--pos,1) * 100%);
+  background:var(--paper);opacity:.66;pointer-events:none;z-index:2;display:none}
+.nowbar[data-replay=true] .plot .ah{display:block}
+.nowbar[data-replay=true] .plot .ph{background:var(--purple)}
+.nowbar[data-replay=true] .seek .done{background:var(--purple)}
+.nowbar[data-replay=true] .seek .knob{border-color:var(--purple)}
+.nowbar[data-replay=true]{background:var(--purple-soft);border-top-color:var(--purple)}
+.nowbar[data-replay=true] .tcode.live{color:var(--purple)}
+
+/* --- transport row --- */
+.player{flex:0 0 106px;display:flex;align-items:center;gap:14px;padding:0 22px}
+.art{width:64px;height:64px;border-radius:12px;border:2px solid var(--card-outline);overflow:hidden;flex:none}
+.art svg{display:block;width:100%;height:100%}
+.pmeta{flex:0 0 190px;min-width:0;display:flex;flex-direction:column;gap:3px}
+.pmeta b{font-family:var(--fd);font-weight:800;font-size:16px;letter-spacing:-.02em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pmeta .sub{font-family:var(--fm);font-size:11px;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbtns{display:flex;align-items:center;gap:8px;flex:none}
+.tbtn{width:46px;height:46px;border-radius:50%;border:2px solid var(--line-2);background:var(--card);
+  display:grid;place-items:center;transition:transform .12s,background .12s}
+.tbtn svg{width:17px;height:17px}
+.tbtn:hover{background:var(--paper-2)}
+.tbtn:active{transform:translateY(2px)}
+.tbtn.main{width:56px;height:56px;border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.tbtn.main svg{width:19px;height:19px}
+
+.seekrow{flex:0 0 46px;display:flex;align-items:center;gap:14px;padding:0 22px}
+.tcode{font-family:var(--fm);font-size:12.5px;color:var(--muted);flex:none;width:62px}
+button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
+.tcode.right{text-align:right}
+.tcode.live{color:var(--red);font-weight:600}
+.seek{flex:1 1 auto;min-width:120px;height:36px;position:relative;display:flex;align-items:center;cursor:pointer}
+.seek .rail{position:absolute;left:0;right:0;height:8px;border-radius:99px;background:var(--line-2)}
+.seek .done{position:absolute;left:0;height:8px;border-radius:99px;background:var(--red)}
+.seek .knob{position:absolute;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:var(--card);
+  border:3px solid var(--red);box-shadow:var(--sh-card)}
+.seek .marks{position:absolute;left:0;right:0;height:8px;pointer-events:none}
+.seek .marks i{position:absolute;top:-3px;width:3px;height:14px;border-radius:2px}
+.savebtn{flex:none;white-space:nowrap;padding:0 16px}
+.savebtn svg{width:16px;height:16px}
+.nowbar[data-replay=true] .savebtn{border-color:var(--purple);color:var(--purple)}
+.nowbar[data-replay=true] .savebtn:hover{background:var(--purple);color:#fff}
+/* what a save will actually write, shown before it writes it */
+.saveconfirm{position:absolute;right:22px;bottom:124px;z-index:8;width:330px;background:var(--card);
+  border:2px solid var(--card-outline);border-radius:var(--r-lg);box-shadow:var(--sh-hover);padding:16px;
+  display:none;flex-direction:column;gap:11px}
+.saveconfirm.open{display:flex}
+.saveconfirm h4{font-family:var(--fd);font-weight:800;font-size:16px}
+.saveconfirm dl{display:grid;grid-template-columns:72px 1fr;gap:3px 10px;font-family:var(--fm);font-size:11.5px}
+.saveconfirm dt{color:var(--faint)}
+.saveconfirm .row{display:flex;gap:8px;margin-top:2px}
+.saveconfirm .row .btn{flex:1 1 auto}
+.vol{display:flex;align-items:center;gap:10px;flex:none}
+.vol .v{font-family:var(--fm);font-size:15px;font-weight:600;width:40px;text-align:right}
+.bars{display:flex;gap:3px}
+.bars i{width:6px;height:26px;border-radius:2px;background:var(--line-2);display:block}
+.bars i.on{background:var(--ok)}
+.expand{flex:none;width:46px;height:46px;border-radius:50%;border:2px solid var(--ink);
+  display:grid;place-items:center;font-size:15px;transition:transform .2s}
+.nowbar[data-open=true] .expand{transform:rotate(180deg)}
+.groups{display:flex;gap:8px;flex:0 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none}
+.groups::-webkit-scrollbar{display:none}
+.gbtn{flex:none;min-height:46px;padding:0 13px;border-radius:99px;border:2px solid var(--line-2);
+  background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  font-family:var(--fb);font-weight:700;font-size:10.5px;color:var(--ink-2);transition:transform .12s}
+.gbtn i{width:20px;height:3px;border-radius:2px;display:block}
+.gbtn:active{transform:translateY(2px)}
+.vsep{width:2px;height:44px;background:var(--line-2);flex:none}
 
 /* ---------- exceptions sheet ---------- */
 .sheet{position:absolute;top:0;right:0;bottom:96px;width:378px;background:var(--card);
@@ -400,84 +436,107 @@ button.shot:focus-visible{outline:2px solid var(--red);outline-offset:3px}
     </aside>
 
     <footer class="nowbar" id="nowbar" data-open="false">
-      <div class="nowrow">
-        <div class="np">
-          <div class="pic" id="np-pic"></div>
-          <div class="lbl">
-            <b id="np-name">Eleanor Vance</b>
-            <span class="badge b-live"><i class="dot live-dot"></i>LISTENING · LATCHED</span>
+
+      <div class="graphs" id="graphs">
+
+        <div class="glane">
+          <span class="k">Audio</span>
+          <div class="plot"><svg viewBox="0 0 900 60" preserveAspectRatio="none" data-g="audio"></svg><span class="ah"></span><span class="ph"></span></div>
+          <span class="v" id="g-audio">−18.2<small>dBFS peak</small></span>
+        </div>
+        <div class="glane">
+          <span class="k">RF level</span>
+          <div class="plot"><svg viewBox="0 0 900 60" preserveAspectRatio="none" data-g="rf"></svg><span class="ah"></span><span class="ph"></span></div>
+          <span class="v" id="g-rf">−62<small>dBm</small></span>
+        </div>
+        <div class="glane">
+          <span class="k">Link quality</span>
+          <div class="plot">
+            <svg viewBox="0 0 900 60" preserveAspectRatio="none" data-g="q"></svg>
+            <span class="ev" style="left:80%;color:var(--t-out)">✕</span>
+            <span class="ah"></span><span class="ph"></span>
           </div>
+          <span class="v" id="g-q">31<small>%</small></span>
         </div>
-        <div class="vsep"></div>
-        <button class="btn btn-line sq">Prev</button>
-        <button class="btn btn-line sq">Clear</button>
-        <button class="btn btn-line sq" id="mutebtn">Mute</button>
-        <button class="btn btn-line sq">Dim</button>
-        <div class="level"><span class="v mono">−18</span><div class="bars" id="outbars"></div></div>
-        <div class="vsep"></div>
-        <div class="groups">
-          <button class="gbtn">PRINC<i style="background:var(--blue)"></i></button>
-          <button class="gbtn">ENSMB<i style="background:var(--green)"></i></button>
-          <button class="gbtn">BAND<i style="background:var(--amber)"></i></button>
-          <button class="gbtn">SWING<i style="background:var(--purple)"></i></button>
-          <button class="gbtn">RADIO<i style="background:var(--teal)"></i></button>
+        <div class="glane">
+          <span class="k">Battery</span>
+          <div class="plot"><svg viewBox="0 0 900 60" preserveAspectRatio="none" data-g="batt"></svg><span class="ah"></span><span class="ph"></span></div>
+          <span class="v" id="g-batt">2:14<small>remaining</small></span>
         </div>
-        <button class="expand" id="expand" aria-label="Expand channel detail" aria-expanded="false">⌃</button>
+        <div class="glane" style="flex:0 0 22px">
+          <span class="k"></span>
+          <div class="plot" id="axis" style="border:0;position:relative">
+            <span data-t="1" style="position:absolute;left:0;top:2px;font-family:var(--fm);font-size:10.5px;color:var(--faint)">−30:00</span>
+            <span data-t="0.66" style="position:absolute;left:33%;top:2px;font-family:var(--fm);font-size:10.5px;color:var(--faint)">−20:00</span>
+            <span data-t="0.33" style="position:absolute;left:66%;top:2px;font-family:var(--fm);font-size:10.5px;color:var(--faint)">−10:00</span>
+            <span style="position:absolute;right:0;top:2px;font-family:var(--fm);font-size:10.5px;color:var(--red);font-weight:600">LIVE</span>
+            <span class="winsel" role="group" aria-label="Replay window">
+              <button data-win="10" aria-pressed="false">10m</button>
+              <button data-win="30" aria-pressed="true">30m</button>
+              <button data-win="60" aria-pressed="false">60m</button>
+            </span>
+          </div>
+          <span class="v"></span>
+        </div>
       </div>
 
-      <div class="nowpanel">
-        <div class="np-facts">
-          <div id="np-tags"></div>
-          <dl>
-            <dt>role</dt><dd id="np-role">Marguerite Hale</dd>
-            <dt>receiver</dt><dd id="np-rx">RX 4 · ant B · in 27</dd>
-            <dt>pack</dt><dd>A2-114 · 596.075 MHz</dd>
-            <dt>element</dt><dd>MKE-1 beige · E-221</dd>
-            <dt>battery</dt><dd>2:14 · change at interval</dd>
-            <dt>checked</dt><dd>18:55 · J. Marsh</dd>
-          </dl>
+      <div class="seekrow">
+        <span class="tcode" id="t-pos">−00:00</span>
+        <div class="seek" id="seek">
+          <div class="rail"></div>
+          <div class="done" style="width:100%"></div>
+          <div class="marks">
+            <i style="left:80%;background:var(--t-out)" title="link quality dropped"></i>
+            <i style="left:88%;background:var(--warn)" title="your note"></i>
+          </div>
+          <div class="knob" style="left:100%"></div>
+        </div>
+        <button class="tcode right live" id="t-end">LIVE</button>
+      </div>
+
+      <div class="player">
+        <div class="art" id="np-pic"></div>
+        <div class="pmeta">
+          <b id="np-name">Eleanor Vance</b>
+          <span class="sub" id="np-rx">RX 4 · ant B · in 27</span>
+          <span class="badge b-live" style="align-self:flex-start"><i class="dot live-dot"></i>LISTENING</span>
         </div>
 
-        <div class="np-tl">
-          <div class="lane">
-            <span class="k">Audio</span>
-            <div class="t"><svg viewBox="0 0 900 32" preserveAspectRatio="none" data-np="audio"></svg></div>
-            <span class="v">−18.2 dBFS</span>
-          </div>
-          <div class="lane">
-            <span class="k">RF level</span>
-            <div class="t"><svg viewBox="0 0 900 32" preserveAspectRatio="none" data-np="rf"></svg></div>
-            <span class="v">−62 dBm</span>
-          </div>
-          <div class="lane">
-            <span class="k">Quality</span>
-            <div class="t"><svg viewBox="0 0 900 32" preserveAspectRatio="none" data-np="q"></svg></div>
-            <span class="v">31 %</span>
-          </div>
-          <div class="lane">
-            <span class="k">Events</span>
-            <div class="t cuelane">
-              <span class="ev" style="left:53%;color:var(--t-out)">■</span>
-              <span class="c" style="left:calc(53% + 26px)">quality dropped</span>
-              <span class="ev hand" style="left:78%;color:var(--warn)">✎</span>
-              <span class="c" style="left:calc(78% + 26px)">your note</span>
-            </div>
-            <span class="v">live</span>
-          </div>
-          <div class="scrubber">
-            <span class="k"></span>
-            <div class="track"><div class="fill" style="width:100%"></div><div class="knob" style="left:100%">now</div></div>
-            <span class="v"></span>
-          </div>
-          <div class="ticks"><span>−30m</span><span>−20m</span><span>−10m</span><span>−5m</span><span>now</span></div>
+        <div class="tbtns">
+          <button class="tbtn" aria-label="Previous channel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 20 9 12l10-8zM5 19V5"/></svg></button>
+          <button class="tbtn" aria-label="Back ten seconds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4v6h6"/><path d="M3.5 10a9 9 0 1 1 1.6 6"/></svg></button>
+          <button class="tbtn main" aria-label="Currently live — press to pause and enter replay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14"/><path d="M6.5 8.5v7M17.5 8.5v7"/></svg></button>
+          <button class="tbtn" aria-label="Forward ten seconds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4v6h-6"/><path d="M20.5 10a9 9 0 1 0-1.6 6"/></svg></button>
+          <button class="tbtn" aria-label="Next channel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4l10 8-10 8zM19 5v14"/></svg></button>
         </div>
 
-        <div class="np-acts">
-          <button class="btn btn-line">Replay from here</button>
-          <button class="btn btn-line">Mark this moment</button>
-          <button class="btn btn-line">Run a check</button>
-          <button class="btn btn-line">Message about this</button>
-          <button class="btn btn-primary">Swap…</button>
+
+        <button class="btn btn-line savebtn" id="savebtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/></svg><span id="savelbl">Save replay</span></button>
+
+        <div class="vsep"></div>
+        <div class="vol">
+          <button class="tbtn" id="mutebtn" aria-label="Mute">M</button>
+          <span class="v mono">−18</span>
+          <div class="bars" id="outbars"></div>
+        </div>
+        <div class="vsep"></div>
+        <button class="btn btn-line" style="flex:none">Groups</button>
+        <button class="expand" id="expand" aria-label="Show the full timeline" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button>
+      </div>
+
+      <div class="saveconfirm" id="saveconfirm" role="dialog" aria-label="Save replay">
+        <h4>Save this replay?</h4>
+        <dl>
+          <dt>channel</dt><dd id="sv-ch">27 · Eleanor Vance</dd>
+          <dt>from</dt><dd id="sv-from">21:04:06</dd>
+          <dt>length</dt><dd id="sv-len">30 seconds</dd>
+          <dt>includes</dt><dd>audio, RF, battery, events</dd>
+        </dl>
+        <p style="font-size:12.5px;color:var(--muted)">This writes audio off the appliance.
+          Marking a moment does not — use <b>Mark</b> if you only need to find it again later.</p>
+        <div class="row">
+          <button class="btn btn-line" data-savecancel>Cancel</button>
+          <button class="btn btn-primary" data-savecancel>Save</button>
         </div>
       </div>
     </footer>
@@ -532,39 +591,27 @@ button.shot:focus-visible{outline:2px solid var(--red);outline-offset:3px}
       </button>
     </aside>
 
-    <footer class="nowbar" data-open="false">
-      <div class="nowrow">
-        <div class="np">
-          <div class="pic" data-static-pic></div>
-          <div class="lbl"><b>Dov Halpern</b><span class="badge b-live"><i class="dot live-dot"></i>LISTENING</span></div>
+    <footer class="nowbar" data-open="false" style="height:112px">
+      <div class="player">
+        <div class="art" data-static-pic></div>
+        <div class="pmeta"><b>Dov Halpern</b><span class="sub">console ch 12</span>
+          <span class="badge b-live" style="align-self:flex-start"><i class="dot live-dot"></i>LISTENING</span></div>
+        <div class="tbtns">
+          <button class="tbtn" aria-label="Previous channel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 20 9 12l10-8zM5 19V5"/></svg></button>
+          <button class="tbtn main" aria-label="Live"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14"/><path d="M6.5 8.5v7M17.5 8.5v7"/></svg></button>
+          <button class="tbtn" aria-label="Next channel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4l10 8-10 8zM19 5v14"/></svg></button>
+        </div>
+        <div class="seekrow" style="flex:1 1 auto;padding:0">
+          <span class="tcode">−00:00</span>
+          <div class="seek"><div class="rail"></div><div class="done" style="width:100%"></div>
+            <div class="knob" style="left:100%"></div></div>
+          <span class="tcode right live">LIVE</span>
         </div>
         <div class="vsep"></div>
-        <button class="btn btn-line sq">Prev</button>
-        <button class="btn btn-line sq">Clear</button>
-        <button class="btn btn-line sq">Mute</button>
-        <button class="btn btn-line sq">Dim</button>
-        <div class="level"><span class="v mono">−22</span><div class="bars" id="outbars2"></div></div>
+        <div class="vol"><span class="v mono">−22</span><div class="bars" id="outbars2"></div></div>
         <div class="vsep"></div>
-        <div class="groups" style="flex:0 0 auto">
-          <button class="btn btn-primary lg">Request a check</button>
-          <button class="btn btn-line lg">Report a fault</button>
-        </div>
-        <button class="expand" aria-label="Expand channel detail" aria-expanded="false">⌃</button>
-      </div>
-      <div class="nowpanel">
-        <div class="np-facts">
-          <div class="tags"><span class="badge b-ok"><i class="dot"></i>RF OK</span><span class="badge b-warn"><i class="dot"></i>BATT 0:41</span></div>
-          <dl><dt>role</dt><dd>Auguste Renaud</dd><dt>console</dt><dd>ch 12</dd><dt>heard</dt><dd>21:03 · you</dd></dl>
-        </div>
-        <div class="np-tl">
-          <div class="lane"><span class="k">Audio</span><div class="t"><svg viewBox="0 0 900 32" preserveAspectRatio="none" data-np="audio2"></svg></div><span class="v">−12.4 dBFS</span></div>
-          <div class="lane"><span class="k">Events</span><div class="t cuelane"><span class="c" style="left:2%">nothing logged on this channel</span></div><span class="v">live</span></div>
-        </div>
-        <div class="np-acts">
-          <button class="btn btn-primary">Request a check</button>
-          <button class="btn btn-line">Report a fault</button>
-          <button class="btn btn-line">Mark this moment</button>
-        </div>
+        <button class="btn btn-primary lg">Request a check</button>
+        <button class="btn btn-line lg">Report a fault</button>
       </div>
     </footer>
   </section>
@@ -833,7 +880,6 @@ function card(ch,i){
     </button>
     <div class="who"><div class="nm">${ch.nm}</div><div class="rl">${ch.rl}</div></div>
     ${statusStrip(ch)}
-    <div class="saying ${ch.say[1]}"><span>${ch.say[0]}</span></div>
   </article>`;
 }
 
@@ -852,19 +898,82 @@ $("#mclist").innerHTML=[["Identity and label","done"],["RF and link in the zone"
    <span style="font-weight:${s==='now'?700:500};color:${s==='done'?'var(--muted)':'var(--ink)'}">${t}</span>
    <span style="margin-left:auto">${s==='done'?'<span class="badge b-ok">PASS</span>':s==='now'?'<span class="badge b-live">NOW</span>':''}</span></div>`).join("");
 
-/* long lanes in the expanded bar */
+/* ------------------------------------------------------------------
+   The player's timeline. Four measurements over one shared window, so
+   they are read together: audio, RF level, link quality and battery.
+   ------------------------------------------------------------------ */
 const L=(sel,html)=>{const e=$(sel); if(e)e.innerHTML=html;};
 function paintLanes(){
-  L('[data-np=audio]', bars(Array.from({length:110},(_,k)=>.22+Math.abs(Math.sin(k/6))*.55*Math.random()+.12),900,32,C.ok));
-  L('[data-np=rf]',    line(Array.from({length:110},(_,k)=>k>86?.34:.6+(Math.random()-.5)*.08),900,32,C.warn));
-  L('[data-np=q]',     bars(Array.from({length:110},(_,k)=>k>86?.2:.82+(Math.random()-.5)*.09),900,32,C.out));
-  L('[data-np=audio2]',bars(Array.from({length:110},()=>.25+Math.random()*.6),900,32,C.ok));
+  L('[data-g=audio]', bars(Array.from({length:150},(_,k)=>.18+Math.abs(Math.sin(k/7))*.6*Math.random()+.1),900,60,C.ok));
+  L('[data-g=rf]',    line(Array.from({length:150},(_,k)=>k>118?.34:.62+(Math.random()-.5)*.07),900,60,C.warn));
+  L('[data-g=q]',     bars(Array.from({length:150},(_,k)=>k>118?.19:.84+(Math.random()-.5)*.08),900,60,C.out));
+  /* battery is a slow line over hours, so it reads flat and falling */
+  L('[data-g=batt]',  line(Array.from({length:150},(_,k)=>.86-k*.0034),900,60,"var(--blue)"));
   L('[data-np=raudio]',bars(Array.from({length:110},(_,k)=>.22+Math.abs(Math.sin(k/6))*.55*Math.random()+.12),900,32,C.rp));
   L('[data-np=rrf]',   line(Array.from({length:110},(_,k)=>k>62&&k<76?.12:.6+(Math.random()-.5)*.08),900,32,C.rp));
   L('[data-np=rq]',    bars(Array.from({length:110},(_,k)=>k>62&&k<80?.18:.82+(Math.random()-.5)*.09),900,32,C.rp));
   L('[data-np=replayaf]', bars(Array.from({length:44},()=>.2+Math.random()*.7),240,26,C.rp));
 }
 paintLanes();
+
+/* ------------------------------------------------------------------
+   Scrubbing. Dragging the seek bar back is how an operator listens
+   back: position 1 is live, anything less is replay on this channel
+   at that offset. The window length is configurable.
+   ------------------------------------------------------------------ */
+let POS=1, WIN=30;                                  /* 1 = live; WIN in minutes */
+const pad=n=>String(n).padStart(2,"0");
+function fmt(min){ const t=Math.round(min*60); return `−${pad(Math.floor(t/60))}:${pad(t%60)}`; }
+function applyPos(){
+  const bar=$("#nowbar"); if(!bar) return;
+  const live = POS>=0.999;
+  bar.dataset.replay = String(!live);
+  const done=$(".seek .done",bar), knob=$(".seek .knob",bar);
+  if(done) done.style.width=(POS*100)+"%";
+  if(knob) knob.style.left=(POS*100)+"%";
+  const gr=$("#graphs"); if(gr) gr.style.setProperty("--pos", POS);
+  const sl=$("#savelbl");
+  if(sl) sl.textContent = live ? "Save replay" : "Save from here";
+  const pos=$("#t-pos"), end=$("#t-end");
+  if(pos) pos.textContent = live ? "−00:00" : fmt((1-POS)*WIN);
+  if(end){ end.textContent = live ? "LIVE" : "BACK TO LIVE"; }
+  const main=$(".tbtn.main",bar);
+  if(main) main.setAttribute("aria-label", live
+    ? "Currently live — scrub back to listen to what already happened"
+    : `Replaying ${fmt((1-POS)*WIN)} behind live — press to return to live`);
+}
+function seekFrom(e,el){
+  const r=el.getBoundingClientRect();
+  if(!r.width) return;
+  POS=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
+  if(POS>0.985) POS=1;
+  applyPos();
+}
+$$(".seek").forEach(el=>{
+  let down=false;
+  el.addEventListener("pointerdown",e=>{down=true;el.setPointerCapture(e.pointerId);seekFrom(e,el);});
+  el.addEventListener("pointermove",e=>{if(down)seekFrom(e,el);});
+  ["pointerup","pointercancel"].forEach(ev=>el.addEventListener(ev,()=>{down=false;}));
+});
+document.addEventListener("click",e=>{
+  if(e.target.closest("#savebtn")){
+    const ch=CH.find(c=>c.live)||CH[0];
+    const set=(id,v)=>{const el=$(id); if(el)el.textContent=v;};
+    set("#sv-ch",`${ch.no} · ${ch.nm}`);
+    set("#sv-from", POS>=0.999 ? "the last 30 seconds" : fmt((1-POS)*WIN)+" behind live");
+    set("#sv-len", POS>=0.999 ? "30 seconds" : "30 seconds from the playhead");
+    $("#saveconfirm").classList.add("open"); return;
+  }
+  if(e.target.closest("[data-savecancel]")){ $("#saveconfirm").classList.remove("open"); return; }
+  if(e.target.closest("#t-end")||e.target.closest(".tbtn.main")){ POS=1; applyPos(); }
+  const w=e.target.closest("[data-win]");
+  if(w){ WIN=+w.dataset.win;
+    $$("[data-win]").forEach(o=>o.setAttribute("aria-pressed",String(o===w)));
+    $$("#axis span[data-t]").forEach(sp=>{
+      const f=+sp.dataset.t; sp.textContent = f===0 ? "LIVE" : `−${pad(Math.round(WIN*f))}:00`; });
+    applyPos(); }
+});
+applyPos();
 
 setInterval(()=>{
   CH.forEach(ch=>{
@@ -892,7 +1001,7 @@ function listen(i){
   set("#np-name",ch.nm); set("#np-role",ch.rl);
   const tg=$("#np-tags");
   if(tg) tg.innerHTML=statusStrip(ch);
-  paintLanes();
+  paintLanes(); applyPos();
 }
 /* pressing the photo opens the detailed display for that channel */
 function openDetail(i){

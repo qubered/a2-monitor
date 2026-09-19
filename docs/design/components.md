@@ -92,8 +92,6 @@ everywhere it is seen.
 - **Trace.** 10-second rolling window on the photo's bottom edge over a
   `--scrim`, following WaveTool's convention.
 - **Name and role.** Archivo 800, then the performer or part in `--muted`.
-- **One sentence.** Plain language, present tense, naming what happened and when.
-  *Likely* prefixes an inferred cause. Nothing when there is nothing to say.
 
 ### States
 
@@ -101,32 +99,71 @@ everywhere it is seen.
 - **Critical** — `--t-out` outline, plus the faulted cell in the strip.
 - **Stale** — dashes in the affected cells with the age in the sentence.
 
-## Detail display
+## The player
 
-Opens from the photo. It is the bottom bar expanded, not a drawer or a modal:
-the grid stays where it is and the faces stay visible.
+The bottom bar is a player for the selected channel, and it behaves like one.
+Artwork, name, transport, a scrub bar with a time code, and a volume. An
+operator already knows how to use it before anyone explains it.
 
-Three columns: **who** (the same status strip, then role, receiver, pack,
-element, battery, last check), **what happened** (audio, RF level and link
-quality as separate aligned lanes over a scrubable 30-minute timeline, with
-events marked on it), and **what you can do** (replay from here, mark this
-moment, run a check, message about this, swap).
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│ AUDIO    ▁▂▅█▆▃▂▁▂▄▆█▇▄▂▁▂▃▅▇█▆▄▂▁▂▃▄▅▆▇█▆▄▃▂▁┃░░░░░░░░   −18.2 dBFS │
+│ RF LEVEL ───────────────────────────────╲_____┃░░░░░░░░   −62 dBm    │
+│ QUALITY  ▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▁▁▁▁▁▁▁▁▁┃░░░░░░░░   31 %       │
+│ BATTERY  ╲____________________________________┃░░░░░░░░   2:14       │
+│ −30:00            −20:00      10m[30m]60m     ┃  −10:00      LIVE    │
+├──────────────────────────────────────────────────────────────────────┤
+│ −10:51 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━●─────┃──────────  BACK TO LIVE │
+├──────────────────────────────────────────────────────────────────────┤
+│ [art] Eleanor Vance   ⏮ ↺ ⏸ ↻ ⏭   [↓ Save from here]  M −18 ▮▮▮  ⌄   │
+│       RX 4 · ant B · in 27                                           │
+└──────────────────────────────────────────────────────────────────────┘
+```
 
-RF level and link quality are never merged into one lane
-([research](../research/wavetool-and-browser-audio.md)).
+### The timeline
 
-Dragging the scrub back puts that source into replay; the mode rules in
-[replay and incidents](surfaces/replay-and-incidents.md) then apply.
+Four measurements over one shared window, stacked so they are read together
+rather than compared across screens: **audio**, **RF level**, **link quality**
+and **battery**. One playhead crosses all four, so every value is read at the
+same instant. Everything after the playhead is dimmed — it is later than what
+you are hearing.
 
-## Transport row
+RF level and link quality are separate lanes, never merged
+([research](../research/wavetool-and-browser-audio.md)). Battery is a slow line
+over hours and reads as a shallow fall, which is exactly the shape that tells an
+operator whether a pack will make it to the interval.
 
-Always visible at the bottom, whether the detail is open or closed: what you are
-hearing · previous · clear · **mute** · **dim** · output level with its numeric
-value · group buttons as press-to-listen · the expand control.
+The window is configurable — 10, 30 or 60 minutes — and the axis relabels with
+it. The default is 30 minutes, matching the replay depth in
+[the roadmap](../product/roadmap.md).
 
-Mute and dim are here because [listening safety](../quality/listening-safety.md)
-requires an always-available local action, and because this is where the thumb
-already is. Listen always starts muted, shown as a resting state, not an error.
+### Scrubbing is how you listen back
+
+Dragging the scrub bar back is the replay feature. There is no separate mode to
+enter and no other screen to go to: the channel you are hearing stays the
+channel you are hearing, and you move it in time.
+
+- Position at the right edge is **live**. Anything left of it is replay.
+- In replay the bar tints `--purple`, the playhead and progress turn violet, and
+  the right-hand time code becomes **BACK TO LIVE** — one press, from anywhere.
+- The time code on the left shows how far behind live you are, not a clock, and
+  never as a bare number.
+- Event marks sit on the scrub rail at the time they happened, so an operator
+  can aim at the thing they are looking for rather than hunting for it.
+
+### Save replay
+
+A permissioned action with its own button, deliberately never automatic and
+never a side effect of anything else.
+
+Pressing it states, before it writes anything, exactly what is about to leave
+the appliance: which channel, from when, how long, and what is included. The
+confirmation also says that **Mark** does not export audio, because the two get
+confused and only one of them has a privacy consequence.
+
+Export is separately permissioned from listening and from marking
+([operator workflows](../product/operator-workflows.md)). A user who can hear a
+channel cannot necessarily take a copy of it away.
 
 ## Filter band
 
