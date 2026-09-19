@@ -48,6 +48,7 @@ must remain understandable without access to the original conversation.
 - [Round 3 response and closure ledger](reviews/2026-09-19-round-3-response.md)
 - [Independent plan review: round 4](reviews/2026-09-19-independent-review-round-4.md)
 - [Round 4 response and closure ledger](reviews/2026-09-19-round-4-response.md)
+- [Independent plan review: round 5 closure verification](reviews/2026-09-19-independent-review-round-5.md)
 
 ## Accepted decisions
 

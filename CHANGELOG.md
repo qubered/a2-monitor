@@ -22,3 +22,7 @@ externally tested release.
   command/result contracts and vectors, component-level swap/performance state
   machines, power-fenced boot authority, platform confinement/offline PKI,
   reconciliation objects, listening/operator gates and a bounded review exit rule.
+- Recorded the bounded Round 5 closure review. It retained the architecture but
+  found five executable-contract blockers in evidence promotion, command
+  authority, boot-grant issuance, event/reconciliation truth and operator-slice
+  promotion; remediation is a targeted closure change, not another broad review.

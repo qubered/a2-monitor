@@ -1,6 +1,6 @@
 # Round 4 response and closure ledger
 
-**Status:** Implemented; ready for bounded Round 5 verification
+**Status:** Implemented; Round 5 found bounded executable-contract gaps
 
 The response converts the review's prose gaps into executable contracts where
 possible. “Implemented” here means the plan/repository contract is repaired; it
@@ -36,3 +36,6 @@ Round 5 uses the exit rule in
 owned/gated, and executable contracts agreeing ends general plan review. Later
 reviews occur at evidence milestones or when a test/scope/security change
 reopens an assumption.
+
+See the [Round 5 closure verification](2026-09-19-independent-review-round-5.md)
+for the resulting targeted checklist. It does not reopen product discovery.
