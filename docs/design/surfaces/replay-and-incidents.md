@@ -115,7 +115,7 @@ from lifecycle so neither can be mistaken for the other.
 Resolution requires action, evidence and **confidence**, and the confidence
 control is three explicit words — *observed*, *likely*, *unconfirmed* — not a
 slider. Observed facts, derived warnings and suspected causes are rendered with
-the three treatments defined in [principles](principles.md) and never merged.
+the three treatments defined in [principles](../principles.md) and never merged.
 
 ## Handoff
 
