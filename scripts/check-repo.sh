@@ -7,9 +7,21 @@ cd "$repo_root"
 git diff --check
 
 if command -v rg >/dev/null 2>&1; then
-  trailing_output="$(rg -n '[[:blank:]]+$' --hidden --glob '!.git/**' . || true)"
+  trailing_output="$(rg -n '[[:blank:]]+$' --hidden \
+    --glob '!.git/**' \
+    --glob '!node_modules/**' \
+    --glob '!dist/**' \
+    --glob '!build/**' \
+    --glob '!target/**' \
+    . || true)"
 else
-  trailing_output="$(grep -RInE '[[:blank:]]+$' --exclude-dir=.git . || true)"
+  trailing_output="$(grep -RInE '[[:blank:]]+$' \
+    --exclude-dir=.git \
+    --exclude-dir=node_modules \
+    --exclude-dir=dist \
+    --exclude-dir=build \
+    --exclude-dir=target \
+    . || true)"
 fi
 
 if [[ -n "$trailing_output" ]]; then
