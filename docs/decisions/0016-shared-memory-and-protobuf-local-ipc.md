@@ -1,6 +1,6 @@
 # ADR 0016: Split native IPC into shared-memory PCM and bounded framed control
 
-- **Status:** Accepted for shared-memory/framing; Protobuf promotion remains Phase 0T-gated
+- **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 - **Date:** 2026-09-19
 - **Owners:** Audio runtime owner; platform/security owner for IPC confinement
 - **Supersedes:** None

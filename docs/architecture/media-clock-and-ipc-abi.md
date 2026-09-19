@@ -1,6 +1,6 @@
 # Media clock, discontinuity, and native IPC ABI
 
-**Status:** Accepted Phase 0A/0B implementation contract
+**Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 
 ## Authoritative time
 

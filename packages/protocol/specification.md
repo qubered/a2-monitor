@@ -1,6 +1,6 @@
 # Protocol v0 specification
 
-**Status:** Proposed; must be frozen before production component work
+**Status:** Hypothesis; no supporting evidence. See [open questions](../../docs/open-questions.md).
 
 ## Scope
 

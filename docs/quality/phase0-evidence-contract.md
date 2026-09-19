@@ -1,6 +1,6 @@
 # Phase 0 evidence contract
 
-**Status:** Executable promotion gate
+**Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 
 The closed catalogue is
 [`evidence-tests.v0.json`](../../tests/catalog/evidence-tests.v0.json). Every run

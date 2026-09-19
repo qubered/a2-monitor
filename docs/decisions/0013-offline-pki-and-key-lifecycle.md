@@ -1,6 +1,6 @@
 # ADR 0013: Offline PKI and signing-key lifecycle
 
-- **Status:** Accepted for Phase 0B implementation
+- **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 - **Date:** 2026-09-19
 - **Owners:** Security/platform owner
 

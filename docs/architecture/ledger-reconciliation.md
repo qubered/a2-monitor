@@ -1,6 +1,6 @@
 # Control-ledger reconciliation and pruning
 
-**Status:** Normative design baseline for protocol v0
+**Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 
 ## Chunk and order
 

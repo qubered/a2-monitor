@@ -1,7 +1,8 @@
 # System architecture
 
-**Status:** Accepted boundary and technology baseline; audio/media library
-compatibility remains evidence-gated.
+**Status:** The component boundary is accepted (ADR 0001). The technology
+baseline is a hypothesis with no supporting evidence; nothing below has been
+measured. See [open questions](../open-questions.md).
 
 ## Central decision
 

@@ -1,6 +1,6 @@
 # Phase capability and dependency matrix
 
-**Status:** Accepted planning baseline; estimates follow Phase 0B evidence
+**Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 
 The UI is capability-driven. A control is hidden—not merely disabled—until its
 phase, backend/node capability and client profile are all qualified. Intercom/

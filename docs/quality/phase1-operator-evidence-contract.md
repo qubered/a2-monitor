@@ -1,6 +1,6 @@
 # Phase 1 operator evidence contract
 
-**Status:** Normative gate before operator reliance
+**Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 
 Each slice uses the closed
 [`operator catalogue`](../../tests/catalog/operator-tests.v0.json), validates a

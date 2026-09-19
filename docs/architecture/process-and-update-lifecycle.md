@@ -1,6 +1,6 @@
 # Process, session, and update lifecycle
 
-**Status:** Accepted Phase 0D implementation contract
+**Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 
 ## Process ownership
 

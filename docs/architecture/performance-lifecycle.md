@@ -1,6 +1,6 @@
 # Performance, activation, and show-lock lifecycle
 
-**Status:** Normative design baseline for protocol v0
+**Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 
 Activation and performance state are separate aggregates. Activation proves a
 revision and hardware manifest are installed on one node. Performance state says

@@ -1,6 +1,6 @@
 # ADR 0005: Cue authority, occurrences, and degraded cue context
 
-- **Status:** Accepted
+- **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 - **Date:** 2026-09-18
 - **Owners:** Project team
 - **Supersedes:** None

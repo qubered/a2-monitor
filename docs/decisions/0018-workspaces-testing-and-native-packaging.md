@@ -1,6 +1,6 @@
 # ADR 0018: Use Cargo/npm workspaces and native signed installers
 
-- **Status:** Accepted as the implementation baseline; installers remain Phase 0 evidence work
+- **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 - **Date:** 2026-09-19
 - **Owners:** Release/signing custodian; platform/security owner
 - **Supersedes:** None
