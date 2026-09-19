@@ -30,6 +30,7 @@ must remain understandable without access to the original conversation.
 - [Domain model](architecture/domain-model.md)
 - [Operator workflows](product/operator-workflows.md)
 - [Phase capability matrix](product/phase-capability-matrix.md)
+- [Design language](design/DESIGN.md)
 - [Receiver integration standard](integrations/README.md)
 - [Shure wireless integration](integrations/shure-wireless.md)
 - [Sennheiser EW-DX integration](integrations/sennheiser-ew-dx.md)

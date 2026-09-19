@@ -1,92 +1,23 @@
-# Show Slate — the A2 Monitor design language
+# Design
 
-**Status:** Proposed
+Three things live here.
 
-This directory defines how A2 Monitor looks, feels and behaves. It is a design
-language, not a component library: `packages/ui` implements it once real
-workflows exist, and this directory is what that implementation is measured
-against.
+- **[DESIGN.md](DESIGN.md)** — the design language, in one versioned document.
+  Normative: where it and anything else disagree, this is the intent and the
+  implementation is wrong.
+- **[research-notes.md](research-notes.md)** — why. Sources, what is taken from
+  WaveTool and what is deliberately changed, the five visual rounds that were
+  rejected and what each one taught, and the open questions that need an operator
+  in a room rather than more desk work.
+- **[prototype/index.html](prototype/index.html)** — the reference build. Open it
+  directly in a browser; no build step, no dependencies beyond web fonts. It
+  opens fit to the window, with fixed desktop and iPad viewports for checking
+  layout, and a Paper/dark toggle that follows the operating system on first load.
+  Its data is fabricated and it makes no latency, receiver or performance claim.
 
-## Why "Show Slate"
+Two product decisions the design rests on are recorded as
+[ADR 0019](../decisions/0019-cue-optional-and-show-time-scope.md): Live defaults
+to every channel with cue tracking optional and silence alerting per channel, and
+the product owns show time.
 
-The product lives backstage, in the dark, next to a rack. The nearest physical
-object is not a dashboard — it is a slate: a dark panel that carries printed
-labels, gaff tape, and things a human wrote on it in a hurry. That object is the
-whole visual argument. Every ornament in this language traces back to something
-real in a wing: tape, chalk, flight-case edges, label-maker strips, the ghost
-light left burning on an empty stage.
-
-Nothing here is decorative for its own sake. If a treatment cannot be traced to
-a backstage object or a piece of operational meaning, it is deleted.
-
-## Where this is up to
-
-Five rounds. Rounds 1–4 were all rejected, and the useful part of this directory
-is why.
-
-1. **Rejected — "futuristic AI slop."** Glow, neon on blue-black.
-2. **Rejected — "cartoonish and far too info dense."** Thick outlines, hard
-   shadows, pills everywhere, a card carrying twelve things.
-3. **Rejected.** Subtracted the chrome and the density; still not it.
-4. **Rejected.** Photo-led cards, no sidebar, a monitor bar rising from the
-   bottom. The structure was right; the whole register was still wrong.
-5. **Current — a restart, not an iteration.** Built directly on the
-   [RVLT design language](https://rvlt-labs.github.io/rvlt-designlanguage/) with
-   its published tokens, on its light **Paper** surface. Big, obviously
-   pressable channel cards: press one and you are listening to that channel.
-
-The lesson, recorded plainly because it cost four rounds: the first four
-attempted a *bespoke* language "inspired by" the references. The brief was to
-use the existing one. Rounds 1–4 differ from each other in finish; round 5
-differs in kind.
-
-## Two product decisions this design rests on
-
-Both are now recorded in
-[ADR 0019](../decisions/0019-cue-optional-and-show-time-scope.md), and the
-product documents have been updated to match.
-
-- **Live defaults to every channel.** Cue tracking is an opt-in layer, and
-  silence alerting is a per-channel setting rather than a cue-derived
-  conclusion.
-- **The product owns show time.** During a performance the work happens here and
-  an operator should not be hopping between programs; coordination, scanning and
-  firmware stay in the vendor tools.
-
-## Read in this order
-
-1. [Principles](principles.md) — what we optimise for, and what we refuse.
-2. [Visual language](visual-language.md) — colour, type, space, shadow, motion.
-3. [Touch and input](touch-and-input.md) — the touch-first contract. Read before
-   designing any control.
-4. [Components](components.md) — anatomy of the shared parts.
-5. Surfaces:
-   - [A2 Live channel grid and inspector](surfaces/a2-live-grid.md)
-   - [A1 mix-confidence view](surfaces/a1-mix-confidence.md)
-   - [Guided mic check](surfaces/guided-mic-check.md)
-   - [Replay and incident timeline](surfaces/replay-and-incidents.md)
-6. [Research notes](research-notes.md) — the sources behind the decisions.
-
-## Prototype
-
-[`prototype/index.html`](prototype/index.html) is a self-contained, clickable
-prototype of all four surfaces. Open it directly in a browser; it has no build
-step and no dependencies beyond web fonts.
-
-It opens fit to the window, with fixed desktop, iPad landscape and iPad portrait
-viewports available for checking layout, and a Paper/dark toggle that follows the
-operating system on first load and remembers the choice after that.
-
-It is a design artefact with fabricated data, not a product build. It makes no
-claim about latency, receiver behaviour or anything else in
-[open questions](../open-questions.md).
-
-## Relationship to the plan
-
-This language serves the workflows in
-[operator workflows](../product/operator-workflows.md) and
-[A1/A2 views and collaboration](../product/a1-a2-views-and-collaboration.md).
-Where a design decision encodes a product rule — observed versus inferred,
-distinct RF level and link quality, a second critical fault that must not hide
-behind the first — the rule is cited at the point of use. Those citations are
-the contract: a component that drops the rule is wrong even if it looks right.
+Nothing here has been in front of an A2, an A1 or a real rack.

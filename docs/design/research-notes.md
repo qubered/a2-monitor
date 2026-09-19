@@ -125,7 +125,7 @@ The lesson taken is not the cream canvas — we need dark for a wing. It is that
 the whimsy is *consistent, drawn by hand, and confined*: a specific character in
 specific situations, an opinionated palette, and documentation that states the
 point of view rather than listing tokens. Our Ghost is that character, our
-confinement rule is the whimsy policy in [principles](principles.md), and the
+confinement rule is the whimsy policy in [principles](DESIGN.md), and the
 "refusals" list exists because a point of view is mostly a list of things you
 will not do.
 
@@ -161,7 +161,7 @@ for the second.
 The dark-dashboard results are close to identical to one another: near-black
 canvas, hairline 1px borders, a single accent, a large number above a sparkline,
 generic sans throughout, no materiality, no voice. They are the thing the
-refusals list in [principles](principles.md) exists to prevent. They were used
+refusals list in [principles](DESIGN.md) exists to prevent. They were used
 as a negative reference.
 
 The people-card results were more useful, and confirmed two things: a photo plus
@@ -202,7 +202,7 @@ What was wrong:
    glyphs and a matte ink for anything actually laid down as a mark.
 
 The rule that came out of it is the one now at the top of
-[visual language](visual-language.md): **printed, not illuminated.** It is worth
+[visual language](DESIGN.md): **printed, not illuminated.** It is worth
 more than the rest of this file, because it is the one that was learned by
 getting it wrong first.
 
