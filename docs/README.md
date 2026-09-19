@@ -32,6 +32,7 @@ must remain understandable without access to the original conversation.
 - [A1/A2 theatre workflow research](research/a1-a2-collaboration.md)
 - [Independent-review response research](research/review-response-research.md)
 - [A1/A2 independent review](reviews/2026-09-18-a1-a2-independent-review.md)
+- [Independent plan review: round 3](reviews/2026-09-19-independent-review-round-3.md)
 
 ## Accepted decisions
 
