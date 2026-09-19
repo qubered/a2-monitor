@@ -63,6 +63,8 @@ body{background:var(--paper);color:var(--ink);font-family:var(--fb);font-size:16
 h1,h2,h3,h4{font-family:var(--fd);font-weight:800;letter-spacing:-.02em}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .mono{font-family:var(--fm);font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .hand{font-family:var(--fh);font-weight:700}
 
 /* ---------- prototype chrome (not the product) ---------- */
@@ -160,6 +162,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .chcard{position:relative;background:var(--card);border:2px solid var(--card-outline);border-radius:var(--r-lg);
   box-shadow:var(--sh-card);padding:14px;display:flex;flex-direction:column;gap:12px;text-align:left;width:100%;
   transition:transform .16s,box-shadow .16s,border-color .16s;touch-action:manipulation}
+/* the whole card listens. it sits under the content, which does not take
+   pointer events, so a press anywhere that is not the photo lands here. */
+.chcard .hit{position:absolute;inset:0;z-index:1;border-radius:var(--r-lg);background:none}
+.chcard .hit:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.chcard > *:not(.hit):not(.shot){pointer-events:none}
 .chcard:hover{transform:translateY(-3px);box-shadow:var(--sh-hover)}
 .chcard:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line-2)}
 .chcard:focus-visible{outline:2px solid var(--red);outline-offset:3px}
@@ -168,8 +175,16 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .chcard.listening:hover{box-shadow:0 7px 0 var(--red-700)}
 .chcard.critical{border-color:var(--t-out)}
 
-.shot{position:relative;border:2px solid var(--card-outline);border-radius:var(--r);overflow:hidden;
-  aspect-ratio:16/10;background:var(--paper-2)}
+/* the photo is its own target: it opens the channel's detailed display */
+.shot{position:relative;z-index:2;display:block;width:100%;padding:0;
+  border:2px solid var(--card-outline);border-radius:var(--r);overflow:hidden;
+  aspect-ratio:16/10;background:var(--paper-2);cursor:zoom-in}
+button.shot:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.shot .zoom{position:absolute;right:8px;bottom:32px;width:30px;height:30px;border-radius:50%;
+  background:var(--card);border:2px solid var(--card-outline);display:grid;place-items:center;
+  transition:transform .16s}
+.shot .zoom svg{width:14px;height:14px}
+.shot:hover .zoom{transform:scale(1.12)}
 .shot svg.face{display:block;width:100%;height:100%}
 .shot .no{position:absolute;left:8px;top:8px;font-family:var(--fm);font-size:11px;font-weight:600;
   background:var(--card);border:2px solid var(--card-outline);border-radius:8px;padding:2px 7px}
@@ -183,12 +198,32 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .who .rl{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tags{display:flex;flex-wrap:wrap;gap:6px;min-height:22px}
+
+/* per-dimension status: a tick, a cross or a caution for each thing that can
+   go wrong, always in the same order and the same place, so the eye learns
+   the positions and reads the row as a shape. Never colour alone — every
+   cell carries a glyph and a label. */
+.status{display:flex;border:2px solid var(--card-outline);border-radius:var(--r);
+  overflow:hidden;background:var(--card)}
+.status .cell{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;padding:7px 2px;border-right:2px solid var(--card-outline)}
+.status .cell:last-child{border-right:0}
+.status .cell .g{width:19px;height:19px;border-radius:50%;display:grid;place-items:center;flex:none}
+.status .cell .g svg{width:12px;height:12px;display:block}
+.status .cell .lb{font-family:var(--fb);font-weight:700;font-size:9.5px;letter-spacing:.05em;
+  color:var(--muted);text-transform:uppercase;white-space:nowrap}
+.status .cell.ok   .g{background:var(--ok-soft);color:var(--ok)}
+.status .cell.bad  .g{background:var(--out-soft);color:var(--t-out)}
+.status .cell.warn .g{background:var(--warn-soft);color:var(--warn)}
+.status .cell.unk  .g{background:var(--rep-soft);color:var(--rep)}
+.status .cell.bad  .lb{color:var(--t-out)}
+.status .cell.warn .lb{color:var(--warn)}
+.status .cell.bad{background:var(--out-soft)}
+.status .cell.warn{background:var(--warn-soft)}
 .saying{font-size:13px;color:var(--ink-2);display:flex;gap:7px;align-items:flex-start;min-height:38px}
 .saying b{color:var(--t-out);font-weight:700}
 .saying.warn b{color:var(--warn)}
-.chcard .acts{display:flex;gap:8px;margin-top:auto}
-.chcard .acts .btn{flex:1 1 auto}
-.chcard .acts .btn.sq{flex:0 0 auto}
+.saying{margin-top:auto}
 
 /* ============================================================
    NOW LISTENING BAR — press a card, it fills in here.
@@ -392,7 +427,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
       <div class="nowpanel">
         <div class="np-facts">
-          <div class="tags" id="np-tags"></div>
+          <div id="np-tags"></div>
           <dl>
             <dt>role</dt><dd id="np-role">Marguerite Hale</dd>
             <dt>receiver</dt><dd id="np-rx">RX 4 · ant B · in 27</dd>
@@ -693,30 +728,41 @@ const html=document.documentElement;
 const AV=["--blue","--green","--amber","--purple","--coral","--teal","--pink","--lime"];
 const CH=[
  {no:27,g:0,nm:"Eleanor Vance",rl:"Marguerite Hale",af:-18.2,st:"on",
-  tags:[["b-out","RF QUALITY"],["b-warn","UNVERIFIED ID"]],
+  s:{rf:"bad",audio:"ok",batt:"ok",chk:"warn"},
   say:["<b>RF quality collapsed</b> 0:40 ago. Level normal.","crit"],crit:true,live:true},
  {no:12,g:1,nm:"Dov Halpern",rl:"Auguste Renaud",af:-12.4,st:"on",
-  tags:[["b-warn","BATTERY 0:41"]],say:["<b>Battery 0:41</b> left. Shortest on the rig.","warn"]},
+  s:{rf:"ok",audio:"ok",batt:"warn",chk:"ok"},
+  say:["<b>Battery 0:41</b> left. Shortest on the rig.","warn"]},
  {no:33,g:2,nm:"Ines Okonjo",rl:"Vera Castellan",af:-24.0,st:"on",
-  tags:[["b-ok","ALL GOOD"]],say:["Checked 18:55. Nothing outstanding.",""]},
+  s:{rf:"ok",audio:"ok",batt:"ok",chk:"ok"},
+  say:["Checked 18:55. Nothing outstanding.",""]},
  {no:41,g:3,nm:"Tobias Renn",rl:"Ensemble 4",af:null,st:"silent",
-  tags:[["b-rep","SILENT"]],say:["No audio for 6m. Silence alerts are off for this channel.",""]},
+  s:{rf:"ok",audio:"unk",batt:"ok",chk:"ok"},
+  say:["No audio for 6m. Silence alerts are off for this channel.",""]},
  {no:19,g:4,nm:"Priya Nandakumar",rl:"Swing · covering Marguerite",af:-31.5,st:"on",
-  tags:[["b-warn","IDENTITY"]],say:["<b>Not verified</b> since the 17:12 swap.","warn"]},
+  s:{rf:"ok",audio:"ok",batt:"ok",chk:"bad"},
+  say:["<b>Not verified</b> since the 17:12 swap.","warn"]},
  {no:51,g:5,nm:"Marcus Bell",rl:"Ensemble 9",af:-20.1,st:"stale",
-  tags:[["b-rep","RF STALE 42s"]],say:["Rack B has gone quiet. Showing last-known RF.",""]},
+  s:{rf:"unk",audio:"ok",batt:"unk",chk:"ok"},
+  say:["Rack B has gone quiet. Showing last-known RF.",""]},
  {no:8,g:6,nm:"Reed Kovac",rl:"Bandleader · keys vox",af:-9.8,st:"on",
-  tags:[["b-ok","ALL GOOD"]],say:["Checked 18:41. Nothing outstanding.",""]},
+  s:{rf:"na",audio:"ok",batt:"na",chk:"ok"},
+  say:["Wired input. Checked 18:41.",""]},
  {no:36,g:7,nm:"Anneke Vos",rl:"Célestine",af:null,st:"mute",
-  tags:[["b-out","MUTED AT PACK"]],say:["<b>Muted at the pack</b> for 3m. Nobody has touched it.","crit"],crit:true},
+  s:{rf:"ok",audio:"bad",batt:"ok",chk:"ok"},
+  say:["<b>Muted at the pack</b> for 3m. Nobody has touched it.","crit"],crit:true},
  {no:22,g:1,nm:"Halim Ferrer",rl:"Ensemble 2",af:-26.7,st:"on",
-  tags:[["b-ok","ALL GOOD"]],say:["Checked 18:48. Nothing outstanding.",""]},
+  s:{rf:"ok",audio:"ok",batt:"ok",chk:"ok"},
+  say:["Checked 18:48. Nothing outstanding.",""]},
  {no:14,g:0,nm:"Solomon Adeyemi",rl:"Le Directeur",af:-15.9,st:"on",
-  tags:[["b-warn","RF WATCH"]],say:["<em>Likely</em> interference in SL. Quality fell, level did not.","warn"]},
+  s:{rf:"warn",audio:"ok",batt:"ok",chk:"ok"},
+  say:["<em>Likely</em> interference in SL. Quality fell, level did not.","warn"]},
  {no:45,g:5,nm:"Stage radio 1",rl:"DSM · comms tap",af:-38.0,st:"on",
-  tags:[["b-ok","ALL GOOD"]],say:["Nothing outstanding.",""]},
+  s:{rf:"ok",audio:"ok",batt:"ok",chk:"ok"},
+  say:["Nothing outstanding.",""]},
  {no:60,g:3,nm:"Juno Park",rl:"Swing · unassigned",af:null,st:"silent",
-  tags:[["b-ok","SPARE READY"]],say:["Prepared and verified. Ready to swap in.",""]},
+  s:{rf:"ok",audio:"unk",batt:"ok",chk:"ok"},
+  say:["Prepared spare. Verified and ready to swap in.",""]},
 ];
 
 /* A stand-in for a real approved headshot: the exact frame, crop and weight a
@@ -750,23 +796,44 @@ function afTrace(ch,w=240,h=26){
   return bars(ser("af"+ch.no,44,.5,.8),w,h,ch.st==="stale"?C.rep:C.ok);
 }
 
+/* One glyph per verdict. Drawn, not typed, so they hold their weight at 12px. */
+const GLYPH={
+  ok:  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.4 12 13 4.5"/></svg>',
+  bad: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
+  warn:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.4 15 14H1z"/><path d="M8 6.6v3.2"/><path d="M8 11.9h.01" stroke-width="2.6"/></svg>',
+  unk: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 8h8"/></svg>',
+  na:  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".5"><path d="M4.5 11.5 11.5 4.5"/></svg>'
+};
+const DIMS=[["rf","RF","RF link"],["audio","Audio","Audio"],["batt","Batt","Battery"],["chk","Check","Mic check"]];
+const VERDICT={ok:"good",bad:"fault",warn:"caution",unk:"unknown",na:"not applicable"};
+function statusStrip(ch){
+  return `<div class="status" role="group" aria-label="Status by dimension">` +
+    DIMS.map(([k,label,full])=>{
+      const v = (ch.s && ch.s[k]) || "unk";
+      const cls = v==="na" ? "unk" : v;
+      return `<div class="cell ${cls}" title="${full}: ${VERDICT[v]}">
+        <span class="g" aria-hidden="true">${GLYPH[v]}</span>
+        <span class="lb">${label}</span>
+        <span class="sr">${full}: ${VERDICT[v]}</span>
+      </div>`;
+    }).join("") + `</div>`;
+}
+
 function card(ch,i){
-  const tags=ch.tags.map(([c,t])=>`<span class="badge ${c}"><i class="dot"></i>${t}</span>`).join("");
-  const val = ch.st==="mute"?"muted":ch.st==="silent"?"silent":ch.af.toFixed(1)+" dBFS";
   return `<article class="chcard ${ch.live?'listening':''} ${ch.crit?'critical':''}" data-i="${i}">
-    <div class="shot">
+    <button class="hit" data-listen="${i}" aria-label="Listen to ${ch.nm}, channel ${ch.no}"></button>
+    <button class="shot" data-detail="${i}" aria-label="Open details for ${ch.nm}">
       ${face(ch)}
       <span class="no">${String(ch.no).padStart(2,"0")}</span>
       ${ch.live?`<span class="listening-tag badge b-live"><i class="dot live-dot"></i>LISTENING</span>`:""}
+      <span class="zoom" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor"
+        stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 2H2v4M10 14h4v-4M14 6V2h-4M2 10v4h4"/></svg></span>
       <div class="meter"><svg viewBox="0 0 240 26" preserveAspectRatio="none" data-af="${ch.no}">${afTrace(ch)}</svg></div>
-    </div>
+    </button>
     <div class="who"><div class="nm">${ch.nm}</div><div class="rl">${ch.rl}</div></div>
-    <div class="tags">${tags}</div>
+    ${statusStrip(ch)}
     <div class="saying ${ch.say[1]}"><span>${ch.say[0]}</span></div>
-    <div class="acts">
-      <button class="btn ${ch.live?'btn-primary':'btn-line'}" data-listen="${i}">${ch.live?'Listening':'Listen'}</button>
-      <button class="btn btn-line sq" data-more="${i}" aria-label="More about ${ch.nm}">⋯</button>
-    </div>
   </article>`;
 }
 
@@ -819,22 +886,25 @@ function listen(i){
     if(on && !tag) $(".shot",el).insertAdjacentHTML("beforeend",
       `<span class="listening-tag badge b-live"><i class="dot live-dot"></i>LISTENING</span>`);
     if(!on && tag) tag.remove();
-    const b=$("[data-listen]",el);
-    if(b){ b.textContent=on?"Listening":"Listen";
-      b.className="btn "+(on?"btn-primary":"btn-line"); }
   });
   const pic=$("#np-pic"); if(pic) pic.innerHTML=face(ch);
   const set=(id,v)=>{const e=$(id); if(e)e.textContent=v;};
   set("#np-name",ch.nm); set("#np-role",ch.rl);
   const tg=$("#np-tags");
-  if(tg) tg.innerHTML=ch.tags.map(([c,t])=>`<span class="badge ${c}"><i class="dot"></i>${t}</span>`).join("");
-  const bar=$("#nowbar"); if(bar) bar.dataset.open="true";
-  const ex=$("#expand"); if(ex){ex.setAttribute("aria-expanded","true");}
+  if(tg) tg.innerHTML=statusStrip(ch);
   paintLanes();
 }
+/* pressing the photo opens the detailed display for that channel */
+function openDetail(i){
+  listen(i);
+  const bar=$("#nowbar"); if(bar) bar.dataset.open="true";
+  const ex=$("#expand"); if(ex) ex.setAttribute("aria-expanded","true");
+}
 document.addEventListener("click",e=>{
-  const c=e.target.closest("[data-listen]")||e.target.closest(".chcard");
-  if(c){ const i=+(c.dataset.listen ?? c.dataset.i); if(!Number.isNaN(i)) listen(i); }
+  const d=e.target.closest("[data-detail]");
+  if(d){ openDetail(+d.dataset.detail); return; }
+  const c=e.target.closest("[data-listen]");
+  if(c){ listen(+c.dataset.listen); return; }
   const sh=e.target.closest("[data-sheet]");
   if(sh){ const s=sh.closest("section").querySelector(".sheet"); if(s) s.classList.toggle("open"); }
   const ex=e.target.closest(".expand");
