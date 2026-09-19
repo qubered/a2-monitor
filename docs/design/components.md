@@ -32,17 +32,19 @@ on hover and presses 2px down on tap.
 
 ### Two targets, two jobs
 
-- **Press anywhere on the card — you are listening to that channel.** The whole
-  card is the listen target. This is the most frequent action in the product and
-  it should cost nothing: no button to find, no button to aim at.
-- **Press the photo — the channel's detailed display opens.** The photo carries
-  a small `⤢` affordance so the second target is discoverable on touch, where
-  there is no hover to reveal it.
+- **Press anywhere on the card — the card's own action.** On the A2 grid that is
+  *listen to this channel*; on the A1 view it is *report a fault*. The whole card
+  is that target, including the photograph. It is the most frequent action on
+  each surface and it should cost nothing: no button to find, no button to aim at.
+- **Press the small `⤢` button inside the photograph — the detail opens.** That
+  button is the *only* thing on a card that opens the detail. The rest of the
+  image behaves like the rest of the card.
 
-Implementation note: the listen target is a full-bleed `<button>` behind the
+Implementation note: the card's action is a full-bleed `<button>` behind the
 content, and the content sets `pointer-events:none` so a press anywhere that is
-not the photo falls through to it. Both targets are real buttons with accessible
-names; neither is nested inside the other.
+not the expand button falls through to it. The expand button re-enables pointer
+events for itself and carries a 44px hit area around a 32px visual. Both are real
+buttons with accessible names; neither is nested inside the other.
 
 ### Status strip
 
@@ -148,9 +150,13 @@ which kind, fast, from across a wing.
    status area marked **Not acknowledged**, with a dashed border, and still
    counts in the header's outstanding total. An alert nobody saw must never look
    like one somebody saw.
-4. **Acknowledging is not fixing.** An acknowledged alert moves into the same
-   status area marked *Seen*, while the failed dimension stays failed in the
-   status strip. A channel whose RF is still broken still reads `✕ RF`.
+4. **Acknowledging is not fixing.** Acknowledgement clears the overlay and
+   nothing else: the failed dimension stays failed in the status strip, so a
+   channel whose RF is still broken still reads `✕ RF`. The card does **not**
+   carry a second row repeating the alert — the strip already says it, and a
+   duplicate row cost more height than it earned. The alert itself, with its
+   time and whether it was seen, lives in the channel's detail and on the replay
+   timeline.
 5. **A fault that clears takes its alert with it.** If the underlying condition
    resolves — the pack is unmuted, the interference passes, the battery is
    changed — the alert disappears from the card entirely, acknowledged or not.

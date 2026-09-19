@@ -202,7 +202,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* the photograph and the name. an alert veils this much and stops short of the
    status strip, which stays readable underneath it. */
 .chcard .tile{position:relative;display:flex;flex-direction:column;gap:12px}
-.chcard .tile > *:not(.shot):not(.alertover){pointer-events:none}
+.chcard .tile > *:not(.alertover){pointer-events:none}
+.chcard .tile .zoom{pointer-events:auto}
 .chcard:hover{transform:translateY(-3px);box-shadow:var(--sh-hover)}
 .chcard:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line-2)}
 .chcard:focus-visible{outline:2px solid var(--red);outline-offset:3px}
@@ -258,16 +259,20 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 @keyframes alertpulse{0%,100%{box-shadow:0 3px 0 var(--red-700)}50%{box-shadow:0 3px 0 var(--red-700),0 0 0 4px var(--red-soft)}}
 .chcard.alert{animation:alertpulse 2.2s ease-in-out infinite}
 
-/* the photo is its own target: it opens the channel's detailed display */
-.shot{position:relative;z-index:2;display:block;width:100%;padding:0;
+.shot{position:relative;display:block;width:100%;padding:0;
   border:2px solid var(--card-outline);border-radius:var(--r);overflow:hidden;
-  aspect-ratio:16/10;background:var(--paper-2);cursor:zoom-in}
-button.shot:focus-visible{outline:2px solid var(--red);outline-offset:3px}
-.shot .zoom{position:absolute;right:8px;bottom:32px;width:30px;height:30px;border-radius:50%;
-  background:var(--card);border:2px solid var(--card-outline);display:grid;place-items:center;
-  transition:transform .16s}
-.shot .zoom svg{width:14px;height:14px}
-.shot:hover .zoom{transform:scale(1.12)}
+  aspect-ratio:16/10;background:var(--paper-2)}
+/* the only thing on a card that opens the detail. everything else — including
+   the rest of the photograph — does whatever the card does. */
+.shot .zoom{position:absolute;right:6px;bottom:30px;width:44px;height:44px;z-index:3;
+  display:grid;place-items:center;pointer-events:auto;background:none;border:0;padding:0}
+.shot .zoom i{width:32px;height:32px;border-radius:50%;background:var(--card);
+  border:2px solid var(--card-outline);display:grid;place-items:center;
+  transition:transform .16s,background .16s}
+.shot .zoom svg{width:15px;height:15px}
+.shot .zoom:hover i{transform:scale(1.1)}
+.shot .zoom:active i{background:var(--ink);color:var(--paper)}
+.shot .zoom:focus-visible i{outline:2px solid var(--red);outline-offset:3px}
 .shot svg.face{display:block;width:100%;height:100%}
 .shot .no{position:absolute;left:8px;top:8px;font-family:var(--fm);font-size:11px;font-weight:600;
   background:var(--card);border:2px solid var(--card-outline);border-radius:8px;padding:2px 7px}
@@ -467,6 +472,56 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
 .antrow.active .tag{color:var(--ok)}
 .sqline{position:absolute;top:0;bottom:0;width:2px;background:var(--t-out)}
 
+.a1bar{flex:0 0 auto;min-height:96px;display:flex;align-items:center;gap:18px;padding:0 22px;
+  background:var(--paper-2);border-top:2px solid var(--line-2)}
+.a1open{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:7px}
+.a1open .micro{font-family:var(--fm);font-size:10.5px;letter-spacing:.08em;color:var(--faint)}
+.a1list{display:flex;gap:10px;flex-wrap:wrap}
+
+/* A1 cards carry a standing instruction, because pressing one does something
+   different here than it does on the A2 grid. */
+.chcard.a1 .reportcue{font-family:var(--fb);font-weight:700;font-size:10px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--muted);text-align:center;padding-top:2px}
+.chcard.a1:hover .reportcue{color:var(--red)}
+.chcard.a1.reported{border-color:var(--warn);box-shadow:0 3px 0 #9C6A0E}
+
+/* ============================================================
+   REPORT SHEET — the A1's whole job in one thumb.
+   Press a channel, press what is wrong. That is the report.
+   ============================================================ */
+.report{position:absolute;inset:0;z-index:12;display:none;background:var(--scrim)}
+.report.open{display:block}
+.rsheet{position:absolute;left:0;right:0;bottom:0;background:var(--paper);
+  border-top:2px solid var(--card-outline);border-radius:var(--r-lg) var(--r-lg) 0 0;
+  padding:18px 22px calc(22px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:16px;
+  max-height:100%;overflow:auto;animation:rup .22s cubic-bezier(.16,1,.3,1)}
+@keyframes rup{from{transform:translateY(14px)}to{transform:none}}
+.rhead{display:flex;align-items:center;gap:14px}
+.rhead .shot{width:72px;flex:none;cursor:default}
+.rhead .t{flex:1 1 auto;min-width:0}
+.rhead h3{font-family:var(--fd);font-weight:800;font-size:22px;letter-spacing:-.02em}
+.rhead .sub{color:var(--muted);font-size:13.5px}
+.rq{font-family:var(--fd);font-weight:800;font-size:17px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+[data-view=ipad-p] .fgrid{grid-template-columns:1fr}
+.fbtn{min-height:72px;border-radius:var(--r);border:2px solid var(--card-outline);background:var(--card);
+  box-shadow:var(--sh-card);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+  gap:2px;padding:0 18px;text-align:left;transition:transform .12s,box-shadow .12s,background .12s}
+.fbtn b{font-family:var(--fd);font-weight:800;font-size:16px;letter-spacing:-.01em}
+.fbtn span{font-size:12.5px;color:var(--muted)}
+.fbtn:hover{transform:translateY(-2px);box-shadow:var(--sh-hover)}
+.fbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line-2);background:var(--red);color:#fff}
+.fbtn:active span{color:rgba(255,255,255,.8)}
+.rfoot{display:flex;gap:12px;align-items:center}
+.rfoot .btn{flex:1 1 auto;min-height:56px}
+
+/* what the A1 sees after pressing: it is already sent */
+.rsent{display:flex;flex-direction:column;gap:16px;align-items:flex-start}
+.rsent .big{font-family:var(--fd);font-weight:800;font-size:26px;letter-spacing:-.02em;color:var(--ok)}
+.rsent .who3{font-size:14px;color:var(--ink-2)}
+.rsent .row3{display:flex;gap:12px;width:100%;flex-wrap:wrap}
+.rsent .row3 .btn{flex:1 1 180px;min-height:56px}
+
 /* ---------- exceptions sheet ---------- */
 .sheet{position:absolute;top:0;right:0;bottom:96px;width:378px;background:var(--card);
   border-left:2px solid var(--card-outline);padding:20px;display:flex;flex-direction:column;gap:12px;overflow:auto;
@@ -511,7 +566,7 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
     <button data-t="light" aria-pressed="true">Paper</button>
     <button data-t="dark" aria-pressed="false">Dark</button>
   </div>
-  <span class="note">Fabricated data. Press a card to listen to that channel.</span>
+  <span class="note">Fabricated data — not a real production.</span>
 </div>
 
 <div class="stage"><div class="device" id="device">
@@ -550,7 +605,7 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
     <main class="body">
       <div class="gridhead">
         <h2>All channels</h2>
-        <span class="sub">64 sources · press a card to listen</span>
+        <span class="sub">64 sources · press a card to listen · the expand button opens detail</span>
       </div>
       <div class="grid" id="a2grid"></div>
     </main>
@@ -735,7 +790,7 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
         </div>
         <span class="btn btn-line">Follow</span>
       </div>
-      <div class="gridhead"><h2>All channels</h2><span class="sub">press a card to hear it</span></div>
+      <div class="gridhead"><h2>All channels</h2><span class="sub">press a card to report a fault · the expand button opens detail</span></div>
       <div class="grid" id="a1grid"></div>
     </main>
 
@@ -752,29 +807,20 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
       </button>
     </aside>
 
-    <footer class="nowbar" data-open="false" style="height:112px">
-      <div class="player">
-        <div class="art" data-static-pic></div>
-        <div class="pmeta"><b>Dov Halpern</b><span class="sub">console ch 12</span>
-          <span class="badge b-live" style="align-self:flex-start"><i class="dot live-dot"></i>LISTENING</span></div>
-        <div class="tbtns">
-          <button class="tbtn" aria-label="Previous channel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 20 9 12l10-8zM5 19V5"/></svg></button>
-          <button class="tbtn main" aria-label="Live"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14"/><path d="M6.5 8.5v7M17.5 8.5v7"/></svg></button>
-          <button class="tbtn" aria-label="Next channel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4l10 8-10 8zM19 5v14"/></svg></button>
+    <footer class="a1bar">
+      <div class="a1open">
+        <span class="micro">YOUR OPEN REPORTS</span>
+        <div class="a1list">
+          <span class="badge b-warn"><i class="dot"></i>27 ELEANOR · J. MARSH IS ON IT</span>
+          <span class="badge b-rep"><i class="dot"></i>33 INES · A. DUNNE CLAIMED</span>
         </div>
-        <div class="seekrow" style="flex:1 1 auto;padding:0">
-          <span class="tcode">−00:00</span>
-          <div class="seek"><div class="rail"></div><div class="done" style="width:100%"></div>
-            <div class="knob" style="left:100%"></div></div>
-          <span class="tcode right live">LIVE</span>
-        </div>
-        <div class="vsep"></div>
-        <div class="vol"><span class="v mono">−22</span><div class="bars" id="outbars2"></div></div>
-        <div class="vsep"></div>
-        <button class="btn btn-primary lg">Request a check</button>
-        <button class="btn btn-line lg">Report a fault</button>
       </div>
+      <button class="btn btn-line lg" style="flex:none">See all</button>
     </footer>
+
+    <div class="report" id="report" role="dialog" aria-label="Report a fault">
+      <div class="rsheet" id="rsheet"></div>
+    </div>
   </section>
 
   <!-- ===================== MIC CHECK ===================== -->
@@ -1060,6 +1106,9 @@ function alertOverlay(ch,i){
 }
 
 const TICK='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.4 12 13 4.5"/></svg>';
+/* Kept for the detail view's history list; the card no longer carries it —
+   the failed dimension is already in the status strip, and a second row
+   repeating it cost more height than it earned. */
 function ackRow(ch){
   if(!ch.alert || !(ch.acked || ch.expired)) return "";
   const warn = ch.alert.kind === "Battery low";
@@ -1074,31 +1123,67 @@ function ackRow(ch){
   </div>`;
 }
 
+/* ------------------------------------------------------------------
+   The A1 never listens on this product — they are mixing, and the
+   console is where they hear things. Their card is for glancing at,
+   and pressing it reports a fault rather than auditioning a source.
+   ------------------------------------------------------------------ */
+const FAULTS=[
+  ["Dropping out","signal is cutting"],
+  ["Crackling","intermittent noise"],
+  ["Distorted","clipping or breaking up"],
+  ["Too quiet","level has fallen"],
+  ["Clothing noise","rustle or handling"],
+  ["Popping","plosives or wind"],
+  ["Hum or buzz","constant tone"],
+  ["Nothing at all","dead channel"],
+];
+function a1card(ch,i){
+  const working = ch.owner || (ch.alert && ch.acked);
+  return `<article class="chcard a1 ${ch.crit?'critical':''} ${ch.reported?'reported':''}" data-i="${i}">
+    <button class="hit" data-report="${i}" aria-label="Report a fault on ${ch.nm}, channel ${ch.no}"></button>
+    <div class="tile">
+      <div class="shot">
+        ${face(ch)}
+        <span class="no">${String(ch.no).padStart(2,"0")}</span>
+        ${ch.reported?`<span class="listening-tag badge b-warn"><i class="dot"></i>REPORTED</span>`:
+          working?`<span class="listening-tag badge b-rep"><i class="dot"></i>BEING WORKED</span>`:""}
+        <button class="zoom" data-detail="${i}" aria-label="Open details for ${ch.nm}"><i><svg viewBox="0 0 16 16"
+          fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2H2v4M10 14h4v-4M14 6V2h-4M2 10v4h4"/></svg></i></button>
+        <div class="meter"><svg viewBox="0 0 240 26" preserveAspectRatio="none" data-af="${ch.no}">${afTrace(ch)}</svg></div>
+      </div>
+      <div class="who"><div class="nm">${ch.nm}</div><div class="rl">${ch.rl}</div></div>
+    </div>
+    ${statusStrip(ch)}
+    <div class="reportcue">Press to report a fault</div>
+  </article>`;
+}
+
 function card(ch,i){
   const alerting = ch.alert && !ch.acked;
   return `<article class="chcard ${ch.live?'listening':''} ${ch.crit?'critical':''} ${alerting?'alert':''}" data-i="${i}">
     <button class="hit" data-listen="${i}" aria-label="Listen to ${ch.nm}, channel ${ch.no}"></button>
     ${alertOverlay(ch,i)}
     <div class="tile">
-    <button class="shot" data-detail="${i}" aria-label="Open details for ${ch.nm}">
+    <div class="shot">
       ${face(ch)}
       <span class="no">${String(ch.no).padStart(2,"0")}</span>
       ${ch.live?`<span class="listening-tag badge b-live"><i class="dot live-dot"></i>LISTENING</span>`:""}
-      <span class="zoom" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor"
-        stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M6 2H2v4M10 14h4v-4M14 6V2h-4M2 10v4h4"/></svg></span>
+      <button class="zoom" data-detail="${i}" aria-label="Open details for ${ch.nm}"><i><svg viewBox="0 0 16 16"
+        fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 2H2v4M10 14h4v-4M14 6V2h-4M2 10v4h4"/></svg></i></button>
       <div class="meter"><svg viewBox="0 0 240 26" preserveAspectRatio="none" data-af="${ch.no}">${afTrace(ch)}</svg></div>
-    </button>
+    </div>
     <div class="who"><div class="nm">${ch.nm}</div><div class="rl">${ch.rl}</div></div>
     </div>
     ${statusStrip(ch)}
-    ${ackRow(ch)}
   </article>`;
 }
 
 function renderGrids(){
   const a2=$("#a2grid"); if(a2) a2.innerHTML = CH.map(card).join("");
-  const a1=$("#a1grid"); if(a1) a1.innerHTML = CH.slice(0,8).map((c,i)=>card(c,i)).join("");
+  const a1=$("#a1grid"); if(a1) a1.innerHTML = CH.slice(0,8).map((c,i)=>a1card(c,i)).join("");
 }
 renderGrids();
 
@@ -1266,6 +1351,16 @@ $$(".seek").forEach(el=>{
   ["pointerup","pointercancel"].forEach(ev=>el.addEventListener(ev,()=>{down=false;}));
 });
 document.addEventListener("click",e=>{
+  const rep=e.target.closest("[data-report]");
+  if(rep){ openReport(+rep.dataset.report); return; }
+  const fb=e.target.closest("[data-fault]");
+  if(fb){ sendReport(+fb.dataset.ch, +fb.dataset.fault); return; }
+  if(e.target.closest("[data-rclose]")){ $("#report").classList.remove("open"); return; }
+  const un=e.target.closest("[data-undo]");
+  if(un){ const i=+un.dataset.undo; CH[i].reported=null; renderGrids();
+    $("#report").classList.remove("open"); return; }
+  const ug=e.target.closest("[data-urgent]");
+  if(ug){ ug.textContent="Marked urgent"; ug.className="btn btn-primary"; return; }
   const ak=e.target.closest("[data-ack]");
   if(ak){
     e.stopPropagation();
@@ -1332,7 +1427,55 @@ function listen(i){
   if(tg) tg.innerHTML=statusStrip(ch);
   paintLanes(); applyPos();
 }
-/* pressing the photo opens the detailed display for that channel */
+/* ------------------------------------------------------------------
+   Reporting a fault, from the A1's side of the room. One press to open,
+   one press to send. The fault buttons are the send: mid-show, a
+   confirmation step is a step too many, so the report goes immediately
+   and stays undoable for a few seconds instead.
+   ------------------------------------------------------------------ */
+let undoTimer=null;
+function openReport(i){
+  const ch=CH[i]; if(!ch) return;
+  const r=$("#report"), sh=$("#rsheet"); if(!r||!sh) return;
+  sh.innerHTML = `
+    <div class="rhead">
+      <div class="shot">${face(ch)}</div>
+      <div class="t"><h3>${ch.nm}</h3><div class="sub">${ch.rl} · console ${String(ch.no).padStart(2,"0")}</div></div>
+      <button class="btn btn-line" data-rclose>Cancel</button>
+    </div>
+    <div class="rq">What are you hearing?</div>
+    <div class="fgrid">
+      ${FAULTS.map((f,k)=>`<button class="fbtn" data-fault="${k}" data-ch="${i}">
+        <b>${f[0]}</b><span>${f[1]}</span></button>`).join("")}
+    </div>
+    <div class="rfoot">
+      <button class="btn btn-line" data-rclose>Not now</button>
+      <button class="btn btn-line" data-fault="-1" data-ch="${i}">Something else — dictate a note</button>
+    </div>`;
+  r.classList.add("open");
+}
+function sendReport(i,k){
+  const ch=CH[i]; if(!ch) return;
+  const what = k>=0 ? FAULTS[k][0] : "A note";
+  ch.reported = what;
+  renderGrids();
+  const sh=$("#rsheet");
+  sh.innerHTML = `
+    <div class="rsent">
+      <div class="big">Sent to backstage</div>
+      <div class="who3"><b>${what}</b> on ${ch.no} · ${ch.nm}.
+        The A2 on that zone has it, and you will see who claims it on the card.</div>
+      <div class="row3">
+        <button class="btn btn-line" data-undo="${i}">Undo</button>
+        <button class="btn btn-line" data-urgent="${i}">Mark urgent — it is on air now</button>
+        <button class="btn btn-primary" data-rclose>Done</button>
+      </div>
+    </div>`;
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(()=>{ const u=$("[data-undo]"); if(u) u.remove(); }, 6000);
+}
+
+/* pressing the expand button opens the detailed display for that channel */
 function openDetail(i){
   listen(i);
   const bar=$("#nowbar"); if(bar) bar.dataset.open="true";
