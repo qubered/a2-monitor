@@ -40,16 +40,21 @@ by output continuity testing.
 
 Physical capture-to-ear target:
 
-| Path | p50 | p95 | Notes |
-| --- | ---: | ---: | --- |
-| Wired validated client | <= 50 ms | <= 75 ms | Non-Bluetooth output |
-| Dedicated Wi-Fi 6/6E | <= 80 ms | <= 120 ms | Venue-like RF load |
+| Path | p50 | p95 | p99 | maximum | Notes |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Wired validated client | <= 50 ms | <= 75 ms | <= 100 ms | <= 150 ms | Non-Bluetooth output |
+| Dedicated Wi-Fi 6/6E | <= 80 ms | <= 120 ms | <= 180 ms | <= 250 ms | Venue-like RF load |
 
 Additional gates:
 
 - gesture-to-audible tap-to-switch p95 <= 100 ms on wired and dedicated Wi-Fi
   profiles, with node-receipt-to-mix reported separately;
-- no sustained interruption under the approved impaired-network profile;
+- maximum audible interruption <= 100 ms wired and <= 250 ms on the declared
+  venue-Wi-Fi impairment profile;
+- absolute capture-to-ear latency slope <= 1 ms/hour over the long-run clock
+  and media-worker recovery test;
+- negotiated Opus SDP/FMTP and observed packet cadence conform to the selected
+  mono/stereo profile;
 - media stats and UI indicate degraded latency/loss rather than hiding it; and
 - unsupported Bluetooth/output behavior is reported separately.
 
@@ -82,6 +87,9 @@ Additional gates:
 ## Capacity guardrails
 
 - New audio clients are rejected cleanly before resource exhaustion.
+- The admission gate is executed at the declared maximum plus one attempted
+  client; existing sessions remain continuous and the extra client receives a
+  bounded explicit rejection.
 - Disk-low thresholds warn early and preserve live monitoring over history.
 - Telemetry backpressure drops/coalesces obsolete meter updates before durable
   events or control acknowledgements.

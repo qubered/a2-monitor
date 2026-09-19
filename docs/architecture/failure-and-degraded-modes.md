@@ -31,8 +31,9 @@ Targets below are proposed until measured on reference hardware.
 
 | Failure | Automatic behavior | Operator capability | Proposed target |
 | --- | --- | --- | --- |
+| Show user not logged in after boot | Platform bootstrap reports `awaiting-show-user`; it does not claim the appliance is ready. No audio device is opened in another session. | Log in to the nominated show account, then verify device identity and readiness. | Initial supported profile is foreground/manual login; unattended capture is deferred. |
 | Public internet loss | No local service changes. | Full local operation. | Indefinite. |
-| Backend process restart | Node keeps capture, replay, receiver state, media, active performance and valid established leased controls. Appliance service manager restarts backend. | Existing Live sessions can listen, replay, move cues and perform approved emergency swaps; Manager, collaboration and new sessions wait. | Desired 30 s; hard supported-profile RTO 120 s. |
+| Backend process restart | The independent platform bootstrap/supervisor restarts the backend from the active application slot. Node capture, replay, receiver state, media, active performance and valid established leased controls continue. | Existing Live sessions can listen, replay, move cues and perform approved emergency swaps; Manager, collaboration and new sessions wait. | Desired 30 s; hard supported-profile RTO 120 s. |
 | Collaboration database unavailable/corrupt | Stop accepting mutations before acknowledgement; preserve node/audio priorities. Isolate or restore the database. | Intercom/radio plus emergency paper log; monitoring and leased node commands continue. | No accepted commit lost; recovery/restore RTO is validated separately from process restart. |
 | Metadata disk full | Reserve control/database space, reject uploads/chat first, then nonessential state; never consume audio/replay reservations. | Monitoring continues; collaboration may be read-only/unavailable. | Warn before reserve; accepted commit RPO 0. |
 | Asset store/worker unavailable | Text/state continues; new attachments remain unavailable or visibly processing, never ready. | Use text/intercom; existing ready assets show explicit failure if missing. | No false ready/attachment delivery; worker RTO does not gate monitoring. |
@@ -42,12 +43,16 @@ Targets below are proposed until measured on reference hardware.
 | Client Wi-Fi roam/drop | Node preserves bus briefly; ICE restart/reconnect is attempted. | Other clients unaffected. | Recover within 5 s on validated roaming profile. |
 | Audio device loss | Close epoch, mark audio unavailable, keep receiver telemetry, retry exact device only. | RF diagnosis remains; listening is silent/unavailable, never stale. | Detect within 1 s; recovery measured per driver. |
 | Audio engine crash | Supervisor restarts engine; never substitutes another device. | UI declares monitoring unavailable and directs operator to fallback. | Cold recovery target <= 120 s, then identity reconciliation. |
+| Media worker crash | Supervisor closes every session owned by that worker, preserves capture and replay, starts a fresh worker generation and requires new DTLS/ICE sessions. It never reuses RTP state across generations. | Monitoring is visibly interrupted; clients reconnect through the backend and safe listen gain is reapplied. | Detect <= 1 s; supported-profile transport recovery <= 5 s. |
+| Canonical sequencer crash | Command acceptance stops before acknowledgement. Supervisor restarts it against the durable ledger and a new generation; client gateway cannot commit independently. | Audio already routed continues; new routing/swap/cue commands wait and the UI shows control unavailable. | No acknowledged-command loss; recovery measured by the combined soak. |
+| Client gateway crash | Direct Live data-channel control stops, but canonical state and capture continue. A restarted gateway obtains a new scoped capability from the sequencer. | Backend REST control remains when healthy; established offline direct control waits for reconnect. | No authority fork; recovery measured by the combined soak. |
 | Receiver adapter crash | Only affected vendor/device telemetry goes stale; audio continues. Worker restarts with bounded backoff. | Listening and PCM meters remain. | Stale indication <= 1 s; worker recovery <= 10 s when device is reachable. |
 | Receiver/network loss | Preserve last value as stale with timestamp; no inferred healthy state. | Audio continues. | Immediate visible degradation after configured freshness threshold. |
 | Replay writer/disk failure | Drop replay work, protect capture and live media, shrink/disable replay. | Live monitoring continues. | Never block audio callback. |
 | Node/backend partition | Node continues active revision/overlay; canonical runtime mutations enter the non-evicting control ledger while bounded telemetry may roll over. | Existing leased Live sessions continue; only activated-pool runtime mutations are allowed until durable mutation reserve is reached. | Reconcile idempotently; stop mutations before control-history loss. |
 | Certificate nearing expiry | Warn before the show and block unsafe activation if expiry falls inside the planned show window. | Existing valid session follows its lease. | Renewal tested offline; no surprise show-time expiry. |
 | Appliance power loss | UPS initiates clean shutdown when possible; active segment may be lost. | External fallback only until reboot. | Completed replay segments and show database recover; boot target <= 120 s. |
+| Interrupted update or failed health gate | The active slot remains selected until the candidate passes offline migration, startup, audio-open and API health checks. Failure reselects the prior immutable slot; forward-only data conversion is prohibited. | Continue on the prior version and export the signed failure bundle for support. Updates are blocked during an active performance. | No accepted event loss; both OS package paths pass the lifecycle evidence test. |
 
 ## Reconciliation after recovery
 
@@ -76,3 +81,9 @@ operator action, safe fallback, RTO/RPO, and recovery proof. Release evidence
 includes repeated cold starts, power cycles, backend and worker crash loops,
 disk-pressure tests, clock/NIC/device changes, AP roaming, certificate expiry,
 and spare-appliance restore.
+
+Process ownership, restart generations, manual-login readiness, confinement and
+the immutable-slot update transaction are normative in the
+[process and update lifecycle](process-and-update-lifecycle.md). Capture-frame,
+RTP and local IPC recovery rules are normative in the
+[media clock and IPC ABI](media-clock-and-ipc-abi.md).

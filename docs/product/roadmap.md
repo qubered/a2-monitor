@@ -6,6 +6,87 @@ Dates begin only when the named team, representative hardware, vendor access,
 and test network are available. Every phase ends in evidence and a go/no-go
 decision; calendar completion alone does not advance the product.
 
+## Technology baseline
+
+Implementation begins from the accepted baseline in the
+[technology stack study](../research/technology-stack-selection.md): Rust for
+the native node/workers, CPAL as the replaceable Phase 0A audio-host adapter,
+`str0m` plus `libopus` as the replaceable Phase 0B media implementation,
+TypeScript/Node/Fastify for management, separate React/Vite Manager and Live
+applications, and local SQLite authority.
+
+Selection is not validation. CPAL is promoted only by the named Phase 0A
+device/driver evidence, and `str0m` only by the Phase 0B browser/network
+evidence. Their project-owned interfaces and fallback spikes keep a failure
+local rather than restarting framework selection for the whole product.
+
+## Phase 0D: close implementation prerequisites — 1 to 2 weeks
+
+Resolve the stack-review findings before scaffolding turns assumptions into
+code. This phase is documentation, executable-contract and build-provenance
+work; it makes no device-support claim.
+
+Deliverables:
+
+- byte-verifying evidence promotion with measured predicates and explicit OS,
+  device, browser and lifecycle coverage rows;
+- accepted capture-frame-to-RTP/RTCP rules and a page-separated shared-memory
+  ABI with malicious-consumer tests;
+- complete process ownership for the audio engine, canonical sequencer, client
+  gateway, media/replay/adapters, backend supervisor and storage worker;
+- Windows restricted-token/Job Object and macOS SMAppService/XPC confinement
+  spikes, including foreground/manual show-user readiness;
+- immutable application-slot update and rollback transaction for MSI and pkg;
+- one strict non-mutating Ajv 2020 schema configuration for Fastify, tools and
+  generated golden vectors;
+- explicit `str0m` crypto-provider selection on each OS and a build without
+  default features;
+- proprietary ASIO SDK provenance decision, reviewed `CPAL_ASIO_DIR` workflow
+  and no-public-network release build; and
+- WiX commercial/EULA approval or selection of another maintained MSI authoring
+  implementation.
+
+Exit gate:
+
+- evidence contract tests reject false measurements, changed artifact bytes,
+  short runs, out-of-window faults and incomplete support matrices;
+- no runtime process, authority, restart, package or build input is ownerless;
+- every legal/tooling gate has a named accountable role and a blocking state;
+  and
+- unresolved choices are explicit Phase 0 experiments rather than hidden
+  implementation defaults.
+
+## Phase 0T: scaffold the selected stack — 2 to 3 weeks
+
+Create the buildable skeleton described by the
+[implementation structure](../architecture/implementation-structure.md).
+
+Deliverables:
+
+- pinned Node/Rust toolchains, npm/Cargo workspaces and committed lockfiles;
+- Windows/macOS CI for format, lint, unit, contract and independent web builds;
+- deterministic JSON Schema/OpenAPI/AsyncAPI generation with a dirty-diff gate
+  and cross-language golden vectors; bounded JSON and Protobuf local-control
+  encodings remain behind one framing interface until the Phase 0T comparison;
+- synthetic `AudioHost` to fixed PCM-ring handoff with allocation/lock guards;
+- supervised native worker startup/health/shutdown, media-worker generation
+  recovery, canonical sequencer/client-gateway routing and bounded control-IPC;
+- Fastify health/snapshot API plus independent Manager and Live shell builds;
+- evidence schemas updated with required implementation/build identifiers;
+- dependency/licence inventory including ASIO, CPAL, Opus, `str0m`, crypto,
+  SQLite and installer inputs; and
+- unsigned development MSI/pkg smoke artifacts with no automatic installation.
+
+Exit gate:
+
+- a clean checkout builds and tests on Windows 11 x86-64 and Apple-silicon
+  macOS using documented commands;
+- generated contracts are reproducible and current/previous compatibility
+  fixtures pass;
+- process crash, malformed IPC and full-queue tests fail boundedly; and
+- no licensed SDK, credential, certificate or unsupported hardware claim is in
+  the repository or artifact.
+
 ## Phase 0A: prove capture and time — 4 to 6 weeks
 
 Build a disposable, instrumented cross-platform audio core.
@@ -13,7 +94,11 @@ Build a disposable, instrumented cross-platform audio core.
 Deliverables:
 
 - frozen machine-readable evidence manifest plus signed result artifacts;
+- exact Rust, CPAL, host adapter, SQLite and build identifiers captured in each
+  evidence tuple;
 - pinned Windows/macOS CI builds, contract tests and real-time callback guards;
+- Windows 11 x86-64 and Apple-silicon macOS reference appliance builds on exact
+  in-support OS versions; other CPU profiles remain unclaimed until HIL passes;
 - Windows and macOS node builds sharing one capture contract;
 - ASIO, WASAPI, and Core Audio evaluation;
 - DVS plus a representative professional USB/Thunderbolt device on each OS;
@@ -22,8 +107,10 @@ Deliverables:
 - capture epochs, device identity, discontinuity and loss/recovery behavior;
 - bounded callback-to-worker handoffs and initial resource envelope;
 - 12-hour capture soak and physical input-to-node measurement; and
-- ADRs selecting implementation language, host library, IPC, and reference
-  hardware.
+- implementation of ADR 0014's Rust/audio-host boundary and ADR 0016's IPC ABI;
+- a CPAL-versus-targeted-fallback comparison for any failed named tuple; and
+- reference hardware selection recorded from the evidence rather than assumed
+  from the framework decision.
 
 Exit gate:
 
@@ -33,39 +120,82 @@ Exit gate:
 - worst-case callback work remains inside the budget; and
 - unsupported device/rate/channel combinations fail clearly.
 
-## Phase 0B: falsify the end-to-end architecture — 4 to 6 weeks
+## Phase 0B: falsify the end-to-end architecture — three gated slices
 
 Connect the minimum complete signal and control path without treating the code
-as production-ready.
+as production-ready. The machine-readable evidence phase remains `0B`, but it
+cannot promote until all three slices pass. This decomposition preserves one
+system gate while making failures attributable and estimates revisable.
+
+### Phase 0B-M: media, clock and real clients — initial estimate 4 to 6 weeks
 
 Deliverables:
 
 - frozen Phase 0B manifest for every named tuple, fault and pass/fail threshold;
+- exact build, Rust, `str0m`, crypto provider, `libopus`, Node, Fastify, SQLite,
+  browser-build, generated-contract and lockfile identifiers in each tuple;
 - per-client server-side bus and WebRTC/Opus playback;
-- physical gesture-to-ear and capture-to-ear measurements on the named browser
-  field kit;
+- `str0m` media-worker implementation with a reproducible `libdatachannel`
+  fallback comparison path;
+- physical gesture-to-ear and capture-to-ear p50/p95/p99/max, audible-tail and
+  long-run drift measurements on real Chrome/Chromium, Firefox and Safari/iPad kit;
+- negotiated Opus SDP/FMTP and observed packet-cadence conformance;
+- capture-frame-to-RTP/RTCP mapping, discontinuity and media-worker restart
+  generation tests;
+- declared-client-limit-plus-one admission with uninterrupted existing clients;
 - multi-NIC ICE/interface/firewall validation with no hardware-network leakage;
 - browser reload, lock/wake, output-change, roaming, and backend-restart tests;
-- one real EW-DX SSCv2 profile and one representative Shure rack profile;
-- sandboxed adapter failure and reconnect-storm test;
+- numeric wired/Wi-Fi impairment manifests rather than named presets; and
+- a second 12-hour media soak.
+
+Gate: named wired and Wi-Fi clients meet every latency-tail, recovery, Opus and
+clock predicate; browser lifecycle limitations and any native-client trigger
+are documented; media-worker failure cannot interrupt capture.
+
+### Phase 0B-A: appliance, authority and durability — initial estimate 4 to 6 weeks
+
+Deliverables:
+
 - a minimal preallocated replay ring proving the timeline/storage architecture;
 - backend local HTTPS/CA provisioning, node enrollment, pinned WebRTC DTLS,
   reliable ordered control data channel, signed lease and secret-envelope spikes;
 - active-node authority epoch, externally fenced takeover, unprivileged client
-  gateway, boot authority grant, exact proof-of-possession, durable idempotency/control-ledger and
-  partition/quarantine spikes;
+  gateway, canonical sequencer, boot authority grant, exact proof-of-possession,
+  durable idempotency/control-ledger and partition/quarantine spikes;
 - minimum chunk seal/import, signed receipt, ledger-head rollback comparison and
   projection-rebuild spike;
 - replay-reader/prefetch isolation and concurrent seek cancellation;
 - foreground wake-lock field profile plus camera, microphone/voice capture,
   notification sink and audio-route continuity tests;
+- Windows and macOS power-cut/restore evidence for SQLite, ledger and replay;
+- signed installed-package startup, interrupted update, health-gated slot switch
+  and rollback evidence on both operating systems;
+- offline PKI issue/rotate/revoke/expiry and clock-rollback evidence; and
+- Fastify/Rust/TypeScript contract-runtime conformance with no validation input
+  mutation.
+
+Gate: authority cannot fork, accepted events survive the declared crash points,
+packages roll back without data loss, readiness is truthful before show-user
+login, and PKI failures close rather than authorize.
+
+### Phase 0B-I: integrations and combined load — initial estimate 3 to 5 weeks
+
+Deliverables:
+
+- one real EW-DX SSCv2 profile and one representative Shure rack profile;
+- sandboxed adapter failure and reconnect-storm test;
 - QLab 5 read-only OSC show-control-broadcast observer spike;
 - cue shadow-mode comparison against a manual rehearsal log before authority;
 - combined capture/replay/receiver/media load plus chat fan-out, upload/hostile
   decode, page storm, disk pressure and impairment; and
-- a second 12-hour end-to-end soak.
+- a 12-hour end-to-end combined soak.
 
-Exit gate:
+The Phase 0B application slice also scaffolds the accepted Node/Fastify backend,
+independent React/Vite Manager and Live bundles, SQLite storage worker,
+generated public JSON contracts, selected bounded native IPC codec, and Windows/
+macOS packaging smoke tests.
+
+Final Phase 0B exit gate:
 
 - at least one named wired and one named Wi-Fi client meet numeric latency and
   continuity targets;
@@ -74,8 +204,9 @@ Exit gate:
 - receiver/adapter failure cannot interrupt capture;
 - replay backpressure cannot reach the callback; and
 - collaboration/resource overload sheds before capture/live media and the
-  authority/control ledger cannot fork or evict accepted runtime mutations; and
-- the security/process architecture has no unresolved P0 design blocker.
+  authority/control ledger cannot fork or evict accepted runtime mutations;
+- the security/process architecture has no unresolved P0 design blocker; and
+- every required test and named coverage row passes the executable catalogue.
 
 ## Phase 1A: operational rehearsal core — three independently gated slices
 

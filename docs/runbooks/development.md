@@ -2,16 +2,41 @@
 
 ## Repository setup
 
-Until component toolchains are selected, only Git and a POSIX shell are
-required.
+The selected toolchains are Node.js 24 LTS with npm and the repository-pinned
+stable Rust toolchain with Cargo, rustfmt and Clippy. Until runnable workspaces
+are scaffolded, the existing contract checks still require only Node/npm, Git
+and a POSIX shell.
 
 ```sh
 git status --short --branch
 ./scripts/check-repo.sh
 ```
 
-Component READMEs will own their exact setup and checks. Do not add a root task
-runner until at least two real components need shared orchestration.
+Component READMEs own their exact setup and checks. The root may expose thin
+orchestration scripts once at least two real components need them, but it must
+not hide the underlying Cargo/npm commands or hardware evidence profile.
+
+The intended workspace commands after scaffolding are:
+
+```sh
+npm ci
+npm run check --workspaces --if-present
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+```
+
+ASIO builds additionally require the approved proprietary Steinberg SDK path,
+recorded checksum/provenance, LLVM/Clang documented by the selected CPAL
+version, and an explicit `CPAL_ASIO_DIR`. Do not download an SDK from a build
+script. Evidence/release builds run with public-network access disabled and
+must fail if a required controlled input is absent.
+
+The first packaged backend is a pinned Node 24 patch plus compiled JavaScript,
+static assets and an adjacent signed `better-sqlite3` addon; it is not Node
+SEA. Fastify is pinned at 5.12.2 or newer in major 5 and receives an explicit
+strict, non-mutating Ajv 2020 compiler. Release provenance records toolchain,
+SDK, native source, lockfile and installer hashes.
 
 ## Local topology
 
@@ -22,6 +47,9 @@ Development must support both:
 
 Use synthetic devices by default. Access to real Dante and receiver networks
 must be explicit, and test credentials belong in an ignored local secret store.
+The supported startup profile requires manual login to the nominated show
+account. Tests report `awaiting-show-user` before login rather than treating OS
+boot as audio readiness.
 
 ## Adding a component dependency
 
@@ -34,6 +62,14 @@ Before adding a production dependency:
 - add an ADR if it establishes a framework or runtime boundary.
 
 Never vendor Dante/vendor SDK binaries or credentials into Git.
+
+Production dependencies use exact lockfile resolution. Rust and Node toolchain
+changes, CPAL/`str0m`/Opus/SQLite changes and native package changes require
+their relevant Phase 0 regression evidence, not only a successful compile.
+
+`str0m` is built with default features disabled. The baseline crypto feature is
+`apple-crypto` on macOS and `wincrypto` on Windows; any fallback is explicit in
+the build profile and evidence manifest.
 
 ## Test artifacts
 

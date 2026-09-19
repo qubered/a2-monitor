@@ -3,6 +3,15 @@
   "manifest_id": "11111111-1111-4111-8111-111111111111",
   "test_id": "capture.64ch.48k.nominal-soak.v1",
   "commit": "6666666666666666666666666666666666666666",
+  "implementation": {
+    "build_id": "fixture-build-1",
+    "rust_version": "1.98.1",
+    "audio_host_adapter": "cpal",
+    "audio_host_adapter_version": "fixture-adapter-1",
+    "cpal_version": "0.18.2",
+    "sqlite_version": "3.51.3",
+    "dependency_lock_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
   "tuple": {
     "os": "macos",
     "os_version": "15.6.1",
@@ -13,12 +22,16 @@
     "power_profile": "mains-performance"
   },
   "audio": {
+    "host_api": "coreaudio",
+    "device_class": "professional-interface",
     "device": "reference-usb-64",
+    "device_id": "coreaudio:fixture-reference-usb-64",
     "driver": "Core Audio",
     "driver_version": "15.6.1",
     "firmware": "1.0.0",
     "sample_rate_hz": 48000,
-    "block_frames": 128,
+    "requested_block_frames": 128,
+    "actual_block_frames": 128,
     "inputs": 64
   },
   "trials": {"count": 3, "duration_s": 43200, "warmup_s": 60},
@@ -33,7 +46,7 @@
     "audio.callback_p99_fraction.lte_0_50",
     "audio.callback_max_fraction.lt_0_80"
   ],
-  "artifact_kinds": ["runner-log", "integrity-oracle", "callback-metrics", "hardware-manifest"],
+  "artifact_kinds": ["verifier-metrics", "runner-log", "integrity-oracle", "callback-metrics", "hardware-manifest"],
   "integrity_oracle": {
     "algorithm": "per-channel-sequence-v0",
     "seed": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",

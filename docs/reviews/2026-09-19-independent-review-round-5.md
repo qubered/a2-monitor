@@ -57,7 +57,7 @@ Required closure:
 
 Evidence: [`evidence-verifier.mjs`](../../tools/evidence-verifier.mjs),
 [`evidence-tests.v0.json`](../../tests/catalog/evidence-tests.v0.json), and the
-[passing result fixture](../../tests/fixtures/evidence/phase0a-nominal.result.valid.json).
+[replacement passing metrics fixture](../../tests/fixtures/evidence/phase0a-nominal.metrics.valid.json).
 
 ### 2. The canonical command schema conflates bootstrap and Live authority
 

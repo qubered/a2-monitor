@@ -38,3 +38,26 @@ established Live sessions use the same bounded node authority directly during a
 brief backend outage. Base-show mutation, collaboration and new authorization
 still require the backend. Pre-approved runtime overlays/cue movement reconcile
 from the node's durable control ledger.
+
+## Implementation baseline
+
+The backend uses strict TypeScript on Node.js 24 LTS with Fastify. It serves
+versioned REST, WebSocket state/signaling and the independent static Manager and
+Live bundles over local HTTPS. JSON Schema in `packages/protocol` is the public
+contract source.
+
+The packaged artifact contains an exact Node patch, compiled JavaScript/static
+assets and an adjacent signed native addon. Fastify 5 is pinned at 5.12.2 or
+newer and uses an explicit strict, non-mutating Ajv 2020 compiler. Responses
+are validated before ordinary JSON serialization; runtime conformance vectors
+must agree with tools and generated Rust/TypeScript types.
+
+SQLite runs through pinned `better-sqlite3` in a dedicated storage worker with
+one writer queue, reviewed SQL migrations, disabled extension loading and a
+runtime-enforced SQLite 3.51.3 minimum. CPU-heavy import/export and untrusted
+media work use bounded confined workers. None of these processes receives PCM
+or enters the live media path. See ADR 0015 and ADR 0010.
+
+The Node process is owned by an independent platform bootstrap/supervisor, not
+by the audio node. A Node worker thread isolates SQLite work from the event
+loop, but it is not an operating-system crash or privilege boundary.

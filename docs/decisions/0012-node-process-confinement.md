@@ -1,6 +1,6 @@
 # ADR 0012: Cross-platform node process confinement
 
-- **Status:** Accepted for Phase 0B implementation
+- **Status:** Accepted; exact platform profiles require the Phase 0D packaged spike
 - **Date:** 2026-09-19
 - **Owners:** Security/platform and audio-runtime owners
 
@@ -20,18 +20,25 @@ single declared writer/reader, generation, boot ID and corruption counters; a
 worker cannot substitute its own mapping. Child processes cannot inherit device,
 ledger, signing or listening sockets unless explicitly listed.
 
-On Windows, workers run under distinct service SIDs/restricted tokens with
-deny-only administrative groups, low-integrity/AppContainer where compatible,
-job-object child/process/memory limits, explicit named-pipe/file-mapping ACLs,
-Windows Firewall egress rules and no interactive desktop. Capture uses only the
-minimum audio/MMCSS rights proven necessary.
+On Windows, logon-task children use restricted tokens derived from the show
+user's primary token and individual Job Objects with child/process/memory/handle
+limits and kill-on-supervisor-close behavior. Service SIDs are used only by a
+future process actually launched by the Service Control Manager; they are not
+claimed for ordinary scheduled-task children. Prefer inherited/duplicated
+handles to named objects. Random named pipes add an owner-only DACL, expected
+child PID/token, boot nonce and protocol handshake. AppContainer is a later
+strengthening option only after it proves the required UDP and local IPC path.
+The audio engine retains only the audio/MMCSS access proven necessary.
 
-On macOS, workers run as separate unprivileged users or hardened helper
-identities with sandbox profiles, hardened runtime/library validation, explicit
-Mach/shared-memory/file permissions and per-worker network allow-lists. Capture
-receives only required Core Audio and Audio Workgroup access. No component runs
-as root after supervisor setup; privileged installation/update is a separate,
-non-show service.
+On macOS, the signed app bundle registers its user-session LaunchAgents through
+`SMAppService`. Network-facing media, gateway and receiver helpers use signed
+sandboxed XPC services and App Group-scoped shared memory/sockets where the
+packaged Phase 0D spike proves the required access. The plan no longer assumes
+separate Unix users that the LaunchAgent does not create. A helper that cannot be
+sandboxed receives a documented process-only exception rather than a false
+privilege-isolation claim. Capture receives only required Core Audio and Audio
+Workgroup access. No show process runs as root; privileged installation/update
+is stopped-state administrative work.
 
 Receiver adapters can reach only configured receiver addresses/ports. Gateway
 can reach only declared ICE/media peers. Import/image workers have no receiver
@@ -41,12 +48,20 @@ enforce the profile, that feature is disabled or moved to another host.
 
 ## Validation
 
-CI checks manifests and IPC schemas; lab tests enumerate tokens, SIDs/users,
-handles, mappings, children and sockets. Adversarial workers attempt undeclared
+Before ordinary scaffolding, signed development packages prove the real launch,
+token/sandbox, App Group and handle-passing topology without requiring ASIO
+licence material in the repository. CI checks manifests and IPC schemas; lab
+tests enumerate tokens/users, handles, mappings, children and sockets.
+Adversarial workers attempt undeclared
 file, IPC, process, audio-device and network access; every attempt must fail.
 Malformed IPC, worker crash/hang, restart storm and shared-memory corruption must
 not interrupt capture or grant canonical authority. Supported OS builds retain
 these tests as signed Phase 0B artifacts.
+
+The exact process tree, gateway/sequencer hop and restart ownership are normative
+in [the process lifecycle](../architecture/process-and-update-lifecycle.md). The
+PCM access model is normative in
+[the native IPC ABI](../architecture/media-clock-and-ipc-abi.md).
 
 ## Consequences
 

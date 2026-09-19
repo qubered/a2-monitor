@@ -9,10 +9,13 @@ When hosted, `main` requires:
 
 - pull requests rather than direct pushes;
 - passing repository, unit, contract, security, and component checks;
-- at least one independent approval;
-- audio-domain approval for capture, clock, DSP, codec, routing, or replay time;
-- security/platform approval for auth, protocol, network, update, secret,
-  import/export, sandbox, or appliance changes;
+- no mandatory GitHub approval during the named single-maintainer, pre-pilot
+  phase; each pull request records a deliberate self-review;
+- independent audio-domain review for capture, clock, DSP, codec, routing, or
+  replay support claims before external use;
+- independent security/platform review for auth, protocol, network, update,
+  secret, import/export, sandbox, or appliance release claims before external
+  use;
 - resolved review conversations and signed commits/releases under the selected
   organization policy; and
 - no administrator bypass except a documented incident with retrospective
@@ -20,6 +23,31 @@ When hosted, `main` requires:
 
 CODEOWNERS identities cannot be invented locally. They are configured with the
 actual maintainers when the repository host and team accounts exist.
+
+The required-approval branch rule is restored when a second qualified
+maintainer becomes active and no later than the first external pilot. Required
+checks, pull-request-only changes and administrator enforcement remain active
+during the solo phase. Removing an impossible approval gate does not waive any
+machine evidence, hardware qualification, operator trial or release sign-off.
+
+## Accountable role matrix
+
+One person may hold several roles during prototyping, but every release record
+names the people filling them. Release signing and deployment approval become
+separate people before an external pilot.
+
+| Decision or artifact | Accountable role | Required independent review |
+| --- | --- | --- |
+| Product scope, supported workflows and risk acceptance | Product owner | Theatre operations owner |
+| Capture, clock, DSP, Opus, routing and replay | Audio runtime owner | Evidence authority |
+| Auth, PKI, confinement, updates and secrets | Platform/security owner | Release/signing custodian |
+| Evidence catalogue, verifier and promotion bundle | Evidence authority | Relevant domain owner |
+| Receiver protocol/profile claim | Integration owner | Hardware-lab operator |
+| A1/A2 workflow and operator gate | Theatre operations owner | Product owner plus participating operator |
+| Package signing and release publication | Release/signing custodian | Deployment approver |
+
+The author of a promotion-affecting verifier or catalogue change cannot be its
+sole reviewer. A waiver cannot be signed by the person requesting it.
 
 ## Automated gates
 
@@ -67,6 +95,26 @@ external pilot.
   license, contribution terms, and third-party notices are approved.
 - Release signing, update signing, and deployment approval are separate roles
   once team size permits.
+- Rust and Node toolchains are pinned; Cargo and npm lockfiles are committed.
+- The shipped SQLite library is bundled and runtime-verified at 3.51.3 or newer.
+- CPAL, `str0m`, Opus, SQLite or audio-driver dependency updates run their named
+  hardware/browser/power regression subset before promotion.
+- The working distribution assumption is proprietary software. Before the
+  first ASIO evidence build, the owner must record a proprietary Steinberg SDK
+  route and provenance, set `CPAL_ASIO_DIR` to a reviewed local SDK, and prove
+  the release build performs no network download. If that route is unavailable,
+  ASIO packaging and claims remain blocked; the GPLv3 path is not silently mixed
+  into a proprietary artifact.
+- JUCE fallback use is separately blocked until its commercial/AGPL path is
+  approved.
+- WiX release tooling is blocked until its current EULA/maintenance-fee terms
+  are approved for the organization and revenue profile; an old unsupported
+  major is not used to avoid those terms. A commercial MSI authoring tool or
+  reviewed direct Windows Installer implementation is the fallback—the product
+  requires MSI semantics, not WiX specifically.
+- Release builds run without public-network access from a pinned source cache;
+  toolchain, SDK, native library and installer inputs have checksums and SBOM/
+  provenance. A convenient build-script download is a release failure.
 
 ## Compatibility lifecycle
 

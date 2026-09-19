@@ -34,6 +34,12 @@ The pilot selects exact versions of at least:
 - one dedicated Wi-Fi profile and wired fallback; and
 - the nominated switch and AP configuration.
 
+Each record distinguishes browser product, browser engine and execution
+profile. Phase 0B promotion specifically requires real-device Chrome/Chromium and
+Firefox wired runs and a real-device Safari/iPadOS Wi-Fi run. Playwright
+Chromium/WebKit/Firefox runs remain mandatory CI regression coverage but cannot
+stand in for those product/device rows.
+
 The mobile field profile is a dedicated, foreground, screen-awake device with
 validated power/battery reserve, approved wired/USB output and documented
 mount/body-worn/Guided Access or MDM practice. Intercom/radio remains the urgent
@@ -73,7 +79,10 @@ claim.
 | Venue Wi-Fi | RTT p95 <= 30 ms, random loss <= 1%, jitter <= 15 ms, bursts up to 3 packets | Continuous usable monitoring with visible metrics. |
 | Stress | loss up to 3%, jitter up to 50 ms, reordering 0.1%, short roam outage | No crash or control corruption; audible degradation and recovery are allowed and reported. |
 
-The impairment harness records burst model and direction. These profiles are
+The executable manifest records direction, base delay and distribution, loss
+and burst model/parameters, jitter distribution, reordering, duplication,
+corruption, bandwidth, queue limit, and every outage or roam interval. Human
+labels such as `venue Wi-Fi` are never sufficient evidence. These profiles are
 starting definitions and may be changed only with a linked benchmark/ADR.
 
 ## Full-load profile
@@ -94,6 +103,10 @@ The resource envelope records reserved memory, maximum inputs per bus, queue
 depths, encoder deadlines, concurrent replay limit, thermal state, disk budget,
 and deterministic admission thresholds.
 
+Capacity qualification includes a declared-maximum-plus-one attempt. The
+additional client must be rejected without interrupting existing media or
+exceeding any declared resource ceiling.
+
 The declared collaboration envelope includes maximum messages/history,
 conversations, open tasks/incidents, pages/rate, attachment bytes/pixels/voice
 duration, processing concurrency, asset quota, subscription fan-out and audit
@@ -111,6 +124,11 @@ Before limited beta:
 - repeated driver, worker, backend, network, disk, and receiver failure tests;
 - spare-appliance restore and certificate/clock-expiry drills; and
 - every release-blocking recovery target demonstrated on named hardware.
+
+Phase 0B adds both-OS storage power-cut/restore and installed-package update,
+interruption and rollback rows. An application slot is not activated until
+migration, startup, selected-device open and API health gates pass; the prior
+slot and compatible database state remain recoverable.
 
 These are minimum evidence thresholds, not statistical proof of zero failures.
 Field show-hours and incidents remain part of each compatibility record.

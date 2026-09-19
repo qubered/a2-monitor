@@ -26,8 +26,11 @@ identity.
 The project is in **discovery and technical validation**. The first milestone
 is a measured cross-platform vertical slice using one Windows or macOS audio
 device, WebRTC, Sennheiser EW-DX, and a representative Shure rack receiver. DVS
-is an important device profile, not a special-case architecture. No production
-technology stack has been approved yet.
+is an important device profile, not a special-case architecture. The
+implementation baseline is now Rust/CPAL/`str0m`/`libopus` for the native node,
+TypeScript/Node/Fastify for management, React/Vite for Manager and Live, and
+SQLite for local authority. CPAL and `str0m` remain hardware/browser evidence-
+gated rather than being treated as proven by selection alone.
 
 ## Product principles
 
@@ -94,9 +97,11 @@ See the [roadmap](docs/product/roadmap.md) and
 
 ## Development
 
-There is deliberately no root build command yet. Each runtime must earn its
-place through the technical spike and an architecture decision record (ADR).
-The repository-level check is:
+There is deliberately no root product build command until the selected
+workspaces contain runnable components. The stack, alternatives and
+falsification gates are recorded in
+[technology stack selection](docs/research/technology-stack-selection.md) and
+ADRs 0014–0018. The repository-level check is:
 
 ```sh
 ./scripts/check-repo.sh

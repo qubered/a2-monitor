@@ -1,5 +1,25 @@
 # Testing strategy
 
+## Selected test tooling
+
+- Rust native tests plus property/fuzz/concurrency/benchmark tooling for audio,
+  IPC, media, replay and receiver adapters;
+- strict TypeScript checks and Vitest for backend and web packages;
+- Playwright for Chromium, WebKit and Firefox browser workflows;
+- the existing dependency-light Node runner for repository contract and
+  evidence-verifier tests until a migration has a concrete benefit; and
+- signed custom hardware evidence manifests for all performance/support claims.
+
+Generated Rust and TypeScript protocol artifacts are rebuilt in CI and a dirty
+diff fails. Cross-language golden vectors cover size bounds, additive/unknown
+fields, epochs, identifiers and canonical signatures.
+
+The Fastify conformance suite drives the same positive and negative Draft
+2020-12 vectors through explicit Ajv 2020 request validation, authorization/
+signature handling, response validation, standard JSON serialization and the
+generated Rust/TypeScript types. It asserts that validation does not coerce,
+default or remove input fields.
+
 ## Test layers
 
 ### Unit tests
@@ -62,6 +82,10 @@ Integration coverage also includes snapshot/delta gaps, duplicated commands,
 activation prepare/commit conflicts, authority fencing/takeover, durable ledger
 reserve exhaustion, lease expiry/proof-of-possession/replay, backend
 reconciliation, replay-reader isolation and process crash containment.
+It also mutates every shared-memory descriptor/counter boundary from a hostile
+consumer, verifies least-write mapping views, restarts the media worker with a
+new generation, and proves the canonical sequencer/client gateway cannot
+create concurrent writers.
 
 A representative two-operator scenario runs the A1 mix-confidence workspace and
 A2 intervention workspace concurrently: either operator raises an incident,
@@ -80,10 +104,13 @@ source actions, time-to-audition, verbal clarifications and abandoned work.
 - callback deadline and underrun instrumentation;
 - meter/render load at full channel count;
 - replay write/read/rollover;
-- client admission/resource limits; and
+- client admission/resource limits;
 - chat fan-out, page/upload storms, hostile media decode, database/asset/audit
-  pressure, transcription gating and deterministic priority shedding; and
-- controlled loss, jitter, reordering, outage, and reconnect.
+  pressure, transcription gating and deterministic priority shedding;
+- controlled loss, jitter, reordering, outage, and reconnect;
+- capture-frame-to-RTP/RTCP mapping and long-run latency slope;
+- negotiated Opus SDP/FMTP and observed packet cadence; and
+- declared maximum plus one client admission.
 
 ### Soak and chaos tests
 

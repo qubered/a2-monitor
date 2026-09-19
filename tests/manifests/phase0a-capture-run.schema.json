@@ -4,12 +4,13 @@
   "title": "Frozen Phase 0A capture run",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "manifest_id", "test_id", "commit", "tuple", "audio", "trials", "faults", "assertion_ids", "artifact_kinds", "integrity_oracle"],
+  "required": ["schema_version", "manifest_id", "test_id", "commit", "implementation", "tuple", "audio", "trials", "faults", "assertion_ids", "artifact_kinds", "integrity_oracle"],
   "properties": {
     "schema_version": {"const": "phase0a-capture-run/v0"},
     "manifest_id": {"type": "string", "format": "uuid"},
-    "test_id": {"enum": ["capture.64ch.48k.nominal-soak.v1", "capture.device-clock-change.v1"]},
+    "test_id": {"enum": ["capture.64ch.48k.nominal-soak.v1", "capture.device-clock-change.v1", "ipc.abi-confinement.v1"]},
     "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "implementation": {"$ref": "#/$defs/implementation"},
     "tuple": {"$ref": "#/$defs/tuple"},
     "audio": {"$ref": "#/$defs/audio"},
     "trials": {"$ref": "#/$defs/trials"},
@@ -30,6 +31,19 @@
     }
   },
   "$defs": {
+    "implementation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["build_id", "rust_version", "audio_host_adapter", "audio_host_adapter_version", "cpal_version", "sqlite_version", "dependency_lock_sha256"],
+      "properties": {
+        "build_id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "rust_version": {"type": "string", "minLength": 1, "maxLength": 32},
+        "audio_host_adapter": {"type": "string", "minLength": 1, "maxLength": 64},
+        "audio_host_adapter_version": {"type": "string", "minLength": 1, "maxLength": 64},
+        "cpal_version": {"type": "string", "minLength": 1, "maxLength": 32},
+        "sqlite_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "dependency_lock_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
     "tuple": {
       "type": "object", "additionalProperties": false,
       "required": ["os", "os_version", "cpu", "ram_bytes", "storage", "filesystem", "power_profile"],
@@ -45,14 +59,18 @@
     },
     "audio": {
       "type": "object", "additionalProperties": false,
-      "required": ["device", "driver", "driver_version", "firmware", "sample_rate_hz", "block_frames", "inputs"],
+      "required": ["host_api", "device_class", "device", "device_id", "driver", "driver_version", "firmware", "sample_rate_hz", "requested_block_frames", "actual_block_frames", "inputs"],
       "properties": {
+        "host_api": {"enum": ["asio", "wasapi", "coreaudio"]},
+        "device_class": {"enum": ["dvs", "professional-interface", "ordinary-device", "synthetic-ipc"]},
         "device": {"type": "string", "minLength": 1, "maxLength": 128},
+        "device_id": {"type": "string", "minLength": 1, "maxLength": 512},
         "driver": {"type": "string", "minLength": 1, "maxLength": 128},
         "driver_version": {"type": "string", "minLength": 1, "maxLength": 64},
         "firmware": {"type": "string", "minLength": 1, "maxLength": 64},
         "sample_rate_hz": {"const": 48000},
-        "block_frames": {"type": "integer", "minimum": 16, "maximum": 4096},
+        "requested_block_frames": {"type": "integer", "minimum": 16, "maximum": 4096},
+        "actual_block_frames": {"type": "integer", "minimum": 16, "maximum": 4096},
         "inputs": {"type": "integer", "minimum": 32, "maximum": 64}
       }
     },
@@ -67,10 +85,11 @@
     },
     "fault": {
       "type": "object", "additionalProperties": false,
-      "required": ["at_s", "kind", "duration_s"],
+      "required": ["at_s", "kind", "profile_id", "duration_s"],
       "properties": {
         "at_s": {"type": "integer", "minimum": 0},
-        "kind": {"enum": ["device-disconnect", "clock-discontinuity"]},
+        "kind": {"enum": ["device-disconnect", "clock-discontinuity", "consumer-crash", "index-corruption", "header-corruption", "unauthorized-open"]},
+        "profile_id": {"type": "string", "minLength": 1, "maxLength": 128},
         "duration_s": {"type": "integer", "minimum": 0, "maximum": 600}
       }
     }

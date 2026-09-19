@@ -1,6 +1,7 @@
 # ADR 0002: Use WebRTC and Opus for browser monitoring
 
-- **Status:** Proposed; acceptance depends on the Phase 0B latency spike
+- **Status:** Accepted as the transport profile; production support remains
+  Phase 0B evidence-gated
 - **Date:** 2026-09-18
 - **Owners:** Project team
 - **Supersedes:** None
@@ -18,6 +19,11 @@ Use one continuous WebRTC/Opus monitor stream per client. Mix and route sources
 on the audio node. Use 48 kHz audio, request 10 ms packetization for the
 low-latency profile, disable speech enhancement and DTX, and measure actual
 browser buffering.
+
+ADR 0017 selects `str0m` plus upstream `libopus` as the Phase 0B native
+reference implementation. That implementation may be replaced without
+reopening this transport/profile decision if it fails the frozen evidence
+manifest and a fallback passes it.
 
 WebRTC signaling and authorization belong to the management backend. Media
 flows directly between the selected audio node and the browser when network
@@ -51,5 +57,7 @@ topology permits.
 
 ## Validation
 
-Meet the targets and method in `docs/quality/performance-baselines.md` across
-the supported compatibility matrix before changing this ADR to Accepted.
+The WebRTC/Opus architecture is accepted. Promote an individual browser/output/
+network support profile only after it meets the targets and physical method in
+`docs/quality/performance-baselines.md`; passing one profile does not validate
+another.

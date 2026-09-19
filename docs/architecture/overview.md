@@ -1,7 +1,7 @@
 # System architecture
 
-**Status:** Accepted as the initial boundary model; implementation technologies
-remain proposed.
+**Status:** Accepted boundary and technology baseline; audio/media library
+compatibility remains evidence-gated.
 
 ## Central decision
 
@@ -71,8 +71,9 @@ Responsibilities:
 
 The node exposes only bootstrap, health, diagnostics, media, and versioned
 control protocols. It has no show builder or user-management interface. The
-deployment is internally split into a real-time audio engine, media worker,
-replay worker, vendor adapter workers, and supervisor. The callback performs
+deployment is internally split into a real-time audio engine, command sequencer,
+client gateway, media worker, replay worker, vendor adapter workers, and
+supervisor. The callback performs
 bounded work with preallocated memory and communicates through bounded
 lock-free or wait-free handoffs where practical. Network-facing parsers cannot
 share the audio engine's privilege or failure domain.
@@ -141,16 +142,25 @@ code.
 The initial expectation is multiple supervised processes plus two separately
 built web bundles:
 
-1. a minimally privileged audio engine with exclusive access to one device;
-2. an unprivileged WebRTC data-channel control gateway plus node supervisor, media, replay,
-   and adapter workers with least privilege;
-3. a management backend; and
-4. a static frontend host, which may be served by the backend package.
+1. an audio engine with exclusive access to one device and no network/database
+   handles;
+2. a canonical command sequencer as the sole node-ledger writer;
+3. separate least-privilege media, client-gateway, replay and adapter workers;
+4. a node supervisor that owns only the native worker tree;
+5. an independently supervised management backend and storage worker; and
+6. independent Manager/Live static artifacts served by the backend.
 
 The frontend host serves independent Manager and Live artifacts.
 
-The node/backend transport and ownership model require a later ADR after
-latency and failure-mode testing. The node should establish an outbound,
+The media worker terminates SCTP but cannot append canonical state. It forwards
+bounded untrusted data-channel bytes to the client gateway; the gateway validates
+the lease/signature and forwards canonical commands to the sequencer. Process,
+session and update ownership are specified in
+[the lifecycle contract](process-and-update-lifecycle.md).
+
+The node's internal PCM/control IPC is selected by ADR 0016; its exact ABI is
+validated in Phase 0A. The node/backend network transport remains versioned and
+evidence-gated. The node should establish an outbound,
 mutually authenticated control connection when split across hosts. It must
 reject unbounded client creation or configuration changes that would violate
 its declared resource envelope.
@@ -202,5 +212,11 @@ its declared resource envelope.
 See [single-device capture](../decisions/0003-cross-platform-single-capture-device.md),
 [active-performance authority](../decisions/0004-active-performance-command-authority.md),
 [appliance resource isolation](../decisions/0007-appliance-resource-isolation.md),
+[native runtime/audio host](../decisions/0014-rust-audio-runtime-and-host-boundary.md),
+[application stack](../decisions/0015-typescript-fastify-react-application-stack.md),
+[local IPC](../decisions/0016-shared-memory-and-protobuf-local-ipc.md),
+[media worker](../decisions/0017-str0m-webrtc-media-worker.md),
+[media clock and IPC ABI](media-clock-and-ipc-abi.md),
+[process/update lifecycle](process-and-update-lifecycle.md),
 [time and replay](time-and-replay.md), and
 [failure/degraded modes](failure-and-degraded-modes.md).

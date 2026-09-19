@@ -12,6 +12,9 @@ must remain understandable without access to the original conversation.
 - [A1/A2 views and collaboration](product/a1-a2-views-and-collaboration.md)
 - [Roadmap](product/roadmap.md)
 - [System architecture](architecture/overview.md)
+- [Implementation and workspace structure](architecture/implementation-structure.md)
+- [Process supervision and update lifecycle](architecture/process-and-update-lifecycle.md)
+- [Media clock and native IPC ABI](architecture/media-clock-and-ipc-abi.md)
 - [Deployment topologies](architecture/deployment.md)
 - [Latency architecture](architecture/latency.md)
 - [Time, clock, and replay](architecture/time-and-replay.md)
@@ -40,6 +43,8 @@ must remain understandable without access to the original conversation.
 - [Repository governance](quality/repository-governance.md)
 - [Definition of done](quality/definition-of-done.md)
 - [Show management and control API](api/show-management-and-control.md)
+- [Technology stack selection](research/technology-stack-selection.md)
+- [Stack review resolutions](research/stack-review-resolution.md)
 - [A1/A2 theatre workflow research](research/a1-a2-collaboration.md)
 - [Independent-review response research](research/review-response-research.md)
 - [Round 3 response research](research/round-3-response-research.md)
@@ -52,6 +57,8 @@ must remain understandable without access to the original conversation.
 
 ## Accepted decisions
 
+- [Component boundaries](decisions/0001-three-component-boundary.md)
+- [WebRTC and Opus transport](decisions/0002-webrtc-opus.md)
 - [Cross-platform single-device capture](decisions/0003-cross-platform-single-capture-device.md)
 - [Active-performance authority and control ledger](decisions/0004-active-performance-command-authority.md)
 - [Cue authority and occurrences](decisions/0005-cue-authority-and-occurrences.md)
@@ -63,6 +70,11 @@ must remain understandable without access to the original conversation.
 - [Untrusted media sandbox](decisions/0011-untrusted-media-sandbox.md)
 - [Node process confinement](decisions/0012-node-process-confinement.md)
 - [Offline PKI and key lifecycle](decisions/0013-offline-pki-and-key-lifecycle.md)
+- [Rust native runtime and audio-host boundary](decisions/0014-rust-audio-runtime-and-host-boundary.md)
+- [TypeScript/Fastify and React/Vite application stack](decisions/0015-typescript-fastify-react-application-stack.md)
+- [Shared-memory and Protobuf local IPC](decisions/0016-shared-memory-and-protobuf-local-ipc.md)
+- [`str0m` WebRTC media worker](decisions/0017-str0m-webrtc-media-worker.md)
+- [Workspaces, testing and native packaging](decisions/0018-workspaces-testing-and-native-packaging.md)
 
 ## Reference
 

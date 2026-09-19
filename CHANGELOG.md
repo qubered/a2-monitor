@@ -10,6 +10,25 @@ externally tested release.
 
 ### Added
 
+- Resolved the independent stack reviews with executable evidence predicates
+  over verified artifact bytes, explicit OS/device/browser/lifecycle promotion
+  matrices, capture-frame/RTP rules, a hardened shared-memory ABI, complete
+  native/backend supervision, media-worker recovery, immutable-slot updates,
+  strict Ajv 2020/Fastify conformance, explicit WebRTC crypto providers,
+  hermetic ASIO builds, accountable release roles and conditional WiX use.
+- Rebased Phase 0 into a prerequisite closure slice, stack scaffold, capture
+  proof and three attributable Phase 0B media/appliance/integration gates.
+- Aligned branch governance with the current single-maintainer phase: pull
+  requests and required cross-platform checks remain enforced, while the
+  impossible second-person approval gate returns before an external pilot.
+
+- Selected and documented the implementation baseline: Rust with a replaceable
+  CPAL audio-host layer, shared-memory/Protobuf IPC, `str0m` plus `libopus`, a
+  TypeScript/Fastify backend, independent React/Vite applications, pinned
+  SQLite, Cargo/npm workspaces, cross-browser testing and native signed
+  Windows/macOS packages. Hardware-sensitive choices remain evidence-gated.
+- Added the target workspace/dependency map and a Phase 0T scaffold gate before
+  hardware capture work.
 - Initial product, architecture, quality, and repository-management baseline.
 - Closed the third independent-review design findings with safe takeover
   fencing, exact Live lease/data-channel semantics, persistence and media-

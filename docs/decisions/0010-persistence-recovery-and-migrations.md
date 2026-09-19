@@ -20,6 +20,13 @@ WALs are not hosted on SMB/NFS, cloud-sync folders or removable media. Automatic
 WAL checkpointing is disabled; a storage worker performs measured checkpoints
 outside the real-time path.
 
+Every shipped process uses a pinned bundled SQLite containing the WAL-reset fix:
+SQLite 3.51.3 or newer. Startup records and asserts `sqlite_version()` plus
+compile options. It never silently substitutes an older operating-system
+library. The backend uses one owner/writer queue through the ADR 0015 storage
+worker; the node owns a different database through bundled `rusqlite`. No two
+components share one database file. Extension loading is disabled.
+
 An accepted canonical command is acknowledged only after its transaction has
 committed under this profile. Node and backend each reserve control-ledger space,
 write latency and IOPS independently of replay, assets and logs. A UPS reduces
@@ -70,3 +77,5 @@ age and backup/evidence pins; deletion uses a tombstone before physical purge.
 - fill disk and exhaust reserved IOPS while capture/live media continue;
 - restore current and previous release backups and rebuild projections; and
 - measure every RPO/RTO instead of accepting a successful process exit.
+- concurrently write/checkpoint with multiple readers and verify the shipped
+  SQLite version against the upstream WAL-reset regression case.
