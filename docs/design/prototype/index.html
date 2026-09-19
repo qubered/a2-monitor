@@ -483,7 +483,17 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
 .chcard.a1 .reportcue{font-family:var(--fb);font-weight:700;font-size:10px;letter-spacing:.07em;
   text-transform:uppercase;color:var(--muted);text-align:center;padding-top:2px}
 .chcard.a1:hover .reportcue{color:var(--red)}
-.chcard.a1.reported{border-color:var(--warn);box-shadow:0 3px 0 #9C6A0E}
+/* A reported channel pulses until someone claims it. This is the one piece of
+   ambient motion in the product: it marks work that has been handed over and
+   not yet picked up, on both the view that sent it and the view that has to
+   answer it. It stops the moment somebody claims the report. */
+.chcard.reported{border-color:var(--warn);box-shadow:0 3px 0 #9C6A0E;
+  animation:reportpulse 1.9s ease-in-out infinite}
+@keyframes reportpulse{
+  0%,100%{box-shadow:0 3px 0 #9C6A0E, 0 0 0 0 var(--warn-soft)}
+  55%{box-shadow:0 3px 0 #9C6A0E, 0 0 0 7px var(--warn-soft)}
+}
+.chcard.reported.claimed{animation:none;border-color:var(--card-outline);box-shadow:var(--sh-card)}
 
 /* ============================================================
    REPORT SHEET — the A1's whole job in one thumb.
@@ -509,9 +519,20 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
   gap:2px;padding:0 18px;text-align:left;transition:transform .12s,box-shadow .12s,background .12s}
 .fbtn b{font-family:var(--fd);font-weight:800;font-size:16px;letter-spacing:-.01em}
 .fbtn span{font-size:12.5px;color:var(--muted)}
+.fbtn{position:relative;padding-right:52px}
 .fbtn:hover{transform:translateY(-2px);box-shadow:var(--sh-hover)}
-.fbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line-2);background:var(--red);color:#fff}
-.fbtn:active span{color:rgba(255,255,255,.8)}
+.fbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line-2)}
+/* selected, not pressed: an A1 often hears more than one thing at once */
+.fbtn .tick{position:absolute;right:16px;top:50%;transform:translateY(-50%);
+  width:26px;height:26px;border-radius:50%;border:2px solid var(--line-2);
+  display:grid;place-items:center;color:transparent;transition:background .12s,border-color .12s,color .12s}
+.fbtn .tick svg{width:14px;height:14px}
+.fbtn[aria-pressed=true]{background:var(--red);border-color:var(--red-700);color:#fff;
+  box-shadow:0 3px 0 var(--red-700)}
+.fbtn[aria-pressed=true] span{color:rgba(255,255,255,.82)}
+.fbtn[aria-pressed=true] .tick{background:#fff;border-color:#fff;color:var(--red)}
+.rfoot{position:sticky;bottom:0;background:var(--paper);padding-top:4px}
+.rfoot .btn[disabled]{opacity:.4;pointer-events:none}
 .rfoot{display:flex;gap:12px;align-items:center}
 .rfoot .btn{flex:1 1 auto;min-height:56px}
 
@@ -1140,13 +1161,13 @@ const FAULTS=[
 ];
 function a1card(ch,i){
   const working = ch.owner || (ch.alert && ch.acked);
-  return `<article class="chcard a1 ${ch.crit?'critical':''} ${ch.reported?'reported':''}" data-i="${i}">
+  return `<article class="chcard a1 ${ch.crit?'critical':''} ${ch.reported&&!ch.claimed?'reported':''}" data-i="${i}">
     <button class="hit" data-report="${i}" aria-label="Report a fault on ${ch.nm}, channel ${ch.no}"></button>
     <div class="tile">
       <div class="shot">
         ${face(ch)}
         <span class="no">${String(ch.no).padStart(2,"0")}</span>
-        ${ch.reported?`<span class="listening-tag badge b-warn"><i class="dot"></i>REPORTED</span>`:
+        ${ch.reported?`<span class="listening-tag badge b-warn"><i class="dot live-dot"></i>REPORTED${ch.reported.length>1?` ×${ch.reported.length}`:""}</span>`:
           working?`<span class="listening-tag badge b-rep"><i class="dot"></i>BEING WORKED</span>`:""}
         <button class="zoom" data-detail="${i}" aria-label="Open details for ${ch.nm}"><i><svg viewBox="0 0 16 16"
           fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -1162,14 +1183,16 @@ function a1card(ch,i){
 
 function card(ch,i){
   const alerting = ch.alert && !ch.acked;
-  return `<article class="chcard ${ch.live?'listening':''} ${ch.crit?'critical':''} ${alerting?'alert':''}" data-i="${i}">
+  return `<article class="chcard ${ch.live?'listening':''} ${ch.crit?'critical':''} ${alerting?'alert':''} ${ch.reported&&!ch.claimed?'reported':''}" data-i="${i}">
     <button class="hit" data-listen="${i}" aria-label="Listen to ${ch.nm}, channel ${ch.no}"></button>
     ${alertOverlay(ch,i)}
     <div class="tile">
     <div class="shot">
       ${face(ch)}
       <span class="no">${String(ch.no).padStart(2,"0")}</span>
-      ${ch.live?`<span class="listening-tag badge b-live"><i class="dot live-dot"></i>LISTENING</span>`:""}
+      ${ch.reported&&!ch.claimed
+        ? `<span class="listening-tag badge b-warn"><i class="dot live-dot"></i>A1 REPORTED${ch.reported.length>1?` ×${ch.reported.length}`:""}</span>`
+        : ch.live?`<span class="listening-tag badge b-live"><i class="dot live-dot"></i>LISTENING</span>`:""}
       <button class="zoom" data-detail="${i}" aria-label="Open details for ${ch.nm}"><i><svg viewBox="0 0 16 16"
         fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M6 2H2v4M10 14h4v-4M14 6V2h-4M2 10v4h4"/></svg></i></button>
@@ -1353,8 +1376,16 @@ $$(".seek").forEach(el=>{
 document.addEventListener("click",e=>{
   const rep=e.target.closest("[data-report]");
   if(rep){ openReport(+rep.dataset.report); return; }
-  const fb=e.target.closest("[data-fault]");
-  if(fb){ sendReport(+fb.dataset.ch, +fb.dataset.fault); return; }
+  const pk=e.target.closest("[data-pick]");
+  if(pk){
+    const k=+pk.dataset.pick;
+    const on = pk.getAttribute("aria-pressed")!=="true";
+    pk.setAttribute("aria-pressed", String(on));
+    if(on) PICKED.add(k); else PICKED.delete(k);
+    refreshSend(); return;
+  }
+  const sd=e.target.closest("[data-send]");
+  if(sd){ sendReport(+sd.dataset.send); return; }
   if(e.target.closest("[data-rclose]")){ $("#report").classList.remove("open"); return; }
   const un=e.target.closest("[data-undo]");
   if(un){ const i=+un.dataset.undo; CH[i].reported=null; renderGrids();
@@ -1443,27 +1474,42 @@ function openReport(i){
       <div class="t"><h3>${ch.nm}</h3><div class="sub">${ch.rl} · console ${String(ch.no).padStart(2,"0")}</div></div>
       <button class="btn btn-line" data-rclose>Cancel</button>
     </div>
-    <div class="rq">What are you hearing?</div>
+    <div class="rq">What are you hearing? <span style="font-weight:500;color:var(--muted);font-size:14px;font-family:var(--fb)">Pick as many as apply.</span></div>
     <div class="fgrid">
-      ${FAULTS.map((f,k)=>`<button class="fbtn" data-fault="${k}" data-ch="${i}">
-        <b>${f[0]}</b><span>${f[1]}</span></button>`).join("")}
+      ${FAULTS.map((f,k)=>`<button class="fbtn" data-pick="${k}" aria-pressed="false">
+        <b>${f[0]}</b><span>${f[1]}</span>
+        <span class="tick" aria-hidden="true">${TICK}</span></button>`).join("")}
+      <button class="fbtn" data-pick="8" aria-pressed="false">
+        <b>Something else</b><span>dictate a note</span>
+        <span class="tick" aria-hidden="true">${TICK}</span></button>
     </div>
     <div class="rfoot">
-      <button class="btn btn-line" data-rclose>Not now</button>
-      <button class="btn btn-line" data-fault="-1" data-ch="${i}">Something else — dictate a note</button>
+      <button class="btn btn-line" data-rclose style="flex:0 0 140px">Not now</button>
+      <button class="btn btn-primary" id="rsend" data-send="${i}" disabled>Send report</button>
     </div>`;
+  PICKED.clear();
   r.classList.add("open");
 }
-function sendReport(i,k){
+const PICKED=new Set();
+function refreshSend(){
+  const b=$("#rsend"); if(!b) return;
+  const n=PICKED.size;
+  b.disabled = n===0;
+  b.textContent = n===0 ? "Send report" : n===1 ? "Send 1 issue" : `Send ${n} issues`;
+}
+function sendReport(i){
   const ch=CH[i]; if(!ch) return;
-  const what = k>=0 ? FAULTS[k][0] : "A note";
-  ch.reported = what;
+  const names=[...PICKED].sort((a,b)=>a-b).map(k=> k===8 ? "a dictated note" : FAULTS[k][0]);
+  if(!names.length) return;
+  ch.reported = names;
   renderGrids();
+  const list = names.length===1 ? `<b>${names[0]}</b>`
+    : names.slice(0,-1).map(n=>`<b>${n}</b>`).join(", ") + ` and <b>${names.at(-1)}</b>`;
   const sh=$("#rsheet");
   sh.innerHTML = `
     <div class="rsent">
       <div class="big">Sent to backstage</div>
-      <div class="who3"><b>${what}</b> on ${ch.no} · ${ch.nm}.
+      <div class="who3">${list} on ${ch.no} · ${ch.nm}.
         The A2 on that zone has it, and you will see who claims it on the card.</div>
       <div class="row3">
         <button class="btn btn-line" data-undo="${i}">Undo</button>

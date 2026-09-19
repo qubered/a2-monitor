@@ -62,24 +62,36 @@ more than a moment.
 **Press the channel.** A sheet rises from the bottom with the performer, the
 console number, and one question: *What are you hearing?*
 
-**Press what is wrong.** Eight faults in the A1's own words — dropping out,
-crackling, distorted, too quiet, clothing noise, popping, hum or buzz, nothing at
-all — each a 72px target with a one-line gloss beneath. There is also *Something
-else — dictate a note*.
+**Press what is wrong — as many as apply.** Eight faults in the A1's own words —
+dropping out, crackling, distorted, too quiet, clothing noise, popping, hum or
+buzz, nothing at all — plus *Something else, dictate a note*. Each is a 72px
+target with a one-line gloss beneath and a tick on the right when selected.
 
-**That press is the send.** There is no confirm step. Mid-show a confirmation is
-a step too many, and a mis-sent report is cheap: the sheet then shows **Sent to
-backstage**, who has it, and an **Undo** that stays live for a few seconds.
-Alongside it, two follow-ups the A1 can add without having needed them first:
-*Mark urgent — it is on air now*, and *Done*.
+Multi-select, because faults arrive together. Clothing noise *and* crackling is a
+different diagnosis from either alone, and forcing the A1 to pick the most
+representative one throws away the very thing that tells an A2 where to start.
+
+**Press Send.** The button counts what is going — *Send 2 issues* — and is the
+only disabled control on the surface until something is picked. The sheet then
+shows **Sent to backstage**, everything that went, who has it, and an **Undo**
+that stays live for a few seconds. Alongside it, two follow-ups the A1 can add
+without having needed them first: *Mark urgent — it is on air now*, and *Done*.
 
 The report arrives backstage carrying the channel, the performer, the fault in
 plain words, the time, and who sent it. No identity translation, no readback.
 
 ## What the A1 gets back
 
-- The card shows **REPORTED** until someone claims it, then **BEING WORKED** with
-  the claimant.
+- **The card's outline pulses** from the moment a report is sent until somebody
+  claims it — on the A1's own grid and on the A2's. This is the only ambient
+  motion in the product, and it earns its place: it marks work that has been
+  handed over and not yet picked up, which is precisely the state nobody should
+  be able to sit in unnoticed. It stops on claim, and `prefers-reduced-motion`
+  removes it while the amber outline stays.
+- The card shows **REPORTED**, with a count when more than one issue went, until
+  someone claims it — then **BEING WORKED** with the claimant. On the A2 grid the
+  same channel reads **A1 REPORTED**, so it is obvious the fault came from the
+  desk rather than from telemetry.
 - Critical exceptions across the whole show sit in one banner at the top,
   including sources not currently on stage.
 - The open-reports bar names who has what.
