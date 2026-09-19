@@ -92,8 +92,12 @@ not made here.
 ## Prototype
 
 [`prototype/index.html`](prototype/index.html) is a self-contained, clickable
-prototype of all four surfaces at both reference viewports. Open it directly in
-a browser; it has no build step and no dependencies beyond web fonts.
+prototype of all four surfaces. Open it directly in a browser; it has no build
+step and no dependencies beyond web fonts.
+
+It opens fit to the window, with fixed desktop, iPad landscape and iPad portrait
+viewports available for checking layout, and a Paper/dark toggle that follows the
+operating system on first load and remembers the choice after that.
 
 It is a design artefact with fabricated data, not a product build. It makes no
 claim about latency, receiver behaviour or anything else in

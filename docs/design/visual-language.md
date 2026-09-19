@@ -13,11 +13,23 @@ Source: [RVLT design language](https://rvlt-labs.github.io/rvlt-designlanguage/)
 [component preview](https://rvlt-labs.github.io/rvlt-designlanguage/preview);
 accessed 2026-09-19.
 
-## Surface: Paper
+## Surface: Paper, and dark
 
 RVLT ships a dark default and an opt-in light "Paper" theme. **A2 Monitor
-defaults to Paper.** Dark remains available and is a straight theme switch, not
-a separate design.
+defaults to Paper.** Dark is a straight theme switch, not a separate design, and
+both are first-class: every colour is a token, and no component defines a colour
+that only resolves in one theme.
+
+Themes resolve in three states, not two — an explicit choice, and the default
+"system" setting which stamps nothing and leaves only `prefers-color-scheme`.
+The Paper set is declared on bare `:root`; the dark set is declared twice, once
+behind `@media (prefers-color-scheme: dark)` guarded as
+`:root:not([data-theme="light"])`, and once behind `:root[data-theme="dark"]` so
+an in-app toggle wins in either direction.
+
+The translucent alert veil and its text shadows are the one place this bites:
+they need a `--veil` and `--veil-ink` token per theme rather than a literal
+white, or the alert renders white-on-white in dark.
 
 ```
 --paper #F4EEE1   --paper-2 #EDE4D2   --card #FFFDF8   --elev #FFFDF8

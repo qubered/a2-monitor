@@ -135,12 +135,11 @@ which kind, fast, from across a wing.
 
 ### Behaviour
 
-1. **Pressing the card acknowledges it — and starts listening.** There is no
-   Acknowledge button. Pressing an alerting channel means "I see it, let me hear
-   it", so one press does both: the alert is acknowledged and that channel goes
-   into the operator's ears. The alert is the only thing standing between the
-   card and its normal press-to-listen behaviour, and it gets out of the way on
-   the first press.
+1. **Pressing the card acknowledges it, and nothing else.** There is no
+   Acknowledge button. The first press clears the alert and returns the card to
+   normal, so a **second press listens** — the same press that listens to any
+   other channel. Acknowledging is never mixed with changing what is in the
+   operator's ears: one gesture, one consequence.
 2. **The overlay expires; the alert does not.** It holds the card for a
    configurable time — default five minutes, set per severity by production
    policy — then clears, so an unattended screen does not end the night as a wall

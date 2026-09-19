@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="light" data-surface="a2" data-view="ipad-l">
+<html lang="en" data-theme="light" data-surface="a2" data-view="fit">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,7 +19,28 @@
      --ok    verified                --rep   stale or unknown
      --purple replay
    ============================================================ */
-:root{                             /* RVLT dark */
+:root{                            /* RVLT Paper — the default surface */
+  --paper:#F4EEE1; --paper-2:#EDE4D2; --card:#FFFDF8; --elev:#FFFDF8;
+  --ink:#1D1A15; --ink-2:#4B4539; --muted:#7D7565; --faint:#A89E89;
+  --line:#E4DAC3; --line-2:#D8CCB0;
+  --red:#C12229; --red-700:#9C1B21; --red-soft:#FBE7E3;
+  --ok:#2EA65C; --warn:#C98A14; --rep:#8A8270; --t-out:#9C1B21;
+  --ok-soft:#E7F5EC; --warn-soft:#FBF0D6; --rep-soft:#EFE9DC; --out-soft:#FBE7E3;
+  --amber:#E79A2B; --blue:#2F6BD6; --green:#2EA65C; --purple:#7A5CD0; --dark:#241F1A;
+  --coral:#CC5E2E; --teal:#1C8B83; --pink:#C2487E; --lime:#6E8C12;
+  --purple-soft:#ECE6FA;
+  --scrim:rgba(40,30,15,.45); --select:rgba(193,34,41,.16); --link:#2F6BD6;
+  --veil:rgba(255,253,248,.44); --veil-ink:rgba(255,253,248,.85); --card-lit:none;
+  --sh-card:0 3px 0 var(--line-2); --sh-hover:0 7px 0 var(--line-2);
+  --sh-stk:2px 4px 0 rgba(40,30,15,.13);
+  --card-outline:var(--ink);
+}
+/* The viewer's theme has three states: an explicit choice stamps data-theme on
+   the root, and the default "system" setting stamps nothing. So the dark set is
+   declared twice — once behind the media query for un-stamped documents, once
+   behind the explicit stamp so the in-app toggle wins either way. */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){                /* RVLT dark */
   --paper:#141210; --paper-2:#1A1613; --card:#211C17; --elev:#2A241D;
   --ink:#F5EFE2; --ink-2:#CDC4B2; --muted:#9E9483; --faint:#6E665A;
   --line:#332C24; --line-2:#473E32;
@@ -35,25 +56,34 @@
   --lit:inset 0 1px 0 rgba(255,253,248,.14); --sh-stk:2px 4px 0 rgba(0,0,0,.5);
   --cream:#F5EFE2; --cream-ink:#1D1A15;
   --r:14px; --r-lg:20px; --radius:0.875rem;
+  --veil:rgba(20,18,16,.50); --veil-ink:rgba(10,9,8,.85); --card-lit:var(--lit);
   --fd:"Archivo",sans-serif;
   --fb:"Hanken Grotesk",system-ui,sans-serif;
   --fh:"Kalam",cursive; --fm:"JetBrains Mono",ui-monospace,monospace;
   --card-outline:var(--line-2);
+  }
 }
-.light{                            /* RVLT Paper — the default here */
-  --paper:#F4EEE1; --paper-2:#EDE4D2; --card:#FFFDF8; --elev:#FFFDF8;
-  --ink:#1D1A15; --ink-2:#4B4539; --muted:#7D7565; --faint:#A89E89;
-  --line:#E4DAC3; --line-2:#D8CCB0;
-  --red:#C12229; --red-700:#9C1B21; --red-soft:#FBE7E3;
-  --ok:#2EA65C; --warn:#C98A14; --rep:#8A8270; --t-out:#9C1B21;
-  --ok-soft:#E7F5EC; --warn-soft:#FBF0D6; --rep-soft:#EFE9DC; --out-soft:#FBE7E3;
-  --amber:#E79A2B; --blue:#2F6BD6; --green:#2EA65C; --purple:#7A5CD0; --dark:#241F1A;
-  --coral:#CC5E2E; --teal:#1C8B83; --pink:#C2487E; --lime:#6E8C12;
-  --purple-soft:#ECE6FA;
-  --scrim:rgba(40,30,15,.45); --select:rgba(193,34,41,.16); --link:#2F6BD6;
-  --sh-card:0 3px 0 var(--line-2); --sh-hover:0 7px 0 var(--line-2);
-  --sh-stk:2px 4px 0 rgba(40,30,15,.13);
-  --card-outline:var(--ink);
+:root[data-theme="dark"]{                         /* RVLT dark */
+  --paper:#141210; --paper-2:#1A1613; --card:#211C17; --elev:#2A241D;
+  --ink:#F5EFE2; --ink-2:#CDC4B2; --muted:#9E9483; --faint:#6E665A;
+  --line:#332C24; --line-2:#473E32;
+  --red:#E0363D; --red-700:#B21F26; --red-soft:rgba(224,54,61,.16);
+  --ok:#4FD888; --warn:#EBA53A; --rep:#B6AC9A; --t-out:#F26F73;
+  --ok-soft:rgba(62,207,122,.14); --warn-soft:rgba(235,165,58,.15);
+  --rep-soft:rgba(158,148,131,.14); --out-soft:rgba(224,54,61,.18);
+  --amber:#EBA53A; --blue:#5B8DEF; --green:#3ECF7A; --purple:#9B82E6; --dark:#0E0C0A;
+  --coral:#EF7E55; --teal:#3FC8BE; --pink:#E875AC; --lime:#AFC44E;
+  --purple-soft:rgba(155,130,230,.15);
+  --scrim:rgba(14,12,10,.66); --select:rgba(224,54,61,.20); --link:#5B8DEF;
+  --sh-card:0 3px 0 #0C0A08; --sh-hover:0 7px 0 #0C0A08;
+  --lit:inset 0 1px 0 rgba(255,253,248,.14); --sh-stk:2px 4px 0 rgba(0,0,0,.5);
+  --cream:#F5EFE2; --cream-ink:#1D1A15;
+  --r:14px; --r-lg:20px; --radius:0.875rem;
+  --veil:rgba(20,18,16,.50); --veil-ink:rgba(10,9,8,.85); --card-lit:var(--lit);
+  --fd:"Archivo",sans-serif;
+  --fb:"Hanken Grotesk",system-ui,sans-serif;
+  --fh:"Kalam",cursive; --fm:"JetBrains Mono",ui-monospace,monospace;
+  --card-outline:var(--line-2);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 ::selection{background:var(--select)}
@@ -79,9 +109,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .specbar .note{margin-left:auto;font-size:12px;color:var(--faint)}
 
 /* ---------- device ---------- */
-.stage{flex:1 1 auto;display:grid;place-items:center;overflow:auto;padding:22px}
+.stage{flex:1 1 auto;display:grid;place-items:center;overflow:auto;padding:22px;min-height:0}
+[data-view=fit] .stage{padding:0}
 .device{background:var(--paper);border:2px solid var(--card-outline);border-radius:var(--r-lg);
   box-shadow:var(--sh-card);overflow:hidden;position:relative;display:flex;flex-direction:column;flex:0 0 auto}
+[data-view=fit] .device{width:100%;height:100%;border:0;border-radius:0;box-shadow:none}
 [data-view=desktop] .device{width:1512px;height:900px}
 [data-view=ipad-l]  .device{width:1180px;height:820px}
 [data-view=ipad-p]  .device{width:820px;height:1080px}
@@ -144,7 +176,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   transition:transform .12s,box-shadow .12s,background .12s}
 .chipf .n{font-family:var(--fm);font-size:12px;color:var(--faint)}
 .chipf[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--paper);box-shadow:0 3px 0 var(--line-2)}
-.chipf[aria-pressed=true] .n{color:rgba(255,255,255,.7)}
+.chipf[aria-pressed=true] .n{color:var(--paper);opacity:.62}
 .chipf:active{transform:translateY(2px)}
 
 /* ============================================================
@@ -160,7 +192,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 [data-view=ipad-p] .grid{grid-template-columns:repeat(auto-fill,minmax(236px,1fr))}
 
 .chcard{position:relative;background:var(--card);border:2px solid var(--card-outline);border-radius:var(--r-lg);
-  box-shadow:var(--sh-card);padding:14px;display:flex;flex-direction:column;gap:12px;text-align:left;width:100%;
+  box-shadow:var(--sh-card),var(--card-lit,none);padding:14px;display:flex;flex-direction:column;gap:12px;text-align:left;width:100%;
   transition:transform .16s,box-shadow .16s,border-color .16s;touch-action:manipulation}
 /* the whole card listens. it sits under the content, which does not take
    pointer events, so a press anywhere that is not the photo lands here. */
@@ -192,10 +224,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    status strip — which is what they need to start troubleshooting. The overlay
    names the problem and nothing else. */
 .alertover{position:absolute;inset:0;z-index:5;border-radius:calc(var(--r-lg) - 2px);
-  background:color-mix(in srgb, var(--t-out) 11%, rgba(255,253,248,.44));
+  background:color-mix(in srgb, var(--t-out) 11%, var(--veil));
   display:flex;flex-direction:column;padding:14px;
   align-items:center;justify-content:flex-start;text-align:center;width:100%;border:none;cursor:pointer}
-.alertover.warn{background:color-mix(in srgb, var(--warn) 13%, rgba(255,253,248,.44))}
+.alertover.warn{background:color-mix(in srgb, var(--warn) 13%, var(--veil))}
 /* the mark sits over the photograph, the way WaveTool puts it on the tile,
    so the name and the status strip underneath stay readable */
 /* the mark matches the photograph's box exactly, so the name and the status
@@ -204,9 +236,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   align-items:center;justify-content:center;gap:2px}
 .alertover .glyph{color:var(--t-out);opacity:.92;line-height:0}
 .alertover.warn .glyph{color:var(--warn)}
-.alertover .glyph svg{width:46px;height:46px;filter:drop-shadow(0 1px 0 rgba(255,253,248,.9))}
+.alertover .glyph svg{width:46px;height:46px;filter:drop-shadow(0 1px 0 var(--veil-ink))}
 .alertover .kind{font-family:var(--fd);font-weight:800;font-size:18px;letter-spacing:.02em;
-  text-transform:uppercase;color:var(--t-out);text-shadow:0 1px 0 rgba(255,253,248,.85)}
+  text-transform:uppercase;color:var(--t-out);text-shadow:0 1px 0 var(--veil-ink)}
 .alertover.warn .kind{color:var(--warn)}
 /* the overlay clears itself after a configurable time. the alert does not:
    it drops into the status area still marked unacknowledged. */
@@ -219,10 +251,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 @keyframes alertexpire{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .alertover .press{font-family:var(--fb);font-weight:700;font-size:10px;letter-spacing:.07em;
   text-transform:uppercase;color:var(--t-out);opacity:.7;margin-top:4px;
-  text-shadow:0 1px 0 rgba(255,253,248,.85)}
+  text-shadow:0 1px 0 var(--veil-ink)}
 .alertover.warn .press{color:var(--warn)}
-.alertover:active{background:color-mix(in srgb, var(--t-out) 20%, rgba(255,253,248,.44))}
-.alertover.warn:active{background:color-mix(in srgb, var(--warn) 22%, rgba(255,253,248,.44))}
+.alertover:active{background:color-mix(in srgb, var(--t-out) 20%, var(--veil))}
+.alertover.warn:active{background:color-mix(in srgb, var(--warn) 22%, var(--veil))}
 @keyframes alertpulse{0%,100%{box-shadow:0 3px 0 var(--red-700)}50%{box-shadow:0 3px 0 var(--red-700),0 0 0 4px var(--red-soft)}}
 .chcard.alert{animation:alertpulse 2.2s ease-in-out infinite}
 
@@ -470,8 +502,9 @@ button.tcode{width:auto;min-width:62px;text-align:right;font-weight:600}
     <button data-s="replay" aria-pressed="false">Replay</button>
   </div>
   <div class="seg" role="group" aria-label="Viewport">
+    <button data-v="fit" aria-pressed="true">Fit window</button>
     <button data-v="desktop" aria-pressed="false">Desktop</button>
-    <button data-v="ipad-l" aria-pressed="true">iPad landscape</button>
+    <button data-v="ipad-l" aria-pressed="false">iPad landscape</button>
     <button data-v="ipad-p" aria-pressed="false">iPad portrait</button>
   </div>
   <div class="seg" role="group" aria-label="Theme">
@@ -1236,9 +1269,10 @@ document.addEventListener("click",e=>{
   const ak=e.target.closest("[data-ack]");
   if(ak){
     e.stopPropagation();
+    /* first press acknowledges and nothing else. the card returns to normal,
+       so a second press listens — the same press that listens to any other
+       channel. acknowledging is never mixed with changing what is in your ears. */
     const i=+ak.dataset.ack; CH[i].acked=true; CH[i].expired=false;
-    /* pressing an alerting channel means "I see it, let me hear it" */
-    listen(i);
     /* acknowledging is not fixing: the fault stays in the status strip, and the
        alert moves into the card's status area rather than vanishing */
     renderGrids();
@@ -1324,10 +1358,25 @@ document.addEventListener("click",e=>{
 function go(s){ $$(".seg [data-s]").forEach(o=>o.setAttribute("aria-pressed",String(o.dataset.s===s))); html.dataset.surface=s; }
 $$(".seg [data-s]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.s)));
 $$(".seg [data-v]").forEach(b=>b.addEventListener("click",()=>{
-  $$(".seg [data-v]").forEach(o=>o.setAttribute("aria-pressed",String(o===b))); html.dataset.view=b.dataset.v; }));
-$$(".seg [data-t]").forEach(b=>b.addEventListener("click",()=>{
-  $$(".seg [data-t]").forEach(o=>o.setAttribute("aria-pressed",String(o===b)));
-  html.classList.toggle("light",b.dataset.t==="light"); }));
+  $$(".seg [data-v]").forEach(o=>o.setAttribute("aria-pressed",String(o===b)));
+  html.dataset.view=b.dataset.v;
+  try{ localStorage.setItem("a2-view", b.dataset.v); }catch(e){}
+}));
+try{
+  const v=localStorage.getItem("a2-view");
+  if(v){ html.dataset.view=v;
+    $$(".seg [data-v]").forEach(o=>o.setAttribute("aria-pressed",String(o.dataset.v===v))); }
+}catch(e){}
+function setTheme(t){
+  $$(".seg [data-t]").forEach(o=>o.setAttribute("aria-pressed",String(o.dataset.t===t)));
+  html.setAttribute("data-theme", t);
+  try{ localStorage.setItem("a2-theme", t); }catch(e){}
+}
+$$(".seg [data-t]").forEach(b=>b.addEventListener("click",()=>setTheme(b.dataset.t)));
+try{
+  const saved=localStorage.getItem("a2-theme");
+  setTheme(saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+}catch(e){}
 $$(".chipf,#mutebtn").forEach(b=>b.addEventListener("click",()=>
   b.setAttribute("aria-pressed",String(b.getAttribute("aria-pressed")!=="true"))));
 })();
