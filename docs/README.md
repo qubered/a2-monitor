@@ -6,6 +6,7 @@ must remain understandable without access to the original conversation.
 
 ## Start here
 
+- [Open questions](open-questions.md)
 - [Product vision](product/vision.md)
 - [Reference productions](product/reference-productions.md)
 - [Cast, microphone, image, and cue workflows](product/cast-mics-cues.md)
@@ -19,7 +20,6 @@ must remain understandable without access to the original conversation.
 - [Latency architecture](architecture/latency.md)
 - [Time, clock, and replay](architecture/time-and-replay.md)
 - [Failure and degraded modes](architecture/failure-and-degraded-modes.md)
-- [Collaboration state and authorization contract](architecture/collaboration-contract.md)
 - [Runtime command contract](architecture/runtime-command-contract.md)
 - [Temporal identity and physical swap](architecture/temporal-identity-and-swap.md)
 - [Cue and operator state machines](architecture/cue-and-operator-state-machines.md)
@@ -44,18 +44,12 @@ must remain understandable without access to the original conversation.
 - [Definition of done](quality/definition-of-done.md)
 - [Show management and control API](api/show-management-and-control.md)
 - [Technology stack selection](research/technology-stack-selection.md)
-- [Stack review resolutions](research/stack-review-resolution.md)
 - [A1/A2 theatre workflow research](research/a1-a2-collaboration.md)
-- [Independent-review response research](research/review-response-research.md)
-- [Round 3 response research](research/round-3-response-research.md)
-- [A1/A2 independent review](reviews/2026-09-18-a1-a2-independent-review.md)
-- [Independent plan review: round 3](reviews/2026-09-19-independent-review-round-3.md)
-- [Round 3 response and closure ledger](reviews/2026-09-19-round-3-response.md)
-- [Independent plan review: round 4](reviews/2026-09-19-independent-review-round-4.md)
-- [Round 4 response and closure ledger](reviews/2026-09-19-round-4-response.md)
-- [Independent plan review: round 5 closure verification](reviews/2026-09-19-independent-review-round-5.md)
 
-## Accepted decisions
+## Decisions
+
+ADRs 0001-0003 are accepted. ADRs 0004-0018 are hypotheses with no
+supporting evidence; their status lines say so individually.
 
 - [Component boundaries](decisions/0001-three-component-boundary.md)
 - [WebRTC and Opus transport](decisions/0002-webrtc-opus.md)
@@ -83,13 +77,14 @@ must remain understandable without access to the original conversation.
 - `quality`: testing, performance, security, and release gates
 - `integrations`: receiver coverage, transports, capability maps, and firmware policy
 - `research`: source-backed technical and competitive research
-- `reviews`: review findings and action ledgers
 - `runbooks`: repeatable development and operational procedures
 
 ## Document states
 
 Use these labels at the top of technical documents where ambiguity matters:
 
+- **Hypothesis**: written ahead of evidence. Nothing in it has been measured
+  and it may be wrong in ways nobody has discovered yet.
 - **Proposed**: not yet accepted or proven.
 - **Accepted**: the current project decision.
 - **Validated**: measured on a named test setup.

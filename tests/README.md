@@ -11,25 +11,30 @@ shared test environment:
 - long-running soak and controlled network impairment; and
 - appliance upgrade/rollback tests.
 
-`manifests` contains machine-readable evidence input/result schemas. `fixtures`
-contains versioned protocol golden vectors. Both are validated by
-`scripts/check-repo.sh`; executable code must add semantic schema and
-cryptographic-vector validation rather than relying on JSON syntax alone.
+It is currently empty. There is no product code to test.
 
-Evidence runners do not declare pass/fail. They emit signed results whose
-assertions name a content-addressed artifact and include a mandatory
-`evidence-metrics/v0` artifact. The verifier reads the files beneath a supplied
-artifact root, hashes their actual bytes, evaluates catalogue predicates and
-returns normalized coverage for promotion. Its run form is:
+The previous contents — an evidence catalogue, manifest schemas, protocol
+golden vectors and adversarial contract tests — were withdrawn along with the
+verifier they exercised, because the verifier did not verify: it compared
+declared artifact hashes without resolving the storage key, reading bytes,
+checking length or recomputing SHA-256, and its passing fixture used
+placeholder hashes against nonexistent stores.
 
-```text
-node tools/evidence-verifier.mjs verify-run \
-  MANIFEST RESULT CATALOG KEYRING MANIFEST_SCHEMA RESULT_SCHEMA ARTIFACT_ROOT
-```
+## What the replacement must do
 
-Contract tests must retain adversarial cases for changed bytes, fabricated
-measurements, insufficient elapsed time, out-of-window faults and promotion
-with an incomplete OS/device/browser matrix.
+When evidence runners are written against a working runtime:
+
+- runners do not declare pass/fail. They emit signed results whose assertions
+  name a content-addressed artifact and include a mandatory metrics artifact;
+- the verifier reads files beneath a supplied artifact root, hashes their
+  actual bytes, evaluates catalogue predicates and returns normalized coverage
+  for promotion; and
+- contract tests carry adversarial cases for changed bytes, fabricated
+  measurements, insufficient elapsed time, out-of-window faults and promotion
+  with an incomplete OS/device/browser matrix. Each must fail for the intended
+  reason, proven by a negative test.
+
+See [open questions](../docs/open-questions.md).
 
 Component-local unit tests should live beside their component. Generated audio,
 captures, logs, databases, and performance reports belong in ignored artifact

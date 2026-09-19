@@ -2,13 +2,18 @@
 
 **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 
+The schemas this document referenced are withdrawn. The design below is
+retained for its reasoning; it must be re-derived against a working runtime
+rather than restored as written.
+
 ## Chunk and order
 
 The node closes immutable chunks at a bounded count/size or performance
 boundary. The signed header binds node/boot/performance/authority IDs,
 first/last sequence, prior-chunk hash, event Merkle root, schema IDs, time and
-bytes. The exact contract is
-[`ledger-chunk.schema.json`](../../packages/protocol/schema/v0/ledger-chunk.schema.json).
+bytes. No machine-readable contract exists: the `schema/v0` tree was withdrawn
+because its chunk schema accepted arbitrary event objects and represented
+neither per-event hash nor inclusion order.
 Open chunks are recoverable but never prunable. Canonical global position is
 `(authority_epoch, authority_sequence)`; UTC never resolves order.
 
@@ -27,11 +32,10 @@ a future profile. Power-loss/WAL and connected rollback detection are mandatory.
    position, signature/hash chain, Merkle contents and schemas.
 2. One transaction inserts raw events idempotently, advances the cursor,
    updates projections and writes outbox rows. Any failure rolls it all back.
-3. Backend signs an exact
-   [`ImportReceipt`](../../packages/protocol/schema/v0/import-receipt.schema.json)
-   with chunk/range, projection version and backup generation.
+3. Backend signs an exact `ImportReceipt` with chunk/range, projection version
+   and backup generation.
 4. Only after that generation is verified in backup/evidence storage may it sign
-   an exact [`PrunePermit`](../../packages/protocol/schema/v0/prune-permit.schema.json).
+   an exact `PrunePermit`.
 5. Node records permit and compaction marker before payload removal, retaining
    header/hash/permit/result for audit.
 
@@ -41,9 +45,8 @@ performance close requires no open canonical transaction, lease closure, sealed
 final chunk and final receipt. Old-epoch/post-fence tails import to quarantine
 only.
 
-Projection changes use a checked
-[`MigrationManifest`](../../packages/protocol/schema/v0/migration-manifest.schema.json)
-binding source head/schema, target schema/version and migration binary. Rebuild
+Projection changes use a checked `MigrationManifest` binding source
+head/schema, target schema/version and migration binary. Rebuild
 writes a parallel projection, verifies counts and hashes, then atomically selects
 it. It never rewrites raw events.
 

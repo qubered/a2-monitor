@@ -36,12 +36,12 @@ required_files=(
   CONTRIBUTING.md
   SECURITY.md
   docs/README.md
+  docs/open-questions.md
   docs/product/vision.md
   docs/architecture/overview.md
   docs/architecture/implementation-structure.md
   docs/architecture/process-and-update-lifecycle.md
   docs/architecture/media-clock-and-ipc-abi.md
-  docs/architecture/collaboration-contract.md
   docs/decisions/0004-active-performance-command-authority.md
   docs/decisions/0005-cue-authority-and-occurrences.md
   docs/decisions/0006-foreground-live-client-profile.md
@@ -58,7 +58,6 @@ required_files=(
   docs/decisions/0017-str0m-webrtc-media-worker.md
   docs/decisions/0018-workspaces-testing-and-native-packaging.md
   docs/research/technology-stack-selection.md
-  docs/research/stack-review-resolution.md
   docs/architecture/performance-lifecycle.md
   docs/architecture/runtime-command-contract.md
   docs/architecture/temporal-identity-and-swap.md
@@ -74,11 +73,6 @@ required_files=(
   docs/quality/validation-matrix.md
   packages/protocol/specification.md
   packages/protocol/model/aggregate-transitions.v0.json
-  tests/catalog/evidence-tests.v0.json
-  tests/catalog/operator-tests.v0.json
-  tests/manifests/evidence-metrics.schema.json
-  tests/fixtures/evidence/phase0a-nominal.metrics.valid.json
-  tests/fixtures/evidence/phase0a-nominal.metrics.false-pass.json
 )
 
 for path in "${required_files[@]}"; do
@@ -98,19 +92,12 @@ while IFS= read -r path; do
 done < <(git ls-files --cached --others --exclude-standard)
 
 if command -v ruby >/dev/null 2>&1; then
-  ruby scripts/check-markdown-links.rb
+  RUBYOPT="-EUTF-8" ruby scripts/check-markdown-links.rb
   while IFS= read -r path; do
     ruby -rjson -e 'JSON.parse(File.read(ARGV.fetch(0)))' "$path"
-  done < <(find packages tests -type f -name '*.json' -print | sort)
+  done < <(find packages -type f -name '*.json' -print | sort)
 else
   echo "Ruby is required for local Markdown and JSON validation." >&2
-  exit 1
-fi
-
-if command -v npm >/dev/null 2>&1; then
-  npm run check:contracts
-else
-  echo "Node.js/npm is required for schema, signature, and evidence validation." >&2
   exit 1
 fi
 

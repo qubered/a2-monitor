@@ -129,8 +129,9 @@ without losing the request history.
 
 Incident lifecycle is `open`, `investigating`, optional `mitigated`, `resolved`,
 `deferred` or `false-positive`. Seen receipts and coordinator claim are separate
-from lifecycle. Exact transitions are defined in the
-[collaboration contract](../architecture/collaboration-contract.md).
+from lifecycle. Exact transitions are not currently specified: the
+collaboration contract is withdrawn with Phase 1B/1C (see
+[open questions](../open-questions.md)).
 
 ## Chat model
 

@@ -2,33 +2,37 @@
 
 **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
 
-The closed catalogue is
-[`evidence-tests.v0.json`](../../tests/catalog/evidence-tests.v0.json). Every run
-validates against the phase-specific
-[`0A`](../../tests/manifests/phase0a-capture-run.schema.json) or
-[`0B`](../../tests/manifests/phase0b-run.schema.json) manifest and the common
-[`result`](../../tests/manifests/evidence-result.schema.json) schema.
+This document states what an evidence contract must do. It does **not**
+describe anything that exists. The previous catalogue, manifest schemas and
+verifier were withdrawn: the verifier compared declared artifact hashes but
+never resolved the storage key, read bytes, checked length or recomputed
+SHA-256, and the checked-in passing fixture used placeholder hashes against
+nonexistent stores. It asserted an assurance level the project did not have.
 
-The verifier, not the runner, computes pass. It requires the exact catalogue
-test, minimum trials/duration/client classes, required faults, assertions and
-content-addressed artifacts. The runner supplies assertion IDs and hashes of
-the artifacts that substantiate them, never a trusted pass/fail field. The
-verifier opens every artifact beneath an explicit artifact root, hashes the
-bytes itself, parses the mandatory `evidence-metrics/v0` document and evaluates
-the catalogue predicate (`eq`, `lt`, `lte`, `gt`, `gte` or `abs_lte`). Every
-predicate must pass. Deviations require a separately signed
-[`waiver`](../../tests/manifests/evidence-waiver.schema.json) whose authority,
-scope, expiry and allowed phase are verified. A phase closes only when every
-catalogued test has a verified passing result.
+When this is rebuilt against a working runtime, it must hold:
 
-The input manifest is immutable and hash-bound to the result. Trial start/end
-times must cover at least `trials * (duration + warmup)`, and every scheduled
-fault must fall inside that interval. The result
-signature is ES256 IEEE-P1363 over RFC 8785 bytes of the object excluding its
-`signature` member. Artifact hashes are SHA-256 of the actual bytes, and
-duplicate artifact kinds or storage keys are rejected. The checked-in
-[`evidence verifier`](../../tools/evidence-verifier.mjs), fixtures and
-adversarial contract tests define the implementation behavior.
+- the verifier, not the runner, computes pass. The runner supplies assertion
+  IDs and artifact hashes, never a trusted pass/fail field;
+- the verifier opens every artifact beneath an explicit artifact root, hashes
+  the bytes itself, parses the metrics document and evaluates the catalogue
+  predicate (`eq`, `lt`, `lte`, `gt`, `gte`, `abs_lte`). Every predicate must
+  pass, and missing or tampered artifacts must fail with negative tests
+  proving it;
+- promotion consumes signed run records against an exact required tuple
+  matrix covering both supported OS families and every named profile.
+  Windows-only or macOS-only evidence cannot close Phase 0A;
+- the input manifest is immutable and hash-bound to the result. Trial
+  start/end times cover at least `trials * (duration + warmup)`, and every
+  scheduled fault falls inside that interval;
+- result signatures are ES256 IEEE-P1363 over RFC 8785 bytes of the object
+  excluding its `signature` member, with cross-runtime canonicalization
+  vectors including Unicode edge cases;
+- deviations require a separately signed waiver whose authority, scope,
+  expiry and allowed phase are verified; and
+- a phase closes only when every catalogued test has a verified passing
+  result.
+
+The requirements below record what the phases were intended to freeze.
 
 0A freezes the exact Windows/macOS device/driver/firmware/rate/block/channel
 tuple plus build, Rust, audio-host adapter, CPAL, SQLite and lockfile
