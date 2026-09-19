@@ -8,103 +8,127 @@ component size.
 
 ## Channel card
 
-The centrepiece. It answers *is anything wrong, and is it mine* in one second.
+The centrepiece, and it is a photograph.
 
-WaveTool draws the headshot as the tile and paints the audio trace over the
-face, with the name on a group-coloured plate beneath. That photo-forward idea
-is right — an A2 thinks in people, not channel numbers — and we keep it. What we
-change: the trace does not sit on the face (it competes with the one thing you
-recognise fastest), audio and RF get separate lanes, and every state that
-WaveTool encodes in colour also gets a glyph.
+An A2 thinks in people. They are looking for Eleanor, not for input 27, and a
+face is recognised faster than any label a screen can carry. WaveTool is right
+about this and we keep it: the headshot is the tile, not an avatar beside the
+text.
 
-### Standard card — 300×212
+What we change is what sits on top of the face. WaveTool paints the audio trace
+across the portrait; we run it as a strip along the bottom edge, inside the
+photograph but clear of it. And the card stops there. Everything past the fifth
+fact belongs in the monitor bar.
+
+### Standard card — 196px wide, 5:4 crop
 
 ```
-┌━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┐ ← 7px marked edge in
-│ ▎[24]  ✓RF  ▲BATT  ·  ·  ·  ·       stale 4s │   --listening-ink, matte,
-│ ┌──────┐  ELEANOR VANCE                      │   no glow. Only when listening.
-│ │      │  Marguerite Hale                    │   category, dimmed when clear
-│ │ face │  ┌────────────────────┐             │
-│ │      │  │ RX 4 · B · IN 27   │ ← tape      │
-│ └──────┘  └────────────────────┘             │
-│                                              │
-│  AF  ▁▂▅█▆▃▂▁▂▄▆█▇▄▂▁▂▃▅  -18.2 dBFS         │ ← audio lane, 10s window
-│  RF  ▄▄▄▅▅▄▄▃▃▄▄▄▄▅▅▅▄▄▄  -62 dBm  Q ▮▮▮▯▯   │ ← RF lane + discrete quality
-│                                              │
-│  ▲ Battery 0:41 — no change before interval  │ ← strongest exception, one line
-│  ✓✓✓✓·✓✓·                        [ JM ]      │ ← check badges · incident owner
-└──────────────────────────────────────────────┘
-   ^ group plate colour runs behind the name row
+┌──────────────────────────────────────┐
+│ ● 27                  ● RF ● Identity│ ← channel, group dot, and only the
+│                                      │   categories actually in fault
+│                                      │
+│           [ headshot ]               │ ← 5:4 crop, fills the card
+│                                      │
+│                                      │
+│▁▂▅█▆▃▂▁▂▄▆█▇▄▂▁▂▃▅▇█▆▄▂▁▂▃▄▅▆▇█▆▄▃▂▁│ ← 10s audio trace, 22px, on the
+├──────────────────────────────────────┤   photo's bottom edge over a scrim
+│ Eleanor Vance                        │
+│ Marguerite Hale                      │
+│ ■ RF quality collapsed 0:40 ago.     │ ← one line, only when something
+└━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┘   needs you
+   ^ 3px bottom rule when listening
 ```
 
-Elements, top to bottom:
+Five things: who, where (the channel number and group dot), what it sounds like,
+the one thing that needs you, and — in the fault flags — whether a second thing
+does too. Nothing else.
 
-- **Marked edge.** A solid 7px bar in `--listening-ink` across the top, flush
-  over the outline, with the outline taking the same ink. Matte tape, not a lit
-  edge — nothing in this product glows. Exactly one card per surface.
-- **Channel number.** Stamped: mono-sm in a boxed plate with a 6px group-colour
-  tab fused to its left edge, like a rubber stamp beside a coloured binder tab.
-  Group is identity, so it never touches a semantic colour.
-- **Badge rail.** Seven fixed positions — audio, RF, battery, identity, cue,
-  client, system — each a glyph at 20px. Clear categories render at `--ink-2`
-  25% so the rail keeps its shape and the eye learns fixed positions. A category
-  with a fault renders in its semantic colour with a count if greater than one.
-  The rail exists so that selecting one primary exception cannot hide a second
-  independent critical fault, which is a stated product requirement
-  ([A1/A2 views](../product/a1-a2-views-and-collaboration.md)).
-- **Staleness stamp.** `stale 4s` in mono-sm `--stale`, top right, with the
-  hatch overlay applied to whichever lanes are affected — not the whole card,
-  because audio can be fresh while receiver telemetry is old.
-- **Headshot.** 56×56, `--r-sm`, 2px `--rule`. Real production headshot, or a
-  monogram on the person's assigned group colour at 22%. Never an illustration.
-- **Character name** in ui-lg 600 `--ink`; **performer name** in ui-sm `--ink-2`
-  beneath. Character first: the A1 calls the role, the cue sheet says the role.
-- **Tape label.** Physical identity — receiver, antenna, input — in mono-sm on a
-  tape strip, rotated `-0.4deg`. The thing you read out loud on comms.
-- **Audio lane.** 10-second rolling trace, 28px tall, `--verified` when present,
-  `--ink-2` when the scene expects silence, hatched when stale. Numeric peak in
-  mono to the right, tabular.
-- **RF lane.** 10-second RSSI trace in `--intervention` hue at 60%, 20px tall,
-  with RSSI in mono and a **separate** five-segment link-quality indicator.
-  Never merged into one health bar.
-- **Exception line.** The single strongest exception, as glyph + sentence. If
-  the cause is inferred rather than observed, the line is prefixed *likely* and
-  the card's outline becomes dashed on that lane.
-- **Check badges.** Eight positions matching the mic-check dimensions in
-  [operator workflows](../product/operator-workflows.md): identity, RF, audio,
-  mute/control, spare, battery, placement, operator sign-off. Passed is
-  `--verified` tick, failed is `--critical`, not-yet-checked is a dot,
-  invalidated by a swap is a dot with a small slash.
-- **Incident owner.** Initials chip when claimed, with the claimant's colour.
-
-### Zoom levels
-
-Pinch cycles three levels. They change what is dropped, never where things are.
-
-| Level | Size | Drops |
-| --- | --- | --- |
-| Compact | 168×108 | Tape label, RF lane, exception line, check badges |
-| Standard | 300×212 | — |
-| Expanded | 300×300 | Adds placement thumbnail, next intervention window, last verified time, operator note in the hand |
+- **Headshot.** The production's real approved headshot through Manager's
+  managed image pipeline. Never an illustrated avatar, never a stock photo. A
+  source with no headshot yet shows the empty frame and reads as incomplete,
+  because it is.
+- **Channel number and group dot.** Quiet mono over the photograph, top left. The
+  dot is group identity and never carries a semantic colour.
+- **Fault flags.** Top right, over the photograph. A category that is clear says
+  nothing at all; a category in fault says its name. This is how a second
+  independent critical fault stays visible behind the first
+  ([A1/A2 views](../product/a1-a2-views-and-collaboration.md)) without a
+  permanent rail of dormant icons.
+- **Staleness.** `42s old` joins the flags, and the trace strip is hatched.
+- **Trace strip.** 10-second rolling window, matching WaveTool's convention, over
+  a scrim so it reads against any photograph. Present audio in `--verified-ink`,
+  expected silence in `--ink-2`, hatched when stale.
+- **Caption.** Character name, then performer name. Character first: the A1 calls
+  the role and the cue sheet says the role.
+- **Exception line.** One line, two at most, only when there is one. `likely`
+  prefixes an inferred cause.
 
 ### States
 
-- **Rest** — `--raised`, 3px `--rule`, `--sh`.
-- **Listening** — marked edge, outline `--listening-ink`.
-- **Latched** — marked edge plus a folded corner in the same ink, the way you
-  dog-ear the page you are working on. Distinguishable from momentary at a
-  glance, because getting this wrong is a safety issue.
-- **Critical** — 2px `--critical` outline. No red wash over the card: WaveTool's
-  red overlay obscures the headshot, which is the fastest identifier on the
-  tile. The outline, the badge and the exception line carry it.
-- **Expected silent** — audio lane in `--ink-2` with the label *expected silent*,
-  explicitly not an alarm state.
-- **Stale** — hatch on the affected lanes, age counter, values in `--stale`.
-- **Unknown / unarmed** — value replaced by `—` and the word *unknown*. Never a
-  zero, never an empty bar.
-- **Muted at transmitter** — the tape label gains a `MUTE` chip in `--critical`,
-  and the audio lane shows a flat line, labelled, not hatched. A muted pack is a
-  known fact, not a missing measurement.
+- **Listening** — a 3px rule in `--listening-ink` along the bottom edge.
+- **Latched** — the same rule plus a latch glyph after the name. Distinguishable
+  at a glance, because getting this wrong is a safety issue.
+- **Critical** — the bottom rule in `--critical-ink`. No red wash: it would cover
+  the face, which is the fastest identifier on the card.
+- **Expected silent** — trace in `--ink-2`, captioned *silent*. Not an alarm.
+- **Stale** — hatched strip, age in the flags, values in `--stale`.
+- **Muted at transmitter** — flat line, captioned *muted at pack*, not hatched. A
+  muted pack is a known fact, not a missing measurement.
+
+### Zoom
+
+Pinch cycles compact / standard / expanded. Compact drops the caption's second
+line and the exception; expanded switches the crop to 4:5 and adds placement,
+next intervention window and the operator's note.
+
+## Monitor bar
+
+The bottom bar is the detail view. There is no side drawer and no modal.
+
+Collapsed it is transport only. **Selecting a channel raises it into that
+source's monitoring panel** — identity, lanes, and its own timeline — without
+moving the grid, covering the faces, or leaving the surface. It is the single
+most-used surface in the product and it sits in the thumb zone.
+
+```
+        ▁▁▁▁  ← grip: tap or drag to raise and lower
+┌─────────────────────────────────────────────────────────────────────┐
+│ ┌──────┐ Eleanor Vance      Audio    ▁▂▅█▆▃▂▁▂▄▆█▇  −18.2 dBFS  │ ⟲ Replay from here │
+│ │photo │ Marguerite Hale    RF level ────────────╲__  −62 dBm   │ ⚑ Mark this moment │
+│ │      │ rx    RX 4 · B     Quality  ▌▌▌▌▌▌▌▌▌▌▁▁▁▁   31 %      │ ◍ Run check        │
+│ └──────┘ pack  A2-114       Cue      40 │41 Ballroom■ ✎│42      │ ✉ Message about…   │
+│          batt  2:14         ├────────────────────────◆ now      │ ⇄ Swap…            │
+│          check 18:55 JM     −30m   −20m   −10m   −5m   now      │                    │
+├─────────────────────────────────────────────────────────────────────┤
+│ [photo] Eleanor Vance  ◀Prev  ⊘Clear  MUTE  DIM  −18 ▮▮▮▮▯  [groups]  ⟲ Replay │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+Three columns: **who** (headshot, identity, pack, battery, last check), **what
+happened** (the lanes and the source's own scrubable timeline), **what you can
+do** (the actions, one per row, always in the same order).
+
+The lanes are the honest ones: audio, RF level, and link quality as a separate
+lane, never merged into a health bar, because interference degrades quality
+without an equivalent fall in RSSI
+([research](../research/wavetool-and-browser-audio.md)). Cue boundaries and
+events sit on the same x-axis so correlation is a glance, not a calculation.
+
+The scrub runs to *now* by default. Dragging back puts that source into replay;
+the mode rule in
+[replay and incidents](surfaces/replay-and-incidents.md) then applies to the
+whole window.
+
+### Transport row
+
+Always visible, whether the panel is raised or not: what you are hearing ·
+previous · clear-all (long-press) · **MUTE** and **DIM** · output level with its
+numeric value · group buttons 1–8 as press-to-listen · replay.
+
+Mute and dim are here because [listening safety](../quality/listening-safety.md)
+requires an always-available local action, and because this is where the thumb
+already is. Listen always starts muted; the transport shows that as a resting
+condition, not an error.
 
 ## Meter and trace
 
@@ -141,45 +165,29 @@ verdicts. Full-width on iPad portrait.
 requires a long-press, drawing a `--critical` fill from left to right over
 1500ms, with the action named in the fill.
 
-## Transport rail
+## Exceptions sheet
 
-Fixed to the bottom, 120px tall, full width, on every Live surface. Present at
-desktop in the same place.
-
-Left to right: listen state (what you are hearing, in the lit-edge treatment) ·
-previous source · clear-all (long-press) · **MUTE** and **DIM** (56px, always
-visible, never in a menu) · output level with its numeric value in mono · group
-buttons 1–8 as press-to-listen pills with their group colour · replay entry.
-
-Mute and dim are here because [listening safety](../quality/listening-safety.md)
-requires an always-available local action, and because the rail is the thumb
-zone. Listen always starts muted; the rail shows that state as a resting
-condition, not an error.
-
-## Exceptions rail
-
-A right-hand rail, 340px at desktop, an edge-swipe sheet on iPad. Lists critical
+A sheet, on every viewport, opened from the header counter or by an edge swipe
+from the right. Never a standing panel: a sidebar spends permanent width on
+something that is empty most of the night. Lists critical
 exceptions across the entire show — including sources not in the current filter
 and not on stage — plus system and audio-path faults affecting more than one
 input. Sorted by severity then age. Each row is a 56px target that selects the
 source and offers listen and claim inline.
 
-## Inspector
+## Full record
 
-Right drawer at desktop (460px), full-height sheet on iPad with a swipe-down
-dismiss and a 56px close control.
+The monitor bar answers *what is happening to this source now*. The full
+record — diversity and interference detail, captured versus receiver meters,
+battery history, every check badge with who and when, placement images, asset
+and assignment history, cue expectations, incident evidence — is a separate
+sheet reached from the monitor bar, not a permanent drawer.
 
-Sections, in order: identity and assignment · RF detail including diversity and
-interference, level and quality charted separately · captured audio versus
-receiver audio meters · battery with history and next safe change window · check
-badges with who and when · telemetry history · placement images · asset and
-assignment history · cue expectations · incident evidence · actions.
-
-Actions are a fixed row at the bottom of the inspector, in the thumb zone:
-listen · replay from here · message · run check · prepare or promote spare ·
-swap. Swap opens the transaction described in
+Swap opens the transaction described in
 [operator workflows](../product/operator-workflows.md) and shows the full
-identity diff before anything is committed.
+identity diff before anything is committed. It lives at the end of the monitor
+bar's action column, behind a long-press, so it is never one gesture away from
+a listen.
 
 ## Header
 

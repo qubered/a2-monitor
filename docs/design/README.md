@@ -21,24 +21,26 @@ a backstage object or a piece of operational meaning, it is deleted.
 
 ## Where this is up to
 
-The prototype is ahead of the written specs. It is on its third visual round;
-the specs still describe the second.
+Four rounds so far. The specs describe the current one.
 
 - Round 1 was rejected as "futuristic AI slop" — glow, neon on blue-black.
 - Round 2 removed the glow and warmed the neutrals, and was rejected as
   "cartoonish and far too info dense" — thick outlines, hard offset shadows,
   pills and plates everywhere, and a card carrying twelve things at once.
-- Round 3, in the prototype now, subtracts rather than re-tints. Outlines become
-  hairlines or nothing, shadows are gone, controls stop being pills, and the
-  card carries five things: who, where, what it sounds like, the one thing that
-  needs you, and whether anyone has it. A category that is clear says nothing at
-  all. Everything else moved to the inspector.
+- Round 3 subtracted rather than re-tinted. Outlines became hairlines or
+  nothing, shadows went, controls stopped being pills, and the card dropped from
+  twelve elements to five. A category that is clear says nothing at all.
+- Round 4, current, is structural rather than cosmetic, and came from three
+  direct instructions: **headshots matter**, **a sidebar is not the vibe**, and
+  **the bottom bar should rise into the monitoring view for the channel you
+  tapped, with its timeline**. So: the card is now a photograph; the left filter
+  rail became a horizontal band and the right exceptions rail became a sheet;
+  and the side inspector is gone, replaced by a monitor bar that raises out of
+  the bottom of the window carrying the selected source's identity, lanes and
+  its own scrubable timeline.
 
-The specs below are updated once the third round is confirmed, so they are not
-rewritten a fourth time. Where a spec and the prototype disagree today, the
-prototype is the current intent. The rejections themselves are recorded in
-[research notes](research-notes.md), because they are the most useful design
-findings in this directory.
+The rejections are recorded in [research notes](research-notes.md), because they
+are the most useful design findings in this directory.
 
 ## Read in this order
 

@@ -209,6 +209,39 @@ getting it wrong first.
 Not changed, because they were not the problem: the pill controls, the card
 grammar, the grid layout, the rails, and the four-family type system.
 
+## Design review, round 4 — structure, not paint
+
+Three instructions from the product owner, each of which changed the shape of
+the product rather than its finish.
+
+1. **"I want to be able to do headshots and stuff."** The card is now a
+   photograph with a 5:4 crop, the channel number and fault flags over the
+   image, and the ten-second trace as a strip on its bottom edge. This is
+   WaveTool's instinct and it is correct: an A2 looks for Eleanor, not for input
+   27. It also makes Manager's managed headshot pipeline
+   ([roadmap](../product/roadmap.md), Phase 1A.3) load-bearing for the Live
+   experience rather than a nicety, which is worth knowing before it is
+   scheduled.
+2. **"I don't think a sidebar is the vibe for this app at all."** Correct, and
+   for a reason beyond taste: a standing left rail spends permanent width on
+   navigation used in bursts, and a standing right rail spends it on a list that
+   is empty most of the night. Filters became a horizontal band under the
+   header; show-wide exceptions became a sheet on every viewport. The width went
+   to faces.
+3. **"The bottom bar coming up when you click on a channel to monitor it with
+   like its timeline."** This replaced the side inspector entirely and is the
+   better idea. The detail view now rises from the thumb zone, the grid does not
+   move, nothing covers the faces, and the source's own timeline sits directly
+   under the source's own identity. It also collapses two concepts — the
+   inspector and the replay scrub — into one control that behaves the same way
+   in both.
+
+What this cost: the "full record" (assignment history, placement gallery, every
+check badge, incident evidence) no longer has a permanent home and is now a
+sheet reached from the monitor bar. That is one more tap for the deepest
+material, which is the right trade, but it needs watching in the first
+rehearsal — see the open questions below.
+
 ## Open design questions
 
 These need an operator in a room, not more desk research.
@@ -228,3 +261,10 @@ These need an operator in a room, not more desk research.
    disappear the moment the ambient light is cold?
 8. Is the matte ink still legible at 20% screen brightness, or did removing the
    saturation cost more than the glow was worth?
+9. Does a real production headshot survive the 5:4 crop, at 196px, in a dark
+   wing — or do theatre headshots (often high-key, often full-length) need a
+   managed face crop on ingest?
+10. Is one tap to the full record too far when an A2 is mid-swap, and should the
+    monitor bar have a second, taller detent instead of a separate sheet?
+11. Does the monitor bar's timeline confuse live and replay, given that dragging
+    its scrub is what enters replay mode?

@@ -155,16 +155,21 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* ---------- body split ---------- */
 .body{flex:1 1 auto;display:flex;min-height:0}
-.rail{
-  flex:0 0 196px;background:var(--canvas);border-right:1px solid var(--hair);
-  padding:var(--s4) var(--s3);display:flex;flex-direction:column;gap:6px;overflow:auto;
+/* No sidebar. Context lives in one horizontal band under the header, where a
+   running order lives on paper: left to right, in the order you read. */
+.filterbar{
+  flex:0 0 auto;height:60px;display:flex;align-items:center;gap:var(--s2);
+  padding:0 var(--s5);border-bottom:1px solid var(--hair);overflow-x:auto;
+  scrollbar-width:none;
 }
-.rail .lbl{padding:0 8px 6px;color:var(--stale)}
+.filterbar::-webkit-scrollbar{display:none}
+.filterbar .sep{width:1px;height:24px;background:var(--hair);flex:0 0 auto;margin:0 6px}
+.filterbar .lbl{color:var(--stale);flex:0 0 auto;padding-right:2px}
 .filt{
-  display:flex;align-items:center;justify-content:space-between;gap:var(--s2);
-  min-height:44px;padding:0 12px;border-radius:var(--r-pill);
-  border:2px solid transparent;color:var(--ink-2);font:500 14px/1 var(--font-ui);
-  transition:background var(--m-state),color var(--m-state),border-color var(--m-state);
+  display:flex;align-items:center;gap:7px;flex:0 0 auto;
+  min-height:44px;padding:0 13px;border-radius:var(--r-sm);
+  border:1px solid transparent;color:var(--ink-2);font:400 14px/1 var(--font-ui);
+  transition:background var(--m-state),color var(--m-state);
 }
 .filt .n{font:500 12px/1 var(--font-mono);color:var(--stale)}
 .filt[aria-pressed=true]{background:#262320;border-color:transparent;color:var(--ink)}
@@ -179,17 +184,23 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   font:600 12px/1 var(--font-ui);color:var(--ink-2)}
 .gridhead .zoom button[aria-pressed=true]{background:#262320;color:var(--ink)}
 
-.grid{display:grid;gap:var(--s5);grid-template-columns:repeat(auto-fill,minmax(296px,1fr))}
-[data-view=ipad-p] .grid{grid-template-columns:1fr}
-[data-zoom=compact] .grid{grid-template-columns:repeat(auto-fill,minmax(168px,1fr))}
+.grid{display:grid;gap:var(--s3);grid-template-columns:repeat(auto-fill,minmax(196px,1fr))}
+[data-view=ipad-p] .grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+[data-zoom=compact] .grid{grid-template-columns:repeat(auto-fill,minmax(136px,1fr))}
+[data-zoom=compact] .card .exc{display:none}
+[data-zoom=compact] .card .c-person{display:none}
+[data-zoom=expanded] .grid{grid-template-columns:repeat(auto-fill,minmax(268px,1fr))}
+[data-zoom=expanded] .shot{aspect-ratio:4/5}
 
 /* ============================================================
    CHANNEL CARD — the centrepiece
    ============================================================ */
+/* Photo first. An A2 recognises a face faster than a number, and the whole
+   product is about people. The frame is a 4:5 headshot crop. */
 .card{
-  position:relative;background:var(--raised);border:0;border-top:1px solid var(--hair);
-  border-radius:var(--r);padding:18px 18px 16px;
-  display:flex;flex-direction:column;gap:14px;text-align:left;width:100%;
+  position:relative;background:var(--raised);border:0;
+  border-radius:var(--r);padding:0 0 13px;overflow:hidden;
+  display:flex;flex-direction:column;gap:0;text-align:left;width:100%;
   transition:background var(--m-state);touch-action:manipulation;
 }
 .card:active{background:#2A2723}
@@ -200,13 +211,13 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* what you are hearing: a single quiet rule down the left edge. nothing else. */
 .card.listening{background:#282521}
 .card.listening::before{
-  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
-  border-radius:var(--r) 0 0 var(--r);background:var(--listening-ink);
+  content:"";position:absolute;left:0;right:0;bottom:0;height:3px;z-index:2;
+  background:var(--listening-ink);
 }
 /* latched reads in the word, not in an ornament */
 .card.latched .c-role::after{content:" ⏻";font-size:12px;color:var(--listening);vertical-align:2px}
-.card.critical::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
-  border-radius:var(--r) 0 0 var(--r);background:var(--critical-ink)}
+.card.critical::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;z-index:2;
+  background:var(--critical-ink)}
 
 /* row 1 — channel no, badge rail, staleness */
 .c-top{display:flex;align-items:center;gap:var(--s2)}
@@ -228,14 +239,27 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .c-stale{font:500 11px/1 var(--font-mono);color:var(--stale)}
 
 /* row 2 — identity */
-.c-id{display:flex;gap:11px;align-items:flex-start}
+/* the headshot frame */
+.shot{position:relative;width:100%;aspect-ratio:5/4;overflow:hidden;background:#1E1B18;flex:0 0 auto}
+.shot img,.shot svg{display:block;width:100%;height:100%;object-fit:cover}
+.shot .over{position:absolute;left:10px;top:10px;right:10px;display:flex;align-items:center;gap:8px;
+  font:400 11px/1 var(--font-mono);color:#EDE9E2;text-shadow:0 1px 3px rgba(0,0,0,.85)}
+.shot .over .dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+.shot .over .flags{margin-left:auto;display:flex;gap:9px;font-family:var(--font-ui);font-size:11px}
+.shot .scrim{position:absolute;left:0;right:0;bottom:0;height:58px;
+  background:linear-gradient(to top,rgba(10,9,8,.86),rgba(10,9,8,0))}
+/* the ten-second trace sits on the bottom edge of the photograph, the way
+   WaveTool draws it — but as a strip, so it never covers the face */
+.shot .strip{position:absolute;left:0;right:0;bottom:0;height:22px}
+.shot .strip svg{width:100%;height:100%}
+.c-id{display:flex;gap:11px;align-items:flex-start;padding:11px 13px 0}
 .face{
   width:52px;height:52px;border-radius:var(--r-sm);border:0;
   flex:0 0 auto;display:grid;place-items:center;
   font:600 18px/1 var(--font-display);color:var(--ink);overflow:hidden;
 }
-.c-names{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;gap:3px}
-.c-role{font:500 19px/23px var(--font-ui);letter-spacing:-.012em;color:var(--ink);
+.c-names{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;gap:2px}
+.c-role{font:500 18px/22px var(--font-ui);letter-spacing:-.012em;color:var(--ink);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .c-person{font:400 13px/16px var(--font-ui);color:var(--ink-2);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -258,8 +282,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* exception line */
 .exc{display:flex;align-items:flex-start;gap:8px;font:400 13px/18px var(--font-ui);
-  padding:0;border:0;background:none;color:var(--ink-2)}
-.exc.ok{display:none}
+  padding:8px 13px 0;border:0;background:none;color:var(--ink-2);min-height:44px}
+.exc span:last-child{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden}
+.exc.ok{visibility:hidden}
 .exc .g{flex:0 0 auto;font-size:12px;line-height:17px}
 .exc .g{color:var(--ink-2)}
 .exc.crit .g{color:var(--critical)}
@@ -268,7 +294,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .exc em{font-style:normal;color:var(--ink-2);font-weight:400}
 
 /* checks + owner */
-.c-foot{display:flex;align-items:center;gap:var(--s2);font-size:12px;color:var(--stale)}
+.c-foot{display:none}
 .card .checks{display:none}
 .checks{display:flex;gap:4px}
 .checks i{width:13px;height:13px;border-radius:4px;display:block;
@@ -294,22 +320,24 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* ---------- exceptions rail ---------- */
 .excrail{
-  flex:0 0 340px;background:var(--canvas);border-left:1px solid var(--hair);
+  background:var(--panel);border-left:1px solid var(--hair);
   padding:var(--s4);display:flex;flex-direction:column;gap:var(--s3);overflow:auto;
+  transform:translateX(102%);transition:transform var(--m-panel);
 }
-[data-view=ipad-l] .excrail,[data-view=ipad-p] .excrail{
-  position:absolute;top:0;right:0;bottom:120px;z-index:4;width:360px;
+.excrail.open{transform:none}
+/* show-wide exceptions are a sheet on every viewport, never a standing panel */
+.excrail{
+  position:absolute;top:0;right:0;bottom:104px;z-index:4;width:360px;
   transform:translateX(102%);transition:transform var(--m-panel);
   box-shadow:-6px 0 0 var(--shadow);
 }
-[data-view=ipad-l] .excrail.open,[data-view=ipad-p] .excrail.open{transform:none}
 [data-view=ipad-p] .excrail{width:100%}
 /* the edge handle that replaces the always-on rail on touch viewports */
-.excgrab{display:none;position:absolute;right:0;top:50%;transform:translateY(-50%);
+.excgrab{position:absolute;right:0;top:50%;transform:translateY(-50%);
   width:26px;height:132px;z-index:3;border-radius:var(--r-sm) 0 0 var(--r-sm);
   border:1px solid var(--hair);border-right:0;background:var(--canvas);
   writing-mode:vertical-rl;font:700 10px/28px var(--font-ui);letter-spacing:.1em;color:var(--ink-2)}
-[data-view=ipad-l] .excgrab,[data-view=ipad-p] .excgrab{display:block}
+
 .excrail h3{font:600 13px/1 var(--font-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--stale)}
 .excrow{display:flex;flex-direction:column;gap:6px;padding:14px 0;min-height:56px;
   border:0;border-top:1px solid var(--hair);background:none;text-align:left;
@@ -322,8 +350,54 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .excrow .acts .btn{min-height:40px;padding:0 14px;font-size:13px}
 
 /* ---------- transport rail ---------- */
+/* ============================================================
+   MONITOR BAR — the bottom bar is the detail view.
+   Collapsed it is transport only. Selecting a channel raises it into a
+   monitoring panel: that source's identity, its lanes, and its own
+   timeline. No side drawer, no modal, no leaving the grid.
+   ============================================================ */
+.monitor{flex:0 0 auto;display:flex;flex-direction:column;background:var(--canvas);
+  border-top:1px solid var(--hair);transition:height var(--m-panel);height:104px;overflow:hidden}
+.monitor[data-open=true]{height:316px}
+[data-view=ipad-p] .monitor[data-open=true]{height:396px}
+.mon-grip{flex:0 0 auto;height:18px;display:grid;place-items:center;cursor:ns-resize}
+.mon-grip i{width:44px;height:4px;border-radius:2px;background:var(--hair);display:block}
+.mon-panel{flex:1 1 auto;display:none;min-height:0;gap:var(--s5);padding:0 var(--s5) var(--s4)}
+.monitor[data-open=true] .mon-panel{display:flex}
+[data-view=ipad-p] .mon-panel{flex-direction:column;gap:var(--s4);overflow:auto}
+
+.mon-who{flex:0 0 320px;display:flex;gap:14px;min-width:0;overflow:hidden}
+.mon-who .shot{width:96px;aspect-ratio:4/5;border-radius:var(--r-sm);flex:0 0 auto}
+.mon-who .meta{min-width:0;overflow:hidden;display:flex;flex-direction:column;gap:3px}
+.mon-who h3{font:500 20px/24px var(--font-ui);letter-spacing:-.012em}
+.mon-who .sub{font-size:13px;color:var(--ink-2)}
+.mon-who dl{display:grid;grid-template-columns:62px 1fr;gap:2px 10px;margin-top:9px;
+  font:400 11px/15px var(--font-mono);color:var(--ink-2);white-space:nowrap}
+.mon-who dt{color:var(--stale)}
+.mon-who dd{color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+
+.mon-tl{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:5px;justify-content:center}
+.mon-tl .row{display:flex;align-items:center;gap:12px;height:30px}
+.mon-tl .row .k{width:64px;flex:0 0 auto;font:400 11px/1 var(--font-ui);color:var(--stale)}
+.mon-tl .row .t{flex:1 1 auto;height:100%;position:relative;overflow:hidden}
+.mon-tl .row .t svg{display:block;width:100%;height:100%}
+.mon-tl .row .t::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--hair)}
+.mon-tl .row .v{width:84px;text-align:right;flex:0 0 auto;font:400 12px/1 var(--font-mono);color:var(--ink-2)}
+.mon-scrub{position:relative;height:46px;margin-left:76px;margin-top:4px;margin-right:84px}
+.mon-scrub .track{position:absolute;left:0;right:0;top:20px;height:6px;border-radius:3px;background:#221F1B}
+.mon-scrub .played{position:absolute;left:0;top:20px;height:6px;border-radius:3px;background:var(--listening-ink);opacity:.5}
+.mon-scrub .handle{position:absolute;top:0;width:56px;height:46px;margin-left:-28px;border-radius:var(--r-sm);
+  background:#2C2823;display:grid;place-items:center;font:400 11px/1 var(--font-mono);color:var(--ink)}
+.mon-ticks{display:flex;justify-content:space-between;margin-left:76px;margin-right:84px;color:var(--stale);
+  font:400 11px/1 var(--font-mono)}
+.mon-acts{flex:0 0 172px;display:flex;flex-direction:column;gap:6px;justify-content:center}
+.mon-acts .btn{width:100%;justify-content:flex-start;min-height:44px;padding:0 13px;
+  font-size:13px;white-space:nowrap}
+[data-view=ipad-p] .mon-acts{flex-direction:row;flex-wrap:wrap}
+[data-view=ipad-p] .mon-acts .btn{width:auto;flex:1 1 40%}
+
 .transport{
-  flex:0 0 auto;height:104px;background:var(--canvas);border-top:1px solid var(--hair);
+  flex:0 0 auto;height:86px;background:transparent;border-top:0;
   display:flex;align-items:center;gap:var(--s3);padding:0 var(--s4);min-width:0;
 }
 .transport .grow{flex:1 1 auto;min-width:0;display:flex;gap:var(--s2);overflow-x:auto;
@@ -363,6 +437,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* ---------- inspector ---------- */
 .inspector{
   position:absolute;top:0;right:0;bottom:104px;width:460px;background:var(--panel);
+  display:none;
   border-left:1px solid var(--hair);display:flex;flex-direction:column;
   transform:translateX(102%);transition:transform var(--m-panel);z-index:5;
 }
@@ -554,24 +629,24 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       </div>
     </header>
 
-    <div class="body">
-      <nav class="rail" aria-label="Filters">
-        <div class="micro lbl">Context</div>
-        <button class="filt" aria-pressed="true">On stage <span class="n">12</span></button>
-        <button class="filt" aria-pressed="true">Up next <span class="n">6</span></button>
-        <button class="filt" aria-pressed="false">Quick change <span class="n">2</span></button>
-        <div class="micro lbl" style="padding-top:12px">Mine</div>
-        <button class="filt" aria-pressed="false">My track <span class="n">9</span></button>
-        <button class="filt" aria-pressed="false">SL wing <span class="n">14</span></button>
-        <div class="micro lbl" style="padding-top:12px">State</div>
-        <button class="filt" aria-pressed="false">Warnings <span class="n">4</span></button>
-        <button class="filt" aria-pressed="false">Unchecked <span class="n">3</span></button>
-        <button class="filt" aria-pressed="false">Stale <span class="n">2</span></button>
-        <button class="filt" aria-pressed="false">Spares <span class="n">6</span></button>
-        <div class="micro lbl" style="padding-top:12px">Everything</div>
-        <button class="filt" aria-pressed="false">All channels <span class="n">64</span></button>
-      </nav>
+    <div class="filterbar" role="group" aria-label="Filters">
+      <span class="micro lbl">Showing</span>
+      <button class="filt" aria-pressed="true">On stage <span class="n">12</span></button>
+      <button class="filt" aria-pressed="true">Up next <span class="n">6</span></button>
+      <button class="filt" aria-pressed="false">Quick change <span class="n">2</span></button>
+      <span class="sep"></span>
+      <button class="filt" aria-pressed="false">My track <span class="n">9</span></button>
+      <button class="filt" aria-pressed="false">SL wing <span class="n">14</span></button>
+      <span class="sep"></span>
+      <button class="filt" aria-pressed="false">Warnings <span class="n">4</span></button>
+      <button class="filt" aria-pressed="false">Unchecked <span class="n">3</span></button>
+      <button class="filt" aria-pressed="false">Stale <span class="n">2</span></button>
+      <button class="filt" aria-pressed="false">Spares <span class="n">6</span></button>
+      <span class="sep"></span>
+      <button class="filt" aria-pressed="false">All channels <span class="n">64</span></button>
+    </div>
 
+    <div class="body">
       <main class="main" id="a2main">
         <div class="gridhead">
           <h2>On stage &amp; up next</h2>
@@ -615,7 +690,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     <!-- inspector -->
     <div class="inspector" id="insp">
       <div class="insp-hd">
-        <div class="face" style="background:rgba(86,199,217,.18)">EV</div>
+        <div class="shot" style="width:52px;aspect-ratio:4/5;border-radius:4px;flex:0 0 auto" data-static-shot="1"></div>
         <h3>Eleanor Vance<br><span style="font:400 13px/16px var(--font-ui);color:var(--ink-2)">Marguerite Hale</span></h3>
         <button class="insp-close" id="inspclose" aria-label="Close inspector">✕</button>
       </div>
@@ -672,29 +747,92 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       </div>
     </div>
 
-    <footer class="transport" id="transport">
-      <div class="nowplay">
-        <div class="f" style="background:rgba(86,199,217,.18)">EV</div>
-        <div class="l"><b>Eleanor Vance</b><span>◉ Latched</span></div>
+    <footer class="monitor" id="monitor" data-open="true">
+      <button class="mon-grip" id="mongrip" aria-label="Collapse monitor panel" aria-expanded="true"><i></i></button>
+
+      <div class="mon-panel">
+        <div class="mon-who">
+          <div class="shot" id="mon-shot"></div>
+          <div class="meta">
+            <h3 id="mon-role">Eleanor Vance</h3>
+            <div class="sub" id="mon-person">Marguerite Hale · principal</div>
+            <dl>
+              <dt>rx</dt><dd id="mon-rx">RX 4 · B · IN 27</dd>
+              <dt>pack</dt><dd>A2-114 · 596.075</dd>
+              <dt>element</dt><dd>MKE-1 beige</dd>
+              <dt>battery</dt><dd>2:14 · change at interval</dd>
+              <dt>checked</dt><dd>18:55 · J. Marsh</dd>
+            </dl>
+          </div>
+        </div>
+
+        <div class="mon-tl">
+          <div class="row">
+            <span class="k">Audio</span>
+            <div class="t"><svg viewBox="0 0 900 34" preserveAspectRatio="none" data-mon="audio"></svg></div>
+            <span class="v">−18.2 dBFS</span>
+          </div>
+          <div class="row">
+            <span class="k">RF level</span>
+            <div class="t"><svg viewBox="0 0 900 34" preserveAspectRatio="none" data-mon="rf"></svg></div>
+            <span class="v">−62 dBm</span>
+          </div>
+          <div class="row">
+            <span class="k">Quality</span>
+            <div class="t"><svg viewBox="0 0 900 34" preserveAspectRatio="none" data-mon="q"></svg></div>
+            <span class="v">31 %</span>
+          </div>
+          <div class="row">
+            <span class="k">Cue</span>
+            <div class="t">
+              <span style="position:absolute;left:2%;top:10px;font:400 11px/1 var(--font-mono);color:var(--ink-2)">40</span>
+              <span style="position:absolute;left:34%;top:10px;font:400 11px/1 var(--font-mono);color:var(--ink-2)">41 Ballroom</span>
+              <span style="position:absolute;left:78%;top:10px;font:400 11px/1 var(--font-mono);color:var(--ink-2)">42</span>
+              <span class="evmark crit" style="left:53%;width:20px;height:20px">■</span>
+              <span class="evmark note" style="left:66%;width:20px;height:20px">✎</span>
+            </div>
+            <span class="v">live</span>
+          </div>
+          <div class="mon-scrub" id="monscrub">
+            <div class="track"></div><div class="played" style="width:100%"></div>
+            <div class="handle" style="left:100%">now</div>
+          </div>
+          <div class="mon-ticks"><span>−30m</span><span>−20m</span><span>−10m</span><span>−5m</span><span>now</span></div>
+        </div>
+
+        <div class="mon-acts">
+          <button class="btn">⟲&nbsp; Replay from here</button>
+          <button class="btn">⚑&nbsp; Mark this moment</button>
+          <button class="btn">◍&nbsp; Run check</button>
+          <button class="btn">✉&nbsp; Message about this</button>
+          <button class="btn danger" id="swapbtn2"><span class="fill"></span>⇄&nbsp; Swap…</button>
+        </div>
       </div>
-      <button class="btn lg" title="Previous source">◀ Prev</button>
-      <button class="btn lg" id="clearbtn">⊘ Clear all</button>
-      <div class="tsep"></div>
-      <button class="btn lg" aria-pressed="false" id="mutebtn">Mute</button>
-      <button class="btn lg" aria-pressed="false">Dim</button>
-      <div class="level">
-        <span class="v mono">−18</span>
-        <div class="meterbars" id="outmeter"></div>
+
+      <div class="transport" id="transport">
+        <div class="nowplay">
+          <div class="f" id="np-face"></div>
+          <div class="l"><b>Eleanor Vance</b><span>Latched</span></div>
+        </div>
+        <button class="btn lg">◀ Prev</button>
+        <button class="btn lg" id="clearbtn">⊘ Clear all</button>
+        <div class="tsep"></div>
+        <button class="btn lg" aria-pressed="false" id="mutebtn">Mute</button>
+        <button class="btn lg" aria-pressed="false">Dim</button>
+        <div class="level">
+          <span class="v mono">−18</span>
+          <div class="meterbars" id="outmeter"></div>
+        </div>
+        <div class="tsep"></div>
+        <div class="grow"><div class="groups">
+          <button class="gbtn"><b>PRINC</b><i style="background:var(--g1)"></i></button>
+          <button class="gbtn"><b>ENSMB</b><i style="background:var(--g2)"></i></button>
+          <button class="gbtn"><b>BAND</b><i style="background:var(--g3)"></i></button>
+          <button class="gbtn"><b>SWING</b><i style="background:var(--g4)"></i></button>
+          <button class="gbtn"><b>RADIO</b><i style="background:var(--g6)"></i></button>
+        </div></div>
+        <button class="btn lg" data-goto="replay">⟲ Replay</button>
       </div>
-      <div class="tsep"></div>
-      <div class="grow"><div class="groups">
-        <button class="gbtn"><b>PRINC</b><i style="background:var(--g1)"></i></button>
-        <button class="gbtn"><b>ENSMB</b><i style="background:var(--g2)"></i></button>
-        <button class="gbtn"><b>BAND</b><i style="background:var(--g3)"></i></button>
-        <button class="gbtn"><b>SWING</b><i style="background:var(--g4)"></i></button>
-        <button class="gbtn"><b>RADIO</b><i style="background:var(--g6)"></i></button>
-      </div></div>
-      <button class="btn lg" data-goto="replay">⟲ Replay</button>
     </footer>
   </section>
 
@@ -718,6 +856,17 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       </div>
     </header>
 
+    <div class="filterbar" role="group" aria-label="Filters">
+      <span class="micro lbl">Showing</span>
+      <button class="filt" aria-pressed="true">On stage <span class="n">12</span></button>
+      <button class="filt" aria-pressed="true">Up next <span class="n">6</span></button>
+      <span class="sep"></span>
+      <button class="filt" aria-pressed="false">Warnings <span class="n">4</span></button>
+      <button class="filt" aria-pressed="false">Being worked <span class="n">2</span></button>
+      <span class="sep"></span>
+      <button class="filt" aria-pressed="false">All channels <span class="n">64</span></button>
+    </div>
+
     <div class="body">
       <main class="main">
         <div class="banner">
@@ -727,7 +876,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
           </div>
           <button class="btn">Follow</button>
         </div>
-        <div class="gridhead"><h2>On stage</h2><span class="chip">12</span></div>
+        <div class="gridhead"><h2>On stage</h2><span class="chip">12 sources</span></div>
         <div class="tiles" id="a1tiles"></div>
         <div class="secthead"><b>Up next · cue 42</b><hr></div>
         <div class="tiles" id="a1next"></div>
@@ -791,7 +940,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     <div class="mc">
       <div class="mc-ctx">
         <div class="mc-who">
-          <div class="face" style="background:rgba(86,199,217,.18)">EV</div>
+          <div class="shot" style="width:52px;aspect-ratio:4/5;border-radius:4px;flex:0 0 auto" data-static-shot="1"></div>
           <div>
             <h2>Eleanor Vance</h2>
             <p>Marguerite Hale · principal</p>
@@ -872,7 +1021,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
               <span class="c-stale" style="margin-left:auto">21:04:18</span>
             </div>
             <div class="c-id">
-              <div class="face" style="background:rgba(179,157,219,.18)">EV</div>
+              <div class="shot" style="width:52px;aspect-ratio:4/5;border-radius:4px;flex:0 0 auto" data-static-shot="1"></div>
               <div class="c-names">
                 <div class="c-role" style="background:rgba(86,199,217,.22)">Eleanor Vance</div>
                 <div class="c-person">Marguerite Hale</div>
@@ -983,6 +1132,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   #s-replay .qual i.on{background:var(--replay-ink)}
   #s-replay .btn.primary{background:var(--replay-ink);color:#16121C;border-color:#6A5E80}
   #s-replay .excgrab{color:var(--replay)}
+  .shot .over .fl{display:inline-flex;align-items:center;gap:4px}
+  .shot .over .fl::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+  .shot .over .fl.rf,.shot .over .fl.audio,.shot .over .fl.sys{color:#F0908E}
+  .shot .over .fl.batt,.shot .over .fl.id{color:#E8C37A}
+  .shot .over .fl.cue,.shot .over .fl.stale{color:#C3BDB4}
+  .shot .over .fl.cli{color:#7FC9D6}
   .lane .v u{display:inline-block;margin-left:3px;font:500 9px/1 var(--font-ui);
     letter-spacing:.04em;color:var(--stale);text-decoration:none}
   .lane .v{width:84px}
@@ -1073,6 +1228,22 @@ const CH = [
    checks:["pass","pass","pass","pass","pass","pass","pass","pass"], owner:""},
 ];
 
+/* A stand-in for a real production headshot. The frame, crop and weight are
+   exactly what a real photograph gets; only the pixels are fabricated, because
+   a design file must not ship pictures of real people. Manager's managed image
+   pipeline supplies the real ones. */
+function headshot(ch, seed){
+  const g = `var(--g${ch.g})`;
+  const x = 40 + ((seed % 5) - 2) * 2.2;
+  const y = 30 + (seed % 6);
+  return `<svg viewBox="0 0 80 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect width="80" height="100" fill="color-mix(in srgb, ${g} 9%, #201D1A)"/>
+    <ellipse cx="${x}" cy="${y}" rx="15" ry="18" fill="color-mix(in srgb, ${g} 18%, #363029)"/>
+    <path d="M${x} ${y + 20} c-19 0-30 13-33 34 h66 c-3-21-14-34-33-34 z"
+          fill="color-mix(in srgb, ${g} 14%, #2E2924)"/>
+  </svg>`;
+}
+
 /* U+2212 minus, not a hyphen: a readout is typeset, not printed from a keyboard */
 const num = v => String(v).replace("-", "\u2212");
 
@@ -1144,38 +1315,30 @@ function cardHTML(ch, i){
   const afv = ch.afState === "mute" ? "muted at pack"
             : ch.afState === "silent" ? "silent"
             : num(ch.af) + " dBFS";
-  /* The card carries five things: who, where, what it sounds like, the one
-     thing that needs you, and whether anyone has it. Everything else is in
-     the inspector. A card with nothing wrong shows nothing wrong. */
+  const flags = BADGE_KEYS.filter(([k]) => (ch.badges[k]|0) > 0)
+    .map(([k]) => `<span class="fl ${k}">${BADGE_NAMES[k]}</span>`).join("");
   return `
   <button class="card ${ch.listening?'listening':''} ${ch.latched?'latched':''} ${ch.critical?'critical':''}"
           data-i="${i}" aria-label="${ch.role}, channel ${ch.no}">
-    <div class="c-top">
-      <span class="c-no"><i style="background:var(--g${ch.g})"></i><b>${String(ch.no).padStart(2,"0")}</b></span>
-      ${badgeRail(ch)}
-      ${ch.stale ? `<span class="c-stale">${ch.stale}s old</span>` : ``}
+    <div class="shot">
+      ${headshot(ch, ch.no)}
+      <div class="over">
+        <span class="dot" style="background:var(--g${ch.g})"></span>
+        <span>${String(ch.no).padStart(2,"0")}</span>
+        <span class="flags">${flags}${ch.stale?`<span class="fl stale">${ch.stale}s old</span>`:""}</span>
+      </div>
+      <div class="scrim"></div>
+      <div class="strip"><svg viewBox="0 0 240 22" preserveAspectRatio="none" data-af="${ch.no}">${afTrace(ch)}</svg></div>
     </div>
     <div class="c-id">
-      <div class="face" style="background:color-mix(in srgb, var(--g${ch.g}) 16%, #2A2723)">${ch.ini}</div>
       <div class="c-names">
         <div class="c-role">${ch.role}</div>
         <div class="c-person">${ch.person}</div>
       </div>
     </div>
-    <div class="lane">
-      <div class="trace ${ch.stale?'hatched':''}"><svg viewBox="0 0 240 28" preserveAspectRatio="none" data-af="${ch.no}">${afTrace(ch)}</svg></div>
-      <span class="v ${ch.afState!=='present'?'dim':''}">${afv}</span>
-    </div>
     <div class="exc ${ch.exc.lvl} ${ch.exc.inferred?'inferred':''}">
       <span class="g">${ch.exc.g}</span>
       <span>${ch.exc.inferred?'likely — ':''}${ch.exc.t}</span>
-    </div>
-    <div class="c-foot">
-      <span class="tape">${ch.rx}</span>
-      ${ch.owner?`<span class="owner">${ch.owner} has it</span>`:``}
-    </div>
-    <div class="extra">
-      <div class="hand">watch the tape on this one</div>
     </div>
   </button>`;
 }
@@ -1189,7 +1352,7 @@ function tileHTML(ch, i){
   return `
   <button class="tile ${ch.listening?'listening':''} ${ch.critical?'critical':''}" data-i="${i}" aria-label="${ch.role}">
     <div class="t-id">
-      <div class="face" style="background:color-mix(in srgb, var(--g${ch.g}) 20%, transparent)">${ch.ini}</div>
+      <div class="shot" style="width:46px;aspect-ratio:4/5;border-radius:4px;flex:0 0 auto">${headshot(ch, ch.no)}</div>
       <div class="c-names">
         <div class="c-role" style="background:color-mix(in srgb, var(--g${ch.g}) 22%, transparent)">${ch.role}</div>
         <div class="c-person">${ch.person}</div>
@@ -1260,6 +1423,32 @@ setInterval(() => {
    --------------------------------------------------------------- */
 const LONG_PRESS = 400, HOLD_CLEAR = 1500;
 
+/* Selecting a channel raises the bottom bar into its monitoring panel. The
+   grid never moves, nothing opens over it, and the panel always shows the one
+   source you are hearing. */
+function showMonitor(ch){
+  const mon = document.getElementById("monitor");
+  if(!mon) return;
+  mon.dataset.open = "true";
+  const grip = document.getElementById("mongrip");
+  if(grip) grip.setAttribute("aria-expanded","true");
+  const shot = document.getElementById("mon-shot");
+  if(shot) shot.innerHTML = headshot(ch, ch.no);
+  const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  set("mon-role", ch.role);
+  set("mon-person", ch.person);
+  set("mon-rx", ch.rx);
+  const face = document.getElementById("np-face");
+  if(face) face.innerHTML = headshot(ch, ch.no);
+  drawMonitorLanes(ch);
+}
+function drawMonitorLanes(ch){
+  const put = (sel, html) => { const el = document.querySelector(sel); if(el) el.innerHTML = html; };
+  put('[data-mon=audio]', bars(Array.from({length:110},(_,k)=> .2 + Math.abs(Math.sin(k/6))*.55*Math.random()+.12), 900, 34, COL.verified));
+  put('[data-mon=rf]',    line(Array.from({length:110},(_,k)=> k>86 ? .34 : .6 + (Math.random()-.5)*.09), 900, 34, COL.intervention));
+  put('[data-mon=q]',     bars(Array.from({length:110},(_,k)=> k>86 ? .2 : .82 + (Math.random()-.5)*.1), 900, 34, ch.q<=2 ? COL.critical : COL.verified));
+}
+
 function setListening(i){
   CH.forEach((c,n) => { c.listening = n === i; if(n !== i) c.latched = false; });
   $$(".card, .tile").forEach(el => {
@@ -1269,17 +1458,18 @@ function setListening(i){
   });
   const ch = CH[i]; if(!ch) return;
   $$(".nowplay").forEach(np => {
-    const f = $(".f", np), b = $("b", np), s = $("span", np);
-    if(f) f.textContent = ch.ini;
+    const f = $(".f", np), b = $("b", np), sp = $("span", np);
+    if(f) f.innerHTML = headshot(ch, ch.no);
     if(b) b.textContent = ch.role;
-    if(s && !s.textContent.includes("−")) s.textContent = "◉ Momentary";
+    if(sp && !sp.textContent.includes("−")) sp.textContent = "Momentary";
   });
+  showMonitor(ch);
 }
 function latch(i){
   setListening(i);
   CH[i].latched = true;
   $$(`.card[data-i="${i}"]`).forEach(el => el.classList.add("latched"));
-  $$(".nowplay span").forEach(s => { if(!s.textContent.includes("−")) s.textContent = "◉ Latched"; });
+  $$(".nowplay span").forEach(s => { if(!s.textContent.includes("−")) s.textContent = "Latched"; });
   if(navigator.vibrate) navigator.vibrate(10);
 }
 
@@ -1318,7 +1508,11 @@ $$(".card, .tile").forEach(el => {
   });
 });
 
-function openInspector(){ $("#insp").classList.add("open"); }
+/* swipe left no longer opens a drawer — it raises the monitor panel */
+function openInspector(){
+  const i = CH.findIndex(c => c.listening);
+  showMonitor(CH[i > -1 ? i : 0]);
+}
 $("#inspclose").addEventListener("click", () => $("#insp").classList.remove("open"));
 
 /* long-press clear-all, with the same filling ring */
@@ -1389,6 +1583,28 @@ $$("[data-exc]").forEach(b => b.addEventListener("click", () => {
   const open = rail.classList.toggle("open");
   b.setAttribute("aria-expanded", String(open));
 }));
+
+const grip = document.getElementById("mongrip");
+if(grip) grip.addEventListener("click", () => {
+  const mon = document.getElementById("monitor");
+  const open = mon.dataset.open !== "true";
+  mon.dataset.open = String(open);
+  grip.setAttribute("aria-expanded", String(open));
+  grip.setAttribute("aria-label", open ? "Collapse monitor panel" : "Expand monitor panel");
+});
+const swap2 = document.getElementById("swapbtn2");
+if(swap2){
+  let t=null; const fill = swap2.querySelector(".fill");
+  swap2.addEventListener("pointerdown", () => {
+    fill.style.transition = `width ${HOLD_CLEAR}ms linear`;
+    requestAnimationFrame(() => fill.style.width = "100%");
+    t = setTimeout(() => { if(navigator.vibrate) navigator.vibrate(30); }, HOLD_CLEAR);
+  });
+  const reset = () => { clearTimeout(t); fill.style.transition="width 120ms"; fill.style.width="0"; };
+  ["pointerup","pointerleave","pointercancel"].forEach(ev => swap2.addEventListener(ev, reset));
+}
+$$("[data-static-shot]").forEach(el => el.innerHTML = headshot(CH[0], CH[0].no));
+showMonitor(CH[0]);
 
 html.dataset.zoom = "standard";
 $("#device").dataset.mode = "live";

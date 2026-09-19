@@ -37,12 +37,12 @@ it once during a technical rehearsal.
 | Tap | Momentary listen — hear it while held on a group button, switch to it on a card | Channel card, group button |
 | Long-press (400ms) | Latch — stay on this source until cleared | Channel card, group button |
 | Long-press (1500ms) | Global clear, with a filling ring showing progress | Solo clear, alert reset |
-| Swipe left on card | Open inspector for that channel | Channel card |
+| Swipe left on card | Raise the monitor bar for that channel | Channel card |
 | Swipe right on card | Claim / open the task sheet | Channel card |
-| Swipe down on sheet | Dismiss sheet | Inspector, sheet, modal |
+| Swipe down on sheet | Dismiss sheet, or lower the monitor panel | Monitor bar, sheet |
 | Two-finger tap | Mark the current moment for replay, from anywhere | Whole surface |
 | Pinch on grid | Change zoom level: compact / standard / expanded | Channel grid |
-| Edge swipe from right | Open the exceptions rail | A1 and A2 Live |
+| Edge swipe from right | Open the exceptions sheet | A1 and A2 Live |
 
 Every gesture has a visible equivalent control. The gesture is the shortcut, not
 the mechanism. A new operator who knows no gestures can run the show.
@@ -66,18 +66,23 @@ Touch has no cursor, so feedback must be immediate and physical.
 At iPad landscape (1180×820 reference) the device is most often held two-handed
 by the outer edges, or one-handed by the left edge while the right hand works.
 
-- **Bottom 120px, full width** — the transport rail: listen state, mute, dim,
-  level, group buttons, return-to-live. The most-used controls, always in reach.
-- **Right edge, vertical rail** — the exceptions rail and inspector handle.
-- **Top 72px** — status, identity and context. Read frequently, touched rarely.
-- **Centre** — content. The grid scrolls here.
+- **Bottom, always** — the monitor bar. Collapsed it is the transport row:
+  listen state, mute, dim, level, group buttons, replay. Raised it is the
+  selected source in full. Everything used more than once a minute lives here,
+  because this is where the thumb already is.
+- **Right edge** — an edge swipe opens the show-wide exceptions sheet. There is
+  no standing right rail.
+- **Below the header** — the filter band, scrolling horizontally. Reached by
+  stretching, not by the resting thumb, which suits a control used in bursts.
+- **Top 72px** — status, identity and context. Read constantly, touched rarely.
+- **Centre** — the grid of faces. Scrolls behind the monitor bar.
 
-At iPad portrait the transport rail stays bottom, the grid becomes a single
-column of wider cards, and the exceptions rail becomes a pull-up sheet.
+At iPad portrait everything stays where it is; the grid narrows to three or four
+columns and the monitor panel gets taller.
 
-At desktop the same rails exist in the same places. We do not relocate controls
-between viewports; we only change how many columns the content has. An operator
-who learns the iPad layout knows the desktop layout.
+At desktop the layout is the same. We do not relocate controls between
+viewports; we only change how many columns the content has. An operator who
+learns the iPad layout knows the desktop layout.
 
 ## One-handed mode
 
