@@ -98,7 +98,7 @@ from the withdrawn schemas.
 | Evidence promotion | Promotion must consume signed run records with an exact OS/device/profile matrix, and the verifier must resolve stored bytes, size and hash with missing/tampered negative tests. |
 | Phase 1 operator promotion | Slice promotion sets, named A1/A2/observer roles, catalogue-frozen numeric thresholds and per-repetition results were all missing. |
 | Lease wire format | ADR 0009 promises lease, handshake, result and query golden vectors; the lease had no protected-header or wire schema. |
-| JCS conformance | Canonicalization was tested only against self-generated vectors. Needs RFC cross-runtime vectors including Unicode edge cases. |
+| JCS conformance | One fixed Unicode-bearing vector is signed by OpenSSL and verified by Node. Full RFC cross-runtime vectors and broader Unicode edge cases remain required for promotion. |
 | Naming drift | Runtime prose used `FailChange`/`AbandonChange` against `FailPhysicalChange`/`AbandonPhysicalChange`; one client-profile sentence still said `show-ready` after the rename to `transport-ready`. |
 
 ## Commercial questions, unaddressed

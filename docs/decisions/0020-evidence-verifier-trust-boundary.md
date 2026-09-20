@@ -83,5 +83,9 @@ bundles exercise the CLI end to end.
 - Run tests cover all six closed predicates, raw-byte bindings, signature
   purpose/status/validity, false measurements, per-trial duration and exact
   fault occurrence windows.
+- A fixed Unicode-bearing JCS byte sequence and OpenSSL-generated P-256
+  signature exercise Node verification of both DER and 64-byte IEEE-P1363
+  encodings without using Node to sign the fixture. This remains a
+  non-promotional conformance vector, not a trust anchor.
 - Independent review must confirm that no conformance output is represented as
   product evidence.

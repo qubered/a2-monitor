@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "kind": "a2-evidence-es256-jcs-conformance-vector",
+  "promotionEligible": false,
+  "provenance": {
+    "generatedAtUtc": "2026-09-20T06:51:46Z",
+    "generator": "OpenSSL 3.6.3 9 Jun 2026",
+    "publicKeySpkiSha256": "513f45e8751a38c07d45315c09195fa5d119405030d5eec7e428fdfb57d83edc"
+  },
+  "payload": {
+    "unicode": {
+      "\ud83d\ude00": "astral",
+      "\u20ac": "euro",
+      "\u00e9": "precomposed",
+      "\u0065\u0301": "decomposed"
+    },
+    "purpose": "a2-evidence-es256-jcs-conformance-vector",
+    "promotionEligible": false,
+    "nested": {
+      "z": null,
+      "a": [3, true, "line\nquote\"slash/"]
+    },
+    "integer": 9007199254740991
+  },
+  "expectedCanonicalJson": "{\"integer\":9007199254740991,\"nested\":{\"a\":[3,true,\"line\\nquote\\\"slash/\"],\"z\":null},\"promotionEligible\":false,\"purpose\":\"a2-evidence-es256-jcs-conformance-vector\",\"unicode\":{\"é\":\"decomposed\",\"é\":\"precomposed\",\"€\":\"euro\",\"😀\":\"astral\"}}",
+  "expectedCanonicalUtf8Hex": "7b22696e7465676572223a393030373139393235343734303939312c226e6573746564223a7b2261223a5b332c747275652c226c696e655c6e71756f74655c22736c6173682f225d2c227a223a6e756c6c7d2c2270726f6d6f74696f6e456c696769626c65223a66616c73652c22707572706f7365223a2261322d65766964656e63652d65733235362d6a63732d636f6e666f726d616e63652d766563746f72222c22756e69636f6465223a7b2265cc81223a226465636f6d706f736564222c22c3a9223a22707265636f6d706f736564222c22e282ac223a226575726f222c22f09f9880223a2261737472616c227d7d",
+  "expectedCanonicalSha256": "127a6b512d1c339343aed5e068c06c9e6fedbc320491438808002390caa181fb",
+  "publicKeySpkiPem": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAELdaTfxmvXBxUOaAknu+BIqnDQng9\n/btpFjA4WXO6bLxCxUvotBX4tlsykJaSPwt+MAj5AFCYTS+v8dRldW6GnQ==\n-----END PUBLIC KEY-----\n",
+  "signatureDerHex": "30450220457d9a4590c4328e2cdfdd699a7e6f792960ef726db67e5ff435e2beb99a5b6f022100ca5a20552f191edb865d70d05e7995f0125fa316dbdd6b1c555e1cfc648fba61",
+  "signatureP1363Hex": "457d9a4590c4328e2cdfdd699a7e6f792960ef726db67e5ff435e2beb99a5b6fca5a20552f191edb865d70d05e7995f0125fa316dbdd6b1c555e1cfc648fba61"
+}

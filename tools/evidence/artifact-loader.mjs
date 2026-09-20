@@ -446,6 +446,7 @@ async function verifyOne(
   limits,
   totalRead,
   openedIdentities,
+  testHooks,
 ) {
   await assertRootStable(rootState);
   const pathState = await inspectPath(rootState, descriptor.path);
@@ -492,6 +493,11 @@ async function verifyOne(
         "ARTIFACT_FILE_LIMIT",
         "artifact exceeds the per-file limit",
         descriptor.path,
+      );
+    }
+    if (testHooks?.afterOpen !== undefined) {
+      await testHooks.afterOpen(
+        Object.freeze({ path: descriptor.path, filename: pathState.filename }),
       );
     }
 
@@ -589,7 +595,21 @@ async function verifyOne(
  * `{ declaredBytes, kind, mediaType, path, sha256, content }`, where `content`
  * is a `VerifiedArtifactBytes` instance.
  */
-export async function verifyArtifactSet({ root, artifacts, limits } = {}) {
+export async function verifyArtifactSet({
+  root,
+  artifacts,
+  limits,
+  testHooks,
+} = {}) {
+  if (
+    testHooks !== undefined &&
+    (testHooks === null ||
+      typeof testHooks !== "object" ||
+      typeof testHooks.afterOpen !== "function" ||
+      Object.keys(testHooks).length !== 1)
+  ) {
+    fail("ARTIFACT_TEST_HOOK_INVALID", "artifact test hook is invalid");
+  }
   const checkedLimits = validateLimits(limits);
   const descriptors = validateDescriptors(artifacts, checkedLimits);
   const rootState = await stableRoot(root);
@@ -604,6 +624,7 @@ export async function verifyArtifactSet({ root, artifacts, limits } = {}) {
         checkedLimits,
         totalRead,
         openedIdentities,
+        testHooks,
       ),
     );
   }
