@@ -104,19 +104,59 @@ pub trait CaptureCallback: Send + 'static {
     fn process(&mut self, block: CaptureBlock<'_>) -> CallbackControl;
 }
 
+/// Builds downstream callback resources from the host-resolved stream tuple.
+///
+/// Factories run on the control thread after the host has resolved the request
+/// and must not retain a reference to the supplied configuration.
+pub trait CaptureCallbackFactory: Send + 'static {
+    fn create(
+        self: Box<Self>,
+        resolved: StreamConfig,
+    ) -> Result<Box<dyn CaptureCallback>, HostError>;
+}
+
+impl<F> CaptureCallbackFactory for F
+where
+    F: FnOnce(StreamConfig) -> Result<Box<dyn CaptureCallback>, HostError> + Send + 'static,
+{
+    fn create(
+        self: Box<Self>,
+        resolved: StreamConfig,
+    ) -> Result<Box<dyn CaptureCallback>, HostError> {
+        self(resolved)
+    }
+}
+
 pub trait InputStream: Send {
     fn start(&mut self) -> Result<(), HostError>;
     fn stop(&mut self) -> Result<(), HostError>;
+    /// Releases the selected device so another explicit open may proceed.
+    ///
+    /// Closing is idempotent. Implementations must also release the device if
+    /// the stream is dropped without an explicit close. Close and drop belong
+    /// on the control thread, never on the real-time callback thread.
+    fn close(&mut self) -> Result<(), HostError>;
     fn capture_epoch(&self) -> CaptureEpochId;
+    fn requested_config(&self) -> StreamConfig;
+    fn resolved_config(&self) -> StreamConfig;
 }
 
+/// Project-owned boundary for one explicitly selected capture device.
+///
+/// Implementations must reject unadvertised configurations, must not follow a
+/// default device or silently substitute a tuple, and must permit at most one
+/// open input stream across every handle for the same host instance. Every
+/// successful open receives a new nonzero capture epoch. Failed opens consume
+/// neither the exclusive-open ownership nor an epoch. One host instance and
+/// all its clones form one node-boot epoch namespace; a node boot identifier
+/// disambiguates epochs from independent instances.
 pub trait AudioHost: Send + Sync {
     fn id(&self) -> HostId;
     fn devices(&self) -> Result<Vec<DeviceInfo>, HostError>;
     fn open_input(
         &self,
         requested: StreamConfig,
-        callback: Box<dyn CaptureCallback>,
+        callback_factory: Box<dyn CaptureCallbackFactory>,
     ) -> Result<Box<dyn InputStream>, HostError>;
 }
 
@@ -124,9 +164,12 @@ pub trait AudioHost: Send + Sync {
 pub enum HostErrorKind {
     DeviceNotFound,
     UnsupportedConfiguration,
+    DeviceBusy,
     AlreadyRunning,
     NotRunning,
     DeviceInvalidated,
+    CallbackSetupFailed,
+    EpochExhausted,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]

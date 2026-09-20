@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.9e9b73f6b9bd85fc",
-  "sourceSha256": "9e9b73f6b9bd85fc32acee540dafc2a8f21a74319de5b43eb7af5740d7e02aa1",
+  "buildId": "a2-0.0.0+sha256.95fa95f5e24c024d",
+  "sourceSha256": "95fa95f5e24c024de5083d1fe8d17070e4dad4c018c6b35f8c25ba73e1d32899",
   "inputCount": 231,
   "inputs": [
     {
@@ -221,7 +221,7 @@
     },
     {
       "path": "crates/audio-host-api/src/lib.rs",
-      "sha256": "10b8165f9611635a2e3f1381772a9ee07a66107a64dca0177749e043f8a36703"
+      "sha256": "635c1376c33e5b8ad0d1fb3d3c35378eb39cc76ee6038ef3c1aaf9841f4a6dce"
     },
     {
       "path": "crates/build-info/Cargo.toml",
@@ -845,15 +845,15 @@
     },
     {
       "path": "services/audio-node/README.md",
-      "sha256": "344b1da79acb8faf29f834281c7b135dbbf279cffea50cf4ad684f69dacbf758"
+      "sha256": "0a0e8757f979e046912ed878b7fc14afaea5ea1abff94077828a996fb4bbaf3d"
     },
     {
       "path": "services/audio-node/src/bin/synthetic-capture.rs",
-      "sha256": "93ed737271289cfb133d46dc49fb93ecef70fa39ab0372ad453ec54383e1fcd9"
+      "sha256": "e7cf07e12a84b795fe5f4f0d92d5a05bde530dbdd988b113a55abb0101d038b3"
     },
     {
       "path": "services/audio-node/src/lib.rs",
-      "sha256": "f553bd3392bb0d332924d3c65fd6f6928f896a4a6df60e9888b63ef6a0cbe459"
+      "sha256": "aa324595176d2a09fb265f1e8018d673a4693e5433f7769035ecae8f048f3325"
     },
     {
       "path": "services/backend/README.md",
