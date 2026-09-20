@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "generatedFrom": "package-lock.json",
   "regenerationCommand": "node scripts/generate-node-dependency-inventory.mjs",
-  "lockfileSha256": "87a84a3c151bd4c09398970221a849e2850d6f0a0d94df05f5f4a65fbdeefcf6",
-  "componentCount": 254,
+  "lockfileSha256": "da60823ac758de36494c812709fa06b6c1f286c9e61286ec56a1ecd70b87975d",
+  "componentCount": 301,
   "licenseCounts": [
     {
       "license": "Apache-2.0",
@@ -19,7 +19,7 @@
     },
     {
       "license": "BSD-3-Clause",
-      "count": 3
+      "count": 7
     },
     {
       "license": "CC-BY-4.0",
@@ -31,11 +31,11 @@
     },
     {
       "license": "ISC",
-      "count": 12
+      "count": 14
     },
     {
       "license": "MIT",
-      "count": 191
+      "count": 232
     },
     {
       "license": "MIT-0",
@@ -459,6 +459,72 @@
       ]
     },
     {
+      "name": "@fastify/ajv-compiler",
+      "version": "4.0.6",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@fastify/ajv-compiler"
+      ]
+    },
+    {
+      "name": "@fastify/error",
+      "version": "4.2.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@fastify/error"
+      ]
+    },
+    {
+      "name": "@fastify/fast-json-stringify-compiler",
+      "version": "5.1.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@fastify/fast-json-stringify-compiler"
+      ]
+    },
+    {
+      "name": "@fastify/forwarded",
+      "version": "3.0.2",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@fastify/forwarded"
+      ]
+    },
+    {
+      "name": "@fastify/merge-json-schemas",
+      "version": "0.2.1",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@fastify/merge-json-schemas"
+      ]
+    },
+    {
+      "name": "@fastify/proxy-addr",
+      "version": "5.1.1",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@fastify/proxy-addr"
+      ]
+    },
+    {
       "name": "@fontsource/archivo",
       "version": "5.3.0",
       "license": "OFL-1.1",
@@ -643,6 +709,17 @@
       "optional": false,
       "locations": [
         "node_modules/@oxc-project/types"
+      ]
+    },
+    {
+      "name": "@pinojs/redact",
+      "version": "0.4.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@pinojs/redact"
       ]
     },
     {
@@ -921,6 +998,17 @@
       ]
     },
     {
+      "name": "@types/node",
+      "version": "24.10.0",
+      "license": "MIT",
+      "direct": true,
+      "developmentOnly": true,
+      "optional": false,
+      "locations": [
+        "node_modules/@types/node"
+      ]
+    },
+    {
       "name": "@types/react",
       "version": "19.3.0",
       "license": "MIT",
@@ -1086,6 +1174,17 @@
       ]
     },
     {
+      "name": "abstract-logging",
+      "version": "2.0.1",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/abstract-logging"
+      ]
+    },
+    {
       "name": "acorn",
       "version": "8.18.0",
       "license": "MIT",
@@ -1111,11 +1210,36 @@
       "name": "ajv",
       "version": "6.15.0",
       "license": "MIT",
-      "direct": false,
+      "direct": true,
       "developmentOnly": true,
       "optional": false,
       "locations": [
         "node_modules/ajv"
+      ]
+    },
+    {
+      "name": "ajv",
+      "version": "8.20.0",
+      "license": "MIT",
+      "direct": true,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@fastify/ajv-compiler/node_modules/ajv",
+        "node_modules/ajv-formats/node_modules/ajv",
+        "node_modules/fast-json-stringify/node_modules/ajv",
+        "services/backend/node_modules/ajv"
+      ]
+    },
+    {
+      "name": "ajv-formats",
+      "version": "3.0.1",
+      "license": "MIT",
+      "direct": true,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/ajv-formats"
       ]
     },
     {
@@ -1160,6 +1284,28 @@
       "optional": false,
       "locations": [
         "node_modules/assertion-error"
+      ]
+    },
+    {
+      "name": "atomic-sleep",
+      "version": "1.0.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/atomic-sleep"
+      ]
+    },
+    {
+      "name": "avvio",
+      "version": "9.3.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/avvio"
       ]
     },
     {
@@ -1262,6 +1408,17 @@
       ]
     },
     {
+      "name": "cookie",
+      "version": "1.1.1",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/cookie"
+      ]
+    },
+    {
       "name": "cross-spawn",
       "version": "7.0.6",
       "license": "MIT",
@@ -1343,7 +1500,7 @@
       "version": "2.0.3",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/dequal"
@@ -1570,11 +1727,22 @@
       ]
     },
     {
+      "name": "fast-decode-uri-component",
+      "version": "1.0.1",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/fast-decode-uri-component"
+      ]
+    },
+    {
       "name": "fast-deep-equal",
       "version": "3.1.3",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/fast-deep-equal"
@@ -1592,6 +1760,17 @@
       ]
     },
     {
+      "name": "fast-json-stringify",
+      "version": "7.0.1",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/fast-json-stringify"
+      ]
+    },
+    {
       "name": "fast-levenshtein",
       "version": "2.0.6",
       "license": "MIT",
@@ -1600,6 +1779,64 @@
       "optional": false,
       "locations": [
         "node_modules/fast-levenshtein"
+      ]
+    },
+    {
+      "name": "fast-querystring",
+      "version": "1.1.2",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/fast-querystring"
+      ]
+    },
+    {
+      "name": "fast-uri",
+      "version": "3.1.8",
+      "license": "BSD-3-Clause",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@fastify/ajv-compiler/node_modules/ajv/node_modules/fast-uri",
+        "node_modules/ajv-formats/node_modules/fast-uri",
+        "node_modules/fast-json-stringify/node_modules/ajv/node_modules/fast-uri",
+        "services/backend/node_modules/fast-uri"
+      ]
+    },
+    {
+      "name": "fast-uri",
+      "version": "4.2.1",
+      "license": "BSD-3-Clause",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/fast-uri"
+      ]
+    },
+    {
+      "name": "fastify",
+      "version": "5.12.2",
+      "license": "MIT",
+      "direct": true,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/fastify"
+      ]
+    },
+    {
+      "name": "fastq",
+      "version": "1.20.3",
+      "license": "ISC",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/fastq"
       ]
     },
     {
@@ -1622,6 +1859,17 @@
       "optional": false,
       "locations": [
         "node_modules/file-entry-cache"
+      ]
+    },
+    {
+      "name": "find-my-way",
+      "version": "9.9.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/find-my-way"
       ]
     },
     {
@@ -1801,6 +2049,17 @@
       ]
     },
     {
+      "name": "ipaddr.js",
+      "version": "2.5.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/ipaddr.js"
+      ]
+    },
+    {
       "name": "is-extglob",
       "version": "2.1.1",
       "license": "MIT",
@@ -1878,6 +2137,17 @@
       ]
     },
     {
+      "name": "json-schema-ref-resolver",
+      "version": "3.0.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/json-schema-ref-resolver"
+      ]
+    },
+    {
       "name": "json-schema-traverse",
       "version": "0.4.1",
       "license": "MIT",
@@ -1886,6 +2156,20 @@
       "optional": false,
       "locations": [
         "node_modules/json-schema-traverse"
+      ]
+    },
+    {
+      "name": "json-schema-traverse",
+      "version": "1.0.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@fastify/ajv-compiler/node_modules/json-schema-traverse",
+        "node_modules/ajv-formats/node_modules/json-schema-traverse",
+        "node_modules/fast-json-stringify/node_modules/json-schema-traverse",
+        "services/backend/node_modules/json-schema-traverse"
       ]
     },
     {
@@ -1930,6 +2214,17 @@
       "optional": false,
       "locations": [
         "node_modules/levn"
+      ]
+    },
+    {
+      "name": "light-my-request",
+      "version": "6.6.0",
+      "license": "BSD-3-Clause",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/light-my-request"
       ]
     },
     {
@@ -2199,6 +2494,17 @@
       ]
     },
     {
+      "name": "on-exit-leak-free",
+      "version": "2.1.2",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/on-exit-leak-free"
+      ]
+    },
+    {
       "name": "optionator",
       "version": "0.9.4",
       "license": "MIT",
@@ -2287,6 +2593,39 @@
       ]
     },
     {
+      "name": "pino",
+      "version": "10.3.1",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/pino"
+      ]
+    },
+    {
+      "name": "pino-abstract-transport",
+      "version": "3.0.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/pino-abstract-transport"
+      ]
+    },
+    {
+      "name": "pino-std-serializers",
+      "version": "7.1.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/pino-std-serializers"
+      ]
+    },
+    {
       "name": "postcss",
       "version": "8.5.28",
       "license": "MIT",
@@ -2331,6 +2670,28 @@
       ]
     },
     {
+      "name": "process-warning",
+      "version": "4.0.1",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/light-my-request/node_modules/process-warning"
+      ]
+    },
+    {
+      "name": "process-warning",
+      "version": "5.1.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/process-warning"
+      ]
+    },
+    {
       "name": "punycode",
       "version": "2.3.1",
       "license": "MIT",
@@ -2350,6 +2711,17 @@
       "optional": false,
       "locations": [
         "node_modules/qified"
+      ]
+    },
+    {
+      "name": "quick-format-unescaped",
+      "version": "4.0.4",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/quick-format-unescaped"
       ]
     },
     {
@@ -2386,14 +2758,69 @@
       ]
     },
     {
+      "name": "real-require",
+      "version": "0.2.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/real-require"
+      ]
+    },
+    {
+      "name": "real-require",
+      "version": "1.0.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/thread-stream/node_modules/real-require"
+      ]
+    },
+    {
       "name": "require-from-string",
       "version": "2.0.2",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/require-from-string"
+      ]
+    },
+    {
+      "name": "ret",
+      "version": "0.5.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/ret"
+      ]
+    },
+    {
+      "name": "reusify",
+      "version": "1.1.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/reusify"
+      ]
+    },
+    {
+      "name": "rfdc",
+      "version": "1.4.1",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/rfdc"
       ]
     },
     {
@@ -2405,6 +2832,28 @@
       "optional": false,
       "locations": [
         "node_modules/rolldown"
+      ]
+    },
+    {
+      "name": "safe-regex2",
+      "version": "5.1.1",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/safe-regex2"
+      ]
+    },
+    {
+      "name": "safe-stable-stringify",
+      "version": "2.5.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/safe-stable-stringify"
       ]
     },
     {
@@ -2430,6 +2879,17 @@
       ]
     },
     {
+      "name": "secure-json-parse",
+      "version": "4.1.0",
+      "license": "BSD-3-Clause",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/secure-json-parse"
+      ]
+    },
+    {
       "name": "semver",
       "version": "6.3.1",
       "license": "ISC",
@@ -2445,10 +2905,22 @@
       "version": "7.8.5",
       "license": "ISC",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
-        "node_modules/@typescript-eslint/typescript-estree/node_modules/semver"
+        "node_modules/@typescript-eslint/typescript-estree/node_modules/semver",
+        "node_modules/fastify/node_modules/semver"
+      ]
+    },
+    {
+      "name": "set-cookie-parser",
+      "version": "2.7.2",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/set-cookie-parser"
       ]
     },
     {
@@ -2485,6 +2957,17 @@
       ]
     },
     {
+      "name": "sonic-boom",
+      "version": "4.2.1",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/sonic-boom"
+      ]
+    },
+    {
       "name": "source-map-js",
       "version": "1.2.1",
       "license": "BSD-3-Clause",
@@ -2493,6 +2976,17 @@
       "optional": false,
       "locations": [
         "node_modules/source-map-js"
+      ]
+    },
+    {
+      "name": "split2",
+      "version": "4.2.0",
+      "license": "ISC",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/split2"
       ]
     },
     {
@@ -2515,6 +3009,17 @@
       "optional": false,
       "locations": [
         "node_modules/std-env"
+      ]
+    },
+    {
+      "name": "thread-stream",
+      "version": "4.2.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/thread-stream"
       ]
     },
     {
@@ -2570,6 +3075,17 @@
       "optional": false,
       "locations": [
         "node_modules/tldts-core"
+      ]
+    },
+    {
+      "name": "toad-cache",
+      "version": "3.7.4",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/toad-cache"
       ]
     },
     {
@@ -2647,6 +3163,17 @@
       "optional": false,
       "locations": [
         "node_modules/undici"
+      ]
+    },
+    {
+      "name": "undici-types",
+      "version": "7.16.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": true,
+      "optional": false,
+      "locations": [
+        "node_modules/undici-types"
       ]
     },
     {

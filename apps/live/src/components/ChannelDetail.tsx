@@ -1,4 +1,4 @@
-import type { Channel } from "../dev-data/channels";
+import type { LiveChannel as Channel } from "@a2-monitor/protocol/live-snapshot";
 
 type ChannelDetailProps = {
   channel: Channel;
