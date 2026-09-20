@@ -77,7 +77,9 @@ The runnable native scaffold now contains:
   is allocated before capture;
 - `crates/pcm-abi`, a dependency-free page-separated descriptor/region layout,
   consumer-control byte contract and single-threaded hostile-peer state-machine
-  model for the future shared PCM transport;
+  model plus a separate atomic in-process SPSC composition model;
+- `crates/media`, dependency-free 48 kHz source-frame-to-RTP/RTCP arithmetic
+  and media-session identity fencing;
 - `services/audio-node`, a deterministic synthetic host and smoke binary; and
 - `crates/supervisor`, a deterministic native-worker lifecycle policy with
   boot/generation fencing, role-specific readiness gates, bounded heartbeats,
@@ -103,11 +105,9 @@ epochs with the node boot identifier in production metadata.
 
 When the in-process ring is full it drops the newest block and increments a
 counter so published storage is never overwritten. This remains distinct from
-the `pcm-abi` overwrite-oldest state-machine model. That model now fixes and
-tests byte layout, loss accounting, generation/epoch fencing and hostile
-consumer-page handling, but producer/diagnostic/slot bytes are not frozen. It is
-not an OS mapping or concurrent sample-slot implementation and is not used by
-the capture callback.
+the `pcm-abi` serialized overwrite-oldest state-machine model. Its separate
+atomic SPSC model supports bounded in-process composition tests, but is not an
+OS mapping or cross-process ABI and is not used by the capture callback.
 
 Run the native checks and deterministic smoke path from the repository root:
 
@@ -118,12 +118,23 @@ cargo test --workspace --locked
 cargo run --locked --bin a2-synthetic-capture
 cargo run --locked --bin a2-synthetic-capture -- --trace-jsonl
 cargo run --locked --bin a2-replay-smoke
+cargo run --locked --bin a2-media-worker-smoke
 ```
 
 `a2-replay-smoke` is a deterministic, Cargo-runnable composition harness for
 the single-threaded in-memory ingress and replay models. It is not included in
 the immutable application slot or process-boundary contract and is not a
 deployed, supervised, confined or durable replay worker.
+
+`a2-media-worker-smoke` is a closed, zero-argument Cargo harness joining the
+in-process atomic PCM model to pure media-clock arithmetic. Fixed 48 kHz
+fixtures cover a source-frame gap, 32-bit RTP wrap, matching RTCP projection,
+and a simulated worker restart that requires both a fresh media-session epoch
+and SSRC. The sample rate, identities, RTP bases, SSRCs, PCM and clock anchor
+are deterministic fixtures—not random values, clock readings or measurements.
+Its single bounded output line declares those limits. It is not the packaged
+`a2-media-worker` process, WebRTC, Opus, networking, browser interoperability,
+confinement, performance evidence or promotion evidence.
 
 The optional trace mode writes exactly 18 newline-delimited JSON records to
 stdout: one start record, 16 capture-block records and one end record. It is a

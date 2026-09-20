@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.98cb634053d79d12",
-  "sourceSha256": "98cb634053d79d124112baaa22adc58b6060e656a45dcedbf92fa14b9899afe5",
-  "inputCount": 249,
+  "buildId": "a2-0.0.0+sha256.53b90643316ed03b",
+  "sourceSha256": "53b90643316ed03bd11202ec07e23d3e6e4fe141706dc6286f89e1cbc553ed48",
+  "inputCount": 250,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -61,7 +61,7 @@
     },
     {
       "path": "Cargo.lock",
-      "sha256": "244cc8cda1d90a53717174e48e5f76aa27e2fec2e38047440f548481c2045f72"
+      "sha256": "b9ced202fe63328e358bacfe91806a292422434c61886a2cdf4ab85a81bfc401"
     },
     {
       "path": "Cargo.toml",
@@ -597,7 +597,7 @@
     },
     {
       "path": "docs/quality/cargo-dependency-inventory.json",
-      "sha256": "5b0d9aaebd9086c3684455d6d654bf59204426a9255e631f7d51139c0c0451ae"
+      "sha256": "188d0b770f5bab0b9908ded8715c72f23f28b41b8ff2c7de6ae5c70eb6fa39ee"
     },
     {
       "path": "docs/quality/client-and-appliance-profiles.md",
@@ -897,11 +897,15 @@
     },
     {
       "path": "services/audio-node/Cargo.toml",
-      "sha256": "73804d3e185b73881c21b9ad858f7eeca3bd404d9a077b4a175a955e9eae773e"
+      "sha256": "19e05a6b50becb5621e83f700823645e4c3ae4565aef66b76f38a1bc0239eda9"
     },
     {
       "path": "services/audio-node/README.md",
-      "sha256": "c5ac79b520321e1fb5d36b5ce6522026e521115772451fc88a9e33749c170ae3"
+      "sha256": "a2f27d645db07810f15f3fd527c37a729d611cedea629a0d48c61dc27fee91ca"
+    },
+    {
+      "path": "services/audio-node/src/bin/media-worker-smoke.rs",
+      "sha256": "6b507787b43c48de30c42055ea4175a73519888a7ff2be8d49bd96e86b43b42e"
     },
     {
       "path": "services/audio-node/src/bin/replay-smoke.rs",
