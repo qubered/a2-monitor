@@ -36,3 +36,28 @@ Manager is a strict TypeScript React application built with Vite. It is a
 separate npm workspace and deployable static bundle. It shares generated
 protocol clients, accessible headless UI primitives and design tokens with
 Live, but not Live's show-time entry point or media session code.
+
+The current Phase 0T shell is intentionally disconnected from the management
+API. It renders only fabricated labels and explicit unknown/empty states; it
+does not claim that a production, hardware manifest, validation result, or
+activation exists.
+
+## Local development
+
+From the repository root, install the pinned workspace dependencies and start
+Manager on `127.0.0.1:4174`:
+
+```sh
+npm ci
+npm run dev --workspace @a2-monitor/manager
+```
+
+Run its format, lint, interaction-test, type, and production-build checks with:
+
+```sh
+npm run check --workspace @a2-monitor/manager
+```
+
+Manager must remain independently buildable and must not import from
+`apps/live`. Its next data integration must use a management API contract added
+for a running backend path rather than inventing a UI-only resource shape.

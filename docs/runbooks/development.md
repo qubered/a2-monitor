@@ -3,9 +3,10 @@
 ## Repository setup
 
 The selected toolchains are Node.js 24 LTS with npm and the repository-pinned
-stable Rust toolchain with Cargo, rustfmt and Clippy. The Live and minimal
-backend npm workspaces are runnable. The root Cargo workspace and lockfile are
-scaffolded without members; native crates have not been scaffolded yet.
+stable Rust toolchain with Cargo, rustfmt and Clippy. The Manager, Live and
+minimal backend npm workspaces are runnable. The root Cargo workspace contains
+the first project-owned audio-host boundary, bounded in-process PCM ring and
+deterministic synthetic audio node. They are scaffolding, not hardware evidence.
 
 ```sh
 git status --short --branch
@@ -23,30 +24,28 @@ npm ci
 npm run check --workspaces --if-present
 ```
 
-Verify the empty Cargo workspace and its committed lockfile with:
+Run the Rust workspace checks with:
 
 ```sh
 cargo metadata --locked --format-version 1 --no-deps
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --locked -- -D warnings
+cargo test --workspace --locked
+cargo run --locked --bin a2-synthetic-capture
 ```
 
-The required Rust workspace commands after the first native crate lands are:
-
-```sh
-cargo fmt --all --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace
-```
-
-Start the Live development server with:
+Start the web development servers with:
 
 ```sh
 npm run dev --workspace @a2-monitor/backend
 npm run dev --workspace @a2-monitor/live
+npm run dev --workspace @a2-monitor/manager
 ```
 
 The backend binds to `127.0.0.1:3000`; Vite proxies `/api` from
-`127.0.0.1:4173`. Its current snapshot is fabricated and must remain labelled as
-such.
+`127.0.0.1:4173`, while the disconnected Manager shell binds to
+`127.0.0.1:4174`. Current application data is fabricated and must remain
+labelled as such.
 
 ASIO builds additionally require the approved proprietary Steinberg SDK path,
 recorded checksum/provenance, LLVM/Clang documented by the selected CPAL

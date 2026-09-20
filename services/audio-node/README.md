@@ -66,3 +66,34 @@ Capture frame and epoch—not wall clock—drive RTP timestamps. A media-worker
 restart creates fresh peer/RTP generations and reconnects clients without
 stopping capture. The full normative process, time and ABI rules are linked
 from the architecture index.
+
+## Current Phase 0T scaffold
+
+The runnable native scaffold now contains:
+
+- `crates/audio-host-api`, a project-owned device and capture callback boundary
+  with no CPAL or platform type in its public interface;
+- `crates/audio-core`, a fixed-capacity in-process SPSC PCM ring whose storage
+  is allocated before capture; and
+- `services/audio-node`, a deterministic synthetic host and smoke binary.
+
+The callback path and ring push are covered by an allocation-counting test
+after setup. The callback types expose no lock or I/O facility, and the current
+implementation contains no locking primitive on that path; this is structural
+review evidence, not a general runtime proof that future code cannot block.
+When the in-process ring is full it drops the newest block and increments a
+counter so published storage is never overwritten. This is deliberately not
+the page-separated shared-memory ABI, whose overwrite-oldest policy and hostile
+consumer tests remain separate Phase 0T/0D work.
+
+Run the native checks and deterministic smoke path from the repository root:
+
+```sh
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --locked -- -D warnings
+cargo test --workspace --locked
+cargo run --locked --bin a2-synthetic-capture
+```
+
+This scaffold does not open a physical device and provides no latency,
+stability, hardware-support, or real-time scheduling evidence.

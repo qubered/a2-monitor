@@ -236,7 +236,7 @@ export function App({
           <div>
             <strong>Audio node offline.</strong>
             <span>
-              Listening is unavailable. Snapshot values are not current.
+              Monitor output is unavailable. Snapshot values are not current.
             </span>
           </div>
         </section>
@@ -265,7 +265,7 @@ export function App({
             <div className="grid-heading">
               <h1>{filterLabels[filter]}</h1>
               <p>
-                {visibleChannels.length} sources · press a card to listen ·
+                {visibleChannels.length} sources · press a card to select ·
                 expand opens detail
               </p>
             </div>
@@ -274,9 +274,9 @@ export function App({
                 <ChannelCard
                   channel={channel}
                   acknowledged={acknowledged.has(channel.id)}
-                  listening={selectedId === channel.id}
+                  selected={selectedId === channel.id}
                   onAcknowledge={() => acknowledge(channel)}
-                  onListen={() => selectChannel(channel)}
+                  onSelect={() => selectChannel(channel)}
                   onOpenDetail={() => setDetailId(channel.id)}
                   key={channel.id}
                 />
