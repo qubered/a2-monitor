@@ -75,6 +75,9 @@ The runnable native scaffold now contains:
   with no CPAL or platform type in its public interface;
 - `crates/audio-core`, a fixed-capacity in-process SPSC PCM ring whose storage
   is allocated before capture;
+- `crates/pcm-abi`, a dependency-free page-separated descriptor/region layout,
+  consumer-control byte contract and single-threaded hostile-peer state-machine
+  model for the future shared PCM transport;
 - `services/audio-node`, a deterministic synthetic host and smoke binary; and
 - `crates/supervisor`, a deterministic native-worker lifecycle policy with
   boot/generation fencing, role-specific readiness gates, bounded heartbeats,
@@ -99,9 +102,12 @@ independently constructed hosts represent separate node boots and pair their
 epochs with the node boot identifier in production metadata.
 
 When the in-process ring is full it drops the newest block and increments a
-counter so published storage is never overwritten. This is deliberately not
-the page-separated shared-memory ABI, whose overwrite-oldest policy and hostile
-consumer tests remain separate Phase 0T/0D work.
+counter so published storage is never overwritten. This remains distinct from
+the `pcm-abi` overwrite-oldest state-machine model. That model now fixes and
+tests byte layout, loss accounting, generation/epoch fencing and hostile
+consumer-page handling, but producer/diagnostic/slot bytes are not frozen. It is
+not an OS mapping or concurrent sample-slot implementation and is not used by
+the capture callback.
 
 Run the native checks and deterministic smoke path from the repository root:
 

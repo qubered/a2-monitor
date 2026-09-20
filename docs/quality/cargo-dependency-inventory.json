@@ -5,8 +5,8 @@
     "scripts/cargo-license-policy.json"
   ],
   "regenerationCommand": "node scripts/generate-cargo-dependency-inventory.mjs",
-  "lockfileSha256": "26f02b7a9353c2323f077f4b50567ef7eff232b683f35e8d686614269d05de2a",
-  "componentCount": 24,
+  "lockfileSha256": "55a4de93b7fc4fc34f189d9e96b8506729cdeb57a9a9c4e9671044f5036d3f88",
+  "componentCount": 25,
   "licenseCounts": [
     {
       "license": "(MIT OR Apache-2.0) AND Unicode-3.0",
@@ -18,7 +18,7 @@
     },
     {
       "license": "LicenseRef-Proprietary",
-      "count": 6
+      "count": 7
     },
     {
       "license": "MIT",
@@ -68,6 +68,14 @@
     },
     {
       "name": "a2-ipc",
+      "version": "0.0.0",
+      "source": null,
+      "checksum": null,
+      "license": "LicenseRef-Proprietary",
+      "workspace": true
+    },
+    {
+      "name": "a2-pcm-abi",
       "version": "0.0.0",
       "source": null,
       "checksum": null,
