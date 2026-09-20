@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://a2-monitor.invalid/schema/application-slot-manifest.v1.json",
+  "title": "A2 Monitor immutable application slot manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artifactKind",
+    "slotId",
+    "buildId",
+    "appVersion",
+    "platform",
+    "arch",
+    "targetTriple",
+    "buildProfile",
+    "identityKind",
+    "sourceSha256",
+    "lockSha256",
+    "inventorySha256",
+    "toolchains",
+    "entrypoints",
+    "frontendRoots",
+    "protocolVersion",
+    "files"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "artifactKind": { "const": "unsigned-smoke-slot" },
+    "slotId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._+\\-]{0,127}$"
+    },
+    "buildId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._+\\-]{0,127}$"
+    },
+    "platform": { "enum": ["windows", "macos"] },
+    "arch": { "enum": ["x86_64", "aarch64"] },
+    "appVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$"
+    },
+    "targetTriple": {
+      "enum": [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "aarch64-pc-windows-msvc",
+        "x86_64-pc-windows-msvc"
+      ]
+    },
+    "buildProfile": { "enum": ["debug", "release"] },
+    "identityKind": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "sourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "lockSha256": { "$ref": "#/$defs/lockDigests" },
+    "inventorySha256": { "$ref": "#/$defs/inventoryDigests" },
+    "toolchains": { "$ref": "#/$defs/toolchains" },
+    "entrypoints": { "$ref": "#/$defs/entrypoints" },
+    "frontendRoots": { "$ref": "#/$defs/frontendRoots" },
+    "protocolVersion": { "type": "string", "pattern": "^v(0|[1-9][0-9]*)$" },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "role", "size", "sha256", "mode", "executable"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "role": {
+            "enum": [
+              "audio_node",
+              "supervisor",
+              "node_runtime",
+              "backend",
+              "backend_dependency",
+              "protocol_schema",
+              "manager_asset",
+              "live_asset",
+              "license"
+            ]
+          },
+          "size": { "type": "integer", "minimum": 0 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "mode": { "enum": ["0444", "0555"] },
+          "executable": { "type": "boolean" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$"
+    },
+    "lockDigests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cargo", "npm"],
+      "properties": {
+        "cargo": { "$ref": "#/$defs/digest" },
+        "npm": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "inventoryDigests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cargo", "node"],
+      "properties": {
+        "cargo": { "$ref": "#/$defs/digest" },
+        "node": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "toolchains": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node", "npm", "rustc", "cargo"],
+      "properties": {
+        "node": { "$ref": "#/$defs/version" },
+        "npm": { "$ref": "#/$defs/version" },
+        "rustc": { "$ref": "#/$defs/version" },
+        "cargo": { "$ref": "#/$defs/version" }
+      }
+    },
+    "entrypoints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["audioNode", "supervisor", "backend", "nodeRuntime"],
+      "properties": {
+        "audioNode": { "type": "string" },
+        "supervisor": { "type": "string" },
+        "backend": { "type": "string" },
+        "nodeRuntime": { "type": "string" }
+      }
+    },
+    "frontendRoots": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manager", "live"],
+      "properties": {
+        "manager": { "type": "string" },
+        "live": { "type": "string" }
+      }
+    }
+  }
+}

@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.9b3cb61c222eefc5",
-  "sourceSha256": "9b3cb61c222eefc50175f78f20fe1af4d192b27389993810e9b0824cfc4bdedd",
-  "inputCount": 201,
+  "buildId": "a2-0.0.0+sha256.22435ec39eda9d6b",
+  "sourceSha256": "22435ec39eda9d6bb8edcda5b234fd8be71cd87a54fabbf41cd71e7e9dc6965c",
+  "inputCount": 212,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -13,7 +13,7 @@
     },
     {
       "path": ".gitattributes",
-      "sha256": "c19d3e62eaed3c9768d1d3d568f9f81cf6ea8725ad91abcb308fd1b545c63abc"
+      "sha256": "0ef846c37fab8a1d69ce6df37d10ccbea8c8872168f5e0313ee7a1b1bfebb6ce"
     },
     {
       "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
@@ -609,7 +609,7 @@
     },
     {
       "path": "docs/runbooks/release.md",
-      "sha256": "69947516a5628e50c16bd8a2a28256dc30c704235b067c1a5ed0a011eda69047"
+      "sha256": "66cf9ebfd5c3d13f39a85c3c88fb41fb971e3c7fdf1b745627b6763b8e044629"
     },
     {
       "path": "eslint.config.js",
@@ -617,7 +617,51 @@
     },
     {
       "path": "infra/appliance/README.md",
-      "sha256": "f2a619105b1e5f8c351df385c32a226c0edab062eee25847a0344670c1b113b9"
+      "sha256": "a6b3eb1d445146d8b4a130e5f1a8c94ea555bece4481eac09f83c09d2366cc1b"
+    },
+    {
+      "path": "infra/appliance/common/README.md",
+      "sha256": "bf41cf5a28bfb1f072dd655abc0ce9f1649e330966d6ea7c1bbaab3ab34ec2bc"
+    },
+    {
+      "path": "infra/appliance/common/application-slot-manifest.schema.json",
+      "sha256": "ae98ad6ba0b9c7d659a4f8e843f01ef9f2479588f4d9320e74094d23ab236c90"
+    },
+    {
+      "path": "infra/appliance/common/stage-application-slot.mjs",
+      "sha256": "0e3ec224e60fd212f61eefc903d161285d6c72bc7eb3efe6db7af5b4a5bfc2f4"
+    },
+    {
+      "path": "infra/appliance/common/stage-application-slot.test.mjs",
+      "sha256": "4555e66797602e83d6e91fbfd325793ae748e624712e0bae14675cb0a66b5bca"
+    },
+    {
+      "path": "infra/appliance/macos/README.md",
+      "sha256": "4259ee62270298b1e4e1270bfeb5ef17eb2daad358e325ffb8eef5cdf83005d7"
+    },
+    {
+      "path": "infra/appliance/macos/build-unsigned-pkg.sh",
+      "sha256": "8cd770b188ba8e48af087e22faa39b6edece381100383e4ec74c0643f8ca9974"
+    },
+    {
+      "path": "infra/appliance/macos/inspect-unsigned-pkg.sh",
+      "sha256": "547807265d1db8015184a1b02bd55fc2f2e385ba295eba26da6d5c30fbad6a9b"
+    },
+    {
+      "path": "infra/appliance/macos/test-unsigned-pkg.sh",
+      "sha256": "ff06a2bcb0d3b1cbe6226cb59191ae6bd81af2156b54613d3d48bda553da84e1"
+    },
+    {
+      "path": "infra/appliance/windows/New-A2WindowsLayout.ps1",
+      "sha256": "8439518f7a35f25df1b8391b2e84f8c0bba2b82b5131601f90adff2b02cfd0fd"
+    },
+    {
+      "path": "infra/appliance/windows/README.md",
+      "sha256": "fad0084dba180a4f505203ab66e66ee81433cd74631a4b91e912e50a5864a286"
+    },
+    {
+      "path": "infra/appliance/windows/Test-A2WindowsLayout.ps1",
+      "sha256": "523a54aa818a1c6cad1b205be324b6034f40065a8a625b0fd171247240d3e6de"
     },
     {
       "path": "integrations/sennheiser-ewdx/README.md",
@@ -733,7 +777,7 @@
     },
     {
       "path": "scripts/check-repo.sh",
-      "sha256": "c25bdbc7fc4e343fe7b154ca4893ba0e5b4b6358df647a660a19481b567f210a"
+      "sha256": "ddc6493260abba3ce8b97e2578748130c2d0fb1bfc9d3a92e4ebb91885fa571b"
     },
     {
       "path": "scripts/generate-build-identity.mjs",

@@ -1,6 +1,18 @@
 # Release runbook
 
-**Status:** Baseline; automation to be added with the first runnable build
+## Phase 0T packaging-layout smoke
+
+The current scaffold can stage an inactive, versioned application slot and can
+wrap it in an unsigned macOS flat package without installing it. Follow
+[`infra/appliance/common/README.md`](../../infra/appliance/common/README.md) and
+[`infra/appliance/macos/README.md`](../../infra/appliance/macos/README.md).
+The Windows PowerShell wrapper emits only a verified directory for a future
+approved MSI authoring step; it is not an MSI. These checks establish package
+contents and manifest integrity only. They do not establish signing,
+notarization, activation, rollback, confinement, named-host support, or release
+approval.
+
+**Status:** Baseline; unsigned layout smoke exists, production release automation does not
 
 ## Preconditions
 
