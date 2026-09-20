@@ -64,3 +64,56 @@ High-rate audio/RF meters and timelines use bounded external stores plus a
 Canvas/WebGL render scheduler rather than a React render per sample. A service
 worker may cache only the app shell; it cannot cache credentials, API state,
 mutations or media, and it does not change the foreground-only contract.
+
+## Current implementation
+
+The first runnable slice is the A2 channel grid. It currently provides:
+
+- a responsive Paper/dark/system-themed channel grid using shared design
+  tokens and locally bundled project fonts;
+- fabricated wireless and wired sources with separate RF, audio, battery and
+  check verdicts, including unknown and not-applicable states;
+- the required two-step alert/listen behavior: the first press acknowledges an
+  active alert and the next press selects the channel;
+- local filters, a capability-honest detail surface and persistent theme choice;
+- a fixed listening bar that starts muted and keeps mute and dim visible; and
+- unit-level interaction coverage plus verified desktop and iPad portrait
+  rendering against the canonical design reference.
+
+This slice does not play audio or connect to a backend, node, receiver or real
+show. Selecting a channel changes only local UI state. Fabricated data is
+labelled in the header, missing headshots render as missing, and no support or
+performance claim follows from this build.
+
+## Run locally
+
+Use Node.js 24 from the repository's `.node-version` file.
+
+```sh
+npm ci
+npm run dev --workspace @a2-monitor/live
+```
+
+Vite serves the app at `http://127.0.0.1:4173`. Component checks are:
+
+```sh
+npm run check --workspace @a2-monitor/live
+```
+
+## Build progress
+
+- [x] npm workspace and independent React/Vite production build
+- [x] shared Paper/dark design tokens and offline font assets
+- [x] A2 channel grid, filters, alert acknowledgement and detail surface
+- [x] muted-by-default listen selection with visible mute and dim controls
+- [x] interaction tests and desktop/iPad visual checks
+- [ ] backend health and snapshot endpoint
+- [ ] Live snapshot loading, explicit waiting/offline/error states and reconnect
+- [ ] external meter store and bounded rendering path
+- [ ] audio-node media/control integration and real listening
+- [ ] A1 mix-confidence, guided mic check and replay surfaces
+
+The next slice should add the backend health/snapshot skeleton and replace the
+in-component fabricated source with a typed local snapshot adapter. It should
+keep the fabricated fallback for development and add explicit waiting and
+backend-lost states before any real network integration.

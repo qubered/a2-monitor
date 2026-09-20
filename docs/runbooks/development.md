@@ -3,9 +3,8 @@
 ## Repository setup
 
 The selected toolchains are Node.js 24 LTS with npm and the repository-pinned
-stable Rust toolchain with Cargo, rustfmt and Clippy. Until runnable workspaces
-are scaffolded, the existing contract checks still require only Node/npm, Git
-and a POSIX shell.
+stable Rust toolchain with Cargo, rustfmt and Clippy. The Live npm workspace is
+runnable; native and backend workspaces have not been scaffolded yet.
 
 ```sh
 git status --short --branch
@@ -16,14 +15,25 @@ Component READMEs own their exact setup and checks. The root may expose thin
 orchestration scripts once at least two real components need them, but it must
 not hide the underlying Cargo/npm commands or hardware evidence profile.
 
-The intended workspace commands after scaffolding are:
+Current npm workspace commands are:
 
 ```sh
 npm ci
 npm run check --workspaces --if-present
+```
+
+The intended Rust workspace commands after native scaffolding are:
+
+```sh
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
+```
+
+Start the Live development server with:
+
+```sh
+npm run dev --workspace @a2-monitor/live
 ```
 
 ASIO builds additionally require the approved proprietary Steinberg SDK path,
