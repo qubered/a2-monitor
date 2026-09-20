@@ -15,11 +15,22 @@ use a representable half-open end, so a block starting at `u64::MAX` is rejected
 Writer loss requires a new ring generation; the existing generation cannot
 reattach a writer with ambiguous state.
 
+The crate also includes a serialized, preallocated ingress state-machine model
+for one capture epoch. It validates before mutation, keeps capture and ingress
+sequences distinct, drops the oldest unwritten block on queue pressure, and
+publishes persistent exact loss ranges before surviving audio. Drain uses
+peek/commit so a failed downstream append does not consume work. Source gaps
+travel with their queued block. If the bounded exact-loss ledger cannot
+represent another non-contiguous range, ingress fences replay and retains the
+rejected block metadata instead of erasing or fabricating evidence; composition
+must rotate to a fresh ingress generation.
+
 This crate is deliberately single-threaded. It does not implement the durable
 segmented file format, append-only index, checksums, recovery scan, disk-space
-reservation, encryption, OS process isolation, concurrent handoff, or a
-capture-callback queue. Those require the Phase 0B-A storage ADR, worker wiring,
-fault injection and named-host measurements.
+reservation, encryption, OS process isolation, or concurrent handoff. The
+ingress model does not prove a capture-callback transport. Those require the
+Phase 0B-A storage ADR, worker wiring, fault injection and named-host
+measurements.
 
 Run focused checks with:
 
