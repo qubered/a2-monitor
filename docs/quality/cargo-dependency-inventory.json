@@ -5,7 +5,7 @@
     "scripts/cargo-license-policy.json"
   ],
   "regenerationCommand": "node scripts/generate-cargo-dependency-inventory.mjs",
-  "lockfileSha256": "f27ba444bc5d0dd4db3e59123f46327dbda88770821dd82123b83a1784f951b7",
+  "lockfileSha256": "8fdd92690d8879c22ed343e085950ad01806781adcb232eefc75a90194becf92",
   "componentCount": 27,
   "licenseCounts": [
     {

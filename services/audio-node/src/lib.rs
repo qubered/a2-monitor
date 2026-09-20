@@ -1,5 +1,7 @@
 //! Deterministic synthetic audio host used before physical host qualification.
 
+pub mod worker_control;
+
 use a2_audio_host_api::{
     AudioHost, CallbackControl, CaptureBlock, CaptureBlockMetadata, CaptureCallback,
     CaptureCallbackFactory, CaptureEpochId, CaptureTiming, DeviceId, DeviceInfo,
