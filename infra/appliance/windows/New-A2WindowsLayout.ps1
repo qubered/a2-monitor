@@ -17,7 +17,8 @@ param(
     [Parameter(Mandatory = $true)][string]$NpmLock,
     [Parameter(Mandatory = $true)][string]$CargoInventory,
     [Parameter(Mandatory = $true)][string]$NodeInventory,
-    [Parameter(Mandatory = $true)][string]$NodeLicense
+    [Parameter(Mandatory = $true)][string]$NodeLicense,
+    [Parameter(Mandatory = $true)][string]$ProcessContract
 )
 
 $ErrorActionPreference = "Stop"
@@ -64,7 +65,8 @@ $StageArguments = @(
     "--npm-lock", $NpmLock,
     "--cargo-inventory", $CargoInventory,
     "--node-inventory", $NodeInventory,
-    "--node-license", $NodeLicense
+    "--node-license", $NodeLicense,
+    "--process-contract", $ProcessContract
 )
 try {
     & node @StageArguments

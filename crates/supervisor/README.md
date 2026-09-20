@@ -25,6 +25,16 @@ replay are singleton roles. Media and receiver-adapter roles may be configured
 more than once for explicit failure shards. Deployment topology validation
 remains future integration work.
 
+The closed scaffold inventory in
+`infra/appliance/common/process-boundaries.v0.json` assigns every native role a
+cardinality, readiness requirement and canonical configuration order. A Rust
+parity test rejects drift from the `WorkerRole` catalogue. The order is audio
+engine, sequencer, replay, media shards, receiver-adapter shards, then client
+gateway; shutdown requests run in reverse. `start()` still attempts every
+configured worker immediately, so this is not dependency-gated startup. The
+contract deliberately marks all six native entries `policy-model-only` and is
+not converted into runnable `WorkerSpec`s.
+
 The process and clock boundaries are injected. Platform launchers will implement
 the process boundary with restricted Windows children or launchd/XPC connections
 after those mechanisms have evidence. This scaffold does not claim OS

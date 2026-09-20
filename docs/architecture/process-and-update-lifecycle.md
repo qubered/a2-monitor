@@ -7,24 +7,56 @@
 The standard appliance uses two independently supervised user-session trees.
 Loss of the management tree cannot restart or stop the native node tree.
 
-| Process | Account/session | Authority and resources | Supervised by | Failure effect |
-| --- | --- | --- | --- | --- |
-| Node supervisor | dedicated logged-in show user | creates node boot ID; launches native workers; owns their lifecycle handles | OS logon task / `SMAppService` LaunchAgent | node becomes unavailable; backend remains diagnostic-only |
-| Audio engine | show user; highest permitted audio priority | only process that opens the selected audio device; owns capture clock and producer rings | node supervisor | all live capture stops; no fallback device is opened |
-| Canonical sequencer | restricted native child | sole node-ledger writer and holder of the boot authority grant/append handle | node supervisor | control becomes read-only; capture and existing media continue where safe |
-| Media worker | restricted/sandboxed native child | UDP, ICE/DTLS/SRTP/SCTP, Opus and peer state; no ledger append or audio-device handle | node supervisor logically; launchd hosts an XPC service on macOS | all peers on that shard enter `interrupted`; capture continues |
-| Client gateway | restricted/sandboxed native child | verifies direct-client lease/proof/signature and forwards bounded canonical commands | node supervisor logically; launchd hosts an XPC service on macOS | direct outage control unavailable; media may continue |
-| Replay worker | restricted/sandboxed native child | bounded replay mappings and replay store only | node supervisor, or launchd if the macOS sandbox spike requires XPC | replay unavailable; capture/live media continue |
-| Receiver adapter worker | one restricted/sandboxed child per vendor/failure shard | approved receiver interface and normalized telemetry/control contract | node supervisor logically; launchd hosts an XPC service on macOS where sandboxed | affected vendor telemetry/control stale; capture continues |
-| Backend supervisor | dedicated logged-in show user | starts one pinned Node runtime/backend; owns restart budget only for that tree | separate OS logon task / LaunchAgent | backend restarts without touching node workers |
-| Fastify backend | show user with restricted filesystem/network policy | HTTPS, auth, show DB, signaling, static Manager/Live assets | backend supervisor | Manager/collaboration unavailable; existing authorized media continues |
-| Storage worker | Node worker thread initially | sole backend database connection/writer queue; event-loop isolation, not OS crash isolation | Fastify backend | backend fails/restarts on native crash; audio node unaffected |
+| Process                 | Account/session                                         | Authority and resources                                                                     | Supervised by                                                                    | Failure effect                                                            |
+| ----------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Node supervisor         | dedicated logged-in show user                           | creates node boot ID; launches native workers; owns their lifecycle handles                 | OS logon task / `SMAppService` LaunchAgent                                       | node becomes unavailable; backend remains diagnostic-only                 |
+| Audio engine            | show user; highest permitted audio priority             | only process that opens the selected audio device; owns capture clock and producer rings    | node supervisor                                                                  | all live capture stops; no fallback device is opened                      |
+| Canonical sequencer     | restricted native child                                 | sole node-ledger writer and holder of the boot authority grant/append handle                | node supervisor                                                                  | control becomes read-only; capture and existing media continue where safe |
+| Media worker            | restricted/sandboxed native child                       | UDP, ICE/DTLS/SRTP/SCTP, Opus and peer state; no ledger append or audio-device handle       | node supervisor logically; launchd hosts an XPC service on macOS                 | all peers on that shard enter `interrupted`; capture continues            |
+| Client gateway          | restricted/sandboxed native child                       | verifies direct-client lease/proof/signature and forwards bounded canonical commands        | node supervisor logically; launchd hosts an XPC service on macOS                 | direct outage control unavailable; media may continue                     |
+| Replay worker           | restricted/sandboxed native child                       | bounded replay mappings and replay store only                                               | node supervisor, or launchd if the macOS sandbox spike requires XPC              | replay unavailable; capture/live media continue                           |
+| Receiver adapter worker | one restricted/sandboxed child per vendor/failure shard | approved receiver interface and normalized telemetry/control contract                       | node supervisor logically; launchd hosts an XPC service on macOS where sandboxed | affected vendor telemetry/control stale; capture continues                |
+| Backend supervisor      | dedicated logged-in show user                           | starts one pinned Node runtime/backend; owns restart budget only for that tree              | separate OS logon task / LaunchAgent                                             | backend restarts without touching node workers                            |
+| Fastify backend         | show user with restricted filesystem/network policy     | HTTPS, auth, show DB, signaling, static Manager/Live assets                                 | backend supervisor                                                               | Manager/collaboration unavailable; existing authorized media continues    |
+| Storage worker          | Node worker thread initially                            | sole backend database connection/writer queue; event-loop isolation, not OS crash isolation | Fastify backend                                                                  | backend fails/restarts on native crash; audio node unaffected             |
 
 The storage worker description is deliberate: a Node worker thread protects the
 HTTP event loop from synchronous SQLite work, but a native-addon process crash
 can still terminate the backend. No document calls it an operating-system
 security boundary. A separate storage process is introduced only if measured
 backend recovery or native-addon risk requires it.
+
+### Executable boundary contract
+
+[`process-boundaries.v0.json`](../../infra/appliance/common/process-boundaries.v0.json)
+is the closed Phase 0T inventory that binds these assignments to the immutable
+application slot. It separates current behavior from the target above. The slot
+stager rejects unknown/missing boundaries, cross-tree parents, duplicate
+or overlapping authority entries, any semantic drift from the closed v0
+assignment, drift from the Rust worker catalogue, runnable entries without a
+packaged entrypoint, and planned entries that claim an artifact or verified OS
+privilege.
+
+Current implementation truth is narrower than the target table:
+
+| Runnable artifact      | Current owner and lifecycle                                    | Explicit limit                                                              |
+| ---------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `a2-supervisor-smoke`  | manual invoker; recording driver completes its own demo        | creates no child, sends no OS signal and enforces no privilege              |
+| `a2-synthetic-capture` | manual invoker; renders a fixed block count and stops itself   | opens no physical device and is not the production audio-engine worker      |
+| Fastify backend        | manual invoker; `SIGINT`/`SIGTERM` closes Fastify exactly once | has no backend supervisor, storage worker, restart budget or database drain |
+
+The production node supervisor, all six native worker executables, backend
+supervisor and storage worker remain planned or policy-model-only. Current
+privilege enforcement is `false` for every boundary. Packaging the contract
+does not turn a target account, sandbox or restart policy into implementation
+evidence, and the `scaffold-only` profile must never be treated as deployable.
+
+The Rust policy catalogue fixes canonical configuration order as audio engine,
+sequencer, replay, media shards, receiver-adapter shards, then client gateway.
+The generic scaffold still attempts every configured worker immediately; this
+order is not dependency-gated startup. Its implemented shutdown request order
+is the reverse of the supplied configuration, so future launch adapters must
+materialize the canonical order rather than relying on call-site convention.
 
 ## Browser control path
 
@@ -138,7 +170,10 @@ the possibly-live handle. During shutdown this keeps the node in
 The scaffold permits partial topologies, and `WorkersReady` describes only the
 configured set. It rejects duplicate audio-engine, sequencer, client-gateway or
 replay singleton roles while allowing explicit media and receiver-adapter
-shards. Enforcing the complete deployable topology remains integration work.
+shards. The machine-readable contract is checked against the complete Rust role,
+cardinality, readiness and configuration-order catalogue, but it is not loaded
+into `WorkerSpec`: every native entry remains policy-model-only. Enforcing and
+launching the complete deployable topology remains integration work.
 
 The included process driver is a recording smoke adapter, not an OS launcher.
 Restricted Windows children, launchd/XPC connections, production health IPC,

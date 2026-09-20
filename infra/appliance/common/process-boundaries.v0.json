@@ -1,0 +1,466 @@
+{
+  "schemaVersion": 1,
+  "kind": "a2-process-boundaries",
+  "profileId": "phase-0t-scaffold",
+  "deploymentState": "scaffold-only",
+  "boundaries": [
+    {
+      "id": "node-supervisor-smoke",
+      "tree": "node",
+      "boundaryKind": "os-process",
+      "implementationState": "runnable-scaffold",
+      "artifactEntrypoint": "supervisor",
+      "accountableOwner": "audio-runtime-owner",
+      "current": {
+        "parentBoundaryId": null,
+        "processCreator": "manual-invoker",
+        "privilege": "invoking-user-unconfined",
+        "privilegeVerified": false,
+        "readiness": "self-completing-recording-driver-demo",
+        "restart": "none",
+        "shutdown": "self-completing-recording-driver-demo"
+      },
+      "target": {
+        "parentBoundaryId": null,
+        "processCreator": "not-deployable-smoke",
+        "privilege": "not-deployable-smoke",
+        "readiness": "not-deployable-smoke",
+        "restart": "not-deployable-smoke",
+        "shutdown": "not-deployable-smoke"
+      },
+      "currentAuthorities": ["lifecycle-policy-demo"],
+      "targetAuthorities": [],
+      "targetForbiddenAuthorities": [
+        "audio-device",
+        "ledger-append",
+        "receiver-network",
+        "show-database-write"
+      ],
+      "rustWorker": null
+    },
+    {
+      "id": "synthetic-capture-smoke",
+      "tree": "node",
+      "boundaryKind": "os-process",
+      "implementationState": "runnable-scaffold",
+      "artifactEntrypoint": "audioNode",
+      "accountableOwner": "audio-runtime-owner",
+      "current": {
+        "parentBoundaryId": null,
+        "processCreator": "manual-invoker",
+        "privilege": "invoking-user-unconfined",
+        "privilegeVerified": false,
+        "readiness": "fixed-block-count-completes",
+        "restart": "none",
+        "shutdown": "self-stops-after-fixed-block-count"
+      },
+      "target": {
+        "parentBoundaryId": null,
+        "processCreator": "not-deployable-smoke",
+        "privilege": "not-deployable-smoke",
+        "readiness": "not-deployable-smoke",
+        "restart": "not-deployable-smoke",
+        "shutdown": "not-deployable-smoke"
+      },
+      "currentAuthorities": ["in-process-pcm-ring", "synthetic-audio-host"],
+      "targetAuthorities": [],
+      "targetForbiddenAuthorities": [
+        "external-network",
+        "ledger-append",
+        "receiver-network",
+        "show-database-write"
+      ],
+      "rustWorker": null
+    },
+    {
+      "id": "node-supervisor",
+      "tree": "node",
+      "boundaryKind": "os-process",
+      "implementationState": "planned-process",
+      "artifactEntrypoint": null,
+      "accountableOwner": "audio-runtime-owner",
+      "current": {
+        "parentBoundaryId": null,
+        "processCreator": "not-implemented",
+        "privilege": "not-implemented",
+        "privilegeVerified": false,
+        "readiness": "not-implemented",
+        "restart": "not-implemented",
+        "shutdown": "not-implemented"
+      },
+      "target": {
+        "parentBoundaryId": null,
+        "processCreator": "os-user-session-launcher",
+        "privilege": "dedicated-show-user-session",
+        "readiness": "configured-worker-set-ready",
+        "restart": "os-owned-separate-tree-budget",
+        "shutdown": "reverse-configuration-order"
+      },
+      "currentAuthorities": [],
+      "targetAuthorities": [
+        "boot-identity",
+        "native-child-lifecycle",
+        "scoped-ipc-resource-creation"
+      ],
+      "targetForbiddenAuthorities": [
+        "audio-device",
+        "ledger-append",
+        "receiver-network",
+        "show-database-write"
+      ],
+      "rustWorker": null
+    },
+    {
+      "id": "audio-engine",
+      "tree": "node",
+      "boundaryKind": "native-worker",
+      "implementationState": "policy-model-only",
+      "artifactEntrypoint": null,
+      "accountableOwner": "audio-runtime-owner",
+      "current": {
+        "parentBoundaryId": null,
+        "processCreator": "not-implemented",
+        "privilege": "not-implemented",
+        "privilegeVerified": false,
+        "readiness": "policy-model-only",
+        "restart": "policy-model-only",
+        "shutdown": "policy-model-only"
+      },
+      "target": {
+        "parentBoundaryId": "node-supervisor",
+        "processCreator": "node-supervisor",
+        "privilege": "audio-device-only-show-user-child",
+        "readiness": "device-verified",
+        "restart": "bounded-exponential-circuit-breaker",
+        "shutdown": "node-supervisor-grace-then-confirmed-death"
+      },
+      "currentAuthorities": [],
+      "targetAuthorities": ["audio-device", "capture-clock", "pcm-producer"],
+      "targetForbiddenAuthorities": [
+        "external-network",
+        "ledger-append",
+        "receiver-network",
+        "show-database-write"
+      ],
+      "rustWorker": {
+        "role": "audio-engine",
+        "cardinality": "singleton",
+        "readiness": "device-verified",
+        "configurationOrder": 1
+      }
+    },
+    {
+      "id": "sequencer",
+      "tree": "node",
+      "boundaryKind": "native-worker",
+      "implementationState": "policy-model-only",
+      "artifactEntrypoint": null,
+      "accountableOwner": "audio-runtime-owner",
+      "current": {
+        "parentBoundaryId": null,
+        "processCreator": "not-implemented",
+        "privilege": "not-implemented",
+        "privilegeVerified": false,
+        "readiness": "policy-model-only",
+        "restart": "policy-model-only",
+        "shutdown": "policy-model-only"
+      },
+      "target": {
+        "parentBoundaryId": "node-supervisor",
+        "processCreator": "node-supervisor",
+        "privilege": "restricted-native-child",
+        "readiness": "ledger-checked",
+        "restart": "bounded-exponential-circuit-breaker",
+        "shutdown": "node-supervisor-grace-then-confirmed-death"
+      },
+      "currentAuthorities": [],
+      "targetAuthorities": ["boot-authority-grant", "ledger-append"],
+      "targetForbiddenAuthorities": [
+        "audio-device",
+        "external-network",
+        "receiver-network",
+        "show-database-write"
+      ],
+      "rustWorker": {
+        "role": "sequencer",
+        "cardinality": "singleton",
+        "readiness": "ledger-checked",
+        "configurationOrder": 2
+      }
+    },
+    {
+      "id": "replay-worker",
+      "tree": "node",
+      "boundaryKind": "native-worker",
+      "implementationState": "policy-model-only",
+      "artifactEntrypoint": null,
+      "accountableOwner": "audio-runtime-owner",
+      "current": {
+        "parentBoundaryId": null,
+        "processCreator": "not-implemented",
+        "privilege": "not-implemented",
+        "privilegeVerified": false,
+        "readiness": "policy-model-only",
+        "restart": "policy-model-only",
+        "shutdown": "policy-model-only"
+      },
+      "target": {
+        "parentBoundaryId": "node-supervisor",
+        "processCreator": "node-supervisor",
+        "privilege": "restricted-replay-store-child",
+        "readiness": "basic",
+        "restart": "bounded-exponential-circuit-breaker",
+        "shutdown": "node-supervisor-grace-then-confirmed-death"
+      },
+      "currentAuthorities": [],
+      "targetAuthorities": ["bounded-replay-mappings", "replay-store"],
+      "targetForbiddenAuthorities": [
+        "audio-device",
+        "external-network",
+        "ledger-append",
+        "receiver-network",
+        "show-database-write"
+      ],
+      "rustWorker": {
+        "role": "replay",
+        "cardinality": "singleton",
+        "readiness": "basic",
+        "configurationOrder": 3
+      }
+    },
+    {
+      "id": "media-worker",
+      "tree": "node",
+      "boundaryKind": "native-worker",
+      "implementationState": "policy-model-only",
+      "artifactEntrypoint": null,
+      "accountableOwner": "media-runtime-owner",
+      "current": {
+        "parentBoundaryId": null,
+        "processCreator": "not-implemented",
+        "privilege": "not-implemented",
+        "privilegeVerified": false,
+        "readiness": "policy-model-only",
+        "restart": "policy-model-only",
+        "shutdown": "policy-model-only"
+      },
+      "target": {
+        "parentBoundaryId": "node-supervisor",
+        "processCreator": "node-supervisor",
+        "privilege": "sandboxed-media-network-child",
+        "readiness": "fresh-media-sessions",
+        "restart": "bounded-exponential-circuit-breaker",
+        "shutdown": "node-supervisor-grace-then-confirmed-death"
+      },
+      "currentAuthorities": [],
+      "targetAuthorities": ["opus", "peer-state", "webrtc-network"],
+      "targetForbiddenAuthorities": [
+        "audio-device",
+        "ledger-append",
+        "receiver-network",
+        "show-database-write"
+      ],
+      "rustWorker": {
+        "role": "media",
+        "cardinality": "sharded-one-or-more",
+        "readiness": "fresh-media-sessions",
+        "configurationOrder": 4
+      }
+    },
+    {
+      "id": "receiver-adapter",
+      "tree": "node",
+      "boundaryKind": "native-worker",
+      "implementationState": "policy-model-only",
+      "artifactEntrypoint": null,
+      "accountableOwner": "receiver-integration-owner",
+      "current": {
+        "parentBoundaryId": null,
+        "processCreator": "not-implemented",
+        "privilege": "not-implemented",
+        "privilegeVerified": false,
+        "readiness": "policy-model-only",
+        "restart": "policy-model-only",
+        "shutdown": "policy-model-only"
+      },
+      "target": {
+        "parentBoundaryId": "node-supervisor",
+        "processCreator": "node-supervisor",
+        "privilege": "sandboxed-configured-receiver-network-child",
+        "readiness": "basic",
+        "restart": "bounded-exponential-circuit-breaker",
+        "shutdown": "node-supervisor-grace-then-confirmed-death"
+      },
+      "currentAuthorities": [],
+      "targetAuthorities": [
+        "configured-receiver-network",
+        "normalized-telemetry"
+      ],
+      "targetForbiddenAuthorities": [
+        "audio-device",
+        "internet",
+        "ledger-append",
+        "show-database-write"
+      ],
+      "rustWorker": {
+        "role": "receiver-adapter",
+        "cardinality": "sharded-zero-or-more",
+        "readiness": "basic",
+        "configurationOrder": 5
+      }
+    },
+    {
+      "id": "client-gateway",
+      "tree": "node",
+      "boundaryKind": "native-worker",
+      "implementationState": "policy-model-only",
+      "artifactEntrypoint": null,
+      "accountableOwner": "security-platform-owner",
+      "current": {
+        "parentBoundaryId": null,
+        "processCreator": "not-implemented",
+        "privilege": "not-implemented",
+        "privilegeVerified": false,
+        "readiness": "policy-model-only",
+        "restart": "policy-model-only",
+        "shutdown": "policy-model-only"
+      },
+      "target": {
+        "parentBoundaryId": "node-supervisor",
+        "processCreator": "node-supervisor",
+        "privilege": "sandboxed-command-validation-child",
+        "readiness": "basic",
+        "restart": "bounded-exponential-circuit-breaker",
+        "shutdown": "node-supervisor-grace-then-confirmed-death"
+      },
+      "currentAuthorities": [],
+      "targetAuthorities": [
+        "bounded-command-forwarding",
+        "lease-proof-signature-validation"
+      ],
+      "targetForbiddenAuthorities": [
+        "audio-device",
+        "ledger-append",
+        "receiver-network",
+        "show-database-write"
+      ],
+      "rustWorker": {
+        "role": "client-gateway",
+        "cardinality": "singleton",
+        "readiness": "basic",
+        "configurationOrder": 6
+      }
+    },
+    {
+      "id": "backend-supervisor",
+      "tree": "backend",
+      "boundaryKind": "os-process",
+      "implementationState": "planned-process",
+      "artifactEntrypoint": null,
+      "accountableOwner": "platform-runtime-owner",
+      "current": {
+        "parentBoundaryId": null,
+        "processCreator": "not-implemented",
+        "privilege": "not-implemented",
+        "privilegeVerified": false,
+        "readiness": "not-implemented",
+        "restart": "not-implemented",
+        "shutdown": "not-implemented"
+      },
+      "target": {
+        "parentBoundaryId": null,
+        "processCreator": "os-user-session-launcher",
+        "privilege": "dedicated-show-user-session",
+        "readiness": "backend-health-contract",
+        "restart": "os-owned-separate-tree-budget",
+        "shutdown": "graceful-backend-stop-then-confirmed-death"
+      },
+      "currentAuthorities": [],
+      "targetAuthorities": ["pinned-node-backend-lifecycle"],
+      "targetForbiddenAuthorities": [
+        "audio-device",
+        "ledger-append",
+        "native-node-worker-lifecycle",
+        "receiver-network"
+      ],
+      "rustWorker": null
+    },
+    {
+      "id": "backend",
+      "tree": "backend",
+      "boundaryKind": "os-process",
+      "implementationState": "runnable-scaffold",
+      "artifactEntrypoint": "backend",
+      "accountableOwner": "application-backend-owner",
+      "current": {
+        "parentBoundaryId": null,
+        "processCreator": "manual-invoker",
+        "privilege": "invoking-user-unconfined",
+        "privilegeVerified": false,
+        "readiness": "loopback-http-listening",
+        "restart": "none",
+        "shutdown": "sigint-or-sigterm-fastify-close-once"
+      },
+      "target": {
+        "parentBoundaryId": "backend-supervisor",
+        "processCreator": "backend-supervisor",
+        "privilege": "restricted-show-user-process",
+        "readiness": "backend-health-contract",
+        "restart": "bounded-backend-tree-restart",
+        "shutdown": "stop-ingress-drain-storage-then-exit"
+      },
+      "currentAuthorities": [
+        "fabricated-live-snapshot",
+        "loopback-http-health"
+      ],
+      "targetAuthorities": [
+        "authentication",
+        "local-https",
+        "show-database-orchestration",
+        "signaling",
+        "static-web-assets"
+      ],
+      "targetForbiddenAuthorities": [
+        "audio-device",
+        "direct-receiver-network",
+        "ledger-append",
+        "native-node-worker-lifecycle"
+      ],
+      "rustWorker": null
+    },
+    {
+      "id": "storage-worker",
+      "tree": "backend",
+      "boundaryKind": "worker-thread",
+      "implementationState": "planned-thread",
+      "artifactEntrypoint": null,
+      "accountableOwner": "application-backend-owner",
+      "current": {
+        "parentBoundaryId": null,
+        "processCreator": "not-implemented",
+        "privilege": "not-implemented",
+        "privilegeVerified": false,
+        "readiness": "not-implemented",
+        "restart": "not-implemented",
+        "shutdown": "not-implemented"
+      },
+      "target": {
+        "parentBoundaryId": "backend",
+        "processCreator": "backend-worker-thread-host",
+        "privilege": "same-backend-process-not-os-boundary",
+        "readiness": "database-open-migrations-checked",
+        "restart": "backend-restart-on-native-worker-crash",
+        "shutdown": "drain-writer-checkpoint-close-before-backend-exit"
+      },
+      "currentAuthorities": [],
+      "targetAuthorities": ["sole-show-database-connection", "writer-queue"],
+      "targetForbiddenAuthorities": [
+        "audio-device",
+        "external-network",
+        "ledger-append",
+        "receiver-network"
+      ],
+      "rustWorker": null
+    }
+  ]
+}

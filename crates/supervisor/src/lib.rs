@@ -24,11 +24,80 @@ pub enum WorkerRole {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum WorkerCardinality {
+    Singleton,
+    ShardedOneOrMore,
+    ShardedZeroOrMore,
+}
+
+impl WorkerRole {
+    #[must_use]
+    pub const fn contract_id(self) -> &'static str {
+        match self {
+            Self::AudioEngine => "audio-engine",
+            Self::Sequencer => "sequencer",
+            Self::Media => "media",
+            Self::ClientGateway => "client-gateway",
+            Self::Replay => "replay",
+            Self::ReceiverAdapter => "receiver-adapter",
+        }
+    }
+
+    #[must_use]
+    pub const fn cardinality(self) -> WorkerCardinality {
+        match self {
+            Self::AudioEngine | Self::Sequencer | Self::ClientGateway | Self::Replay => {
+                WorkerCardinality::Singleton
+            }
+            Self::Media => WorkerCardinality::ShardedOneOrMore,
+            Self::ReceiverAdapter => WorkerCardinality::ShardedZeroOrMore,
+        }
+    }
+
+    #[must_use]
+    pub const fn readiness_requirement(self) -> ReadinessRequirement {
+        match self {
+            Self::AudioEngine => ReadinessRequirement::DeviceVerified,
+            Self::Sequencer => ReadinessRequirement::LedgerChecked,
+            Self::Media => ReadinessRequirement::FreshMediaSessions,
+            Self::ClientGateway | Self::Replay | Self::ReceiverAdapter => {
+                ReadinessRequirement::Basic
+            }
+        }
+    }
+
+    /// Canonical configuration order. Shutdown requests are issued in reverse.
+    #[must_use]
+    pub const fn configuration_order(self) -> u8 {
+        match self {
+            Self::AudioEngine => 1,
+            Self::Sequencer => 2,
+            Self::Replay => 3,
+            Self::Media => 4,
+            Self::ReceiverAdapter => 5,
+            Self::ClientGateway => 6,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ReadinessRequirement {
     Basic,
     DeviceVerified,
     LedgerChecked,
     FreshMediaSessions,
+}
+
+impl ReadinessRequirement {
+    #[must_use]
+    pub const fn contract_id(self) -> &'static str {
+        match self {
+            Self::Basic => "basic",
+            Self::DeviceVerified => "device-verified",
+            Self::LedgerChecked => "ledger-checked",
+            Self::FreshMediaSessions => "fresh-media-sessions",
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -916,28 +985,11 @@ where
 }
 
 fn valid_readiness(role: WorkerRole, readiness: ReadinessRequirement) -> bool {
-    matches!(
-        (role, readiness),
-        (
-            WorkerRole::AudioEngine,
-            ReadinessRequirement::DeviceVerified
-        ) | (WorkerRole::Sequencer, ReadinessRequirement::LedgerChecked)
-            | (WorkerRole::Media, ReadinessRequirement::FreshMediaSessions)
-            | (
-                WorkerRole::ClientGateway | WorkerRole::Replay | WorkerRole::ReceiverAdapter,
-                ReadinessRequirement::Basic
-            )
-    )
+    role.readiness_requirement() == readiness
 }
 
 fn is_singleton(role: WorkerRole) -> bool {
-    matches!(
-        role,
-        WorkerRole::AudioEngine
-            | WorkerRole::Sequencer
-            | WorkerRole::ClientGateway
-            | WorkerRole::Replay
-    )
+    role.cardinality() == WorkerCardinality::Singleton
 }
 
 fn evidence_satisfies(
@@ -959,6 +1011,7 @@ fn evidence_satisfies(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::Deserialize;
     use std::cell::Cell;
     use std::rc::Rc;
 
@@ -1077,6 +1130,72 @@ mod tests {
         )
         .unwrap();
         (clock, supervisor)
+    }
+
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct ProcessContract {
+        boundaries: Vec<ProcessBoundary>,
+    }
+
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct ProcessBoundary {
+        rust_worker: Option<ContractWorker>,
+    }
+
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct ContractWorker {
+        role: String,
+        cardinality: String,
+        readiness: String,
+        configuration_order: u8,
+    }
+
+    #[test]
+    fn process_contract_matches_the_complete_worker_policy_catalog() {
+        let contract: ProcessContract = serde_json::from_str(include_str!(
+            "../../../infra/appliance/common/process-boundaries.v0.json"
+        ))
+        .unwrap();
+        let actual: Vec<_> = contract
+            .boundaries
+            .iter()
+            .filter_map(|boundary| boundary.rust_worker.as_ref())
+            .map(|worker| {
+                (
+                    worker.role.as_str(),
+                    worker.cardinality.as_str(),
+                    worker.readiness.as_str(),
+                    worker.configuration_order,
+                )
+            })
+            .collect();
+        let roles = [
+            WorkerRole::AudioEngine,
+            WorkerRole::Sequencer,
+            WorkerRole::Replay,
+            WorkerRole::Media,
+            WorkerRole::ReceiverAdapter,
+            WorkerRole::ClientGateway,
+        ];
+        let expected: Vec<_> = roles
+            .map(|role| {
+                let cardinality = match role.cardinality() {
+                    WorkerCardinality::Singleton => "singleton",
+                    WorkerCardinality::ShardedOneOrMore => "sharded-one-or-more",
+                    WorkerCardinality::ShardedZeroOrMore => "sharded-zero-or-more",
+                };
+                (
+                    role.contract_id(),
+                    cardinality,
+                    role.readiness_requirement().contract_id(),
+                    role.configuration_order(),
+                )
+            })
+            .to_vec();
+        assert_eq!(actual, expected);
     }
 
     fn kill_count(supervisor: &Supervisor<FakeClock, FakeDriver>, handle: u64) -> usize {

@@ -54,7 +54,8 @@ package_path="$work_dir/output/a2-monitor-0.0.0-macos-aarch64-unsigned.pkg"
   --npm-lock "$repository_root/package-lock.json" \
   --cargo-inventory "$repository_root/docs/quality/cargo-dependency-inventory.json" \
   --node-inventory "$repository_root/docs/quality/node-dependency-inventory.json" \
-  --node-license "$work_dir/NODE-LICENSE" >/dev/null
+  --node-license "$work_dir/NODE-LICENSE" \
+  --process-contract "$repository_root/infra/appliance/common/process-boundaries.v0.json" >/dev/null
 
 [[ -f "$package_path" ]] || { echo "expected package was not created" >&2; exit 1; }
 "$script_dir/inspect-unsigned-pkg.sh" \
@@ -94,7 +95,8 @@ node "$repository_root/infra/appliance/common/stage-application-slot.mjs" stage 
   --npm-lock "$repository_root/package-lock.json" \
   --cargo-inventory "$repository_root/docs/quality/cargo-dependency-inventory.json" \
   --node-inventory "$repository_root/docs/quality/node-dependency-inventory.json" \
-  --node-license "$work_dir/NODE-LICENSE" >/dev/null
+  --node-license "$work_dir/NODE-LICENSE" \
+  --process-contract "$repository_root/infra/appliance/common/process-boundaries.v0.json" >/dev/null
 
 mkdir "$work_dir/installer-scripts"
 mkdir "$work_dir/scripted-build" "$work_dir/extra-build" "$work_dir/symlink-build"
@@ -178,7 +180,8 @@ if "$script_dir/build-unsigned-pkg.sh" \
   --npm-lock "$repository_root/package-lock.json" \
   --cargo-inventory "$repository_root/docs/quality/cargo-dependency-inventory.json" \
   --node-inventory "$repository_root/docs/quality/node-dependency-inventory.json" \
-  --node-license "$work_dir/NODE-LICENSE" >/dev/null 2>&1; then
+  --node-license "$work_dir/NODE-LICENSE" \
+  --process-contract "$repository_root/infra/appliance/common/process-boundaries.v0.json" >/dev/null 2>&1; then
   echo "package builder overwrote an existing artifact" >&2
   exit 1
 fi

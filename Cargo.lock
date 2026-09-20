@@ -40,6 +40,8 @@ name = "a2-supervisor"
 version = "0.0.0"
 dependencies = [
  "a2-build-info",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

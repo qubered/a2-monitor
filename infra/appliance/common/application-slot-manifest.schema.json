@@ -74,7 +74,9 @@
               "node_runtime",
               "backend",
               "backend_dependency",
+              "protocol_runtime",
               "protocol_schema",
+              "process_contract",
               "manager_asset",
               "live_asset",
               "license"

@@ -22,6 +22,7 @@ node infra/appliance/common/stage-application-slot.mjs stage \
   --live-dist apps/live/dist \
   --node-runtime "$PINNED_NODE_BINARY" \
   --node-license "$PINNED_NODE_LICENSE" \
+  --process-contract infra/appliance/common/process-boundaries.v0.json \
   --build-identity docs/quality/build-identity.json \
   --release-metadata "$RELEASE_METADATA" \
   --cargo-lock Cargo.lock \
@@ -43,6 +44,20 @@ Windows. Renaming a binary from another platform is rejected.
 The Node licence is copied beside the slot payload. Lockfiles, generated
 dependency inventories, and the generated build identity are hashed as explicit
 inputs rather than copied as runtime files.
+
+The closed process-boundary contract is validated before staging and copied as
+`config/process-boundaries.v0.json`. It distinguishes the three runnable
+scaffolds from policy-only and planned processes/threads, keeps every current OS
+privilege claim unverified, assigns target lifecycle owners, and maps each
+packaged application entrypoint exactly once. A scaffold contract is not a
+deployable launch or confinement profile.
+
+Validate the source contract and its adversarial cases with:
+
+```sh
+node infra/appliance/common/validate-process-boundaries.mjs
+node --test infra/appliance/common/validate-process-boundaries.test.mjs
+```
 
 `--release-metadata` is a closed JSON input. It records values that cannot be
 inferred safely from filenames:
@@ -72,6 +87,7 @@ slots/BUILD_ID/
 ├── backend/{package.json,dist/}
 ├── backend/node_modules/
 │   └── @a2-monitor/protocol/{package.json,validation/,schema/}
+├── config/process-boundaries.v0.json
 ├── web/{manager,live}/
 ├── licenses/node/LICENSE
 └── slot-manifest.json
@@ -99,7 +115,8 @@ node infra/appliance/common/stage-application-slot.mjs verify \
 ```
 
 Verification rejects malformed/unknown manifest fields, missing or extra files,
-symlinks, unsafe paths, size changes, and hash changes. This is layout evidence,
+symlinks, unsafe paths, size changes, hash changes, and a process contract whose
+content is invalid even when its manifest size/hash are self-consistent. This is layout evidence,
 not an installer, signature, update, activation, rollback, or support claim.
 The manifest binds the declared versions and inventory inputs but does not infer
 their truth from arbitrary binary contents or prove an npm lockfile closure.
