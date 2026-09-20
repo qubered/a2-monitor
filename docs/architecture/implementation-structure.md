@@ -16,6 +16,7 @@ not imply that empty packages must be created before their phase begins.
 │   ├── audio-core/               # bounded DSP, meters and mix buses
 │   ├── audio-host-api/           # project-owned device/stream contract
 │   ├── audio-host-cpal/          # replaceable CPAL implementation
+│   ├── pcm-abi/                  # dependency-free shared PCM byte contract/model
 │   ├── ipc/                      # shared rings and local control framing
 │   ├── media/                    # Opus/WebRTC session logic
 │   ├── opus-sys-safe/            # only audited libopus FFI leaf
@@ -81,10 +82,12 @@ flowchart LR
     Host["audio-host-cpal"] --> HostAPI["audio-host-api"]
     EngineBin["audio-engine binary"] --> Host
     EngineBin --> Core["audio-core"]
+    EngineBin --> PcmAbi["pcm-abi"]
     EngineBin --> IPC["ipc"]
     MediaBin["media-worker binary"] --> Media["media"]
     Media --> Opus["opus-sys-safe"]
     Media --> IPC
+    Media --> PcmAbi
     ReplayBin["replay-worker binary"] --> Replay["replay"]
     Replay --> IPC
     MediaBin --> GatewayBin["client-gateway binary"]
@@ -107,6 +110,10 @@ Rules:
   dependency. It accepts fixed buffers/commands and returns bounded output.
 - `audio-host-api` has no CPAL types. Only the composition binary imports the
   selected host implementation.
+- `pcm-abi` owns the dependency-free shared PCM descriptor/region layout,
+  consumer-control bytes and deterministic state-machine model. OS mapping,
+  handle, ACL and process code stays in platform/supervisor leaves; the current
+  model is not a complete byte ABI or concurrent mapping implementation.
 - `opus-sys-safe` is the only project crate permitted to call `libopus` FFI.
 - `ipc` and generated native DTOs contain transport mechanics, not show-domain
   authority decisions.

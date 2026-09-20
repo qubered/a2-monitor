@@ -134,4 +134,17 @@ The Phase 0T scaffold implements this outer frame and an initial comparison in
 messages, exact golden bytes, fragmented input, malformed and oversized input,
 and each candidate's unknown-field behavior. This is implementation evidence
 for the framing boundary only: no codec has been selected, no local transport
-has been integrated, and shared-memory PCM remains separate work.
+has been integrated.
+
+`crates/pcm-abi` now implements the first dependency-free version-zero
+descriptor/region layout, consumer-control-page bytes and deterministic
+state-machine model. It checks little-endian descriptor fields and page-separated
+offsets, fences attach by mapping generation and capture epoch, models
+overwrite-oldest loss ranges and sequence wrap, and treats every
+consumer-control-page byte as hostile. Its producer hot path is covered by an
+allocation counter. Producer-state, diagnostic and slot-header byte fields are
+not frozen. The model is intentionally single-threaded: it does not prove that
+ordinary Rust sample memory is a safe concurrent cross-process handoff. OS
+mappings, least-write views, slot-claim/race resolution, ACLs, process-death
+cleanup and callback deadlines remain required before this ABI can be promoted
+as an implemented transport.
