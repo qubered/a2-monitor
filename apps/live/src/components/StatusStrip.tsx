@@ -1,4 +1,7 @@
-import type { Channel, Verdict } from "../dev-data/channels";
+import type {
+  LiveChannel as Channel,
+  Verdict,
+} from "@a2-monitor/protocol/live-snapshot";
 
 const verdictLabels: Record<Verdict, string> = {
   good: "good",

@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { Channel } from "../dev-data/channels";
+import type { LiveChannel as Channel } from "@a2-monitor/protocol/live-snapshot";
 import { StatusStrip } from "./StatusStrip";
 
 type ChannelCardProps = {

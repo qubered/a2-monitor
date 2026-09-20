@@ -26,12 +26,18 @@ The proposed semantics, including negotiation, snapshots/deltas, command
 idempotency, atomic single-node activation, event delivery, imports, and Live
 leases, are in [protocol v0](specification.md).
 
-There are currently no machine-readable contracts. The `schema/v0` tree and its
-golden fixtures were withdrawn: the command envelope conflated bootstrap and
-Live authority, and canonical events and ledger chunks accepted arbitrary
-objects, so an empty event with a false payload hash validated. See
+The only current machine-readable contracts are the two closed Phase 0T HTTP
+response schemas needed by the running backend health and Live snapshot routes.
+They do not restore the withdrawn command, event, authority, or IPC schemas.
+Those contracts remain absent because the earlier `schema/v0` tree conflated
+bootstrap and Live authority and accepted unconstrained canonical data. See
 [open questions](../../docs/open-questions.md).
 
 Schemas are rewritten against a runtime that exists. OpenAPI/AsyncAPI documents
 are generated from the frozen domain schemas when concrete HTTP/subscription
 routes are implemented; hand-written copies may not diverge from them.
+
+`src/live-snapshot.ts` is the temporary handwritten TypeScript view of the two
+running contracts. Deterministic type/client generation and compatibility
+fixtures remain a separate Phase 0T deliverable; no generated artifact is
+claimed by this slice.

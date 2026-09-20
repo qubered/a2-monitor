@@ -1,37 +1,7 @@
-export type Verdict =
-  "good" | "fault" | "caution" | "unknown" | "not-applicable";
-
-export type Channel = {
-  id: string;
-  number: number;
-  character: string;
-  performer: string;
-  kind: "wireless" | "wired";
-  zone: string;
-  levelDbfs: number | null;
-  statuses: {
-    rf: Verdict;
-    audio: Verdict;
-    battery: Verdict;
-    check: Verdict;
-  };
-  alert?: {
-    severity: "critical" | "caution";
-    label: string;
-    dimension: "RF" | "Audio" | "Battery";
-  };
-  details: {
-    receiver: string;
-    input: string;
-    rfLevelDbm: number | null;
-    linkQualityPercent: number | null;
-    batteryRemaining: string | null;
-    telemetryAge: string;
-  };
-};
+import type { LiveChannel } from "@a2-monitor/protocol/live-snapshot";
 
 // Fabricated development data. Nothing here describes a real production.
-export const initialChannels: Channel[] = [
+export const initialChannels: LiveChannel[] = [
   {
     id: "ch-27",
     number: 27,

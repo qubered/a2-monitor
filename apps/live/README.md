@@ -78,12 +78,16 @@ The first runnable slice is the A2 channel grid. It currently provides:
 - local filters, a capability-honest detail surface and persistent theme choice;
 - a fixed listening bar that starts muted and keeps mute and dim visible; and
 - unit-level interaction coverage plus verified desktop and iPad portrait
-  rendering against the canonical design reference.
+  rendering against the canonical design reference;
+- a typed HTTP snapshot adapter which rejects unknown or malformed state; and
+- explicit waiting, backend-unavailable, invalid-response and reconnect states
+  which never replace unknown data with zero or healthy values.
 
-This slice does not play audio or connect to a backend, node, receiver or real
-show. Selecting a channel changes only local UI state. Fabricated data is
-labelled in the header, missing headshots render as missing, and no support or
-performance claim follows from this build.
+The Live grid now reads the Phase 0T snapshot route through Vite's local backend
+proxy. The backend response is still fabricated: this slice does not connect to
+an audio node, receiver or real show, and selecting a channel changes only local
+UI state. Fabricated data is labelled in the header, missing headshots render as
+missing, and no support or performance claim follows from this build.
 
 ## Run locally
 
@@ -91,6 +95,7 @@ Use Node.js 24 from the repository's `.node-version` file.
 
 ```sh
 npm ci
+npm run dev --workspace @a2-monitor/backend
 npm run dev --workspace @a2-monitor/live
 ```
 
@@ -107,13 +112,13 @@ npm run check --workspace @a2-monitor/live
 - [x] A2 channel grid, filters, alert acknowledgement and detail surface
 - [x] muted-by-default listen selection with visible mute and dim controls
 - [x] interaction tests and desktop/iPad visual checks
-- [ ] backend health and snapshot endpoint
-- [ ] Live snapshot loading, explicit waiting/offline/error states and reconnect
+- [x] backend health and fabricated snapshot endpoint
+- [x] Live snapshot loading, explicit waiting/offline/error states and reconnect
 - [ ] external meter store and bounded rendering path
 - [ ] audio-node media/control integration and real listening
 - [ ] A1 mix-confidence, guided mic check and replay surfaces
 
-The next slice should add the backend health/snapshot skeleton and replace the
-in-component fabricated source with a typed local snapshot adapter. It should
-keep the fabricated fallback for development and add explicit waiting and
-backend-lost states before any real network integration.
+The next application slice should add the independent Manager shell. The next
+Live data slice should add bounded subscription/delta handling only after its
+public contract is claimed separately; this snapshot remains fabricated until
+node/backend state exists.

@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://a2-monitor.local/schema/v0/http/live-snapshot-response.schema.json",
+  "title": "Live snapshot response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "generatedAtUtc", "source", "show", "node", "channels"],
+  "properties": {
+    "schemaVersion": { "const": "0" },
+    "generatedAtUtc": { "type": "string", "format": "date-time" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "label"],
+      "properties": {
+        "kind": { "const": "fabricated" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 160 }
+      }
+    },
+    "show": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "venue", "performanceLabel"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "venue": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "performanceLabel": { "type": "string", "minLength": 1, "maxLength": 120 }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "channelCount", "sampleRateHz"],
+      "properties": {
+        "status": { "enum": ["ready", "waiting", "offline"] },
+        "channelCount": { "type": ["integer", "null"], "minimum": 0, "maximum": 128 },
+        "sampleRateHz": { "type": ["integer", "null"], "minimum": 8000, "maximum": 384000 }
+      }
+    },
+    "channels": {
+      "type": "array",
+      "maxItems": 128,
+      "items": { "$ref": "#/$defs/channel" }
+    }
+  },
+  "$defs": {
+    "verdict": {
+      "enum": ["good", "fault", "caution", "unknown", "not-applicable"]
+    },
+    "nullableNumber": {
+      "type": ["number", "null"]
+    },
+    "channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "number", "character", "performer", "kind", "zone", "levelDbfs", "statuses", "details"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "number": { "type": "integer", "minimum": 1, "maximum": 999 },
+        "character": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "performer": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "kind": { "enum": ["wireless", "wired"] },
+        "zone": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "levelDbfs": { "$ref": "#/$defs/nullableNumber" },
+        "statuses": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["rf", "audio", "battery", "check"],
+          "properties": {
+            "rf": { "$ref": "#/$defs/verdict" },
+            "audio": { "$ref": "#/$defs/verdict" },
+            "battery": { "$ref": "#/$defs/verdict" },
+            "check": { "$ref": "#/$defs/verdict" }
+          }
+        },
+        "alert": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["severity", "label", "dimension"],
+          "properties": {
+            "severity": { "enum": ["critical", "caution"] },
+            "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+            "dimension": { "enum": ["RF", "Audio", "Battery"] }
+          }
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["receiver", "input", "rfLevelDbm", "linkQualityPercent", "batteryRemaining", "telemetryAge"],
+          "properties": {
+            "receiver": { "type": "string", "minLength": 1, "maxLength": 160 },
+            "input": { "type": "string", "minLength": 1, "maxLength": 80 },
+            "rfLevelDbm": { "$ref": "#/$defs/nullableNumber" },
+            "linkQualityPercent": { "$ref": "#/$defs/nullableNumber" },
+            "batteryRemaining": { "type": ["string", "null"], "maxLength": 80 },
+            "telemetryAge": { "type": "string", "minLength": 1, "maxLength": 120 }
+          }
+        }
+      }
+    }
+  }
+}

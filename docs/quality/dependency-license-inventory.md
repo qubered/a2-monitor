@@ -3,8 +3,8 @@
 **Status:** Implemented for the current npm workspace; legal approvals remain
 open.
 
-The current runnable repository consists of the Live application and shared UI
-tokens. Its third-party npm graph is recorded in
+The current runnable repository consists of the Live application, the minimal
+Fastify backend, and shared UI/protocol packages. Its third-party npm graph is recorded in
 [`node-dependency-inventory.json`](node-dependency-inventory.json). The file is
 generated from `package-lock.json`; it is an inventory of declared package
 metadata, not legal advice or approval to redistribute a package.
@@ -49,7 +49,9 @@ decisions.
 ## Scope limits
 
 This inventory intentionally covers only dependencies present in the committed
-npm lockfile. It does not claim that the planned Rust, backend, native audio,
-installer, ASIO, Opus, SQLite, `str0m`, receiver SDK or hardware inputs exist or
-have been approved. Add each new ecosystem or proprietary input to this process
-when runnable code introduces it; do not pre-approve the planned stack.
+npm lockfile. The backend entry covers its current Fastify/Ajv health and
+fabricated-snapshot skeleton only. It does not claim that the planned Rust,
+native audio, installer, ASIO, Opus, SQLite, `str0m`, receiver SDK or hardware
+inputs exist or have been approved. Add each new ecosystem or proprietary input
+to this process when runnable code introduces it; do not pre-approve the planned
+stack.

@@ -3,8 +3,9 @@
 ## Repository setup
 
 The selected toolchains are Node.js 24 LTS with npm and the repository-pinned
-stable Rust toolchain with Cargo, rustfmt and Clippy. The Live npm workspace is
-runnable; native and backend workspaces have not been scaffolded yet.
+stable Rust toolchain with Cargo, rustfmt and Clippy. The Live and minimal
+backend npm workspaces are runnable; the native workspace has not been
+scaffolded yet.
 
 ```sh
 git status --short --branch
@@ -33,8 +34,13 @@ cargo test --workspace
 Start the Live development server with:
 
 ```sh
+npm run dev --workspace @a2-monitor/backend
 npm run dev --workspace @a2-monitor/live
 ```
+
+The backend binds to `127.0.0.1:3000`; Vite proxies `/api` from
+`127.0.0.1:4173`. Its current snapshot is fabricated and must remain labelled as
+such.
 
 ASIO builds additionally require the approved proprietary Steinberg SDK path,
 recorded checksum/provenance, LLVM/Clang documented by the selected CPAL

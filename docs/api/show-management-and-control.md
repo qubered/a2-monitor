@@ -48,6 +48,20 @@ Initial route families are:
 Exact pluralization is frozen with the first OpenAPI contract; the resource and
 transaction boundaries are the durable decision.
 
+### Phase 0T running subset
+
+The scaffold currently implements only `GET /healthz` and
+`GET /api/v1/live/snapshot`. Their closed Draft 2020-12 response schemas live in
+`packages/protocol/schema/v0/http`. The snapshot contains fabricated development
+state and identifies that provenance in-band; it is not an observed node,
+receiver, hardware, or show result. Fastify validates both responses through the
+same strict, non-mutating Ajv 2020 registry used for route validation and uses
+ordinary JSON serialization after validation.
+
+OpenAPI generation, authentication, subscriptions, commands and persistence
+remain unimplemented. The running subset does not freeze those adjacent
+contracts.
+
 The public HTTP API uses lower-camel JSON fields and kebab-case action routes;
 all IDs are UUID strings. Boundary adapters map them explicitly to canonical
 protocol snake_case fields and PascalCase commands. No API body is signed or

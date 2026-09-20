@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://a2-monitor.local/schema/v0/http/health-response.schema.json",
+  "title": "Backend health response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "service", "version"],
+  "properties": {
+    "status": { "const": "ok" },
+    "service": { "const": "a2-backend" },
+    "version": { "type": "string", "minLength": 1, "maxLength": 64 }
+  }
+}

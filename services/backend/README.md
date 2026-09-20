@@ -61,3 +61,26 @@ or enters the live media path. See ADR 0015 and ADR 0010.
 The Node process is owned by an independent platform bootstrap/supervisor, not
 by the audio node. A Node worker thread isolates SQLite work from the event
 loop, but it is not an operating-system crash or privilege boundary.
+
+## Current implementation
+
+The Phase 0T skeleton exposes two read-only routes:
+
+- `GET /healthz` reports the backend process health contract; and
+- `GET /api/v1/live/snapshot` returns a bounded, explicitly fabricated Live
+  snapshot for development.
+
+Both responses use the Draft 2020-12 schemas in `packages/protocol`. Fastify is
+configured with strict, non-mutating Ajv 2020 validation and validates response
+data before ordinary `JSON.stringify` serialization. Undeclared response fields
+fail closed.
+
+Run the backend on `http://127.0.0.1:3000` with:
+
+```sh
+npm run dev --workspace @a2-monitor/backend
+```
+
+This scaffold has no database, authorization, WebSocket, node connection, or
+real telemetry. It does not establish a hardware, latency, security, receiver,
+or operator result.
