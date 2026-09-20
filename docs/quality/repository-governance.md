@@ -52,6 +52,9 @@ sole reviewer. A waiver cannot be signed by the person requesting it.
 ## Automated gates
 
 The first CI workflow runs the repository check on pull requests and `main`.
+That check includes the dependency-free evidence parser, filesystem and
+conformance verifier tests. Their green result hardens the verifier only and is
+not hardware, performance, security or release evidence.
 Before runnable code is merged, component owners add formatting, linting,
 unit/contract tests, dependency and secret scanning, SAST, SBOM/provenance, and
 artifact verification. A green documentation-only check is not represented as

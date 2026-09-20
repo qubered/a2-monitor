@@ -11,24 +11,29 @@ shared test environment:
 - long-running soak and controlled network impairment; and
 - appliance upgrade/rollback tests.
 
-It is currently empty. There is no product code to test.
+It is currently empty. Component-independent verifier-conformance tests live
+beside their dependency-free implementation in `tools/evidence`; they are not
+product or hardware evidence.
 
 The previous contents — an evidence catalogue, manifest schemas, protocol
 golden vectors and adversarial contract tests — were withdrawn along with the
-verifier they exercised, because the verifier did not verify: it compared
-declared artifact hashes without resolving the storage key, reading bytes,
-checking length or recomputing SHA-256, and its passing fixture used
-placeholder hashes against nonexistent stores.
+verifier they exercised. The original verifier did not read stored bytes; a
+later repair attempted that work, but no committed independent on-disk bundle
+proved the CLI end to end and caller-created summaries could still fabricate
+promotion. The evidence set did not support its claim.
 
 ## What the replacement must do
 
-When evidence runners are written against a working runtime:
+The current non-promotional foundation implements bounded artifact-byte
+verification and verifier-owned predicate evaluation. When evidence runners
+are written against a working runtime, production promotion must additionally
+do all of the following:
 
-- runners do not declare pass/fail. They emit signed results whose assertions
-  name a content-addressed artifact and include a mandatory metrics artifact;
+- runners do not declare pass/fail. They emit signed results that reference an
+  exact artifact set including a mandatory metrics artifact;
 - the verifier reads files beneath a supplied artifact root, hashes their
   actual bytes, evaluates catalogue predicates and returns normalized coverage
-  for promotion; and
+  that a separate trusted promotion policy can consume; and
 - contract tests carry adversarial cases for changed bytes, fabricated
   measurements, insufficient elapsed time, out-of-window faults and promotion
   with an incomplete OS/device/browser matrix. Each must fail for the intended

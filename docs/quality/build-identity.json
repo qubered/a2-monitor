@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.793e1c36cca050e1",
-  "sourceSha256": "793e1c36cca050e1b648472311c6ef12b562f4cc7eaa4f001a52b2e4bb83bce2",
-  "inputCount": 221,
+  "buildId": "a2-0.0.0+sha256.bd5cc0b26090391e",
+  "sourceSha256": "bd5cc0b26090391ee26ae003f2d2aa0bbf32016dd913a1af3a5e92dc7967d407",
+  "inputCount": 229,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -69,7 +69,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "a112f02f52a7a46a64bacc66de63557370a2ae64f594ee6e0d47651084d125f7"
+      "sha256": "539a7c7cbaa5da9b8ac5be560c9f077b06705c7cd534cdb74bfd6e697046c427"
     },
     {
       "path": "SECURITY.md",
@@ -273,7 +273,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256": "9220734bfbc7d3957b0450111ed8336224a8e9c65983bb83bbbb76413ad65978"
+      "sha256": "5695792ac69fa56a3241cccd83a984d792ff2bbd9d7240e4bed4999cb4698168"
     },
     {
       "path": "docs/api/show-management-and-control.md",
@@ -424,6 +424,10 @@
       "sha256": "a2e260d1a8b375603e476424f971f5b27f48f7492ac5abd7d63f923332f4076c"
     },
     {
+      "path": "docs/decisions/0020-evidence-verifier-trust-boundary.md",
+      "sha256": "b909a9d8e4927d12fbe5de9f62bd97445d063a15a1440041559197680b8c6bf4"
+    },
+    {
       "path": "docs/design/DESIGN.md",
       "sha256": "68605675c8aa74ab5aeaa62b0458e72822be5f5ed96271bc87c7b86f92709f86"
     },
@@ -505,7 +509,7 @@
     },
     {
       "path": "docs/open-questions.md",
-      "sha256": "01968916ffe29da21bc1dad136e6d153c985357f2ae52d5a28d420e2053883f2"
+      "sha256": "c0e936367a95bc1f35ff4875c2d0c738d97c666690e5932468046775df7dc44b"
     },
     {
       "path": "docs/product/a1-a2-views-and-collaboration.md",
@@ -565,7 +569,7 @@
     },
     {
       "path": "docs/quality/phase0-evidence-contract.md",
-      "sha256": "3dc4de3b3b691f1f157c5341dfb31ac9b970ee1d100547100b9ec5c3da143e9b"
+      "sha256": "2529087ec8a2e986ebdbe86befbd2e7d509df9594689698175949c0c4ff895f8"
     },
     {
       "path": "docs/quality/phase1-operator-evidence-contract.md",
@@ -573,7 +577,7 @@
     },
     {
       "path": "docs/quality/repository-governance.md",
-      "sha256": "57eaa7599b2cea55d66e18f3e3974ea4d849cbbf07a292f4c0fe3ecc93cb8447"
+      "sha256": "1b3347f8564c06042f952c95631e4f92dd0703dd714a34a6d57ab058cdc84de8"
     },
     {
       "path": "docs/quality/security-baseline.md",
@@ -581,7 +585,7 @@
     },
     {
       "path": "docs/quality/testing-strategy.md",
-      "sha256": "ad26d80f098fb68e6cc6376bb4833d8884e561858ee1d69a93a9f83a64c33bd3"
+      "sha256": "e4a5c495439f1af10ac786a842f98e60c72344b627837e6dc43d63a8e22a6ce7"
     },
     {
       "path": "docs/quality/threat-model.md",
@@ -605,7 +609,7 @@
     },
     {
       "path": "docs/runbooks/development.md",
-      "sha256": "d762ad35f4f5289d82592eeaab590598e69cdac6af57c088c848ea0704d4cc07"
+      "sha256": "b902c7de6f095db447bcb4598bd291f6eb2fd31efa4bd30940469d5ea6af8fab"
     },
     {
       "path": "docs/runbooks/release.md",
@@ -805,7 +809,7 @@
     },
     {
       "path": "scripts/check-repo.sh",
-      "sha256": "a4e328d8b3926ac89107d5fa4a5a3a2e4ec7af9c8e7c9efbef8c527c9627194f"
+      "sha256": "8bf6345fa0d6950c2138b4f8c391ca1189bdcd86d5f4ac5a6f34d0fa3fce3d29"
     },
     {
       "path": "scripts/generate-build-identity.mjs",
@@ -889,7 +893,35 @@
     },
     {
       "path": "tests/README.md",
-      "sha256": "4d1d434b8f4c36e263fc7844f0a31ac1d19941245ca566660b9148141441c4c0"
+      "sha256": "f6eba0dfc0604c4a2e3681332c63bd6566d25266c66cc8c7889b28c61de1b3fe"
+    },
+    {
+      "path": "tools/evidence/README.md",
+      "sha256": "067c226fd59984589937cfe64a800ee8d5b9a8ee194a1de5aab033b3551dff34"
+    },
+    {
+      "path": "tools/evidence/artifact-loader.mjs",
+      "sha256": "5b086a3b7324044b0020c92fc21223998526e65e6e87ed7678426061dda94452"
+    },
+    {
+      "path": "tools/evidence/artifact-loader.test.mjs",
+      "sha256": "cc3b25adf8193a27ef4bfee76ee06bcf3963be759eb7e9cc2674a242efdc12a2"
+    },
+    {
+      "path": "tools/evidence/evidence-verifier.mjs",
+      "sha256": "3020abda5b67c569f371c44c5e67583ee785307571db4c83a006cfbf268cc059"
+    },
+    {
+      "path": "tools/evidence/evidence-verifier.test.mjs",
+      "sha256": "b906674a96b5a7fd6c73a1d07c5592ce003f9906509455f5ccb4273156bbce1e"
+    },
+    {
+      "path": "tools/evidence/strict-json.mjs",
+      "sha256": "53eb59b5c39edee41650f27e4ff92205e1547b33c846cee44b20b53afe251ed6"
+    },
+    {
+      "path": "tools/evidence/strict-json.test.mjs",
+      "sha256": "bcd1b4407240ad86b3084d09c45d7230842b76ef01028e5a8b7c6e7616779e47"
     }
   ],
   "regenerationCommand": "node scripts/generate-build-identity.mjs"

@@ -6,9 +6,15 @@
   IPC, media, replay and receiver adapters;
 - strict TypeScript checks and Vitest for backend and web packages;
 - Playwright for Chromium, WebKit and Firefox browser workflows;
-- a repository contract and evidence runner, to be written when there are
-  contracts and evidence to check; and
+- dependency-free repository contract checks and a non-promotional evidence-
+  verifier conformance suite; and
 - signed custom hardware evidence manifests for all performance/support claims.
+
+The verifier-conformance suite reads real temporary artifact roots, rejects
+unsafe paths and changed bytes, checks signed raw-byte bindings, evaluates all
+closed predicates and validates per-trial time/fault records. Its metrics are
+runner-attested and its output is never promotion-eligible. Production evidence
+requires runtime-specific raw-trace extractors and a frozen signed catalogue.
 
 Generated Rust and TypeScript protocol artifacts are rebuilt in CI and a dirty
 diff fails. Cross-language golden vectors cover size bounds, additive/unknown

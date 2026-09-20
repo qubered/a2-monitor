@@ -53,7 +53,8 @@ must remain understandable without access to the original conversation.
 
 ADRs 0001-0003 are accepted. ADRs 0004-0018 are hypotheses with no
 supporting evidence; their status lines say so individually. ADR 0019 is an
-accepted product decision rather than a technical hypothesis.
+accepted product decision. ADR 0020 accepts only the verifier-conformance trust
+boundary; production evidence promotion remains deferred.
 
 - [Component boundaries](decisions/0001-three-component-boundary.md)
 - [WebRTC and Opus transport](decisions/0002-webrtc-opus.md)
@@ -74,6 +75,7 @@ accepted product decision rather than a technical hypothesis.
 - [`str0m` WebRTC media worker](decisions/0017-str0m-webrtc-media-worker.md)
 - [Workspaces, testing and native packaging](decisions/0018-workspaces-testing-and-native-packaging.md)
 - [Cue-optional operation and show-time scope](decisions/0019-cue-optional-and-show-time-scope.md)
+- [Evidence verifier trust boundary](decisions/0020-evidence-verifier-trust-boundary.md)
 
 ## Reference
 

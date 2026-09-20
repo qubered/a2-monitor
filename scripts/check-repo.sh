@@ -106,7 +106,10 @@ node --test \
   infra/appliance/common/validate-process-boundaries.test.mjs \
   scripts/generate-node-dependency-inventory.test.mjs \
   scripts/generate-cargo-dependency-inventory.test.mjs \
-  scripts/generate-build-identity.test.mjs
+  scripts/generate-build-identity.test.mjs \
+  tools/evidence/artifact-loader.test.mjs \
+  tools/evidence/evidence-verifier.test.mjs \
+  tools/evidence/strict-json.test.mjs
 node scripts/generate-node-dependency-inventory.mjs --check
 node infra/appliance/common/validate-process-boundaries.mjs
 node scripts/generate-cargo-dependency-inventory.mjs --check
