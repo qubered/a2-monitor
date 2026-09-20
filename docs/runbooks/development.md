@@ -56,6 +56,7 @@ cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked
 cargo run --locked --bin a2-synthetic-capture
 cargo run --locked --bin a2-supervisor-smoke
+cargo run --locked --bin a2-replay-smoke
 ```
 
 The supervisor smoke binary exercises the platform-neutral policy with a
@@ -68,6 +69,15 @@ After the finite termination-retry budget, operators see `TerminationStuck` and
 must not launch a replacement while the retained handle may be live. Quarantine
 release is always an explicit action. The smoke topology is intentionally
 partial and is not a deployable node profile.
+
+Pull requests also run scaffold-portability jobs on GitHub-hosted
+`windows-2025` x64 and `macos-15` arm64 runners. These jobs record the hosted
+image identity, repeat the npm and Cargo checks, run the Cargo-only smokes and
+exercise the platform layout/package harnesses. They are portability checks,
+not the named-host clean-checkout evidence required by Phase 0T: the Windows
+runner is not the required Windows 11 profile, and the hosted Apple-silicon
+runner is not a nominated reference Mac. The jobs do not install an MSI/pkg,
+open an audio device, verify confinement, or support a release claim.
 
 Start the web development servers with:
 

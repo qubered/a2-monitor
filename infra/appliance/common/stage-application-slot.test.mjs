@@ -280,15 +280,19 @@ test("stages and verifies a deterministic closed application slot", async () => 
           entry.role === "protocol_schema",
       ),
     );
-    assert.equal(
-      (await stat(path.join(first, "bin", "a2-synthetic-capture"))).mode &
-        0o777,
-      0o555,
-    );
-    assert.equal(
-      (await stat(path.join(first, "web", "live", "index.html"))).mode & 0o777,
-      0o444,
-    );
+    if (process.platform !== "win32") {
+      assert.equal((await stat(first)).mode & 0o777, 0o555);
+      assert.equal(
+        (await stat(path.join(first, "bin", "a2-synthetic-capture"))).mode &
+          0o777,
+        0o555,
+      );
+      assert.equal(
+        (await stat(path.join(first, "web", "live", "index.html"))).mode &
+          0o777,
+        0o444,
+      );
+    }
     assert.equal(
       (await stat(path.join(first, "web", "live", "index.html"))).mtimeMs,
       946684800000,

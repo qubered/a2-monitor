@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.69355860ae326315",
-  "sourceSha256": "69355860ae3263150d6e151f0c6e810a6565deac7f590e9dadf2f67b4236f057",
+  "buildId": "a2-0.0.0+sha256.d9a30ef22d97546c",
+  "sourceSha256": "d9a30ef22d97546c18bc54cc29a3566f8d3ac7538fe4539fcd05cffb5ffbb7e5",
   "inputCount": 247,
   "inputs": [
     {
@@ -37,7 +37,7 @@
     },
     {
       "path": ".github/workflows/repository.yml",
-      "sha256": "65e298b2c913d8e65657eb5542fa7c81692159b657c52dfd360116fc7805806b"
+      "sha256": "c8ffcafbe30cb799278688db8b7d2527a66bfdaaf8c0401fb81598f5272ab1e1"
     },
     {
       "path": ".gitignore",
@@ -85,7 +85,7 @@
     },
     {
       "path": "apps/live/package.json",
-      "sha256": "1e3172060f3044342c3a59c0408af6e7497854993a2fab40b9492e8d9b9332c5"
+      "sha256": "5ad8488f43227f2075c90f4f54bec971215f90ae8c394699d1030c0215d67adb"
     },
     {
       "path": "apps/live/src/App.test.tsx",
@@ -165,7 +165,7 @@
     },
     {
       "path": "apps/manager/package.json",
-      "sha256": "e52fd2bdf7d9ce237a68da539e02b200a788676446aeb617a18457eaae58d702"
+      "sha256": "33d4887ae8ce9f4aefdf60b7f8d3a24d71a6d61ac08a9447b6fb730a59480b78"
     },
     {
       "path": "apps/manager/src/App.test.tsx",
@@ -657,7 +657,7 @@
     },
     {
       "path": "docs/runbooks/development.md",
-      "sha256": "b902c7de6f095db447bcb4598bd291f6eb2fd31efa4bd30940469d5ea6af8fab"
+      "sha256": "f0393bea0ecc88de9ec224a22c4e0149b3490262c2fcfc051882cdd35758228b"
     },
     {
       "path": "docs/runbooks/release.md",
@@ -685,11 +685,11 @@
     },
     {
       "path": "infra/appliance/common/stage-application-slot.mjs",
-      "sha256": "efaad9c6bcbe109b64c09ecfbedae9ea6bb819f085606c1b52e40cb75a1c3552"
+      "sha256": "d3c7b9c8bbf95d89a569bf384f416f53bc78761346d32442a6ba7b4f4c79d56c"
     },
     {
       "path": "infra/appliance/common/stage-application-slot.test.mjs",
-      "sha256": "cb4d30eb447412cbcd632c377ca1b09b3d2ed30df7b79a918a170fccf4ff891f"
+      "sha256": "e8dcd786ad6c604d9b974771292d9bdfb68903abd72db884d137988b4a3c2b94"
     },
     {
       "path": "infra/appliance/common/validate-process-boundaries.mjs",
@@ -789,7 +789,7 @@
     },
     {
       "path": "packages/protocol/package.json",
-      "sha256": "c515014ea0410662738eaf560218f16ad7b5f74c9625af76bfbeae72975f60c6"
+      "sha256": "f72bf4335202544b1c71821cd688412675027f455b1e1c509d7a2a560f37a48a"
     },
     {
       "path": "packages/protocol/schema/v0/http/health-response.schema.json",
@@ -913,7 +913,7 @@
     },
     {
       "path": "services/backend/package.json",
-      "sha256": "ec044d94f59ca853445056ddf96d1dc8b478c5267c294261d0b5ce7b190fda47"
+      "sha256": "be1d86c6703fc5436915cf4da25c5bc2bd60b2b1e753347066b17101fb2153f7"
     },
     {
       "path": "services/backend/src/fixtures/live-snapshot.ts",

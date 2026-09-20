@@ -7,7 +7,7 @@
     "build": "tsc -p tsconfig.json",
     "check": "npm run format && npm run lint && npm run test && npm run build",
     "dev": "node --watch --experimental-strip-types src/start.ts",
-    "format": "prettier --check 'src/**/*.ts' '*.{json,ts}'",
+    "format": "prettier --check \"src/**/*.ts\" \"*.{json,ts}\"",
     "lint": "eslint .",
     "start": "node dist/start.js",
     "test": "vitest run src"
