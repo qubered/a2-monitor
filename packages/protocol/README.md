@@ -19,8 +19,8 @@ This package will contain versioned, implementation-neutral contracts for:
 JSON is the protocol-v0 control/event representation and RFC 8785 JCS is its
 hash/signature representation. Large counters are strings. Binary media and
 meter transport remain separate. Contracts must define units, time domains,
-optional/unknown behavior, compatibility, bounds, and idempotency before code
-generation is introduced.
+optional/unknown behavior, compatibility, bounds, and idempotency before a
+contract enters generation.
 
 The proposed semantics, including negotiation, snapshots/deltas, command
 idempotency, atomic single-node activation, event delivery, imports, and Live
@@ -33,11 +33,30 @@ Those contracts remain absent because the earlier `schema/v0` tree conflated
 bootstrap and Live authority and accepted unconstrained canonical data. See
 [open questions](../../docs/open-questions.md).
 
-Schemas are rewritten against a runtime that exists. OpenAPI/AsyncAPI documents
-are generated from the frozen domain schemas when concrete HTTP/subscription
-routes are implemented; hand-written copies may not diverge from them.
+Schemas are written against a runtime that exists. OpenAPI/AsyncAPI documents
+will be generated from the frozen domain schemas when concrete
+HTTP/subscription routes are implemented; hand-written copies may not diverge
+from them.
 
-`src/live-snapshot.ts` is the temporary handwritten TypeScript view of the two
-running contracts. Deterministic type/client generation and compatibility
-fixtures remain a separate Phase 0T deliverable; no generated artifact is
-claimed by this slice.
+`schema/v0/http` is authoritative for the two running response contracts.
+`generated/http-contracts.ts` contains their generated TypeScript types,
+closed response parsers and small HTTP client. The header records its inputs
+and regeneration command; never edit it by hand. The generated client applies
+per-response byte limits before JSON parsing, so schema validation never starts
+from an unbounded buffered body.
+
+Generate and verify the committed artifact with:
+
+```sh
+npm run generate --workspace @a2-monitor/protocol
+npm run generate:check --workspace @a2-monitor/protocol
+npm run test --workspace @a2-monitor/protocol
+```
+
+The generator is deterministic and `--check` compares the complete expected
+output, failing when the committed artifact is absent or stale. Repository
+checks run this freshness gate. Compatibility fixtures cover the current and
+previous deployment pair while the schema major remains `0`; incompatible
+major versions and undeclared fields are negative vectors. A future schema
+major needs its own directory and explicit negotiation rather than silently
+relaxing these closed parsers.

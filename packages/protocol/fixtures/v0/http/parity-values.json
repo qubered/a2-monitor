@@ -1,0 +1,6 @@
+{
+  "validUnicodeAtAlertLabelBoundary": "😀😀😀😀😀😀😀😀😀😀 😀😀😀😀😀😀😀😀😀😀 😀😀😀😀😀😀😀😀😀😀 😀😀😀😀😀😀😀😀😀😀 😀😀😀😀😀😀😀😀😀😀",
+  "invalidCalendarDateTime": "2026-02-31T00:00:00Z",
+  "validLinkQualityPercent": [0, 100],
+  "invalidLinkQualityPercent": [-0.1, 100.1]
+}

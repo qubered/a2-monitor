@@ -3,7 +3,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { LiveSnapshot } from "@a2-monitor/protocol/live-snapshot";
+import type { LiveSnapshot } from "@a2-monitor/protocol/http";
 import { App } from "./App";
 import { initialChannels } from "./dev-data/channels";
 import {

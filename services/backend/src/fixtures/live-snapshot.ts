@@ -1,4 +1,4 @@
-import type { LiveSnapshot } from "@a2-monitor/protocol/live-snapshot";
+import type { LiveSnapshot } from "@a2-monitor/protocol/http";
 
 // Fabricated development data. Nothing here describes a real production.
 export const fabricatedLiveSnapshot: LiveSnapshot = {

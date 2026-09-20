@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1",
+  "generatedAtUtc": "2026-09-20T03:31:00Z",
+  "source": {
+    "kind": "fabricated",
+    "label": "Incompatible-major fixture"
+  },
+  "show": {
+    "name": "Incompatible Version",
+    "venue": "Fixture Venue",
+    "performanceLabel": "Fixture"
+  },
+  "node": {
+    "status": "offline",
+    "channelCount": null,
+    "sampleRateHz": null
+  },
+  "channels": []
+}

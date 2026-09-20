@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
-import type { LiveSnapshot } from "@a2-monitor/protocol/live-snapshot";
+import type { LiveSnapshot } from "@a2-monitor/protocol/http";
 import { initialChannels } from "./dev-data/channels";
 import {
   createHttpSnapshotSource,
@@ -36,6 +36,18 @@ describe("Live snapshot HTTP adapter", () => {
   it("rejects undeclared response fields", async () => {
     const source = createHttpSnapshotSource(async () =>
       Response.json({ ...snapshot, inventedHealth: "good" }),
+    );
+
+    await expect(
+      source.load(new AbortController().signal),
+    ).rejects.toBeInstanceOf(SnapshotContractError);
+  });
+
+  it("rejects an oversized response before rendering it", async () => {
+    const source = createHttpSnapshotSource(async () =>
+      Response.json(snapshot, {
+        headers: { "content-length": "1048577" },
+      }),
     );
 
     await expect(

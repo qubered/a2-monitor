@@ -3,10 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "scripts": {
+    "check": "npm run generate:check && npm run format && npm run test",
+    "format": "prettier --check 'generated/**/*.ts' 'scripts/**/*.mjs' 'tests/**/*.ts' '*.json'",
+    "generate": "node scripts/generate-http-contracts.mjs",
+    "generate:check": "node scripts/generate-http-contracts.mjs --check",
+    "test": "node --test tests/generator.test.mjs && vitest run tests/http-contracts.test.ts"
+  },
   "exports": {
-    "./live-snapshot": {
-      "types": "./src/live-snapshot.ts"
-    },
+    "./http": "./generated/http-contracts.ts",
     "./schema/health-response": "./schema/v0/http/health-response.schema.json",
     "./schema/live-snapshot-response": "./schema/v0/http/live-snapshot-response.schema.json"
   }

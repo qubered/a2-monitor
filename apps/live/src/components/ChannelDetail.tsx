@@ -1,4 +1,4 @@
-import type { LiveChannel as Channel } from "@a2-monitor/protocol/live-snapshot";
+import type { LiveChannel as Channel } from "@a2-monitor/protocol/http";
 
 type ChannelDetailProps = {
   channel: Channel;

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "0",
+  "generatedAtUtc": "2026-09-20T03:31:00Z",
+  "source": {
+    "kind": "fabricated",
+    "label": "Unknown-field fixture"
+  },
+  "show": {
+    "name": "Unknown Field",
+    "venue": "Fixture Venue",
+    "performanceLabel": "Fixture"
+  },
+  "node": {
+    "status": "offline",
+    "channelCount": null,
+    "sampleRateHz": null,
+    "inventedClockHealth": "good"
+  },
+  "channels": []
+}
