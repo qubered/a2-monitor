@@ -102,6 +102,7 @@ else
 fi
 
 node --test \
+  infra/appliance/common/stage-application-slot.test.mjs \
   scripts/generate-node-dependency-inventory.test.mjs \
   scripts/generate-cargo-dependency-inventory.test.mjs \
   scripts/generate-build-identity.test.mjs

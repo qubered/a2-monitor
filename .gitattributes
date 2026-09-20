@@ -2,7 +2,9 @@
 
 *.bat text eol=crlf
 *.cmd text eol=crlf
-*.ps1 text eol=crlf
+# PowerShell Core scripts run on both Windows and Unix hosts. Keep their bytes
+# stable so content-addressed build identities survive a clean checkout.
+*.ps1 text eol=lf
 
 *.png binary
 *.jpg binary

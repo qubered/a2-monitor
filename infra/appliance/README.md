@@ -35,3 +35,14 @@ are blocked during an active performance.
 Windows and macOS are both product targets. Their service supervision,
 keystore, firewall, update, and recovery profiles may differ while preserving
 the same security and availability contract.
+
+The platform-neutral unsigned layout-smoke generator and its closed manifest
+contract are documented in [`common/README.md`](common/README.md). It stages
+only explicit, already-built inputs into an inactive version slot; it is not an
+installer or activation mechanism.
+
+The Darwin-only unsigned flat-package smoke wrapper is documented in
+[`macos/README.md`](macos/README.md). The PowerShell boundary that emits a
+Windows-consumable unsigned layout, but no MSI, is documented in
+[`windows/README.md`](windows/README.md). Neither path installs or activates a
+slot.
