@@ -128,3 +128,10 @@ and Protobuf and compares:
 Protobuf is promoted only if that comparison passes. PCM never enters either
 codec. Signed public commands remain RFC 8785 canonical JSON regardless of the
 internal codec.
+
+The Phase 0T scaffold implements this outer frame and an initial comparison in
+`crates/ipc`. The comparison currently covers health-probe and worker-ready
+messages, exact golden bytes, fragmented input, malformed and oversized input,
+and each candidate's unknown-field behavior. This is implementation evidence
+for the framing boundary only: no codec has been selected, no local transport
+has been integrated, and shared-memory PCM remains separate work.

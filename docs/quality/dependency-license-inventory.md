@@ -1,7 +1,7 @@
 # Dependency and licence inventory
 
-**Status:** Implemented for the current npm workspace; legal approvals remain
-open.
+**Status:** Implemented for the current npm workspace and direct Rust
+dependencies; legal approvals remain open.
 
 The current runnable repository consists of the independent Manager and Live
 applications, the minimal Fastify backend, and shared UI/protocol packages. Its third-party npm graph is recorded in
@@ -24,6 +24,20 @@ text, notices, source/binary distribution terms, runtime privilege and the
 applicable regression evidence. The check does not infer compatibility from an
 SPDX expression.
 
+The initial native IPC comparison adds the following direct Rust dependencies.
+The root `Cargo.lock` records their exact resolved versions and transitive
+graph. Licence values below are package metadata, not legal approval.
+
+| Direct crate | Locked version | Declared licence      | Owner               | Purpose and update policy                                                                 |
+| ------------ | -------------- | --------------------- | ------------------- | ----------------------------------------------------------------------------------------- |
+| `prost`      | 0.14.4         | Apache-2.0            | Audio runtime owner | Phase 0T Protobuf comparison; update manually with golden and unknown-field checks.        |
+| `serde`      | 1.0.229        | MIT OR Apache-2.0     | Audio runtime owner | Private JSON comparison DTOs; update manually with all codec and workspace checks.         |
+| `serde_json` | 1.0.151        | MIT OR Apache-2.0     | Audio runtime owner | Bounded canonical-JSON candidate; update manually with exact golden and malformed checks.  |
+
+The transitive Cargo graph still needs a generated licence inventory and human
+licence-text/notice review before distribution. No native library or build-time
+`protoc` binary is introduced by this scaffold.
+
 ## Accountable roles and blockers
 
 No person has yet been assigned to the project roles below. `Unassigned` is a
@@ -37,7 +51,7 @@ dependency.
 | Project software licence and contribution terms                     | Product owner             | Unassigned       | **Blocked for public release and external contributions.** The repository remains all rights reserved.                         |
 | Proprietary Steinberg ASIO SDK route and `CPAL_ASIO_DIR` provenance | Platform/security owner   | Unassigned       | **Blocked for ASIO evidence and packaging.** No SDK or headers are stored here.                                                |
 | WiX EULA/commercial approval or alternate MSI authoring tool        | Product owner             | Unassigned       | **Blocked for Windows packaging.** No tool choice is approved.                                                                 |
-| Cargo dependency graph, native libraries and codec notices          | Audio runtime owner       | Unassigned       | **Blocked before any third-party native dependency lands.** The current Rust workspace has project-owned members and no third-party crates. |
+| Cargo dependency graph, native libraries and codec notices          | Audio runtime owner       | Unassigned       | **Blocked for codec promotion and distribution.** Direct IPC dependencies are recorded above; the transitive inventory and human licence/notice review remain open. |
 
 The independent reviewers remain those in
 [`repository-governance.md`](repository-governance.md): release/signing review
@@ -48,11 +62,11 @@ decisions.
 
 ## Scope limits
 
-This inventory intentionally covers only dependencies present in the committed
-npm lockfile. The backend entry covers its current Fastify/Ajv health and
-fabricated-snapshot skeleton only. The current Rust members have no third-party
-crate dependencies and do not open a physical audio device. This inventory does
-not claim that an installer, ASIO, Opus, SQLite, `str0m`, receiver SDK or
-hardware input has been approved. Add each new ecosystem or proprietary input
-to this process when runnable code introduces it; do not pre-approve the
-planned stack.
+The generated inventory covers only dependencies present in the committed npm
+lockfile. The direct Rust table is a manually recorded interim inventory, not a
+replacement for generated transitive Cargo evidence. The backend entry covers
+its current Fastify/Ajv health and fabricated-snapshot skeleton only. The Rust
+workspace does not open a physical audio device. This inventory does not claim
+that an installer, ASIO, Opus, SQLite, `str0m`, receiver SDK or hardware input
+has been approved. Add each new ecosystem or proprietary input to this process
+when runnable code introduces it; do not pre-approve the planned stack.
