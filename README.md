@@ -23,15 +23,17 @@ identity.
 
 ## Project status
 
-The project is in **discovery**, and nothing has been measured. There is no
-product code. Everything in `docs` is a hypothesis written ahead of evidence;
-read [open questions](docs/open-questions.md) before anything else.
+The project is in **discovery**, and nothing has been measured. The first
+incremental Live application slice now runs with fabricated local data; it is a
+workflow prototype, not evidence that audio, browser latency, hardware support,
+or the wider architecture works. Everything in `docs` remains a hypothesis
+written ahead of evidence; read [open questions](docs/open-questions.md) before
+anything else.
 
-The next action is a disposable two-week spike that answers the two questions
-which decide the product: whether a browser can hold usable capture-to-ear
-latency across Chrome, Firefox and Safari/iPad on venue Wi-Fi, and whether the
-EW-DX and Shure APIs expose telemetry rich enough for causal diagnosis rather
-than another meter grid.
+The latency and receiver-telemetry spikes remain required before any support or
+architecture claim. Current implementation work is proceeding as small,
+testable Live application slices so operator feedback can shape the product
+while those measurement questions remain visibly open.
 
 A proposed implementation stack is recorded (Rust for the native node,
 TypeScript/Node/Fastify for management, React/Vite for the web applications,
@@ -99,18 +101,28 @@ their boundary is deliberate:
 4. the Live web app is the focused operator surface.
 
 See the [roadmap](docs/product/roadmap.md) and
-[performance baselines](docs/quality/performance-baselines.md).
+[performance baselines](docs/quality/performance-baselines.md). Active work and
+session handoffs are indexed in the
+[GitHub phase tracker](https://github.com/qubered/a2-monitor/issues/22).
 
 ## Development
 
-There is no product build command because there is no product code. The
-proposed stack, its alternatives and its falsification gates are recorded in
-[technology stack selection](docs/research/technology-stack-selection.md) and
-ADRs 0014–0018, all of which are unvalidated hypotheses. The repository-level
-check is:
+The Live workspace uses the proposed React/Vite stack and requires the pinned
+Node.js version. Its first local slice can be started with:
+
+```sh
+npm ci
+npm run dev --workspace @a2-monitor/live
+```
+
+The proposed stack, its alternatives and its falsification gates are recorded
+in [technology stack selection](docs/research/technology-stack-selection.md)
+and ADRs 0014–0018, all of which remain unvalidated hypotheses. Run all current
+checks with:
 
 ```sh
 ./scripts/check-repo.sh
+npm run check
 ```
 
 ## License

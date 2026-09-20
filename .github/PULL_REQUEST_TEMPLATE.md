@@ -2,6 +2,8 @@
 
 What user, operational, or engineering problem does this solve?
 
+Phase tracking issue: <!-- Use "Not roadmap work" only when no phase applies. -->
+
 ## Approach
 
 Describe the implementation and important alternatives considered.
@@ -16,6 +18,8 @@ What could fail during a show, and how can the change be disabled or reverted?
 - [ ] Component tests pass.
 - [ ] New behavior has tests.
 - [ ] Documentation and ADRs are current.
+- [ ] The linked phase issue has a dated progress update and only evidenced
+      deliverables are checked off.
 - [ ] No secrets, recordings, generated output, or licensed SDK files are included.
 
 List the exact tests, hardware, browsers, network, and results:

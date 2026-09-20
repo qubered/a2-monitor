@@ -36,6 +36,12 @@ externally tested release.
 
 ### Added
 
+- Added the first runnable Live application slice: a responsive A2 channel
+  grid with fabricated local data, independent status dimensions, alert
+  acknowledgement, listen selection, channel detail, Paper/dark themes and a
+  muted-by-default listening bar. Added the npm workspace, shared design tokens,
+  locally bundled fonts, interaction tests and Node 24 CI checks.
+
 - Resolved the independent stack reviews with executable evidence predicates
   over verified artifact bytes, explicit OS/device/browser/lifecycle promotion
   matrices, capture-frame/RTP rules, a hardened shared-memory ABI, complete

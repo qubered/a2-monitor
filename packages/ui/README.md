@@ -1,7 +1,8 @@
 # UI package
 
-This package will hold shared design tokens and reusable, presentation-focused
-components after the first workflows establish a real design system.
+This package holds the first shared design tokens used by Live. Reusable,
+presentation-focused components move here only after repeated workflows prove
+their boundary; the initial channel components remain owned by Live.
 
 It must not contain backend calls, receiver-specific logic, or live state
 ownership. Dense real-time visualizations may expose canvas/WebGL primitives

@@ -12,6 +12,7 @@ must remain understandable without access to the original conversation.
 - [Cast, microphone, image, and cue workflows](product/cast-mics-cues.md)
 - [A1/A2 views and collaboration](product/a1-a2-views-and-collaboration.md)
 - [Roadmap](product/roadmap.md)
+- [GitHub phase tracking index](https://github.com/qubered/a2-monitor/issues/22)
 - [System architecture](architecture/overview.md)
 - [Implementation and workspace structure](architecture/implementation-structure.md)
 - [Process supervision and update lifecycle](architecture/process-and-update-lifecycle.md)

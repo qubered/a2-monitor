@@ -8,6 +8,15 @@ requirements below.
 
 - Read `README.md`, `docs/README.md`, and the relevant architecture documents.
 - Check `docs/decisions` for decisions that constrain the work.
+- For roadmap or phase work, locate the open GitHub tracking issue for that
+  phase before changing code. Read the full issue and every linked prerequisite,
+  record the issue number in the branch or pull request, and update its progress,
+  evidence, decisions and remaining work before handoff. If no tracking issue
+  exists, create one from the phase-tracking template before implementation.
+- Treat the repository documents as the durable source of truth and the phase
+  issue as the current execution ledger. When they disagree, stop, reconcile
+  the repository documentation in the same change, and explain the resolution
+  on the issue; do not silently follow stale issue text.
 - For UI or UX work, read `docs/design/DESIGN.md` in full, inspect the relevant
   rendered states in `docs/design/mockups`, and use the reference build in
   `docs/design/prototype/index.html` before proposing or implementing a design.
@@ -110,6 +119,9 @@ acceptable.
 ## Change discipline
 
 - Keep commits and pull requests narrowly scoped.
+- Link every phase implementation pull request to its phase tracking issue and
+  check off only work supported by committed code or named evidence. A green CI
+  build alone does not close a hardware, performance, security or operator gate.
 - Do not mix mechanical refactors with behavior changes.
 - Add tests for new behavior and a regression test for every bug fix when
   feasible.

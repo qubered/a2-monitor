@@ -2,7 +2,7 @@
 
 **Status:** Live working list
 
-**Last updated:** 2026-09-19
+**Last updated:** 2026-09-20
 
 This file carries the findings that were still open when the review documents
 were withdrawn, plus the questions that block the plan. It replaces the
@@ -44,6 +44,13 @@ Until both have measured answers, every document in this repository is a
 hypothesis.
 
 ### Next action: disposable spike
+
+**Execution update, 2026-09-20:** the maintainer chose to defer this disposable
+spike and start building the real application in small, locally testable slices.
+The first Live channel-grid slice is in progress. This sequencing choice does
+not answer either product question below, validate the selected stack, or turn
+any target into a measured result. The spike remains the gate before browser
+latency or receiver support is claimed.
 
 Two weeks, explicitly thrown away, no contracts and no schemas:
 
