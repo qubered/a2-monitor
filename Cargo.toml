@@ -6,6 +6,7 @@ members = [
   "crates/ipc",
   "crates/media",
   "crates/pcm-abi",
+  "crates/replay",
   "crates/supervisor",
   "services/audio-node",
 ]

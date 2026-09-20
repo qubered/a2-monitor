@@ -76,6 +76,23 @@ An abrupt power loss may lose the open segment but must not corrupt completed
 segments or the active show. Recovery scans only bounded metadata, not the
 entire media capacity.
 
+`crates/replay` now implements a deliberately smaller, preallocated in-memory
+state-machine model for the timeline boundary. It binds node boot, capture
+session, ring generation and stream shape; preserves half-open frame intervals;
+reports source gaps separately from retention eviction; prevents capture epochs
+from regressing; and gives bounded independent readers explicit epoch, gap and
+slow-reader cancellation outcomes. Append and read allocate no memory after
+construction, and retained-window reports use the actual stored endpoints.
+The model has an explicit 256 MiB ceiling and smaller dimensional limits; these
+are safety bounds for executable state-transition tests, not the appliance
+capacity profile.
+
+This model performs no filesystem I/O and does not freeze the segment layout.
+It does not establish append-only-index durability, checksums, recovery, disk
+pressure behavior, encryption, concurrent process safety, callback queue
+isolation, storage bandwidth/endurance or the 30-minute capacity target. Those
+remain Phase 0B-A implementation and measurement work.
+
 ## Replay session semantics
 
 - Each operator can be live or replaying independently.
