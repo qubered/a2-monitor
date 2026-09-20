@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.95fa95f5e24c024d",
-  "sourceSha256": "95fa95f5e24c024de5083d1fe8d17070e4dad4c018c6b35f8c25ba73e1d32899",
-  "inputCount": 231,
+  "buildId": "a2-0.0.0+sha256.4eaedf75330dd4d2",
+  "sourceSha256": "4eaedf75330dd4d20885f697e9bb0de226dc34562269f7f456e5c6837beb2fdf",
+  "inputCount": 234,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -569,7 +569,7 @@
     },
     {
       "path": "docs/quality/phase0-evidence-contract.md",
-      "sha256": "2529087ec8a2e986ebdbe86befbd2e7d509df9594689698175949c0c4ff895f8"
+      "sha256": "40aae1608bca6f3670411532b34c99e4837d139c16c77061722a44a46afc9013"
     },
     {
       "path": "docs/quality/phase1-operator-evidence-contract.md",
@@ -809,7 +809,7 @@
     },
     {
       "path": "scripts/check-repo.sh",
-      "sha256": "227c981bf908874270329b017ca1fe4d3311d12c5a481e96fb2bde218dde8d05"
+      "sha256": "782d72453a3fbb6e03cf0c0e6369d73e388bfd805334c1d094feffdebf246dd7"
     },
     {
       "path": "scripts/generate-build-identity.mjs",
@@ -845,11 +845,11 @@
     },
     {
       "path": "services/audio-node/README.md",
-      "sha256": "0a0e8757f979e046912ed878b7fc14afaea5ea1abff94077828a996fb4bbaf3d"
+      "sha256": "4db005582dfbb79e8af5b5249fa136ba5e185f7abc936d97b447976e34625978"
     },
     {
       "path": "services/audio-node/src/bin/synthetic-capture.rs",
-      "sha256": "e7cf07e12a84b795fe5f4f0d92d5a05bde530dbdd988b113a55abb0101d038b3"
+      "sha256": "a2dd56eb200cd56b332430fe391eaad12fb07c7483a6b27d929907a7987b00c7"
     },
     {
       "path": "services/audio-node/src/lib.rs",
@@ -893,11 +893,11 @@
     },
     {
       "path": "tests/README.md",
-      "sha256": "2f440b3248e6d323b4dd30a9ac1b546da84cec8d9c261a6ff8846b29cacad414"
+      "sha256": "af525b5d8cbc29b819cf58312dc1190fc2e40660b1beb447242aaf29bb8cf987"
     },
     {
       "path": "tools/evidence/README.md",
-      "sha256": "2725f4aa0afefd740aa981f5ecb2f8501cae83bd7ec6588942311c8261fd0b81"
+      "sha256": "3c885c4f85b2d8829c0320ed41114a679ed2b84ec515f83d8141af33a6ec5235"
     },
     {
       "path": "tools/evidence/artifact-loader.mjs",
@@ -909,15 +909,19 @@
     },
     {
       "path": "tools/evidence/evidence-verifier.mjs",
-      "sha256": "3020abda5b67c569f371c44c5e67583ee785307571db4c83a006cfbf268cc059"
+      "sha256": "19c54273e8725dd8e583be3471efb0463009e107e05a4ccd19cbe9602807c502"
     },
     {
       "path": "tools/evidence/evidence-verifier.test.mjs",
-      "sha256": "b906674a96b5a7fd6c73a1d07c5592ce003f9906509455f5ccb4273156bbce1e"
+      "sha256": "ecc0f8befdce0d35af1374cbc73afdd414fded4ef702b575d6f5d61765f5dd62"
     },
     {
       "path": "tools/evidence/fixtures/openssl-es256-jcs-v1.json",
       "sha256": "900cc7c28152323fab3cdb7198d0ae75316cfa36f63c8d8cdf306cd0a68ad672"
+    },
+    {
+      "path": "tools/evidence/fixtures/synthetic-capture-trace-v1.jsonl",
+      "sha256": "5eca335523d5ff75590eeb7b81229d6ebbb29135f5078c3d9625ffd184faa97b"
     },
     {
       "path": "tools/evidence/openssl-vector.test.mjs",
@@ -930,6 +934,14 @@
     {
       "path": "tools/evidence/strict-json.test.mjs",
       "sha256": "bcd1b4407240ad86b3084d09c45d7230842b76ef01028e5a8b7c6e7616779e47"
+    },
+    {
+      "path": "tools/evidence/synthetic-capture-extractor.mjs",
+      "sha256": "5e73477b8dbc751b3505dcdaa62057d7469c4e0a6570bc3911a893c7cfa29f05"
+    },
+    {
+      "path": "tools/evidence/synthetic-capture-extractor.test.mjs",
+      "sha256": "748dd3b0e993c6cc29619b3a3b2f912c579b8975ba7db774278fd0919b03fb69"
     }
   ],
   "regenerationCommand": "node scripts/generate-build-identity.mjs"

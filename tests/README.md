@@ -17,6 +17,14 @@ product or hardware evidence. That suite includes a fixed OpenSSL-generated
 ES256/JCS verification vector; it tests Node interoperability but is not a
 trusted signing identity or promotion artifact.
 
+The first runtime-specific fixture is the bounded synthetic capture JSONL trace
+under `tools/evidence/fixtures`. Rust tests require the smoke runtime to emit it
+byte-for-byte, while the dependency-free extractor binds the fixed 160 ms trial
+and derives metadata continuity, exact frame timing, discontinuity and xrun
+measurements from the verified bytes. This is
+metadata-only conformance evidence; the verifier re-derives and byte-compares
+the metrics, but PCM integrity and trusted production promotion remain open.
+
 The previous contents — an evidence catalogue, manifest schemas, protocol
 golden vectors and adversarial contract tests — were withdrawn along with the
 verifier they exercised. The original verifier did not read stored bytes; a

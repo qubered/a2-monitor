@@ -6,11 +6,13 @@ import { mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import process from "node:process";
+import { Readable } from "node:stream";
 import test, { after } from "node:test";
 import { fileURLToPath, URL } from "node:url";
 import { promisify } from "node:util";
 import { verifyConformanceRun } from "./evidence-verifier.mjs";
 import { canonicalize, parseStrictJson } from "./strict-json.mjs";
+import { extractSyntheticCaptureMetrics } from "./synthetic-capture-extractor.mjs";
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const jsonBytes = (value) => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
@@ -68,6 +70,7 @@ async function bundle({
     tests: [
       {
         id: "verifier.predicates.v1",
+        metricExtractor: "supplied-conformance-v1",
         minimumTrials: 2,
         minimumWarmupMs: 100,
         minimumMeasurementMs: 1000,
@@ -290,6 +293,257 @@ async function bundle({
     resultBytes,
     keyringBytes,
     inputPaths,
+  };
+}
+
+function syntheticTraceRecords() {
+  const config = {
+    sampleRateHz: 48_000,
+    channelCount: 64,
+    framesPerBlock: 480,
+    sampleFormat: "f32",
+  };
+  return [
+    {
+      schemaVersion: 1,
+      recordType: "capture_start",
+      promotionEligible: false,
+      expectedBlockCount: 16,
+      captureEpoch: "7",
+      requested: { ...config },
+      resolved: { ...config },
+    },
+    ...Array.from({ length: 16 }, (_, index) => ({
+      schemaVersion: 1,
+      recordType: "capture_block",
+      captureEpoch: "7",
+      sequence: String(index),
+      firstFrameIndex: String(index * 480),
+      frameCount: 480,
+      channelCount: 64,
+      monotonicCaptureNs: String(index * 10_000_000),
+      timingUncertaintyNs: 0,
+      discontinuityFlags: 0,
+      cumulativeSourceXruns: "0",
+    })),
+    {
+      schemaVersion: 1,
+      recordType: "capture_end",
+      captureEpoch: "7",
+      observedBlockCount: 16,
+    },
+  ];
+}
+
+function traceBytes(records) {
+  return Buffer.from(
+    `${records.map((record) => JSON.stringify(record)).join("\n")}\n`,
+  );
+}
+
+function canonicalBytes(value) {
+  return Buffer.from(
+    canonicalize(parseStrictJson(Buffer.from(JSON.stringify(value)))),
+  );
+}
+
+async function syntheticBundle({
+  mutateTrace,
+  mutateMetrics,
+  mutateSourceTrace,
+  mutateResult,
+  omitTrace = false,
+  metricExtractor = "a2.synthetic-capture-metadata.v1",
+  measurementMs = 160,
+} = {}) {
+  const root = await mkdtemp(path.join(tmpdir(), "a2-synthetic-evidence-"));
+  temporaryRoots.push(root);
+  const catalog = {
+    schemaVersion: 1,
+    kind: "a2-evidence-verifier-conformance-catalog",
+    catalogId: "synthetic-trace-self-test.v1",
+    promotionEligible: false,
+    tests: [
+      {
+        id: "synthetic.trace.v1",
+        metricExtractor,
+        minimumTrials: 1,
+        minimumWarmupMs: 0,
+        minimumMeasurementMs: 1,
+        requiredFaults: [],
+        requiredArtifacts: [
+          {
+            kind: "synthetic-capture-trace",
+            maxBytes: 18 * 513,
+            mediaType: "application/x-ndjson",
+          },
+          {
+            kind: "verifier-metrics",
+            maxBytes: 4096,
+            mediaType: "application/json",
+          },
+        ],
+        assertions: [
+          {
+            id: "block-count",
+            sourceArtifactKind: "verifier-metrics",
+            valueType: "integer",
+            reducer: "exact",
+            operator: "eq",
+            expected: 16,
+            unit: "blocks",
+          },
+          {
+            id: "continuity-ok",
+            sourceArtifactKind: "verifier-metrics",
+            valueType: "boolean",
+            reducer: "all",
+            operator: "eq",
+            expected: true,
+            unit: "boolean",
+          },
+          {
+            id: "cumulative-source-xruns",
+            sourceArtifactKind: "verifier-metrics",
+            valueType: "string",
+            reducer: "exact",
+            operator: "eq",
+            expected: "0",
+            unit: "decimal-u64",
+          },
+          {
+            id: "discontinuity-mask-or",
+            sourceArtifactKind: "verifier-metrics",
+            valueType: "integer",
+            reducer: "max",
+            operator: "eq",
+            expected: 0,
+            unit: "bitmask",
+          },
+          {
+            id: "timing-exact",
+            sourceArtifactKind: "verifier-metrics",
+            valueType: "boolean",
+            reducer: "all",
+            operator: "eq",
+            expected: true,
+            unit: "boolean",
+          },
+        ],
+      },
+    ],
+  };
+  const catalogBytes = jsonBytes(catalog);
+  const manifest = {
+    schemaVersion: 1,
+    kind: "a2-evidence-run-manifest",
+    manifestId: "00000000-0000-4000-8000-000000000011",
+    catalogSha256: sha256(catalogBytes),
+    testId: "synthetic.trace.v1",
+    buildId: "a2-0.0.0+sha256.0000000000000000",
+    tuple: {
+      architecture: "test-arch",
+      executionProfile: "synthetic-conformance",
+      osFamily: "test-os",
+      profileId: "synthetic-trace-test",
+    },
+    trials: [
+      {
+        id: "trial-1",
+        warmupMs: 0,
+        measurementMs,
+        faults: [],
+      },
+    ],
+  };
+  const manifestBytes = jsonBytes(manifest);
+  const sourceRecords = syntheticTraceRecords();
+  mutateSourceTrace?.(sourceRecords);
+  const originalTraceBytes = traceBytes(sourceRecords);
+  const derived = await extractSyntheticCaptureMetrics({
+    input: Readable.from([originalTraceBytes]),
+    manifestBytes,
+  });
+  mutateMetrics?.(derived);
+  const metricsBytes = canonicalBytes(derived);
+  const records = syntheticTraceRecords();
+  mutateTrace?.(records);
+  const storedTraceBytes = traceBytes(records);
+  await writeFile(path.join(root, "metrics.json"), metricsBytes);
+  if (!omitTrace)
+    await writeFile(path.join(root, "capture.jsonl"), storedTraceBytes);
+
+  const artifacts = [
+    ...(!omitTrace
+      ? [
+          {
+            kind: "synthetic-capture-trace",
+            path: "capture.jsonl",
+            mediaType: "application/x-ndjson",
+            bytes: storedTraceBytes.length,
+            sha256: sha256(storedTraceBytes),
+          },
+        ]
+      : []),
+    {
+      kind: "verifier-metrics",
+      path: "metrics.json",
+      mediaType: "application/json",
+      bytes: metricsBytes.length,
+      sha256: sha256(metricsBytes),
+    },
+  ];
+  const { privateKey, publicKey } = generateKeyPairSync("ec", {
+    namedCurve: "P-256",
+  });
+  const result = {
+    schemaVersion: 1,
+    kind: "a2-evidence-run-result",
+    resultId: "00000000-0000-4000-8000-000000000012",
+    manifestSha256: sha256(manifestBytes),
+    catalogSha256: sha256(catalogBytes),
+    testId: manifest.testId,
+    buildId: manifest.buildId,
+    runnerId: "synthetic-trace-runner",
+    startedUtc: "2026-09-20T00:00:00Z",
+    endedUtc: "2026-09-20T00:00:02Z",
+    trials: [
+      {
+        id: "trial-1",
+        bootId: "boot-1",
+        startedMs: 0,
+        warmupEndedMs: 0,
+        measurementEndedMs: measurementMs,
+        faults: [],
+      },
+    ],
+    artifacts,
+    deviations: [],
+    waiverIds: [],
+  };
+  mutateResult?.(result);
+  const resultBytes = jsonBytes(makeSignedResult(result, privateKey));
+  const keyringBytes = jsonBytes({
+    schemaVersion: 1,
+    kind: "a2-evidence-keyring",
+    keys: [
+      {
+        keyId: "runner-test",
+        purpose: "evidence-run-result",
+        status: "active",
+        notBeforeUtc: "2026-09-19T00:00:00Z",
+        notAfterUtc: "2026-09-21T00:00:00Z",
+        publicJwk: publicKey.export({ format: "jwk" }),
+      },
+    ],
+  });
+  return {
+    artifactRoot: root,
+    catalogBytes,
+    manifestBytes,
+    resultBytes,
+    keyringBytes,
+    sourceTraceSha256: sha256(storedTraceBytes),
   };
 }
 
@@ -521,4 +775,86 @@ test("rejects wrong-purpose, revoked and expired signing keys", async () => {
       /purpose or status is invalid|revoked or outside/,
     );
   }
+});
+
+test("derives synthetic trace metrics before evaluating the signed bundle", async () => {
+  const input = await syntheticBundle();
+  const summary = await verifyConformanceRun(input);
+  assert.equal(summary.outcome, "conformance-pass");
+  assert.equal(summary.promotionEligible, false);
+  assert.equal(summary.metricExtractor, "a2.synthetic-capture-metadata.v1");
+  assert.equal(summary.assertions.length, 5);
+  assert(
+    summary.assertions.every(
+      (assertion) => assertion.sourceTraceSha256 === input.sourceTraceSha256,
+    ),
+  );
+});
+
+test("rejects forged synthetic metrics and invalid or stale trace bindings", async () => {
+  await assert.rejects(
+    verifyConformanceRun(
+      await syntheticBundle({
+        mutateTrace: (records) => (records[5].discontinuityFlags = 1),
+      }),
+    ),
+    /metrics bytes do not equal canonical extracted metrics/,
+  );
+  await assert.rejects(
+    verifyConformanceRun(
+      await syntheticBundle({
+        mutateTrace: (records) => (records[5].sequence = "99"),
+      }),
+    ),
+    /sequence is not continuous/,
+  );
+  await assert.rejects(
+    verifyConformanceRun(
+      await syntheticBundle({
+        mutateTrace: (records) => (records[2].timingUncertaintyNs = 1),
+      }),
+    ),
+    /timing uncertainty is not exact/,
+  );
+  await assert.rejects(
+    verifyConformanceRun(
+      await syntheticBundle({
+        mutateMetrics: (metrics) =>
+          (metrics.sourceTraceSha256 = "0".repeat(64)),
+      }),
+    ),
+    /metrics bytes do not equal canonical extracted metrics/,
+  );
+});
+
+test("rejects invalid timing or duration even when metrics would be regenerated", async () => {
+  await assert.rejects(
+    syntheticBundle({
+      mutateSourceTrace: (records) => (records[1].monotonicCaptureNs = null),
+    }),
+    /canonical decimal u64 string/,
+  );
+  await assert.rejects(
+    syntheticBundle({ measurementMs: 1000 }),
+    /fixed 160 ms trace duration/,
+  );
+});
+
+test("rejects missing synthetic traces and unknown metric extractors", async () => {
+  await assert.rejects(
+    verifyConformanceRun(await syntheticBundle({ omitTrace: true })),
+    /artifact kinds\/order do not exactly match the catalog/,
+  );
+  await assert.rejects(
+    verifyConformanceRun(
+      await syntheticBundle({ metricExtractor: "supplied-conformance-v1" }),
+    ),
+    /metrics fields must be exactly/,
+  );
+  await assert.rejects(
+    verifyConformanceRun(
+      await syntheticBundle({ metricExtractor: "unknown.extractor.v1" }),
+    ),
+    /metricExtractor is unsupported/,
+  );
 });
