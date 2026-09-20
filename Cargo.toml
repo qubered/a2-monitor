@@ -4,6 +4,7 @@ members = [
   "crates/audio-host-api",
   "crates/build-info",
   "crates/ipc",
+  "crates/media",
   "crates/pcm-abi",
   "crates/supervisor",
   "services/audio-node",

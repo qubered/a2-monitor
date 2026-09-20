@@ -114,6 +114,9 @@ Rules:
   consumer-control bytes and deterministic state-machine model. OS mapping,
   handle, ACL and process code stays in platform/supervisor leaves; the current
   model is not a complete byte ABI or concurrent mapping implementation.
+- `media` owns pure 48 kHz source-frame-to-RTP/RTCP arithmetic and session
+  fencing. It has no clock, random, codec, socket or WebRTC dependency; those
+  capabilities remain in the future media-worker composition boundary.
 - `opus-sys-safe` is the only project crate permitted to call `libopus` FFI.
 - `ipc` and generated native DTOs contain transport mechanics, not show-domain
   authority decisions.
