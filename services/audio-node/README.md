@@ -117,7 +117,13 @@ cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked
 cargo run --locked --bin a2-synthetic-capture
 cargo run --locked --bin a2-synthetic-capture -- --trace-jsonl
+cargo run --locked --bin a2-replay-smoke
 ```
+
+`a2-replay-smoke` is a deterministic, Cargo-runnable composition harness for
+the single-threaded in-memory ingress and replay models. It is not included in
+the immutable application slot or process-boundary contract and is not a
+deployed, supervised, confined or durable replay worker.
 
 The optional trace mode writes exactly 18 newline-delimited JSON records to
 stdout: one start record, 16 capture-block records and one end record. It is a

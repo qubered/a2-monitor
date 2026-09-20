@@ -20,6 +20,7 @@ dependencies = [
  "a2-audio-core",
  "a2-audio-host-api",
  "a2-build-info",
+ "a2-replay",
 ]
 
 [[package]]

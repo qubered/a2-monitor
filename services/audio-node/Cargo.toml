@@ -9,6 +9,7 @@ license.workspace = true
 a2-audio-core = { path = "../../crates/audio-core" }
 a2-audio-host-api = { path = "../../crates/audio-host-api" }
 a2-build-info = { path = "../../crates/build-info" }
+a2-replay = { path = "../../crates/replay" }
 
 [lib]
 path = "src/lib.rs"
@@ -16,3 +17,7 @@ path = "src/lib.rs"
 [[bin]]
 name = "a2-synthetic-capture"
 path = "src/bin/synthetic-capture.rs"
+
+[[bin]]
+name = "a2-replay-smoke"
+path = "src/bin/replay-smoke.rs"
