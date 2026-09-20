@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "0",
+  "generatedAtUtc": "2026-09-20T03:31:00Z",
+  "source": {
+    "kind": "fabricated",
+    "label": "Current compatibility fixture"
+  },
+  "show": {
+    "name": "The Winter Circus",
+    "venue": "Northgate Playhouse",
+    "performanceLabel": "Preview 3"
+  },
+  "node": {
+    "status": "ready",
+    "channelCount": 1,
+    "sampleRateHz": 48000
+  },
+  "channels": [
+    {
+      "id": "source-1",
+      "number": 1,
+      "character": "Ringmaster",
+      "performer": "Alex Morgan",
+      "kind": "wireless",
+      "zone": "Stage",
+      "levelDbfs": -18.4,
+      "statuses": {
+        "rf": "good",
+        "audio": "good",
+        "battery": "caution",
+        "check": "unknown"
+      },
+      "alert": {
+        "severity": "caution",
+        "label": "Battery below target",
+        "dimension": "Battery"
+      },
+      "details": {
+        "receiver": "Fabricated receiver 1",
+        "input": "Input 1",
+        "rfLevelDbm": -62,
+        "linkQualityPercent": 94,
+        "batteryRemaining": "1 h 12 min",
+        "telemetryAge": "Fabricated now"
+      }
+    }
+  ]
+}

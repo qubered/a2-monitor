@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "0",
+  "generatedAtUtc": "2026-09-19T23:00:00Z",
+  "source": {
+    "kind": "fabricated",
+    "label": "Previous deployment-pair fixture"
+  },
+  "show": {
+    "name": "Previous Show",
+    "venue": "Previous Venue",
+    "performanceLabel": "Previous Performance"
+  },
+  "node": {
+    "status": "waiting",
+    "channelCount": null,
+    "sampleRateHz": null
+  },
+  "channels": []
+}

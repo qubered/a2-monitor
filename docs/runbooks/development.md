@@ -24,6 +24,19 @@ npm ci
 npm run check --workspaces --if-present
 ```
 
+Public health/snapshot TypeScript artifacts are generated from the closed JSON
+Schemas. Regenerate after changing either schema and verify freshness before
+handoff:
+
+```sh
+npm run generate --workspace @a2-monitor/protocol
+npm run generate:check --workspace @a2-monitor/protocol
+```
+
+The generated file is committed for frontend/backend consumers and must retain
+its source paths and regeneration command. The repository gate fails when it
+does not exactly match generator output.
+
 Run the Rust workspace checks with:
 
 ```sh

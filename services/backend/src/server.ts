@@ -3,10 +3,7 @@ import formatsPlugin from "ajv-formats";
 import Fastify, { type FastifyInstance } from "fastify";
 import healthResponseSchema from "@a2-monitor/protocol/schema/health-response" with { type: "json" };
 import liveSnapshotResponseSchema from "@a2-monitor/protocol/schema/live-snapshot-response" with { type: "json" };
-import type {
-  HealthResponse,
-  LiveSnapshot,
-} from "@a2-monitor/protocol/live-snapshot";
+import type { HealthResponse, LiveSnapshot } from "@a2-monitor/protocol/http";
 import { fabricatedLiveSnapshot } from "./fixtures/live-snapshot.js";
 
 export type SnapshotProvider = () => LiveSnapshot | Promise<LiveSnapshot>;

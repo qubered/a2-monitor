@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { LiveSnapshot } from "@a2-monitor/protocol/live-snapshot";
+import type { LiveSnapshot } from "@a2-monitor/protocol/http";
 import { SnapshotOfflineError, type SnapshotSource } from "./snapshot";
 
 export type SnapshotState =

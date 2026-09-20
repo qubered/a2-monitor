@@ -4,7 +4,14 @@
   "title": "Live snapshot response",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "generatedAtUtc", "source", "show", "node", "channels"],
+  "required": [
+    "schemaVersion",
+    "generatedAtUtc",
+    "source",
+    "show",
+    "node",
+    "channels"
+  ],
   "properties": {
     "schemaVersion": { "const": "0" },
     "generatedAtUtc": { "type": "string", "format": "date-time" },
@@ -24,7 +31,11 @@
       "properties": {
         "name": { "type": "string", "minLength": 1, "maxLength": 120 },
         "venue": { "type": "string", "minLength": 1, "maxLength": 120 },
-        "performanceLabel": { "type": "string", "minLength": 1, "maxLength": 120 }
+        "performanceLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
       }
     },
     "node": {
@@ -33,8 +44,16 @@
       "required": ["status", "channelCount", "sampleRateHz"],
       "properties": {
         "status": { "enum": ["ready", "waiting", "offline"] },
-        "channelCount": { "type": ["integer", "null"], "minimum": 0, "maximum": 128 },
-        "sampleRateHz": { "type": ["integer", "null"], "minimum": 8000, "maximum": 384000 }
+        "channelCount": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 128
+        },
+        "sampleRateHz": {
+          "type": ["integer", "null"],
+          "minimum": 8000,
+          "maximum": 384000
+        }
       }
     },
     "channels": {
@@ -53,7 +72,17 @@
     "channel": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "number", "character", "performer", "kind", "zone", "levelDbfs", "statuses", "details"],
+      "required": [
+        "id",
+        "number",
+        "character",
+        "performer",
+        "kind",
+        "zone",
+        "levelDbfs",
+        "statuses",
+        "details"
+      ],
       "properties": {
         "id": { "type": "string", "minLength": 1, "maxLength": 64 },
         "number": { "type": "integer", "minimum": 1, "maximum": 999 },
@@ -86,14 +115,29 @@
         "details": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["receiver", "input", "rfLevelDbm", "linkQualityPercent", "batteryRemaining", "telemetryAge"],
+          "required": [
+            "receiver",
+            "input",
+            "rfLevelDbm",
+            "linkQualityPercent",
+            "batteryRemaining",
+            "telemetryAge"
+          ],
           "properties": {
             "receiver": { "type": "string", "minLength": 1, "maxLength": 160 },
             "input": { "type": "string", "minLength": 1, "maxLength": 80 },
             "rfLevelDbm": { "$ref": "#/$defs/nullableNumber" },
-            "linkQualityPercent": { "$ref": "#/$defs/nullableNumber" },
+            "linkQualityPercent": {
+              "type": ["number", "null"],
+              "minimum": 0,
+              "maximum": 100
+            },
             "batteryRemaining": { "type": ["string", "null"], "maxLength": 80 },
-            "telemetryAge": { "type": "string", "minLength": 1, "maxLength": 120 }
+            "telemetryAge": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            }
           }
         }
       }

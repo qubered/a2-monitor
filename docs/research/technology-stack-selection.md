@@ -364,8 +364,9 @@ macOS exposes POSIX `shm_open`; see Apple's [`shm_open(2)`](https://developer.ap
 ### Control path
 
 Use byte-mode named pipes on Windows and Unix-domain sockets on macOS. Frames
-are `u32` network-order length plus a codec/version byte and bounded payload
-with message kind, request/event ID, authority epoch where relevant and payload.
+are exactly a `u32` network-order length followed by a bounded payload. The
+codec-neutral semantic payload carries its protocol version, message kind,
+request/event ID, authority epoch where relevant, and message body.
 Apply a small hard maximum before allocation, deadlines, bounded queues,
 peer-identity checks and close-on-protocol-error behavior.
 

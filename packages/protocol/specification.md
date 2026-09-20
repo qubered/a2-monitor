@@ -9,8 +9,32 @@ control, show activation, and import/export envelopes. Control and durable event
 encoding is I-JSON. Hashes and signatures use RFC 8785 JCS bytes and SHA-256;
 Unicode is preserved exactly, duplicate names and nonfinite numbers are rejected,
 and counters/revisions outside safe small numeric ranges are canonical decimal
-strings. There are currently no machine schemas; see
+strings. The only current machine schemas are the two Phase 0T HTTP response
+contracts for backend health and the fabricated Live snapshot. They do not
+define native IPC, commands, events, leases or production runtime state; see
 [open questions](../../docs/open-questions.md).
+
+## Phase 0T HTTP compatibility
+
+The health and Live snapshot JSON Schemas under `schema/v0/http` are the source
+for generated TypeScript types, response parsers and the small HTTP client.
+Both schemas are closed at every object boundary. Unknown fields, an unknown
+snapshot schema major, invalid bounds and invalid enum values fail rather than
+being removed, coerced or interpreted as healthy.
+
+The generated client stops reading health responses after 4 KiB and snapshot
+responses after 1 MiB, including when `Content-Length` is absent. JSON Schema
+string lengths are Unicode code points, not UTF-16 code units. The Live
+snapshot currently constrains link quality to `0..100` percent while retaining
+`null` for unknown; values outside that range are invalid rather than clamped.
+
+Fixtures under `fixtures/v0/http/current` describe the current application
+pair. `previous` contains the rollback-pair shapes the current generated
+consumer must still accept. Both use schema major `0` because there has not yet
+been a released wire-shape change. `incompatible` contains deliberately
+rejected major-version and unknown-field inputs. These fixtures establish
+schema compatibility only; they do not prove updater rollback, native
+node/backend compatibility or hardware behavior.
 
 ## Version negotiation
 

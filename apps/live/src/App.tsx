@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { LiveChannel } from "@a2-monitor/protocol/live-snapshot";
+import type { LiveChannel } from "@a2-monitor/protocol/http";
 import { ChannelCard } from "./components/ChannelCard";
 import { ChannelDetail } from "./components/ChannelDetail";
 import { Player } from "./components/Player";
