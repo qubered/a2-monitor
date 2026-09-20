@@ -110,6 +110,7 @@ node --test \
   tools/evidence/artifact-loader.test.mjs \
   tools/evidence/evidence-verifier.test.mjs \
   tools/evidence/openssl-vector.test.mjs \
+  tools/evidence/synthetic-capture-extractor.test.mjs \
   tools/evidence/strict-json.test.mjs
 node scripts/generate-node-dependency-inventory.mjs --check
 node infra/appliance/common/validate-process-boundaries.mjs

@@ -12,6 +12,10 @@ import process from "node:process";
 import { pathToFileURL } from "node:url";
 import { verifyArtifactSet } from "./artifact-loader.mjs";
 import { canonicalize, parseStrictJson } from "./strict-json.mjs";
+import {
+  SYNTHETIC_CAPTURE_EXTRACTOR_ID,
+  extractSyntheticCaptureMetrics,
+} from "./synthetic-capture-extractor.mjs";
 
 const SHA256 = /^[0-9a-f]{64}$/;
 const IDENTIFIER = /^[a-z0-9][a-z0-9._-]{0,127}$/;
@@ -22,6 +26,10 @@ const RFC3339_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z$/;
 const OPERATORS = new Set(["abs_lte", "eq", "gt", "gte", "lt", "lte"]);
 const REDUCERS = new Set(["abs_max", "all", "any", "exact", "max", "min"]);
 const VALUE_TYPES = new Set(["boolean", "integer", "string"]);
+const METRIC_EXTRACTORS = new Set([
+  "supplied-conformance-v1",
+  SYNTHETIC_CAPTURE_EXTRACTOR_ID,
+]);
 const MAX_ARTIFACTS = 256;
 const MAX_ARTIFACT_BYTES = 64 * 1024 * 1024;
 const MAX_TOTAL_ARTIFACT_BYTES = 256 * 1024 * 1024;
@@ -139,6 +147,7 @@ function validateCatalog(catalog) {
       [
         "assertions",
         "id",
+        "metricExtractor",
         "minimumMeasurementMs",
         "minimumTrials",
         "minimumWarmupMs",
@@ -148,6 +157,10 @@ function validateCatalog(catalog) {
       label,
     );
     string(test.id, `${label}.id`, IDENTIFIER);
+    string(test.metricExtractor, `${label}.metricExtractor`, IDENTIFIER);
+    if (!METRIC_EXTRACTORS.has(test.metricExtractor)) {
+      fail(`${label}.metricExtractor is unsupported`);
+    }
     testIds.push(test.id);
     integer(test.minimumTrials, `${label}.minimumTrials`, 1);
     integer(test.minimumWarmupMs, `${label}.minimumWarmupMs`);
@@ -204,6 +217,14 @@ function validateCatalog(catalog) {
     ) {
       fail(
         `${label}.requiredArtifacts must be unique, sorted and include verifier-metrics`,
+      );
+    }
+    if (
+      test.metricExtractor === SYNTHETIC_CAPTURE_EXTRACTOR_ID &&
+      !artifactKinds.includes("synthetic-capture-trace")
+    ) {
+      fail(
+        `${label}.requiredArtifacts must include synthetic-capture-trace for its metric extractor`,
       );
     }
     if (!Array.isArray(test.assertions) || test.assertions.length === 0) {
@@ -626,19 +647,54 @@ function validateKeyring(keyring, result) {
   if (!valid) fail("result signature is invalid");
 }
 
-function parseMetrics(bytes, manifest, test, manifestSha256) {
+function parseMetrics(
+  bytes,
+  manifest,
+  test,
+  manifestSha256,
+  sourceTraceSha256,
+) {
   const metrics = parseStrictJson(bytes);
-  exactKeys(
-    metrics,
-    ["kind", "manifestSha256", "schemaVersion", "trials"],
-    "metrics",
-  );
-  if (
-    metrics.schemaVersion !== 1 ||
-    metrics.kind !== "a2-evidence-verifier-metrics" ||
-    metrics.manifestSha256 !== manifestSha256
-  )
-    fail("metrics identity or manifest binding is invalid");
+  if (test.metricExtractor === "supplied-conformance-v1") {
+    exactKeys(
+      metrics,
+      ["kind", "manifestSha256", "schemaVersion", "trials"],
+      "metrics",
+    );
+    if (
+      metrics.schemaVersion !== 1 ||
+      metrics.kind !== "a2-evidence-verifier-metrics" ||
+      metrics.manifestSha256 !== manifestSha256
+    ) {
+      fail("metrics identity or manifest binding is invalid");
+    }
+  } else {
+    exactKeys(
+      metrics,
+      [
+        "evidenceScope",
+        "extractorId",
+        "kind",
+        "manifestSha256",
+        "promotionEligible",
+        "schemaVersion",
+        "sourceTraceSha256",
+        "trials",
+      ],
+      "metrics",
+    );
+    if (
+      metrics.schemaVersion !== 1 ||
+      metrics.kind !== "a2-synthetic-capture-extracted-metrics" ||
+      metrics.extractorId !== SYNTHETIC_CAPTURE_EXTRACTOR_ID ||
+      metrics.evidenceScope !== "synthetic-metadata-only" ||
+      metrics.promotionEligible !== false ||
+      metrics.manifestSha256 !== manifestSha256 ||
+      metrics.sourceTraceSha256 !== sourceTraceSha256
+    ) {
+      fail("extracted metrics identity or byte binding is invalid");
+    }
+  }
   exactIds(
     metrics.trials,
     manifest.trials.map((trial) => trial.id),
@@ -733,11 +789,37 @@ export async function verifyConformanceRun({
   });
   const [metrics] = verifiedArtifacts.byKind("verifier-metrics");
   if (!metrics) fail("verified artifact set has no verifier-metrics bytes");
+  let sourceTraceSha256 = null;
+  if (test.metricExtractor === SYNTHETIC_CAPTURE_EXTRACTOR_ID) {
+    const [trace] = verifiedArtifacts.byKind("synthetic-capture-trace");
+    if (!trace)
+      fail("verified artifact set has no synthetic-capture-trace bytes");
+    const input = {
+      async *[Symbol.asyncIterator]() {
+        yield trace.content.copy();
+      },
+    };
+    const derived = await extractSyntheticCaptureMetrics({
+      input,
+      manifestBytes,
+    });
+    if (derived.sourceTraceSha256 !== trace.sha256) {
+      fail("extractor source trace digest does not match verified bytes");
+    }
+    const canonicalDerived = Buffer.from(
+      canonicalize(parseStrictJson(Buffer.from(JSON.stringify(derived)))),
+    );
+    if (!metrics.content.copy().equals(canonicalDerived)) {
+      fail("supplied metrics bytes do not equal canonical extracted metrics");
+    }
+    sourceTraceSha256 = derived.sourceTraceSha256;
+  }
   const values = parseMetrics(
     metrics.content.copy(),
     manifest,
     test,
     manifestSha256,
+    sourceTraceSha256,
   );
   const assertions = Object.freeze(
     test.assertions.map((assertion) => {
@@ -755,6 +837,7 @@ export async function verifyConformanceRun({
         operator: assertion.operator,
         reducer: assertion.reducer,
         sourceArtifactSha256: metrics.sha256,
+        sourceTraceSha256,
         unit: assertion.unit,
       });
     }),
@@ -775,6 +858,7 @@ export async function verifyConformanceRun({
     kind: "a2-verified-conformance-run",
     outcome: "conformance-pass",
     promotionEligible: false,
+    metricExtractor: test.metricExtractor,
     trust:
       "supplied-key-runner-attested-facts-not-independent-product-evidence",
     catalogSha256,

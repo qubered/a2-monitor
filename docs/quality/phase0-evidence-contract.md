@@ -86,6 +86,13 @@ signed evidence emission before it can promote a phase.
 The current CLI takes `verify-conformance-run CATALOG MANIFEST RESULT KEYRING
 ARTIFACT_ROOT`; the artifact root is mandatory and unsafe aliases, symlinks and
 special files are rejected. It deliberately has no `verify-promotion` command.
+The first runtime-specific extractor fixture consumes the synthetic audio-node's
+bounded JSONL metadata trace, requires its fixed 160 ms manifest interval, and
+binds derived continuity/exact-frame-timing/xrun metrics to the exact trace and
+manifest hashes. The verifier reruns the closed extractor
+over verified trace bytes and requires exact canonical metric-byte equality
+before predicate evaluation. The trace contains no PCM oracle and remains
+explicitly non-promotional.
 The future production CLI must consume pinned or signed catalogue/keyring trust
 anchors and either reverify full bundles or accept only independently signed
 verified summaries matched against exact named coverage rows.

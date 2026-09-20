@@ -21,9 +21,33 @@ Every successful summary says `promotionEligible: false`. Metrics, timelines,
 fault occurrences, runner identity, catalogue and keyring are supplied
 conformance inputs, not independently observed facts. Do not use this command to
 claim Phase 0A, Phase 0B, hardware, performance, security or release support.
-Production promotion still needs raw-trace extractors, frozen thresholds and
-coverage rows, trust anchors, independently authorized summaries, waivers and
-cross-platform on-disk bundles.
+Production promotion still needs extractors for the remaining raw trace kinds,
+frozen thresholds and coverage rows, trust anchors, independently authorized
+summaries, waivers and cross-platform on-disk bundles.
+
+## Synthetic capture trace extractor
+
+The audio-node smoke binary has an opt-in, fixed-size metadata trace mode:
+
+```sh
+cargo run --locked --bin a2-synthetic-capture -- --trace-jsonl
+```
+
+It emits one start record, 16 observed block records and one end record as
+bounded JSONL. Serialization happens after the control-side ring consumer pops
+each block, never in the capture callback. The committed
+[`synthetic-capture-trace-v1.jsonl`](fixtures/synthetic-capture-trace-v1.jsonl)
+is checked byte-for-byte by the Rust emitter test.
+
+`synthetic-capture-extractor.mjs` strictly parses those bytes, requires the
+fixed 160 ms manifest interval, and derives continuity, exact frame-based
+timing, discontinuity and source-xrun metadata. Its output is bound to both the
+raw trace SHA-256 and the supplied manifest SHA-256 and always says
+`promotionEligible: false`. The verifier registers this extractor by its closed
+catalogue ID, recomputes the metrics from verified trace bytes and requires the
+supplied metrics artifact to equal the canonical derived bytes before evaluating
+predicates. The trace contains no PCM and cannot establish channel/sample
+integrity, real-time scheduling, hardware behavior or product support.
 
 ## Fixed OpenSSL conformance vector
 

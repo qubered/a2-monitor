@@ -110,7 +110,20 @@ cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked
 cargo run --locked --bin a2-synthetic-capture
+cargo run --locked --bin a2-synthetic-capture -- --trace-jsonl
 ```
+
+The optional trace mode writes exactly 18 newline-delimited JSON records to
+stdout: one start record, 16 capture-block records and one end record. It is a
+bounded metadata-only raw trace for a separate extractor. The start record
+declares both the requested and host-resolved tuple and explicitly sets
+`promotionEligible` to `false`. Block records carry the observed capture epoch,
+sequence, frame position and shape, monotonic timing and uncertainty,
+discontinuity flags and cumulative source-xrun count. Unsigned 64-bit values
+are decimal strings so a JavaScript consumer cannot lose precision. JSON
+serialization happens only after the control-side ring consumer has copied a
+block; it never runs in the callback and never includes PCM samples. Unknown
+arguments fail instead of changing the fixed trace size.
 
 This scaffold does not open a physical device and provides no latency,
 stability, hardware-support, or real-time scheduling evidence.
