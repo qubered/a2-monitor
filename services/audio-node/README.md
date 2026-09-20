@@ -75,7 +75,11 @@ The runnable native scaffold now contains:
   with no CPAL or platform type in its public interface;
 - `crates/audio-core`, a fixed-capacity in-process SPSC PCM ring whose storage
   is allocated before capture; and
-- `services/audio-node`, a deterministic synthetic host and smoke binary.
+- `services/audio-node`, a deterministic synthetic host and smoke binary; and
+- `crates/supervisor`, a deterministic native-worker lifecycle policy with
+  boot/generation fencing, role-specific readiness gates, bounded heartbeats,
+  restart/quarantine, and confirmed-death shutdown deadlines behind injected
+  process and clock boundaries.
 
 The callback path and ring push are covered by an allocation-counting test
 after setup. The callback types expose no lock or I/O facility, and the current
@@ -97,3 +101,6 @@ cargo run --locked --bin a2-synthetic-capture
 
 This scaffold does not open a physical device and provides no latency,
 stability, hardware-support, or real-time scheduling evidence.
+The supervision adapter likewise does not yet claim restricted OS child
+creation, launchd/XPC integration, privilege separation, or production health
+IPC; those remain platform evidence work.

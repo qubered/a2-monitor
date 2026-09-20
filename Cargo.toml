@@ -2,7 +2,9 @@
 members = [
   "crates/audio-core",
   "crates/audio-host-api",
+  "crates/build-info",
   "crates/ipc",
+  "crates/supervisor",
   "services/audio-node",
 ]
 resolver = "3"
