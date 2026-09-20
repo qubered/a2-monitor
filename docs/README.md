@@ -42,6 +42,7 @@ must remain understandable without access to the original conversation.
 - [Client and appliance profiles](quality/client-and-appliance-profiles.md)
 - [Reference validation matrix](quality/validation-matrix.md)
 - [Threat model](quality/threat-model.md)
+- [Dependency and licence inventory](quality/dependency-license-inventory.md)
 - [Repository governance](quality/repository-governance.md)
 - [Definition of done](quality/definition-of-done.md)
 - [Show management and control API](api/show-management-and-control.md)

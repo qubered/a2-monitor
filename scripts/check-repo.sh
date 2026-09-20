@@ -101,4 +101,7 @@ else
   exit 1
 fi
 
+node --test scripts/generate-node-dependency-inventory.test.mjs
+node scripts/generate-node-dependency-inventory.mjs --check
+
 echo "Repository checks passed."
