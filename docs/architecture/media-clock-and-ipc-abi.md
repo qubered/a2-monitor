@@ -156,6 +156,28 @@ and each candidate's unknown-field behavior. This is implementation evidence
 for the codec-neutral comparison boundary only: no codec has been selected, no
 local transport has been integrated, and no runtime-supervision claim follows.
 
+`services/audio-node` composes that framing and semantic adapter in a bounded
+worker-control session model. One codec and the full trusted connection-bound
+worker identity are immutable constructor inputs; neither is negotiated or
+derived from the untrusted stream. The frame and codec layers share a fixed
+512-byte worker-message ceiling, and each receive call completes at most one
+frame so the caller can apply event-loop backpressure before reading the next.
+Every framing, codec, protocol, identity or routing error is terminal. A
+supervisor result other than `Accepted` is also terminal while preserving any
+deadline action the supervisor already performed. Buffered suffixes are
+discarded rather than scanned for a new frame. Clean EOF is valid only at a
+frame boundary and never counts as confirmed worker-process death.
+
+This session remains a synchronous in-process composition boundary. It owns no
+socket, pipe, XPC connection, peer credential, PID check, read timer or process
+handle. The external loop must enforce idle/partial-frame deadlines and continue
+supervisor ticks. Worker ready and heartbeat are one-way lifecycle events here;
+their `request_id` is unvalidated opaque correlation metadata surfaced with the
+in-process dispatch outcome only. Zero, repeated and maximum values are
+preserved; they do not control acceptance. There is no acknowledgement,
+response delivery, deduplication or replay-cache claim, and no production codec
+selection follows from exercising both candidates.
+
 `crates/pcm-abi` now implements the first dependency-free version-zero
 descriptor/region layout, consumer-control-page bytes and deterministic
 state-machine model. It checks little-endian descriptor fields and page-separated

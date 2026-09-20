@@ -97,7 +97,19 @@ the comparison is a routing fence, not peer authentication. Health probes,
 unknown workers, peer mismatches and configured-role mismatches fail before
 supervisor mutation. This composes two codec candidates with lifecycle policy;
 it does not choose a production codec or provide sockets, peer authentication,
-framing, process creation, privilege separation or codec/media work.
+process creation, privilege separation or codec/media work.
+
+The adjacent framed-session model pins that codec and connection-bound identity
+for the life of one session and applies the existing big-endian length prefix
+with a fixed 512-byte worker-control ceiling. It consumes at most one frame per
+call. Any framing, decoding, identity or routing error—and any supervisor result
+other than `Accepted`—permanently requires connection close; trailing bytes are
+never used to resynchronize. Clean EOF is accepted only between frames and is
+not reported as worker process death. This is still an in-process composition
+model: it has no socket/pipe/XPC adapter, peer credential/PID binding, partial-
+frame timer, response delivery, request replay cache or OS lifecycle bridge.
+The unvalidated `request_id` is returned as opaque correlation metadata with an
+in-process outcome; zero, repeated and maximum values have no policy meaning.
 
 The callback path and ring push are covered by an allocation-counting test
 after setup. The callback types expose no lock or I/O facility, and the current

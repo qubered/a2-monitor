@@ -179,6 +179,17 @@ The included process driver is a recording smoke adapter, not an OS launcher.
 Restricted Windows children, launchd/XPC connections, production health IPC,
 privilege separation and platform confinement remain unverified adapter work.
 
+The Phase 0T audio-node model now reconstructs one bounded length-prefixed
+worker ready/heartbeat frame at a time and dispatches it through the supervisor
+policy. Codec choice and the complete boot/worker/role/generation peer tuple are
+pinned out of band for the session. Protocol failures and non-accepted policy
+results latch a connection-close requirement; the model never resynchronizes on
+trailing bytes. EOF validates framing but does not call `worker_exited`, request
+shutdown or force termination because connection loss is not confirmed process
+death. Production transport ownership, authenticated peer binding, idle read
+deadlines, OS exit observation and launcher/confinement integration remain
+unimplemented.
+
 ## Immutable application slots
 
 Mutable databases, replay, assets, logs, certificates and evidence are outside

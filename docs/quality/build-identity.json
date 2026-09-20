@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.51a8aafec304e0c6",
-  "sourceSha256": "51a8aafec304e0c612f51c283acef2f0eeefc286c195fd5f1cb53c58c0e4f1e8",
-  "inputCount": 251,
+  "buildId": "a2-0.0.0+sha256.ad74ddf25f5b58b5",
+  "sourceSha256": "ad74ddf25f5b58b5414ba3de724f0890df3b73dde01de5c8b5d6c34325f221b0",
+  "inputCount": 252,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -369,7 +369,7 @@
     },
     {
       "path": "docs/architecture/media-clock-and-ipc-abi.md",
-      "sha256": "90089ebfdf7d4683f474a1df1316a1d814c2ac0fe060a9f5cf4738ba91b5c3e9"
+      "sha256": "2ed740be9355799c1272877aefc3d8e6874e7b13fff65a878f901369c30325d2"
     },
     {
       "path": "docs/architecture/observability.md",
@@ -385,7 +385,7 @@
     },
     {
       "path": "docs/architecture/process-and-update-lifecycle.md",
-      "sha256": "9d5186c8c7e3f6f3dbefc491eb26ccbcfdf30ef759de72e6977dd1d1235b0933"
+      "sha256": "e003f458981f41b83234fc47cd71ca642309087f7f62e8c3317592100bc9984f"
     },
     {
       "path": "docs/architecture/runtime-command-contract.md",
@@ -901,7 +901,7 @@
     },
     {
       "path": "services/audio-node/README.md",
-      "sha256": "73e4a65af5f59266f83c926c4cc5ce6948429be29815fc53f591c2e1d1fc7c8a"
+      "sha256": "f53ed2bef802ed88c86616f744af005b08b1b70534040adcb285b564ba989527"
     },
     {
       "path": "services/audio-node/src/bin/media-worker-smoke.rs",
@@ -917,11 +917,15 @@
     },
     {
       "path": "services/audio-node/src/lib.rs",
-      "sha256": "2d983ea60310fb473242421d4884991082eb716a97263a57767bc65550f3f692"
+      "sha256": "8c591a150586acd728e0b4dd20d8d5febcfc6ed5840e2265fa1af659a25de8bd"
     },
     {
       "path": "services/audio-node/src/worker_control.rs",
-      "sha256": "58b2196ea4642bd4fcbc6c2805e3ce90edc3ccbf7bc1f90bc36c53940299b689"
+      "sha256": "167cc9623f4b65ee7e061f55d1e969c5a72185396754f340ade0036e9225f9b0"
+    },
+    {
+      "path": "services/audio-node/src/worker_control_session.rs",
+      "sha256": "f5436498c54d545414821a3d8adcb5f9b4b8bad565e4007333f0f376be871e96"
     },
     {
       "path": "services/backend/README.md",
