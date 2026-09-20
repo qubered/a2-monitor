@@ -7,7 +7,7 @@
     "build": "tsc -b && vite build",
     "check": "npm run format && npm run lint && npm run test && npm run build",
     "dev": "vite --host 127.0.0.1",
-    "format": "prettier --check 'src/**/*.{ts,tsx,css}' '*.{html,json,ts}'",
+    "format": "prettier --check \"src/**/*.{ts,tsx,css}\" \"*.{html,json,ts}\"",
     "lint": "eslint .",
     "test": "vitest run"
   },

@@ -865,7 +865,7 @@ function validateManifestShape(manifest) {
   }
 }
 
-async function freezeDirectories(root) {
+async function freezeDirectories(root, includeRoot = true) {
   const directories = [];
   async function visit(directory) {
     const entries = await readdir(directory, { withFileTypes: true });
@@ -876,6 +876,7 @@ async function freezeDirectories(root) {
   }
   await visit(root);
   for (const directory of directories) {
+    if (!includeRoot && directory === root) continue;
     await utimes(directory, FIXED_TIME_SECONDS, FIXED_TIME_SECONDS);
     await chmod(directory, 0o555);
   }
@@ -984,6 +985,7 @@ export async function stageApplicationSlot(options) {
     `.staging-${process.pid}-${Date.now()}`,
   );
   await mkdir(temporarySlot, { mode: 0o755 });
+  let published = false;
 
   try {
     const entries = [];
@@ -1111,12 +1113,16 @@ export async function stageApplicationSlot(options) {
       mode: 0o444,
     });
     await setFileMetadata(manifestPath, false);
-    await freezeDirectories(temporarySlot);
+    await freezeDirectories(temporarySlot, false);
+    await utimes(temporarySlot, FIXED_TIME_SECONDS, FIXED_TIME_SECONDS);
     await rename(temporarySlot, finalSlot);
+    published = true;
+    await chmod(finalSlot, 0o555);
     return finalSlot;
   } catch (error) {
-    await makeTreeRemovable(temporarySlot);
-    await rm(temporarySlot, { force: true, recursive: true });
+    const failedSlot = published ? finalSlot : temporarySlot;
+    await makeTreeRemovable(failedSlot);
+    await rm(failedSlot, { force: true, recursive: true });
     throw error;
   }
 }
