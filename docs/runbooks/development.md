@@ -45,7 +45,19 @@ cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked
 cargo run --locked --bin a2-synthetic-capture
+cargo run --locked --bin a2-supervisor-smoke
 ```
+
+The supervisor smoke binary exercises the platform-neutral policy with a
+recording process adapter. It does not create restricted children. Platform
+adapters must preserve the node boot ID and monotonically increasing worker
+generations, provide role-specific readiness evidence, emit sequenced
+heartbeats, and route process exits back to the state machine. A
+force-termination adapter must not return success until death is confirmed.
+After the finite termination-retry budget, operators see `TerminationStuck` and
+must not launch a replacement while the retained handle may be live. Quarantine
+release is always an explicit action. The smoke topology is intentionally
+partial and is not a deployable node profile.
 
 Start the web development servers with:
 

@@ -115,6 +115,35 @@ with an open and verified audio device.
 - Backend restart never restarts the node tree.
 - Repeated parser/receiver failure quarantines only the responsible worker.
 
+### Phase 0T supervision scaffold
+
+`crates/supervisor` implements the platform-neutral lifecycle policy behind
+injected monotonic-clock and process-driver boundaries. It assigns a node boot
+ID and strictly increasing generation to every launch, ignores cross-boot or
+stale-generation events, and bounds ready-worker health with strictly increasing
+heartbeat sequences and deadlines. Audio capture epochs are nonzero and
+monotonically increasing within one node boot, so an earlier epoch cannot be
+replayed after A→B recovery. The sequencer and media roles require ledger or
+fresh-session readiness evidence. Startup or heartbeat timeouts and unexpected
+exits consume a windowed, exponentially delayed restart budget; exhausting it
+quarantines only that worker until an explicit release. Shutdown requests run
+in reverse configuration order and stragglers are forcibly terminated after a
+fixed grace period. A forced-termination result is successful only when process
+death is confirmed; an adapter error retains the handle and blocks replacement.
+Termination retries use their own finite, capped exponential budget. Exhausting
+it exposes `TerminationStuck`, stops issuing kill requests, and continues to own
+the possibly-live handle. During shutdown this keeps the node in
+`ShuttingDown` until an exit is independently confirmed.
+
+The scaffold permits partial topologies, and `WorkersReady` describes only the
+configured set. It rejects duplicate audio-engine, sequencer, client-gateway or
+replay singleton roles while allowing explicit media and receiver-adapter
+shards. Enforcing the complete deployable topology remains integration work.
+
+The included process driver is a recording smoke adapter, not an OS launcher.
+Restricted Windows children, launchd/XPC connections, production health IPC,
+privilege separation and platform confinement remain unverified adapter work.
+
 ## Immutable application slots
 
 Mutable databases, replay, assets, logs, certificates and evidence are outside

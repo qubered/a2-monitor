@@ -1,0 +1,16 @@
+[package]
+name = "a2-supervisor"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+a2-build-info = { path = "../build-info" }
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "a2-supervisor-smoke"
+path = "src/bin/smoke.rs"

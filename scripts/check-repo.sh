@@ -101,8 +101,13 @@ else
   exit 1
 fi
 
-node --test scripts/generate-node-dependency-inventory.test.mjs
+node --test \
+  scripts/generate-node-dependency-inventory.test.mjs \
+  scripts/generate-cargo-dependency-inventory.test.mjs \
+  scripts/generate-build-identity.test.mjs
 node scripts/generate-node-dependency-inventory.mjs --check
+node scripts/generate-cargo-dependency-inventory.mjs --check
 node packages/protocol/scripts/generate-http-contracts.mjs --check
+node scripts/generate-build-identity.mjs --check
 
 echo "Repository checks passed."

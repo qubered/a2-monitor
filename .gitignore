@@ -41,6 +41,10 @@ compile_commands.json
 
 # Go
 bin/
+!crates/**/src/bin/
+!crates/**/src/bin/**
+!services/**/src/bin/
+!services/**/src/bin/**
 
 # Python
 __pycache__/
