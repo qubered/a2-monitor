@@ -12,6 +12,7 @@ a2-build-info = { path = "../../crates/build-info" }
 a2-media = { path = "../../crates/media" }
 a2-pcm-abi = { path = "../../crates/pcm-abi" }
 a2-replay = { path = "../../crates/replay" }
+a2-supervisor = { path = "../../crates/supervisor" }
 
 [lib]
 path = "src/lib.rs"

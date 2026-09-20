@@ -7,6 +7,9 @@ events, requires role-specific readiness evidence, applies a bounded restart
 budget, quarantines only the failing worker, and gives shutdown requests a fixed
 grace period before forced termination. Ready workers must send strictly
 increasing heartbeat sequence numbers before a configured deadline. A
+readiness event at or after its startup deadline enters the same confirmed-
+termination path as a timeout tick, so event ordering cannot revive an expired
+generation. A
 forced-termination adapter may return success only after it has confirmed
 process death; otherwise the supervisor retains the handle and never starts a
 replacement. Failed termination calls retry with a configured exponential delay

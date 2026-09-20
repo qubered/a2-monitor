@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.53b90643316ed03b",
-  "sourceSha256": "53b90643316ed03bd11202ec07e23d3e6e4fe141706dc6286f89e1cbc553ed48",
+  "buildId": "a2-0.0.0+sha256.ab70fef2c4fd4fa6",
+  "sourceSha256": "ab70fef2c4fd4fa699d772a41752eb34fd95574d5bb18071dd86e16128e60ac4",
   "inputCount": 250,
   "inputs": [
     {
@@ -61,7 +61,7 @@
     },
     {
       "path": "Cargo.lock",
-      "sha256": "b9ced202fe63328e358bacfe91806a292422434c61886a2cdf4ab85a81bfc401"
+      "sha256": "f27ba444bc5d0dd4db3e59123f46327dbda88770821dd82123b83a1784f951b7"
     },
     {
       "path": "Cargo.toml",
@@ -317,7 +317,7 @@
     },
     {
       "path": "crates/supervisor/README.md",
-      "sha256": "9dc4f9000af1229b855a7d6fd8c8531edfb15178f8c691c0ddd537c193fe303c"
+      "sha256": "b89d28c94021941592ce1585d6507aac90debcd51d36072d320b93e09e5c8159"
     },
     {
       "path": "crates/supervisor/src/bin/smoke.rs",
@@ -325,7 +325,7 @@
     },
     {
       "path": "crates/supervisor/src/lib.rs",
-      "sha256": "8cf90d55e5120398d5d7221e5145ae5e5213831ddd53d90270d5d226079b5cc3"
+      "sha256": "39bc54e235e635a9ea454fa3d3fa255beb8694020f3ee80c8003b013d4ec265c"
     },
     {
       "path": "docs/README.md",
@@ -597,7 +597,7 @@
     },
     {
       "path": "docs/quality/cargo-dependency-inventory.json",
-      "sha256": "188d0b770f5bab0b9908ded8715c72f23f28b41b8ff2c7de6ae5c70eb6fa39ee"
+      "sha256": "939985c00ec6423430bcae5efc9350fdc65771dd054452e14df9b9aeddc0b8f6"
     },
     {
       "path": "docs/quality/client-and-appliance-profiles.md",
@@ -897,15 +897,15 @@
     },
     {
       "path": "services/audio-node/Cargo.toml",
-      "sha256": "19e05a6b50becb5621e83f700823645e4c3ae4565aef66b76f38a1bc0239eda9"
+      "sha256": "4d91d4e37fa4b2d1d92cabfb88669b30868cead901a7abdef33c572ad23829f8"
     },
     {
       "path": "services/audio-node/README.md",
-      "sha256": "a2f27d645db07810f15f3fd527c37a729d611cedea629a0d48c61dc27fee91ca"
+      "sha256": "d802c92d913bf45c6db0e07db8546d4870604b522dc5bf4ebc8011ffc4afca55"
     },
     {
       "path": "services/audio-node/src/bin/media-worker-smoke.rs",
-      "sha256": "6b507787b43c48de30c42055ea4175a73519888a7ff2be8d49bd96e86b43b42e"
+      "sha256": "91273af4d9e5e6d547b32e3bfff9f0b925c1b4232daaa42dc2c1e8e992ab8074"
     },
     {
       "path": "services/audio-node/src/bin/replay-smoke.rs",
