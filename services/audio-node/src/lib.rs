@@ -1,6 +1,7 @@
 //! Deterministic synthetic audio host used before physical host qualification.
 
 pub mod worker_control;
+pub mod worker_control_session;
 
 use a2_audio_host_api::{
     AudioHost, CallbackControl, CaptureBlock, CaptureBlockMetadata, CaptureCallback,

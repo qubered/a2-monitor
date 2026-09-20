@@ -98,6 +98,12 @@ pub struct WorkerControlAdapter {
     protobuf: ProtobufCodec,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct DispatchOutcome {
+    pub request_id: u64,
+    pub disposition: EventDisposition,
+}
+
 impl WorkerControlAdapter {
     pub fn new(maximum_payload_bytes: usize) -> Result<Self, CodecError> {
         Ok(Self {
@@ -117,11 +123,30 @@ impl WorkerControlAdapter {
         C: MonotonicClock,
         D: ProcessDriver,
     {
+        self.decode_and_dispatch_outcome(codec, payload, expected_peer, supervisor)
+            .map(|outcome| outcome.disposition)
+    }
+
+    pub fn decode_and_dispatch_outcome<C, D>(
+        &self,
+        codec: CandidateCodec,
+        payload: &[u8],
+        expected_peer: BoundWorkerIdentity,
+        supervisor: &mut Supervisor<C, D>,
+    ) -> Result<DispatchOutcome, DispatchError>
+    where
+        C: MonotonicClock,
+        D: ProcessDriver,
+    {
         let message = match codec {
             CandidateCodec::CanonicalJson => self.json.decode(payload)?,
             CandidateCodec::Protobuf => self.protobuf.decode(payload)?,
         };
-        dispatch_decoded(message, expected_peer, supervisor)
+        let request_id = message.request_id;
+        dispatch_decoded(message, expected_peer, supervisor).map(|disposition| DispatchOutcome {
+            request_id,
+            disposition,
+        })
     }
 }
 
