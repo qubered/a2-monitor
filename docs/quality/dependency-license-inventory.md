@@ -37,7 +37,7 @@ dependency.
 | Project software licence and contribution terms                     | Product owner             | Unassigned       | **Blocked for public release and external contributions.** The repository remains all rights reserved.                         |
 | Proprietary Steinberg ASIO SDK route and `CPAL_ASIO_DIR` provenance | Platform/security owner   | Unassigned       | **Blocked for ASIO evidence and packaging.** No SDK or headers are stored here.                                                |
 | WiX EULA/commercial approval or alternate MSI authoring tool        | Product owner             | Unassigned       | **Blocked for Windows packaging.** No tool choice is approved.                                                                 |
-| Future Cargo dependency graph, native libraries and codec notices   | Audio runtime owner       | Unassigned       | **Not yet applicable; blocked before the first native dependency lands.** There is no Cargo workspace on `main`.               |
+| Future Cargo dependency graph, native libraries and codec notices   | Audio runtime owner       | Unassigned       | **Not yet applicable; blocked before the first native dependency lands.** The Cargo workspace has no members or dependencies.  |
 
 The independent reviewers remain those in
 [`repository-governance.md`](repository-governance.md): release/signing review
@@ -50,8 +50,8 @@ decisions.
 
 This inventory intentionally covers only dependencies present in the committed
 npm lockfile. The backend entry covers its current Fastify/Ajv health and
-fabricated-snapshot skeleton only. It does not claim that the planned Rust,
-native audio, installer, ASIO, Opus, SQLite, `str0m`, receiver SDK or hardware
-inputs exist or have been approved. Add each new ecosystem or proprietary input
-to this process when runnable code introduces it; do not pre-approve the planned
-stack.
+fabricated-snapshot skeleton only. It does not claim that the planned Rust
+crates, native audio, installer, ASIO, Opus, SQLite, `str0m`, receiver SDK or
+hardware inputs exist or have been approved. Add each new ecosystem or
+proprietary input to this process when runnable code introduces it; do not
+pre-approve the planned stack.

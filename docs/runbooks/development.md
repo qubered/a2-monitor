@@ -4,8 +4,8 @@
 
 The selected toolchains are Node.js 24 LTS with npm and the repository-pinned
 stable Rust toolchain with Cargo, rustfmt and Clippy. The Live and minimal
-backend npm workspaces are runnable; the native workspace has not been
-scaffolded yet.
+backend npm workspaces are runnable. The root Cargo workspace and lockfile are
+scaffolded without members; native crates have not been scaffolded yet.
 
 ```sh
 git status --short --branch
@@ -23,7 +23,13 @@ npm ci
 npm run check --workspaces --if-present
 ```
 
-The intended Rust workspace commands after native scaffolding are:
+Verify the empty Cargo workspace and its committed lockfile with:
+
+```sh
+cargo metadata --locked --format-version 1 --no-deps
+```
+
+The required Rust workspace commands after the first native crate lands are:
 
 ```sh
 cargo fmt --all --check
