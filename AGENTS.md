@@ -8,9 +8,66 @@ requirements below.
 
 - Read `README.md`, `docs/README.md`, and the relevant architecture documents.
 - Check `docs/decisions` for decisions that constrain the work.
+- For UI or UX work, read `docs/design/DESIGN.md` in full, inspect the relevant
+  rendered states in `docs/design/mockups`, and use the reference build in
+  `docs/design/prototype/index.html` before proposing or implementing a design.
 - Inspect the working tree and preserve unrelated user changes.
 - If a change introduces a framework, persistent service, wire protocol,
   database, or deployment dependency, add or update an ADR.
+
+## UI and UX design
+
+- Treat `docs/design/DESIGN.md` as normative for visual language, interaction,
+  components, and product surfaces. Follow its referenced RVLT design language
+  where required; do not create a parallel design system.
+- Use the rendered states in `docs/design/mockups` as the visual targets and
+  `docs/design/prototype/index.html` as the canonical interactive reference.
+  When they disagree, the prototype wins and the rendered image is stale.
+  Reproduce their information hierarchy, component behavior, terminology, and
+  interaction flow. Do not derive production UI from earlier or experimental
+  prototypes unless `docs/design/DESIGN.md` explicitly points to them.
+- Treat mockup data as illustrative. Preserve the domain model, permissions,
+  versioned contracts, and architectural boundaries defined elsewhere in this
+  repository. If an architectural or safety requirement conflicts with the
+  design source, document the discrepancy and request a decision instead of
+  silently improvising.
+- Design for a one-second operational glance before a detailed investigation.
+  Keep cards sparse and put diagnostic depth in detail surfaces. Show every
+  independently failing status dimension so one fault never hides another.
+- Preserve the honesty grammar for observed, inferred, stale, and unknown data.
+  Never render unknown as zero or healthy, distinguish human-authored notes from
+  machine measurements, and keep RF level separate from link quality.
+- Use design tokens and the locked type, colour, spacing, shape, elevation,
+  icon, and motion rules from `docs/design/DESIGN.md`. Components must not
+  introduce raw visual values. Paper is the default surface, dark mode is a
+  first-class theme, and both must be tested.
+- Keep the documented refusals: no gradients, glow, glass effects, decorative
+  motion, emoji status icons, stock portraits, animated loading shimmer, or
+  enthusiastic filler copy. Use short, specific, present-tense language with
+  units, time references, and explicit uncertainty.
+- Preserve the distinction between Manager and Live. Live UI must remain
+  show-focused, resilient offline, and free of Manager-only screens and
+  dependencies.
+- Treat touch as the primary input while preserving full keyboard operation.
+  Meet the documented target sizes, spacing, focus, semantic-control, contrast,
+  and reduced-motion rules. Never make hover, precise dragging, colour, sound,
+  or motion the only way to understand or complete an action.
+- Keep audio safety controls visible: listening starts muted, and mute and dim
+  remain one touch away. Make replay unmistakable, keep a one-action return to
+  live visible, and retain current critical alerts while viewing the past.
+- Implement the specific empty, loading, stale, degraded, offline, error, and
+  permission states defined by the design language. Name what the product is
+  waiting for or no longer knows; never imply unavailable work was completed.
+- Verify UI changes against the canonical mockup at representative target
+  viewports in both Paper and dark themes. Include screenshots or equivalent
+  visual-regression evidence and run accessibility, touch, keyboard, and
+  interaction checks before handoff.
+- When changing the design reference itself, regenerate `docs/design/mockups`
+  with `node scripts/render-mockups.mjs`; do not edit the generated PNGs by
+  hand. Verify that the script used the real fonts before committing output.
+- The current design language is proposed rather than field-validated. Record
+  conformance separately from operator validation and do not claim that a UI is
+  validated without named A1/A2 testing and evidence.
 
 ## Architectural invariants
 
