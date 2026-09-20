@@ -87,6 +87,14 @@ The model has an explicit 256 MiB ceiling and smaller dimensional limits; these
 are safety bounds for executable state-transition tests, not the appliance
 capacity profile.
 
+The same crate models the bounded capture-to-replay ingress policy under
+serialized calls. Input is validated before queue mutation; full queues discard
+the oldest unwritten replay block; exact non-contiguous loss ranges remain
+pending until peek/commit acknowledgement; and source gaps remain separately
+attached to surviving work. Exact-loss-ledger exhaustion fences replay and
+retains the rejected interval rather than stalling capture or inventing a broad
+continuous gap. An epoch change requires a fresh ingress instance.
+
 This model performs no filesystem I/O and does not freeze the segment layout.
 It does not establish append-only-index durability, checksums, recovery, disk
 pressure behavior, encryption, concurrent process safety, callback queue

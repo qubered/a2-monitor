@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.bf785eb7d111eaa1",
-  "sourceSha256": "bf785eb7d111eaa1bc2c25343cc0e1b3b7fc921510e6466f88c48a1f0886a2a0",
-  "inputCount": 245,
+  "buildId": "a2-0.0.0+sha256.97716c74102a4a21",
+  "sourceSha256": "97716c74102a4a216eb5d273c006d85585abc831a2b6021aba9ed235c38cde68",
+  "inputCount": 246,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -293,11 +293,15 @@
     },
     {
       "path": "crates/replay/README.md",
-      "sha256": "cfae60bab5b7817baa13e8743a01ac5b4ec6c0feaeef5c362e8fed7768c586ae"
+      "sha256": "f817a7dfca1dfeeeff06b8add0eeb36e600686ac7dbb2e70a09ddf21c787c830"
+    },
+    {
+      "path": "crates/replay/src/ingress.rs",
+      "sha256": "a1b1dcf203e418921e602744445ae02784f265656a081178f43c7cdb00e849ad"
     },
     {
       "path": "crates/replay/src/lib.rs",
-      "sha256": "63ea64b64ebb6071b8dbf9acfe566e404363cd10977fd19261ce47c12a4ca8f6"
+      "sha256": "1db437d2cbce1c2db83fd2485e3466cbc18bdedb5d09a3daf6c805b27d06c4b0"
     },
     {
       "path": "crates/supervisor/Cargo.toml",
@@ -345,7 +349,7 @@
     },
     {
       "path": "docs/architecture/implementation-structure.md",
-      "sha256": "6c707d6c6a6d57d1a8d04ea4b34da4cc60ca159ce8eceb372a13384c07e7ef4d"
+      "sha256": "c54fcff33cf72c2d98d9603ad640ca90a592d5d32a3189b5865c29c35b37f917"
     },
     {
       "path": "docs/architecture/latency.md",
@@ -385,7 +389,7 @@
     },
     {
       "path": "docs/architecture/time-and-replay.md",
-      "sha256": "f2c23529e449b4d6edfdf16ac5cf43f50de883657e4180ce1b8abed7e1d47692"
+      "sha256": "8477fc7cfb4209f34f11060535128659ee749b856c902cbee8fc32c200314810"
     },
     {
       "path": "docs/decisions/0000-template.md",

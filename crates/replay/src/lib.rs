@@ -11,6 +11,13 @@ use std::rc::Rc;
 
 pub use a2_audio_host_api::{CaptureEpochId, DiscontinuityFlags};
 
+mod ingress;
+
+pub use ingress::{
+    CommitError, DrainOutcome, DroppedCaptureRange, EnqueueError, EnqueueOutcome,
+    FencedReplayInput, IngressCommit, ReplayIngress, ReplayIngressConfig, ReplayIngressError,
+};
+
 pub const MAX_MODEL_CHANNELS: u16 = 128;
 pub const MAX_MODEL_FRAMES_PER_BLOCK: u16 = 4_096;
 pub const MAX_MODEL_CAPACITY_BLOCKS: u32 = 65_536;
@@ -726,8 +733,8 @@ mod tests {
     struct TrackingAllocator;
 
     thread_local! {
-        static TRACK: Cell<bool> = const { Cell::new(false) };
-        static ALLOCATIONS: Cell<usize> = const { Cell::new(0) };
+        pub(crate) static TRACK: Cell<bool> = const { Cell::new(false) };
+        pub(crate) static ALLOCATIONS: Cell<usize> = const { Cell::new(0) };
     }
 
     unsafe impl GlobalAlloc for TrackingAllocator {
