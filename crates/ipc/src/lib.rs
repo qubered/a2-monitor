@@ -8,6 +8,7 @@ mod framing;
 
 pub use codec::{
     CONTROL_PROTOCOL_VERSION, CanonicalJsonCodec, CodecComparison, CodecError, ControlBody,
-    ControlCodec, ControlMessage, MessageKind, ProtobufCodec, compare_codecs,
+    ControlCodec, ControlMessage, MessageKind, ProtobufCodec, ReadinessEvidence, WorkerIdentity,
+    WorkerRole, compare_codecs,
 };
 pub use framing::{FrameDecoder, FrameEncoder, FrameError, PushResult};
