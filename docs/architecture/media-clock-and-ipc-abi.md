@@ -92,8 +92,27 @@ The logical regions are page-separated:
    participant;
 2. producer state/index: writable only by the producer, read-only by consumer;
 3. consumer state/index: writable only by the consumer, read-only by producer;
-4. PCM slots: writable by producer, read-only by consumer; and
-5. diagnostic counters split by their sole writer.
+4. PCM slots: writable by producer, read-only by consumer;
+5. producer-owned overwrite and dropped-input loss journals, read-only by consumer; and
+6. diagnostic counters split by their sole writer.
+
+ABI minor 2 defines the candidate ordinary-PCM ownership bytes. All multi-byte
+fields are little-endian, and atomic `u64` fields are eight-byte aligned:
+
+| Region | Fixed fields |
+| --- | --- |
+| Producer state | magic/version, generation, epoch, `published_next` at byte 32, overwrite claim at byte 40, overwrite/dropped journal published cursors at bytes 48/56 |
+| Consumer state | magic/version, generation, epoch, `consumed_next` at byte 32, read claim at byte 40, overwrite/dropped journal consumed cursors at bytes 48/56 |
+| 64-byte slot header | committed publication, source sequence, epoch, first frame, optional monotonic time, cumulative xruns, frame/channel counts, presence flags, uncertainty and discontinuity flags |
+| 64-byte loss entry | committed ledger sequence at byte 0; kind at byte 8 (`1` overwritten, `2` dropped incoming); ordering publication at byte 16; epoch, source sequence and frame range at bytes 24–55 |
+
+`u64::MAX` is the unclaimed/uncommitted sentinel and is never a valid
+publication identity. The descriptor stores the loss-region offset at byte 120;
+the region contains `capacity` overwrite entries followed by `capacity`
+dropped-input entries and has page-rounded length `capacity * 2 * 64`. Minor 1
+remains decodable for the legacy serialized model, but the ordinary constructor
+rejects it. Non-ledger
+producer/consumer diagnostic-page bytes remain unfrozen.
 
 Windows uses duplicated file-mapping handles with the minimum view access.
 macOS uses App Group-scoped POSIX shared memory/mappings with the corresponding
@@ -105,19 +124,38 @@ sizes every region before passing a capability.
 - One producer and one consumer own each ring.
 - Producer publishes a completely written slot with release ordering; consumer
   observes it with acquire ordering.
-- Consumer publishes only its consumed sequence. Producer treats that value as
-  untrusted, bounds-checks it before subtraction/indexing and never waits on it.
+- Before any ordinary slot read or overwrite, consumer and producer publish the
+  full target/victim publication sequence through sequentially consistent claim
+  fields, then inspect the opposing claim. Slot indices are never claims. If the
+  consumer claims the exact victim, the producer completes one bounded call by
+  dropping the incoming source block without advancing publication sequence.
+- Before destructive overwrite, the producer reserves a bounded exact-loss
+  record. Separate overwrite and dropped-input journals avoid head-of-line
+  blocking; the consumer merges their eligible heads by publication order. An
+  overwrite record is eligible at its missing publication; a dropped-incoming
+  record becomes eligible only after all older retained publications. The
+  consumer drains eligible committed loss before returning later audio. If the
+  applicable journal is full, the producer fences the mapping and
+  rejects the incoming block; it never overwrites without attribution.
+- Consumer-writable shared state is limited to its consumed sequence, read
+  claim and the two journal-consumed cursors. The producer treats every value
+  as untrusted, bounds-checks it before subtraction/indexing and never waits on
+  it.
 - Overflow policy is fixed per ring: capture remains live, the lagging consumer
-  loses old data, and a discontinuity counter/event records the exact range.
-- Impossible indices, epoch mismatch or ABI damage quarantine the consumer and
-  create a new mapping; they do not panic or block the callback.
+  normally loses old data, and exact publication/source/frame loss is reported
+  before surviving audio. An actively claimed victim causes a terminal
+  drop-newest result; journal saturation instead fences the mapping and rejects
+  the incoming source block.
+- Impossible indices, epoch mismatch or ABI damage require a remap or fence;
+  they do not panic or block the callback.
 - Teardown uses supervisor-owned process handles/connection state, not a shared
   flag that a compromised peer can forge.
 
-The model/concurrency suite exercises counter wrap, reordered observations,
-torn/corrupt non-atomic bytes, process death and current/previous compatible
-versions. The adversarial suite mutates every consumer-writable byte and proves
-capture continuity.
+The model/concurrency suite exercises the no-wrap exhaustion boundary,
+deterministic paused-reader conflict, patterned concurrent overwrite,
+torn/corrupt ordinary bytes, loss-ledger saturation and current/previous
+version gates. These are in-process model tests, not process-death, OS-mapping,
+hostile-peer confinement or callback-deadline evidence.
 
 ## Control framing
 
@@ -178,19 +216,19 @@ preserved; they do not control acceptance. There is no acknowledgement,
 response delivery, deduplication or replay-cache claim, and no production codec
 selection follows from exercising both candidates.
 
-`crates/pcm-abi` now implements the first dependency-free version-zero
-descriptor/region layout, consumer-control-page bytes and deterministic
-state-machine model. It checks little-endian descriptor fields and page-separated
-offsets, fences attach by mapping generation and capture epoch, models
-overwrite-oldest loss ranges and sequence wrap, and treats every
-consumer-control-page byte as hostile. Its producer hot path is covered by an
-allocation counter. A separate preallocated in-process SPSC model uses atomic
-metadata and sample words, distinct source/publication sequences and a
-single-call drop-newest outcome when the exact overwrite victim is claimed.
-Unit tests cover safe concurrent snapshots and exact overwrite/drop attribution;
-replay composition covers overwrite-gap observation before surviving patterned
-audio. This does not freeze producer-state, diagnostic or slot-header bytes and
-does not prove the ordinary-PCM ownership protocol required by the byte ABI. OS
-mappings, cross-process atomics, least-write views, ACLs, process-death cleanup
-and callback deadlines remain required before this ABI can be promoted as an
-implemented transport.
+`crates/pcm-abi` implements the dependency-free descriptor/region layout, the
+legacy serialized model, an all-atomic concurrent reference and the separate
+minor-2 ordinary-payload ownership candidate. The candidate fences attach by
+mapping generation/epoch, uses nonwrapping publication identities, validates
+before mutation, arbitrates full-sequence claims before ordinary access, clears
+short-block tails, preserves distinct source/publication sequences, and commits
+exact bounded loss records before replacement audio becomes visible. Its
+producer/read/drop/retry paths are preallocated and covered by allocation and
+patterned concurrency tests.
+
+This remains owned in-process model evidence. It does not create an OS mapping,
+construct atomic objects in mapped bytes, authenticate handles, enforce least-
+write views/ACLs, recover claims after process death, or prove cross-process
+atomic layout, target lock-freedom, callback deadlines, cache behavior or
+hardware performance. A crashed peer's mapping is retired only after separately
+confirmed process death; no timer or connection close may clear its claim.

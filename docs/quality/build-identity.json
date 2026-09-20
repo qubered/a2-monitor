@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.ad74ddf25f5b58b5",
-  "sourceSha256": "ad74ddf25f5b58b5414ba3de724f0890df3b73dde01de5c8b5d6c34325f221b0",
-  "inputCount": 252,
+  "buildId": "a2-0.0.0+sha256.adad0393ce7b7be8",
+  "sourceSha256": "adad0393ce7b7be8fabf53d3f98c6723d7ee7c860e7a9016caaef42440b19f2d",
+  "inputCount": 253,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -273,19 +273,23 @@
     },
     {
       "path": "crates/pcm-abi/README.md",
-      "sha256": "9a309b2e30e3657bb89c26df19a6fd381ca7b194bd5096b8cc3b70db4a4e6e7f"
+      "sha256": "12b01c3c7d8fb2d9302cf988f92a33ed1307f45ea35e4290d814e73f852f822f"
     },
     {
       "path": "crates/pcm-abi/src/layout.rs",
-      "sha256": "530643d9b0d17b3f31957f3850aaaf7f1a465bdbfc9bd6f14bf9ec9ee7c615a4"
+      "sha256": "479b04c18ef7237791b685bbea82fa347765cf67f76b1ea5de8fb68e3f347af3"
     },
     {
       "path": "crates/pcm-abi/src/lib.rs",
-      "sha256": "730544edde960e4f312fe2734ddd4810de4d04b5f32d8a767a9d7c546c6735b9"
+      "sha256": "a84f70513ce5217c727c5ed223c269199edd3650ae2787152ae8e2b41a5d875b"
+    },
+    {
+      "path": "crates/pcm-abi/src/ordinary.rs",
+      "sha256": "6aaba799c5fb1c8c08a7901b729aeb98420b80d600fc47378654e562c8d4a4af"
     },
     {
       "path": "crates/pcm-abi/src/ring.rs",
-      "sha256": "9edcfe35f8b9918360bf8fe834abe1123896a1aec80c6d79162ccc2064a4d47d"
+      "sha256": "f4f99b14ed2c438ecb5eafb4de7f7202d6a72f457b073a909672b25fb9b1d3a0"
     },
     {
       "path": "crates/pcm-abi/src/spsc.rs",
@@ -369,7 +373,7 @@
     },
     {
       "path": "docs/architecture/media-clock-and-ipc-abi.md",
-      "sha256": "2ed740be9355799c1272877aefc3d8e6874e7b13fff65a878f901369c30325d2"
+      "sha256": "6d4b95e749c0e357eacc6e671498b897537923faf8a6aa734c0c9cb3d3ebb020"
     },
     {
       "path": "docs/architecture/observability.md",

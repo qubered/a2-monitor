@@ -4,9 +4,11 @@ use std::fmt::{self, Display, Formatter};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU64, Ordering};
 
-use crate::{AbiError, PcmAbiConfig, PcmLayout, initialize_descriptor};
+use crate::layout::initialize_legacy_descriptor;
+use crate::{AbiError, PcmAbiConfig, PcmLayout};
 
 const SERIAL_HALF_RANGE: u64 = 1_u64 << 63;
+const SERIALIZED_MODEL_MINOR: u16 = 1;
 const CONSUMER_MAGIC: [u8; 8] = *b"A2PCON\0\0";
 const CONSUMER_MAJOR_OFFSET: usize = 8;
 const CONSUMER_MINOR_OFFSET: usize = 10;
@@ -173,14 +175,14 @@ pub struct Consumer {
 
 impl SharedPcmRing {
     pub fn new(config: PcmAbiConfig) -> Result<Self, AbiError> {
-        let layout = PcmLayout::checked(config)?;
+        let layout = PcmLayout::checked_for_minor(config, SERIALIZED_MODEL_MINOR)?;
         let mut descriptor = Vec::new();
         descriptor
             .try_reserve_exact(layout.descriptor_length)
             .map_err(|_| AbiError::AllocationFailed)?;
         descriptor.resize(layout.descriptor_length, 0);
         let mut descriptor = descriptor.into_boxed_slice();
-        initialize_descriptor(&mut descriptor, config)?;
+        initialize_legacy_descriptor(&mut descriptor, config)?;
         let sample_capacity = usize::from(config.channels)
             .checked_mul(usize::from(config.frames_per_slot))
             .ok_or(AbiError::SizeOverflow)?;
@@ -217,7 +219,7 @@ impl SharedPcmRing {
         write_bytes(
             &consumer_page,
             CONSUMER_MINOR_OFFSET,
-            &crate::ABI_MINOR.to_le_bytes(),
+            &SERIALIZED_MODEL_MINOR.to_le_bytes(),
             Ordering::Relaxed,
         );
         write_u64(
@@ -503,7 +505,7 @@ fn is_within_closed(candidate: u64, start: u64, end: u64) -> bool {
 fn read_consumer_cursor(inner: &Inner) -> Result<u64, PeerFault> {
     if !bytes_equal(&inner.consumer_page, 0, &CONSUMER_MAGIC)
         || read_u16(&inner.consumer_page, CONSUMER_MAJOR_OFFSET) != crate::ABI_MAJOR
-        || read_u16(&inner.consumer_page, CONSUMER_MINOR_OFFSET) > crate::ABI_MINOR
+        || read_u16(&inner.consumer_page, CONSUMER_MINOR_OFFSET) != SERIALIZED_MODEL_MINOR
         || read_u64(&inner.consumer_page, CONSUMER_GENERATION_OFFSET)
             != inner.config.mapping_generation
         || read_u64(&inner.consumer_page, CONSUMER_EPOCH_OFFSET) != inner.config.capture_epoch
