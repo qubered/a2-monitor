@@ -1,6 +1,8 @@
+use std::cell::Cell;
 use std::ffi::OsString;
 use std::io::{self, Write};
 use std::process::ExitCode;
+use std::rc::Rc;
 
 use a2_media::{
     CaptureEpochId, FrameNtpAnchor, MediaClock, MediaClockConfig, MediaSessionContext,
@@ -10,6 +12,10 @@ use a2_media::{
 use a2_pcm_abi::{
     ConcurrentPcmRing, ConcurrentPublishOutcome, ConcurrentPublishedBlock, ConcurrentReadOutcome,
     PcmAbiConfig, PcmBlockMetadata, SampleFormat,
+};
+use a2_supervisor::{
+    BootId, EventDisposition, MonotonicClock, NodeReadiness, ProcessDriver, ReadinessRequirement,
+    ReadyEvidence, RestartPolicy, Supervisor, WorkerHealth, WorkerId, WorkerRole, WorkerSpec,
 };
 
 const SAMPLE_RATE_HZ: u32 = 48_000;
@@ -23,8 +29,10 @@ const SOURCE_GAP_FRAMES: u32 = 480;
 const RTP_BASE: u32 = u32::MAX - 239;
 const FIRST_SSRC: u32 = 0x1020_3040;
 const SECOND_SSRC: u32 = 0x5060_7080;
-const MAX_SUMMARY_BYTES: usize = 512;
+const MAX_SUMMARY_BYTES: usize = 640;
 const BOOT: NodeBootId = NodeBootId(*b"smoke-node-boot1");
+const SUPERVISOR_BOOT: BootId = BootId(u128::from_be_bytes(BOOT.0));
+const MEDIA_WORKER: WorkerId = WorkerId(4);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct SmokeSummary {
@@ -44,6 +52,79 @@ struct SmokeSummary {
     restarted_ssrc: u32,
     rtcp_anchor_generation: u64,
     rtcp_uncertainty_ns: u64,
+    worker_spawns: usize,
+}
+
+#[derive(Clone, Debug, Default)]
+struct ManualClock(Rc<Cell<u64>>);
+
+impl ManualClock {
+    fn advance(&self, milliseconds: u64) {
+        self.0.set(self.0.get().saturating_add(milliseconds));
+    }
+}
+
+impl MonotonicClock for ManualClock {
+    fn now_ms(&self) -> u64 {
+        self.0.get()
+    }
+}
+
+#[derive(Debug, Default)]
+struct RecordingDriver {
+    spawns: Vec<(WorkerId, WorkerRole, BootId, u64)>,
+}
+
+impl ProcessDriver for RecordingDriver {
+    type Handle = u64;
+    type Error = ();
+
+    fn spawn(
+        &mut self,
+        worker: WorkerId,
+        role: WorkerRole,
+        boot_id: BootId,
+        generation: u64,
+    ) -> Result<Self::Handle, Self::Error> {
+        self.spawns.push((worker, role, boot_id, generation));
+        Ok(generation)
+    }
+
+    fn request_shutdown(&mut self, _handle: Self::Handle) -> Result<(), Self::Error> {
+        Ok(())
+    }
+
+    fn force_terminate(&mut self, _handle: Self::Handle) -> Result<(), Self::Error> {
+        Ok(())
+    }
+}
+
+fn restart_policy() -> RestartPolicy {
+    RestartPolicy {
+        startup_timeout_ms: 100,
+        heartbeat_timeout_ms: 30,
+        shutdown_grace_ms: 50,
+        restart_window_ms: 1_000,
+        restart_base_delay_ms: 10,
+        restart_max_delay_ms: 40,
+        max_restart_attempts: 2,
+        terminate_retry_base_delay_ms: 10,
+        terminate_retry_max_delay_ms: 40,
+        max_force_terminate_attempts: 2,
+    }
+}
+
+fn worker_generation(
+    supervisor: &Supervisor<ManualClock, RecordingDriver>,
+    expected_health: WorkerHealth,
+) -> Result<u64, &'static str> {
+    let snapshot = supervisor
+        .snapshot(MEDIA_WORKER)
+        .ok_or("media worker snapshot missing")?;
+    if snapshot.health != expected_health {
+        return Err("media worker lifecycle state changed");
+    }
+    snapshot.generation.ok_or("media worker generation missing")
 }
 
 fn parse_cli<I>(mut arguments: I) -> Result<(), &'static str>
@@ -99,6 +180,31 @@ fn source_packet(block: ConcurrentPublishedBlock) -> SourcePacket {
 }
 
 fn run_scenario() -> Result<SmokeSummary, &'static str> {
+    let supervisor_clock = ManualClock::default();
+    let mut supervisor = Supervisor::new(
+        supervisor_clock.clone(),
+        RecordingDriver::default(),
+        SUPERVISOR_BOOT,
+        restart_policy(),
+        [WorkerSpec {
+            id: MEDIA_WORKER,
+            role: WorkerRole::Media,
+            readiness: ReadinessRequirement::FreshMediaSessions,
+        }],
+    )
+    .map_err(|_| "supervisor setup failed")?;
+    supervisor.start();
+    let initial_worker_generation = worker_generation(&supervisor, WorkerHealth::Starting)?;
+    if supervisor.worker_ready(
+        MEDIA_WORKER,
+        SUPERVISOR_BOOT,
+        initial_worker_generation,
+        ReadyEvidence::Basic,
+    ) != EventDisposition::EvidenceRejected
+    {
+        return Err("media worker accepted basic readiness evidence");
+    }
+
     let pcm_ring = ConcurrentPcmRing::new(PcmAbiConfig {
         node_boot_id: BOOT.0,
         mapping_generation: MAPPING_GENERATION,
@@ -151,7 +257,7 @@ fn run_scenario() -> Result<SmokeSummary, &'static str> {
         return Err("PCM source identity or pattern changed");
     }
 
-    let initial_context = context(1, 11);
+    let initial_context = context(initial_worker_generation, 11);
     let source = MediaSource::Live(CaptureEpochId(CAPTURE_EPOCH));
     let clock = MediaClock::new(MediaClockConfig {
         context: initial_context,
@@ -161,6 +267,16 @@ fn run_scenario() -> Result<SmokeSummary, &'static str> {
         ssrc: FIRST_SSRC,
     })
     .map_err(|_| "media clock setup failed")?;
+    if supervisor.worker_ready(
+        MEDIA_WORKER,
+        SUPERVISOR_BOOT,
+        initial_worker_generation,
+        ReadyEvidence::FreshMediaSessions,
+    ) != EventDisposition::Accepted
+        || supervisor.readiness() != NodeReadiness::WorkersReady
+    {
+        return Err("fresh media session did not satisfy readiness");
+    }
     let first_packet = source_packet(first);
     let second_packet = source_packet(second);
     let gap = clock
@@ -209,9 +325,28 @@ fn run_scenario() -> Result<SmokeSummary, &'static str> {
         return Err("RTP and RTCP projection identity diverged");
     }
 
-    let restarted_context = context(2, 12);
+    if supervisor.worker_exited(MEDIA_WORKER, SUPERVISOR_BOOT, initial_worker_generation)
+        != EventDisposition::Accepted
+        || supervisor.readiness() != NodeReadiness::Degraded
+    {
+        return Err("media worker exit did not enter restart policy");
+    }
+    supervisor_clock.advance(10);
+    supervisor.tick();
+    let restarted_worker_generation = worker_generation(&supervisor, WorkerHealth::Starting)?;
+    if supervisor.worker_ready(
+        MEDIA_WORKER,
+        SUPERVISOR_BOOT,
+        initial_worker_generation,
+        ReadyEvidence::FreshMediaSessions,
+    ) != EventDisposition::IgnoredStale
+    {
+        return Err("supervisor accepted stale media readiness");
+    }
+
+    let restarted_context = context(restarted_worker_generation, 12);
     let reused_session = MediaClockConfig {
-        context: context(2, 11),
+        context: context(restarted_worker_generation, 11),
         source,
         source_frame_base: FRAME_BASE,
         rtp_timestamp_base: 100,
@@ -251,6 +386,20 @@ fn run_scenario() -> Result<SmokeSummary, &'static str> {
     {
         return Err("worker restart did not fence stale media context");
     }
+    if supervisor.worker_ready(
+        MEDIA_WORKER,
+        SUPERVISOR_BOOT,
+        restarted_worker_generation,
+        ReadyEvidence::FreshMediaSessions,
+    ) != EventDisposition::Accepted
+        || supervisor.readiness() != NodeReadiness::WorkersReady
+    {
+        return Err("restarted media worker did not become ready");
+    }
+    let worker_spawns = supervisor.driver().spawns.len();
+    if worker_spawns != 2 {
+        return Err("restart did not create exactly one replacement generation");
+    }
 
     Ok(SmokeSummary {
         pcm_blocks: 2,
@@ -263,18 +412,19 @@ fn run_scenario() -> Result<SmokeSummary, &'static str> {
         first_rtp_end: first_rtp.end_timestamp_exclusive,
         second_rtp: second_rtp.timestamp,
         rtcp_rtp: sender_report.rtp_timestamp,
-        initial_worker_generation: initial_context.media_worker_generation.0,
-        restarted_worker_generation: restarted_context.media_worker_generation.0,
+        initial_worker_generation,
+        restarted_worker_generation,
         initial_ssrc: FIRST_SSRC,
         restarted_ssrc: SECOND_SSRC,
         rtcp_anchor_generation: sender_report.anchor_generation,
         rtcp_uncertainty_ns: sender_report.uncertainty_ns,
+        worker_spawns,
     })
 }
 
 fn write_summary<W: Write>(mut output: W, summary: SmokeSummary) -> io::Result<W> {
     let line = format!(
-        "schema_version=1 artifact_kind=smoke model=in_process_atomic network=false codec=false random=false measured=false packaged=false promotion_eligible=false sample_rate_hz={SAMPLE_RATE_HZ} pcm_blocks={} publication_sequence={}..{} source_sequence={}..{} source_gap_frames={} rtp={}..{} second_rtp={} rtcp_rtp={} rtcp_anchor_generation={} rtcp_uncertainty_ns={} worker_generation={}..{} ssrc={}..{}",
+        "schema_version=1 artifact_kind=smoke model=in_process_atomic supervision=policy_double os_process=false network=false codec=false random=false measured=false packaged=false promotion_eligible=false sample_rate_hz={SAMPLE_RATE_HZ} pcm_blocks={} publication_sequence={}..{} source_sequence={}..{} source_gap_frames={} rtp={}..{} second_rtp={} rtcp_rtp={} rtcp_anchor_generation={} rtcp_uncertainty_ns={} readiness=fresh_media_sessions restart=unexpected_exit worker_spawns={} worker_generation={}..{} stale_generation_fenced=true ssrc={}..{}",
         summary.pcm_blocks,
         summary.first_publication_sequence,
         summary.last_publication_sequence,
@@ -287,6 +437,7 @@ fn write_summary<W: Write>(mut output: W, summary: SmokeSummary) -> io::Result<W
         summary.rtcp_rtp,
         summary.rtcp_anchor_generation,
         summary.rtcp_uncertainty_ns,
+        summary.worker_spawns,
         summary.initial_worker_generation,
         summary.restarted_worker_generation,
         summary.initial_ssrc,
@@ -356,6 +507,7 @@ mod tests {
                 restarted_ssrc: SECOND_SSRC,
                 rtcp_anchor_generation: 1,
                 rtcp_uncertainty_ns: 50_001,
+                worker_spawns: 2,
             })
         );
     }
@@ -367,7 +519,7 @@ mod tests {
         assert!(output.len() <= MAX_SUMMARY_BYTES);
         assert_eq!(
             output,
-            "schema_version=1 artifact_kind=smoke model=in_process_atomic network=false codec=false random=false measured=false packaged=false promotion_eligible=false sample_rate_hz=48000 pcm_blocks=2 publication_sequence=0..1 source_sequence=10..12 source_gap_frames=480 rtp=4294967056..240 second_rtp=720 rtcp_rtp=720 rtcp_anchor_generation=1 rtcp_uncertainty_ns=50001 worker_generation=1..2 ssrc=270544960..1348497536\n"
+            "schema_version=1 artifact_kind=smoke model=in_process_atomic supervision=policy_double os_process=false network=false codec=false random=false measured=false packaged=false promotion_eligible=false sample_rate_hz=48000 pcm_blocks=2 publication_sequence=0..1 source_sequence=10..12 source_gap_frames=480 rtp=4294967056..240 second_rtp=720 rtcp_rtp=720 rtcp_anchor_generation=1 rtcp_uncertainty_ns=50001 readiness=fresh_media_sessions restart=unexpected_exit worker_spawns=2 worker_generation=1..2 stale_generation_fenced=true ssrc=270544960..1348497536\n"
         );
     }
 }

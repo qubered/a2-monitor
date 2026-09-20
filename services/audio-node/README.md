@@ -127,13 +127,18 @@ the immutable application slot or process-boundary contract and is not a
 deployed, supervised, confined or durable replay worker.
 
 `a2-media-worker-smoke` is a closed, zero-argument Cargo harness joining the
-in-process atomic PCM model to pure media-clock arithmetic. Fixed 48 kHz
-fixtures cover a source-frame gap, 32-bit RTP wrap, matching RTCP projection,
-and a simulated worker restart that requires both a fresh media-session epoch
-and SSRC. The sample rate, identities, RTP bases, SSRCs, PCM and clock anchor
-are deterministic fixtures—not random values, clock readings or measurements.
-Its single bounded output line declares those limits. It is not the packaged
-`a2-media-worker` process, WebRTC, Opus, networking, browser interoperability,
+in-process atomic PCM model and pure media-clock arithmetic to the platform-
+neutral supervisor policy through deterministic clock and process-driver
+doubles. Fixed 48 kHz fixtures cover a source-frame gap, 32-bit RTP wrap,
+matching RTCP projection, fresh-session readiness, an unexpected-exit restart,
+stale-generation rejection, and the required fresh media-session epoch and SSRC
+for the replacement generation. The sample rate, identities, RTP bases, SSRCs,
+PCM and clock anchor are deterministic fixtures—not random values, clock
+readings or measurements. `FreshMediaSessions` is caller-asserted policy evidence
+in this model; it does not inspect or attest peer sessions. `WorkersReady` covers
+only the one configured media shard, not a complete node topology. The single
+bounded output line declares those limits. It creates no process and is not the
+packaged `a2-media-worker`, WebRTC, Opus, networking, browser interoperability,
 confinement, performance evidence or promotion evidence.
 
 The optional trace mode writes exactly 18 newline-delimited JSON records to

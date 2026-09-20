@@ -23,6 +23,7 @@ dependencies = [
  "a2-media",
  "a2-pcm-abi",
  "a2-replay",
+ "a2-supervisor",
 ]
 
 [[package]]

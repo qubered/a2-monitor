@@ -545,13 +545,33 @@ where
         let RuntimeState::Starting {
             handle,
             generation: current,
-            ..
+            deadline_ms,
         } = self.workers[index].state
         else {
             return EventDisposition::IgnoredStale;
         };
         if generation != current {
             return EventDisposition::IgnoredStale;
+        }
+        let now = self.clock.now_ms();
+        if now >= deadline_ms {
+            self.workers[index].last_failure = Some(FailureReason::StartupTimedOut);
+            if self.driver.force_terminate(handle).is_ok() {
+                self.record_failure(index, now, generation, FailureReason::StartupTimedOut);
+            } else {
+                self.retain_after_failed_termination(
+                    index,
+                    now,
+                    TerminationContext {
+                        handle,
+                        generation,
+                        reason: FailureReason::StartupTimedOut,
+                        capture_epoch: None,
+                    },
+                    1,
+                );
+            }
+            return EventDisposition::DeadlineExpired;
         }
         if !evidence_satisfies(
             self.workers[index].spec.readiness,
@@ -1231,6 +1251,26 @@ mod tests {
         );
         assert_eq!(supervisor.readiness(), NodeReadiness::WorkersReady);
         assert_eq!(supervisor.snapshot(AUDIO).unwrap().capture_epoch, Some(7));
+    }
+
+    #[test]
+    fn readiness_at_startup_deadline_cannot_race_ahead_of_tick() {
+        let (clock, mut supervisor) = supervisor();
+        supervisor.start();
+        clock.advance(100);
+        assert_eq!(
+            supervisor.worker_ready(MEDIA, BOOT, 1, ReadyEvidence::FreshMediaSessions),
+            EventDisposition::DeadlineExpired
+        );
+        assert_eq!(
+            supervisor.snapshot(MEDIA).unwrap().health,
+            WorkerHealth::Restarting
+        );
+        assert_eq!(
+            supervisor.snapshot(MEDIA).unwrap().last_failure,
+            Some(FailureReason::StartupTimedOut)
+        );
+        assert_eq!(kill_count(&supervisor, 201), 1);
     }
 
     #[test]
