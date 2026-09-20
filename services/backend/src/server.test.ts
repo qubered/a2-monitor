@@ -57,6 +57,37 @@ describe("backend health and Live snapshot", () => {
     expect(response.body).not.toContain("unsupported");
   });
 
+  it("rejects required fields inherited through the prototype", async () => {
+    const inheritedSnapshot = Object.create(
+      fabricatedLiveSnapshot,
+    ) as LiveSnapshot;
+    const response = await trackedServer({
+      snapshotProvider: () => inheritedSnapshot,
+    }).inject({
+      method: "GET",
+      url: "/api/v1/live/snapshot",
+    });
+
+    expect(response.statusCode).toBe(500);
+    expect(response.body).not.toBe("{}");
+  });
+
+  it("rejects a toJSON hook that changes the serialized contract", async () => {
+    const transformedSnapshot = { ...fabricatedLiveSnapshot } as LiveSnapshot;
+    Object.defineProperty(transformedSnapshot, "toJSON", {
+      value: () => ({ ...fabricatedLiveSnapshot, unsupported: true }),
+    });
+    const response = await trackedServer({
+      snapshotProvider: () => transformedSnapshot,
+    }).inject({
+      method: "GET",
+      url: "/api/v1/live/snapshot",
+    });
+
+    expect(response.statusCode).toBe(500);
+    expect(response.body).not.toContain("unsupported");
+  });
+
   it("counts response string bounds in Unicode code points", async () => {
     const firstChannel = fabricatedLiveSnapshot.channels[0];
     const unicodeSnapshot: LiveSnapshot = {

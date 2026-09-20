@@ -9,6 +9,9 @@ import {
   ProtocolContractError,
   ProtocolHttpError,
 } from "../generated/http-contracts";
+import { createStrictAjv2020 } from "../validation/strict-ajv.mjs";
+import healthResponseSchema from "../schema/v0/http/health-response.schema.json";
+import liveSnapshotResponseSchema from "../schema/v0/http/live-snapshot-response.schema.json";
 
 const packageRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -123,6 +126,119 @@ describe("generated HTTP contract compatibility", () => {
       expect(() => parseLiveSnapshot(withLinkQuality(invalid))).toThrow(
         ProtocolContractError,
       );
+    }
+  });
+});
+
+describe("shared Ajv contract compatibility", () => {
+  const cases = [
+    {
+      schema: healthResponseSchema,
+      accepted: [
+        "current/health-response.valid.json",
+        "previous/health-response.valid.json",
+      ],
+      rejected: ["incompatible/health-response.unknown-field.json"],
+    },
+    {
+      schema: liveSnapshotResponseSchema,
+      accepted: [
+        "current/live-snapshot-response.valid.json",
+        "previous/live-snapshot-response.valid.json",
+      ],
+      rejected: [
+        "incompatible/live-snapshot-response.major-version.json",
+        "incompatible/live-snapshot-response.unknown-field.json",
+      ],
+    },
+  ];
+
+  for (const [index, contract] of cases.entries()) {
+    it(`validates accepted and rejected fixture set ${index + 1} without mutation`, async () => {
+      const validate = createStrictAjv2020().compile(contract.schema);
+
+      for (const fixturePath of contract.accepted) {
+        const value = await fixture(fixturePath);
+        const before = structuredClone(value);
+        expect(validate(value), fixturePath).toBe(true);
+        expect(value).toEqual(before);
+      }
+      for (const fixturePath of contract.rejected) {
+        const value = await fixture(fixturePath);
+        const before = structuredClone(value);
+        expect(validate(value), fixturePath).toBe(false);
+        expect(value).toEqual(before);
+      }
+    });
+  }
+
+  it("matches the committed calendar, Unicode, and link-quality parity vectors", async () => {
+    const validate = createStrictAjv2020().compile(liveSnapshotResponseSchema);
+    const parity = (await fixture("parity-values.json")) as {
+      invalidCalendarDateTime: string;
+      validUnicodeAtAlertLabelBoundary: string;
+      validLinkQualityPercent: number[];
+      invalidLinkQualityPercent: number[];
+    };
+    const snapshot = (await fixture(
+      "current/live-snapshot-response.valid.json",
+    )) as { generatedAtUtc: string; channels: Array<Record<string, unknown>> };
+    const firstChannel = snapshot.channels[0];
+    const alert = firstChannel.alert as Record<string, unknown>;
+    const details = firstChannel.details as Record<string, unknown>;
+    const cases = [
+      {
+        value: {
+          ...snapshot,
+          generatedAtUtc: parity.invalidCalendarDateTime,
+        },
+        accepted: false,
+      },
+      {
+        value: {
+          ...snapshot,
+          channels: [
+            {
+              ...firstChannel,
+              alert: {
+                ...alert,
+                label: parity.validUnicodeAtAlertLabelBoundary,
+              },
+            },
+          ],
+        },
+        accepted: true,
+      },
+      ...parity.validLinkQualityPercent.map((linkQualityPercent) => ({
+        value: {
+          ...snapshot,
+          channels: [
+            {
+              ...firstChannel,
+              details: { ...details, linkQualityPercent },
+            },
+          ],
+        },
+        accepted: true,
+      })),
+      ...parity.invalidLinkQualityPercent.map((linkQualityPercent) => ({
+        value: {
+          ...snapshot,
+          channels: [
+            {
+              ...firstChannel,
+              details: { ...details, linkQualityPercent },
+            },
+          ],
+        },
+        accepted: false,
+      })),
+    ];
+
+    for (const parityCase of cases) {
+      const before = structuredClone(parityCase.value);
+      expect(validate(parityCase.value)).toBe(parityCase.accepted);
+      expect(parityCase.value).toEqual(before);
     }
   });
 });

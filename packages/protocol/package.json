@@ -4,15 +4,24 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "npm run generate:check && npm run format && npm run test",
-    "format": "prettier --check 'generated/**/*.ts' 'scripts/**/*.mjs' 'tests/**/*.ts' '*.json'",
+    "check": "npm run generate:check && npm run validate:fixtures && npm run format && npm run test",
+    "format": "prettier --check 'generated/**/*.ts' 'scripts/**/*.mjs' 'tests/**/*.{mjs,ts}' 'validation/*.{d.mts,mjs}' '*.json'",
     "generate": "node scripts/generate-http-contracts.mjs",
     "generate:check": "node scripts/generate-http-contracts.mjs --check",
-    "test": "node --test tests/generator.test.mjs && vitest run tests/http-contracts.test.ts"
+    "test": "node --test tests/generator.test.mjs tests/strict-ajv.test.mjs && vitest run tests/http-contracts.test.ts",
+    "validate:fixtures": "node scripts/validate-http-contract-fixtures.mjs"
   },
   "exports": {
     "./http": "./generated/http-contracts.ts",
     "./schema/health-response": "./schema/v0/http/health-response.schema.json",
-    "./schema/live-snapshot-response": "./schema/v0/http/live-snapshot-response.schema.json"
+    "./schema/live-snapshot-response": "./schema/v0/http/live-snapshot-response.schema.json",
+    "./validation/strict-ajv": {
+      "types": "./validation/strict-ajv.d.mts",
+      "default": "./validation/strict-ajv.mjs"
+    }
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1"
   }
 }

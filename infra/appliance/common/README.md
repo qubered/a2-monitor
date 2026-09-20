@@ -34,8 +34,9 @@ node infra/appliance/common/stage-application-slot.mjs stage \
 `node_modules` tree. Preparation is a separate, explicit release step. The
 stager never invokes npm and rejects symlinks, including npm workspace links.
 The tree must contain Fastify, Ajv, and Ajv Formats. The protocol workspace
-package is supplied separately because its package metadata and JSON schemas
-are runtime dependencies; the stager copies only `package.json` and `schema`.
+package is supplied separately because its package metadata, strict Ajv runtime,
+and JSON schemas are runtime dependencies; the stager copies only
+`package.json`, `validation`, and `schema`.
 The three executable inputs must match the declared target: a Mach-O containing
 the requested CPU on macOS, or a PE image with the requested machine type on
 Windows. Renaming a binary from another platform is rejected.
@@ -70,7 +71,7 @@ slots/BUILD_ID/
 ├── runtime/node[.exe]
 ├── backend/{package.json,dist/}
 ├── backend/node_modules/
-│   └── @a2-monitor/protocol/{package.json,schema/}
+│   └── @a2-monitor/protocol/{package.json,validation/,schema/}
 ├── web/{manager,live}/
 ├── licenses/node/LICENSE
 └── slot-manifest.json
