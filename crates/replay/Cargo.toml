@@ -8,5 +8,8 @@ license.workspace = true
 [dependencies]
 a2-audio-host-api = { path = "../audio-host-api" }
 
+[dev-dependencies]
+a2-pcm-abi = { path = "../pcm-abi" }
+
 [lib]
 path = "src/lib.rs"
