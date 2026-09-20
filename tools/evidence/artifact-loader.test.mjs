@@ -14,7 +14,6 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import process from "node:process";
-import { setImmediate } from "node:timers";
 import { promisify } from "node:util";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -402,7 +401,7 @@ test("detects a final-path swap while retaining the originally opened bytes", as
     return;
   }
   const root = await fixture(t);
-  const size = 24 * 1024 * 1024;
+  const size = 1024;
   const original = Buffer.alloc(size, 0x61);
   const replacement = Buffer.alloc(size, 0x62);
   await writeFile(path.join(root, "large"), original);
@@ -412,10 +411,16 @@ test("detects a final-path swap while retaining the originally opened bytes", as
       root,
       artifacts: [descriptor("large", original)],
       limits: { maxFileBytes: size, maxTotalBytes: size },
+      testHooks: {
+        afterOpen: async () => {
+          await rename(
+            path.join(root, "replacement"),
+            path.join(root, "large"),
+          );
+        },
+      },
     }),
   );
-  await new Promise((resolve) => setImmediate(resolve));
-  await rename(path.join(root, "replacement"), path.join(root, "large"));
   const error = await verifying;
   assert(error instanceof ArtifactVerificationError);
   assert(

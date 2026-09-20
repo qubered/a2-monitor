@@ -13,7 +13,9 @@ shared test environment:
 
 It is currently empty. Component-independent verifier-conformance tests live
 beside their dependency-free implementation in `tools/evidence`; they are not
-product or hardware evidence.
+product or hardware evidence. That suite includes a fixed OpenSSL-generated
+ES256/JCS verification vector; it tests Node interoperability but is not a
+trusted signing identity or promotion artifact.
 
 The previous contents — an evidence catalogue, manifest schemas, protocol
 golden vectors and adversarial contract tests — were withdrawn along with the

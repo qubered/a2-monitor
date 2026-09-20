@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.bd5cc0b26090391e",
-  "sourceSha256": "bd5cc0b26090391ee26ae003f2d2aa0bbf32016dd913a1af3a5e92dc7967d407",
-  "inputCount": 229,
+  "buildId": "a2-0.0.0+sha256.9e9b73f6b9bd85fc",
+  "sourceSha256": "9e9b73f6b9bd85fc32acee540dafc2a8f21a74319de5b43eb7af5740d7e02aa1",
+  "inputCount": 231,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -425,7 +425,7 @@
     },
     {
       "path": "docs/decisions/0020-evidence-verifier-trust-boundary.md",
-      "sha256": "b909a9d8e4927d12fbe5de9f62bd97445d063a15a1440041559197680b8c6bf4"
+      "sha256": "71d746ecbf346b1a5fcb6aa751ef2a7011aa01ce01b0a0b300c3ce788066829a"
     },
     {
       "path": "docs/design/DESIGN.md",
@@ -509,7 +509,7 @@
     },
     {
       "path": "docs/open-questions.md",
-      "sha256": "c0e936367a95bc1f35ff4875c2d0c738d97c666690e5932468046775df7dc44b"
+      "sha256": "dba853b0cabc07cca558a7e8c4b23eabfe8279f17d0811449db3c75ae10666a8"
     },
     {
       "path": "docs/product/a1-a2-views-and-collaboration.md",
@@ -809,7 +809,7 @@
     },
     {
       "path": "scripts/check-repo.sh",
-      "sha256": "8bf6345fa0d6950c2138b4f8c391ca1189bdcd86d5f4ac5a6f34d0fa3fce3d29"
+      "sha256": "227c981bf908874270329b017ca1fe4d3311d12c5a481e96fb2bde218dde8d05"
     },
     {
       "path": "scripts/generate-build-identity.mjs",
@@ -893,19 +893,19 @@
     },
     {
       "path": "tests/README.md",
-      "sha256": "f6eba0dfc0604c4a2e3681332c63bd6566d25266c66cc8c7889b28c61de1b3fe"
+      "sha256": "2f440b3248e6d323b4dd30a9ac1b546da84cec8d9c261a6ff8846b29cacad414"
     },
     {
       "path": "tools/evidence/README.md",
-      "sha256": "067c226fd59984589937cfe64a800ee8d5b9a8ee194a1de5aab033b3551dff34"
+      "sha256": "2725f4aa0afefd740aa981f5ecb2f8501cae83bd7ec6588942311c8261fd0b81"
     },
     {
       "path": "tools/evidence/artifact-loader.mjs",
-      "sha256": "5b086a3b7324044b0020c92fc21223998526e65e6e87ed7678426061dda94452"
+      "sha256": "497b0a36dd1a3b71bd0ff53c5e4e8357e8cfc73066ea056be1e8c674772f5b83"
     },
     {
       "path": "tools/evidence/artifact-loader.test.mjs",
-      "sha256": "cc3b25adf8193a27ef4bfee76ee06bcf3963be759eb7e9cc2674a242efdc12a2"
+      "sha256": "2a09912e44da7ca6d1d241a49e601af802e308b927923da3b150924bc33aef99"
     },
     {
       "path": "tools/evidence/evidence-verifier.mjs",
@@ -914,6 +914,14 @@
     {
       "path": "tools/evidence/evidence-verifier.test.mjs",
       "sha256": "b906674a96b5a7fd6c73a1d07c5592ce003f9906509455f5ccb4273156bbce1e"
+    },
+    {
+      "path": "tools/evidence/fixtures/openssl-es256-jcs-v1.json",
+      "sha256": "900cc7c28152323fab3cdb7198d0ae75316cfa36f63c8d8cdf306cd0a68ad672"
+    },
+    {
+      "path": "tools/evidence/openssl-vector.test.mjs",
+      "sha256": "12919f2ef1c4533e1e1ecb035d64c1170b58a702db8f489603f4896017ecc2e8"
     },
     {
       "path": "tools/evidence/strict-json.mjs",
