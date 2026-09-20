@@ -49,6 +49,7 @@ name = "a2-replay"
 version = "0.0.0"
 dependencies = [
  "a2-audio-host-api",
+ "a2-pcm-abi",
 ]
 
 [[package]]

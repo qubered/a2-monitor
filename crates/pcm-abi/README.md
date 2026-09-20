@@ -12,11 +12,19 @@ Invalid version, generation, epoch or cursor state produces a bounded fault or
 remap result. Overflow keeps the producer live and reports the exact overwritten
 sequence range.
 
-This is not an OS shared-memory implementation. The model is intentionally
-single-threaded and does not prove concurrent access to ordinary sample memory.
-Platform code must separately provide authenticated handles, least-write views,
-safe slot-claim/race behavior, cleanup and confinement before this layout is
-used between processes.
+This is not an OS shared-memory implementation. The serialized ABI model is
+intentionally single-threaded. A separate preallocated in-process SPSC model
+uses atomic metadata and sample-bit storage to exercise concurrent publication,
+overwrite-oldest gaps and pattern integrity without changing the serialized
+model's `Send`/`Sync` boundary. If the consumer has claimed the exact victim
+slot, the producer returns a successful, terminal drop-newest outcome containing
+the incoming source sequence and frame range instead of waiting or requiring a
+caller retry. Publication sequences remain contiguous; source sequences remain
+distinct and may contain gaps. Successful overwrites identify the exact victim
+source and frame range. It does not prove cross-process atomic layout,
+memory-order, cache-coherency or crash behavior. Platform code must separately
+provide authenticated handles, least-write views, safe byte-level slot claims,
+cleanup and confinement before this layout is used between processes.
 
 Run the focused checks with:
 

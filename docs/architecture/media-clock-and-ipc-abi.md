@@ -155,9 +155,13 @@ state-machine model. It checks little-endian descriptor fields and page-separate
 offsets, fences attach by mapping generation and capture epoch, models
 overwrite-oldest loss ranges and sequence wrap, and treats every
 consumer-control-page byte as hostile. Its producer hot path is covered by an
-allocation counter. Producer-state, diagnostic and slot-header byte fields are
-not frozen. The model is intentionally single-threaded: it does not prove that
-ordinary Rust sample memory is a safe concurrent cross-process handoff. OS
-mappings, least-write views, slot-claim/race resolution, ACLs, process-death
-cleanup and callback deadlines remain required before this ABI can be promoted
-as an implemented transport.
+allocation counter. A separate preallocated in-process SPSC model uses atomic
+metadata and sample words, distinct source/publication sequences and a
+single-call drop-newest outcome when the exact overwrite victim is claimed.
+Unit tests cover safe concurrent snapshots and exact overwrite/drop attribution;
+replay composition covers overwrite-gap observation before surviving patterned
+audio. This does not freeze producer-state, diagnostic or slot-header bytes and
+does not prove the ordinary-PCM ownership protocol required by the byte ABI. OS
+mappings, cross-process atomics, least-write views, ACLs, process-death cleanup
+and callback deadlines remain required before this ABI can be promoted as an
+implemented transport.

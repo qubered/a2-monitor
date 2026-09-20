@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.d9a30ef22d97546c",
-  "sourceSha256": "d9a30ef22d97546c18bc54cc29a3566f8d3ac7538fe4539fcd05cffb5ffbb7e5",
-  "inputCount": 247,
+  "buildId": "a2-0.0.0+sha256.98cb634053d79d12",
+  "sourceSha256": "98cb634053d79d124112baaa22adc58b6060e656a45dcedbf92fa14b9899afe5",
+  "inputCount": 249,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -61,7 +61,7 @@
     },
     {
       "path": "Cargo.lock",
-      "sha256": "42b7d761960b45ef3c6bd4ed8162ab0f8d8780c17407b54bd1740097dc707d95"
+      "sha256": "244cc8cda1d90a53717174e48e5f76aa27e2fec2e38047440f548481c2045f72"
     },
     {
       "path": "Cargo.toml",
@@ -273,7 +273,7 @@
     },
     {
       "path": "crates/pcm-abi/README.md",
-      "sha256": "cb110f9589ac295b1408d033838d9cccf25aee8c018162edc8b21fe8c744e437"
+      "sha256": "9a309b2e30e3657bb89c26df19a6fd381ca7b194bd5096b8cc3b70db4a4e6e7f"
     },
     {
       "path": "crates/pcm-abi/src/layout.rs",
@@ -281,19 +281,23 @@
     },
     {
       "path": "crates/pcm-abi/src/lib.rs",
-      "sha256": "f1bf0bef1f890c1e470cbfc2f03d00f988d0811600c7487b6eb68f35f02d9cc0"
+      "sha256": "730544edde960e4f312fe2734ddd4810de4d04b5f32d8a767a9d7c546c6735b9"
     },
     {
       "path": "crates/pcm-abi/src/ring.rs",
-      "sha256": "25af940444d77fc858bfb68546dea3e1880d8d987b30920ac348a347d1df868a"
+      "sha256": "9edcfe35f8b9918360bf8fe834abe1123896a1aec80c6d79162ccc2064a4d47d"
+    },
+    {
+      "path": "crates/pcm-abi/src/spsc.rs",
+      "sha256": "808f9ece0fbfa4ca8ebaae3e5d1c95540df05c52547eea092db771a9e3110bf9"
     },
     {
       "path": "crates/replay/Cargo.toml",
-      "sha256": "946da87e2059b9711449c4a911b308a5a9759407fb6fce04e3518fd43d68bdbf"
+      "sha256": "cf342db9fe754c4abdbe91f9d1c7cc68c1f1866faa8560060074993bee38c5cb"
     },
     {
       "path": "crates/replay/README.md",
-      "sha256": "f817a7dfca1dfeeeff06b8add0eeb36e600686ac7dbb2e70a09ddf21c787c830"
+      "sha256": "f6d9b75099a4f4381e316d99932f40c8f983190145082b8cd5df7202daef5121"
     },
     {
       "path": "crates/replay/src/ingress.rs",
@@ -302,6 +306,10 @@
     {
       "path": "crates/replay/src/lib.rs",
       "sha256": "1db437d2cbce1c2db83fd2485e3466cbc18bdedb5d09a3daf6c805b27d06c4b0"
+    },
+    {
+      "path": "crates/replay/tests/concurrent_handoff.rs",
+      "sha256": "b8ac8e1d4884ea8cd840b61f364b10ec8a447c3df8bf84ceb206a5b325b9aa04"
     },
     {
       "path": "crates/supervisor/Cargo.toml",
@@ -361,7 +369,7 @@
     },
     {
       "path": "docs/architecture/media-clock-and-ipc-abi.md",
-      "sha256": "061d4a7436dc45fe56da4e6495e82a063092b20e9133641c3d4562125f05cdfb"
+      "sha256": "2c33c77be3c78e1a8ebe2abf7e2d06c215b8043ebd84b0cbbe6105441908f54c"
     },
     {
       "path": "docs/architecture/observability.md",
@@ -389,7 +397,7 @@
     },
     {
       "path": "docs/architecture/time-and-replay.md",
-      "sha256": "8477fc7cfb4209f34f11060535128659ee749b856c902cbee8fc32c200314810"
+      "sha256": "0bcf2bb9e6c8c538079e86bc495bca07ab13f0f7b7af84082a37c59606df7dd3"
     },
     {
       "path": "docs/decisions/0000-template.md",
@@ -589,7 +597,7 @@
     },
     {
       "path": "docs/quality/cargo-dependency-inventory.json",
-      "sha256": "e65058a779f68249335ed214b043dd0001227e111a1a970560e905bc91fa5dea"
+      "sha256": "5b0d9aaebd9086c3684455d6d654bf59204426a9255e631f7d51139c0c0451ae"
     },
     {
       "path": "docs/quality/client-and-appliance-profiles.md",

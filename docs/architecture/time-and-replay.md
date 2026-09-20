@@ -101,6 +101,13 @@ pressure behavior, encryption, concurrent process safety, callback queue
 isolation, storage bandwidth/endurance or the 30-minute capacity target. Those
 remain Phase 0B-A implementation and measurement work.
 
+The in-process atomic SPSC model in `crates/pcm-abi` is composition-tested with
+replay ingress and the replay ring: transport overwrite is reported before
+later patterned audio, and surviving samples are read back unchanged through an
+isolated replay reader. That test does not create a replay worker or establish
+cross-process mappings, ordinary-PCM ownership safety, persistence, process
+failure isolation or callback timing.
+
 ## Replay session semantics
 
 - Each operator can be live or replaying independently.

@@ -547,7 +547,7 @@ fn write_bytes(page: &[AtomicU8], offset: usize, bytes: &[u8], ordering: Orderin
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use std::alloc::{GlobalAlloc, Layout, System};
     use std::cell::Cell;
 
@@ -557,8 +557,8 @@ mod tests {
     struct TrackingAllocator;
 
     thread_local! {
-        static TRACK: Cell<bool> = const { Cell::new(false) };
-        static ALLOCATIONS: Cell<usize> = const { Cell::new(0) };
+        pub(crate) static TRACK: Cell<bool> = const { Cell::new(false) };
+        pub(crate) static ALLOCATIONS: Cell<usize> = const { Cell::new(0) };
     }
 
     unsafe impl GlobalAlloc for TrackingAllocator {

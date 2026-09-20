@@ -32,6 +32,12 @@ ingress model does not prove a capture-callback transport. Those require the
 Phase 0B-A storage ADR, worker wiring, fault injection and named-host
 measurements.
 
+A cross-crate test composes the separate in-process atomic SPSC model from
+`a2-pcm-abi` with replay ingress and the replay ring. It verifies that exact
+transport loss is observed before surviving patterned PCM, then reads the same
+PCM back through a replay reader. This remains model composition, not a worker,
+OS mapping, durable store or callback-deadline result.
+
 Run focused checks with:
 
 ```sh
