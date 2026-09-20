@@ -74,7 +74,7 @@ The runnable native scaffold now contains:
 - `crates/audio-host-api`, a project-owned device and capture callback boundary
   with no CPAL or platform type in its public interface;
 - `crates/audio-core`, a fixed-capacity in-process SPSC PCM ring whose storage
-  is allocated before capture; and
+  is allocated before capture;
 - `services/audio-node`, a deterministic synthetic host and smoke binary; and
 - `crates/supervisor`, a deterministic native-worker lifecycle policy with
   boot/generation fencing, role-specific readiness gates, bounded heartbeats,
@@ -85,6 +85,19 @@ The callback path and ring push are covered by an allocation-counting test
 after setup. The callback types expose no lock or I/O facility, and the current
 implementation contains no locking primitive on that path; this is structural
 review evidence, not a general runtime proof that future code cannot block.
+The synthetic host advertises one exact 64-channel, 48 kHz test tuple and
+rejects every other device, rate, channel and block request. Cloned handles
+share one atomic open claim, so only one input stream can own the synthetic device. A
+successful reopen receives a new nonzero capture epoch; failed and busy opens
+do not consume an epoch. Streams retain both the requested and resolved tuple,
+which are equal for this synthetic adapter. The host passes the resolved tuple
+to a control-thread callback factory before downstream rings or callback
+resources are constructed. Device ownership is released by an explicit
+control-thread close or by dropping the stream, not by stopping it or by a
+callback requesting stop. Clones share one node-boot epoch namespace;
+independently constructed hosts represent separate node boots and pair their
+epochs with the node boot identifier in production metadata.
+
 When the in-process ring is full it drops the newest block and increments a
 counter so published storage is never overwritten. This is deliberately not
 the page-separated shared-memory ABI, whose overwrite-oldest policy and hostile
@@ -101,6 +114,9 @@ cargo run --locked --bin a2-synthetic-capture
 
 This scaffold does not open a physical device and provides no latency,
 stability, hardware-support, or real-time scheduling evidence.
+Its exclusive-open, tuple and epoch checks are synthetic contract tests only;
+they do not demonstrate equivalent behavior from ASIO, WASAPI, Core Audio,
+DVS, CPAL or any professional interface.
 The supervision adapter likewise does not yet claim restricted OS child
 creation, launchd/XPC integration, privilege separation, or production health
 IPC; those remain platform evidence work.
