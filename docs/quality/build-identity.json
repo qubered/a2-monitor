@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.ab70fef2c4fd4fa6",
-  "sourceSha256": "ab70fef2c4fd4fa699d772a41752eb34fd95574d5bb18071dd86e16128e60ac4",
+  "buildId": "a2-0.0.0+sha256.c5a992fe21c639f8",
+  "sourceSha256": "c5a992fe21c639f8f41968e49b286117e6913fce001cc0c36b06bd14229c992c",
   "inputCount": 250,
   "inputs": [
     {
@@ -241,11 +241,11 @@
     },
     {
       "path": "crates/ipc/README.md",
-      "sha256": "55533a3c2b8a94dc0720da13de7ac7fbfa2f630f7e8cb0501b80afcdab2a1c3c"
+      "sha256": "0cca25892313e135d6b8e92a21617dc731b899a8d6c6bd5a7d23e5aabe34a406"
     },
     {
       "path": "crates/ipc/src/codec.rs",
-      "sha256": "92d92319580a1bf74b0c5148e266f846eb7c577f226a98551430dae485fda3ce"
+      "sha256": "25b37d04b1758f4f07e6165e781c43de34122d923925032f4962fabfc74b245a"
     },
     {
       "path": "crates/ipc/src/framing.rs",
@@ -253,7 +253,7 @@
     },
     {
       "path": "crates/ipc/src/lib.rs",
-      "sha256": "a78a0b750c68f59e2e935def1e302feb579142ba805886a3a65e488c672a09c5"
+      "sha256": "d9982b5481914f0c2d129f10ab45fd9921c68a8df1069727ebb195a24b103ae8"
     },
     {
       "path": "crates/media/Cargo.toml",
@@ -369,7 +369,7 @@
     },
     {
       "path": "docs/architecture/media-clock-and-ipc-abi.md",
-      "sha256": "2c33c77be3c78e1a8ebe2abf7e2d06c215b8043ebd84b0cbbe6105441908f54c"
+      "sha256": "90089ebfdf7d4683f474a1df1316a1d814c2ac0fe060a9f5cf4738ba91b5c3e9"
     },
     {
       "path": "docs/architecture/observability.md",

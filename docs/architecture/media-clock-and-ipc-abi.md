@@ -143,11 +143,18 @@ codec. Signed public commands remain RFC 8785 canonical JSON regardless of the
 internal codec.
 
 The Phase 0T scaffold implements this outer frame and an initial comparison in
-`crates/ipc`. The comparison currently covers health-probe and worker-ready
-messages, exact golden bytes, fragmented input, malformed and oversized input,
+`crates/ipc`. The comparison covers the unchanged version 1 health-probe vector
+and version 2 worker-ready and worker-heartbeat vectors. Version 2 makes the
+supervision fence lossless: a 128-bit boot ID, worker ID, typed role and
+generation accompany typed readiness evidence or a heartbeat sequence. JSON
+uses a canonical 32-character lowercase-hex boot ID and Protobuf uses 16
+big-endian bytes. Version 1 worker messages fail closed; their old Protobuf
+nested fields remain occupied and rejected rather than being reinterpreted.
+Tests cover exact golden bytes, fragmented input, malformed and oversized input,
+invalid identities/evidence,
 and each candidate's unknown-field behavior. This is implementation evidence
-for the framing boundary only: no codec has been selected, no local transport
-has been integrated.
+for the codec-neutral comparison boundary only: no codec has been selected, no
+local transport has been integrated, and no runtime-supervision claim follows.
 
 `crates/pcm-abi` now implements the first dependency-free version-zero
 descriptor/region layout, consumer-control-page bytes and deterministic
