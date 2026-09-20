@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.39128c4e23f20c1c",
-  "sourceSha256": "39128c4e23f20c1c3eaa776e667f73ab3164684a5ffa1482a80dc5b00beeb7d7",
-  "inputCount": 239,
+  "buildId": "a2-0.0.0+sha256.a0d81f543c6c7bbd",
+  "sourceSha256": "a0d81f543c6c7bbd35aea0634b6386e868296386b3462bdf443252e2768834e3",
+  "inputCount": 242,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -61,11 +61,11 @@
     },
     {
       "path": "Cargo.lock",
-      "sha256": "55a4de93b7fc4fc34f189d9e96b8506729cdeb57a9a9c4e9671044f5036d3f88"
+      "sha256": "e34b4b83126e044c84e200a8bc8d437ea330dbf8586128e70126355492918a76"
     },
     {
       "path": "Cargo.toml",
-      "sha256": "aca81872af1fbf37d2944218933639bbb35451c72595a437f423ea9a96542877"
+      "sha256": "0edfca0d204dfa866503ce189838d2d6fa426dbb2496f7d5497b20e15b46e1b1"
     },
     {
       "path": "README.md",
@@ -256,6 +256,18 @@
       "sha256": "a78a0b750c68f59e2e935def1e302feb579142ba805886a3a65e488c672a09c5"
     },
     {
+      "path": "crates/media/Cargo.toml",
+      "sha256": "2a323e0053b8ade68686868eee6d65f4af887fe20c78bc7373fab6c8a5f0425e"
+    },
+    {
+      "path": "crates/media/README.md",
+      "sha256": "4aacc1bef9eaf75cd25fcd230df3056e5516c745596c3b415ef35e8d97b3f35f"
+    },
+    {
+      "path": "crates/media/src/lib.rs",
+      "sha256": "a64a5f65e3a73bc4630a418eb3a6c8c38fb29ddf04e57c39d67686dd489f5152"
+    },
+    {
       "path": "crates/pcm-abi/Cargo.toml",
       "sha256": "97d9ce8a471ba3ff35dc7a3fb345ae0dbffdbdea863fdb1fb9583313ca6c560b"
     },
@@ -321,7 +333,7 @@
     },
     {
       "path": "docs/architecture/implementation-structure.md",
-      "sha256": "04d7999aaf6552bd74dbf90a798edd083806f7c967e117a1da588476a0167994"
+      "sha256": "4df8ccdf0ee4ed17bb21650899b9d1d24c8eda7ca8435d327cf9552fd54c64fe"
     },
     {
       "path": "docs/architecture/latency.md",
@@ -333,7 +345,7 @@
     },
     {
       "path": "docs/architecture/media-clock-and-ipc-abi.md",
-      "sha256": "4e7ce3d42eb0d99adc6a4809ce130be5c97b8128ce6d9513eb5f85ec5ef4bf53"
+      "sha256": "061d4a7436dc45fe56da4e6495e82a063092b20e9133641c3d4562125f05cdfb"
     },
     {
       "path": "docs/architecture/observability.md",
@@ -561,7 +573,7 @@
     },
     {
       "path": "docs/quality/cargo-dependency-inventory.json",
-      "sha256": "eaf441bf06e5f3a514258c0b4de7838a2d97b41ffbe9d7e4c10629ea3206698b"
+      "sha256": "5c9bb6a81b5f65f566a1feedecec6bebc7aa0594f6fb47a914a95999072d9665"
     },
     {
       "path": "docs/quality/client-and-appliance-profiles.md",
@@ -821,7 +833,7 @@
     },
     {
       "path": "scripts/cargo-license-policy.json",
-      "sha256": "eb2d7a6cad1d522168a22fa36c9254615ca61d03c3b3cd8eab7cbbf0750a8d37"
+      "sha256": "93378c781cebeee36ae69672d59aa76d3347839e10f25ffe094687db5d96f44a"
     },
     {
       "path": "scripts/check-markdown-links.rb",

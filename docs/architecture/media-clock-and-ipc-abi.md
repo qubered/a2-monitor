@@ -39,6 +39,19 @@ the negotiated absolute-capture-time extension. Clock adjustment updates that
 anchor without changing the frame-index-to-RTP slope. Physical measurement is
 the release result; WebRTC statistics are attribution evidence.
 
+`crates/media` implements the dependency-free arithmetic contract for the fixed
+48 kHz profile. It maps source-frame spans to RTP start/end values modulo
+`2^32`, validates adjacent gaps against a caller-supplied bound, rejects
+adjacent packet-start distances at or above the RTP serial half-range, and
+rejects frame-index overflow rather than wrapping the source timeline. RTCP
+projections bind the wall anchor to the same source frame,
+node boot, source epoch, media-session epoch and worker generation as the RTP
+point. NTP era is retained out of band, and projected uncertainty combines
+anchor measurement uncertainty with a declared rate-error bound. Source/worker
+transitions must rotate both media-session epoch and SSRC. The caller supplies
+cryptographically random bases/SSRCs and measured anchors; this crate performs
+no clock, random, network, WebRTC or codec work.
+
 ## Gaps and epochs
 
 - A missing source block advances RTP media time by the missing frame count. The
@@ -55,7 +68,7 @@ the release result; WebRTC statistics are attribution evidence.
 - Media-worker restart does not restore serialized DTLS/ICE/RTP state. It creates
   fresh peer sessions and the client enters the interruption/safe-reconnect path.
 
-Phase 0B covers 32-bit RTP wrap, frame-index wrap in test models, scheduler
+Phase 0B covers 32-bit RTP wrap, frame-index exhaustion in test models, scheduler
 stalls, ring gaps, epoch change, media-worker restart, replay/live transition,
 RTCP mapping, browser inserted/removed samples and latency slope over the full
 soak.
