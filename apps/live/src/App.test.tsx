@@ -40,17 +40,32 @@ describe("Live channel grid", () => {
     const user = userEvent.setup();
     render(<App snapshotSource={snapshotSource} />);
 
-    expect(await screen.findByText("Listening is muted")).toBeTruthy();
+    expect(await screen.findByText("Monitor output is muted")).toBeTruthy();
     await user.click(
       screen.getByRole("button", {
-        name: "Listen to Vera Castellan, channel 33",
+        name: "Select Vera Castellan, channel 33",
       }),
     );
 
+    const selectedCard = screen
+      .getByRole("button", { name: "Select Vera Castellan, channel 33" })
+      .closest("article");
+    expect(selectedCard?.classList.contains("is-selected")).toBe(true);
+    expect(selectedCard?.classList.contains("is-listening")).toBe(false);
+    expect(
+      within(selectedCard as HTMLElement).getByText("Selected"),
+    ).toBeTruthy();
+    expect(
+      within(selectedCard as HTMLElement).queryByText("Listening"),
+    ).toBeNull();
+    expect(
+      screen.getByText("Selected", { selector: ".source-selected-badge" }),
+    ).toBeTruthy();
+    expect(document.querySelector(".live-badge")).toBeNull();
     expect(
       screen.getByText("Vera Castellan", { selector: ".player-source strong" }),
     ).toBeTruthy();
-    expect(screen.getByText("Listening is muted")).toBeTruthy();
+    expect(screen.getByText("Monitor output is muted")).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Mute" }).getAttribute("aria-pressed"),
     ).toBe("true");
@@ -61,12 +76,12 @@ describe("Live channel grid", () => {
     render(<App snapshotSource={snapshotSource} />);
 
     await screen.findByRole("button", {
-      name: "Listen to Vera Castellan, channel 33",
+      name: "Select Vera Castellan, channel 33",
     });
 
     await user.click(
       screen.getByRole("button", {
-        name: "Listen to Vera Castellan, channel 33",
+        name: "Select Vera Castellan, channel 33",
       }),
     );
     await user.click(
@@ -80,11 +95,28 @@ describe("Live channel grid", () => {
     ).toBeTruthy();
     expect(
       screen.getByRole("button", {
-        name: "Listen to Marguerite Hale, channel 27",
+        name: "Select Marguerite Hale, channel 27",
       }),
     ).toBeTruthy();
+    const acknowledgedCard = screen
+      .getByRole("button", {
+        name: "Select Marguerite Hale, channel 27",
+      })
+      .closest("article");
+    expect(
+      within(acknowledgedCard as HTMLElement).queryByText("Selected"),
+    ).toBeNull();
     expect(
       screen.getByRole("button", { name: "2 to acknowledge" }),
+    ).toBeTruthy();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Select Marguerite Hale, channel 27",
+      }),
+    );
+    expect(
+      within(acknowledgedCard as HTMLElement).getByText("Selected"),
     ).toBeTruthy();
   });
 
@@ -99,7 +131,7 @@ describe("Live channel grid", () => {
     const card = screen.getByRole("article");
     expect(
       within(card).getByRole("button", {
-        name: "Listen to Bandleader · keys vox, channel 8",
+        name: "Select Bandleader · keys vox, channel 8",
       }),
     ).toBeTruthy();
     expect(within(card).getByText("RF link: not applicable")).toBeTruthy();
@@ -155,7 +187,7 @@ describe("Live channel grid", () => {
     finishReconnect?.(snapshot);
     expect(
       await screen.findByRole("button", {
-        name: "Listen to Vera Castellan, channel 33",
+        name: "Select Vera Castellan, channel 33",
       }),
     ).toBeTruthy();
   });
@@ -189,7 +221,7 @@ describe("Live channel grid", () => {
     expect(await screen.findByText("Audio node offline.")).toBeTruthy();
     expect(
       screen.getByText(
-        "Listening is unavailable. Snapshot values are not current.",
+        "Monitor output is unavailable. Snapshot values are not current.",
       ),
     ).toBeTruthy();
     expect(

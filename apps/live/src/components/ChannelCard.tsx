@@ -5,9 +5,9 @@ import { StatusStrip } from "./StatusStrip";
 type ChannelCardProps = {
   channel: Channel;
   acknowledged: boolean;
-  listening: boolean;
+  selected: boolean;
   onAcknowledge: () => void;
-  onListen: () => void;
+  onSelect: () => void;
   onOpenDetail: () => void;
 };
 
@@ -68,18 +68,18 @@ function MeterTrace({ channel }: { channel: Channel }) {
 export function ChannelCard({
   channel,
   acknowledged,
-  listening,
+  selected,
   onAcknowledge,
-  onListen,
+  onSelect,
   onOpenDetail,
 }: ChannelCardProps) {
   const alerting = Boolean(channel.alert && !acknowledged);
-  const handlePrimaryAction = alerting ? onAcknowledge : onListen;
-  const primaryAction = alerting ? "Acknowledge" : "Listen to";
+  const handlePrimaryAction = alerting ? onAcknowledge : onSelect;
+  const primaryAction = alerting ? "Acknowledge" : "Select";
 
   return (
     <article
-      className={`channel-card ${listening ? "is-listening" : ""} ${alerting ? "has-alert" : ""}`}
+      className={`channel-card ${selected ? "is-selected" : ""} ${alerting ? "has-alert" : ""}`}
       data-channel-id={channel.id}
     >
       <button
@@ -97,9 +97,9 @@ export function ChannelCard({
             {String(channel.number).padStart(2, "0")}
           </span>
           <span className="photo-missing">Photo not added</span>
-          {listening ? (
-            <span className="listening-badge">
-              <i aria-hidden="true" /> Listening
+          {selected ? (
+            <span className="selected-badge">
+              <i aria-hidden="true" /> Selected
             </span>
           ) : null}
           <button

@@ -134,9 +134,9 @@ select:focus-visible {
 }
 
 .fabricated-badge,
-.live-badge,
+.source-selected-badge,
 .waiting-badge,
-.listening-badge {
+.selected-badge {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
@@ -331,11 +331,9 @@ select:focus-visible {
   box-shadow: var(--shadow-hover), var(--card-lit);
 }
 
-.channel-card.is-listening {
-  border-color: var(--red);
-  box-shadow:
-    0 var(--space-1) 0 var(--red-700),
-    var(--card-lit);
+.channel-card.is-selected {
+  border-color: var(--ink-2);
+  box-shadow: var(--shadow-hover), var(--card-lit);
 }
 
 .card-hit-target {
@@ -454,18 +452,18 @@ select:focus-visible {
   background: var(--rep);
 }
 
-.listening-badge {
+.selected-badge {
   position: absolute;
   left: var(--space-2);
   bottom: calc(var(--meter-height) + var(--space-2));
   z-index: 2;
   padding: var(--space-1) var(--space-2);
-  background: var(--red);
-  color: var(--card);
+  background: var(--rep-soft);
+  color: var(--ink-2);
 }
 
-.listening-badge i,
-.live-badge i,
+.selected-badge i,
+.source-selected-badge i,
 .waiting-badge i {
   width: calc(var(--space-2) - var(--size-2));
   height: calc(var(--space-2) - var(--size-2));
@@ -618,23 +616,23 @@ select:focus-visible {
   background: var(--paper-2);
 }
 
-.player-live-rail {
+.player-selection-rail {
   position: absolute;
   top: var(--space-3);
   right: var(--space-6);
   left: var(--space-6);
   height: var(--space-2);
   border-radius: var(--radius-pill);
-  background: var(--red);
+  background: var(--rep);
 }
 
-.player-live-rail span {
+.player-selection-rail span {
   position: absolute;
   top: 50%;
   right: 0;
   width: var(--space-5);
   height: var(--space-5);
-  border: var(--size-2) solid var(--red);
+  border: var(--size-2) solid var(--rep);
   border-radius: 50%;
   background: var(--card);
   transform: translateY(-50%);
@@ -668,15 +666,15 @@ select:focus-visible {
   background: var(--card);
 }
 
-.live-badge,
+.source-selected-badge,
 .waiting-badge {
   margin-top: var(--space-1);
   padding: var(--space-1) var(--space-2);
 }
 
-.live-badge {
-  color: var(--card);
-  background: var(--red);
+.source-selected-badge {
+  color: var(--ink-2);
+  background: var(--rep-soft);
 }
 
 .waiting-badge {

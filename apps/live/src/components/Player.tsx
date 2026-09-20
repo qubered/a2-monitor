@@ -16,8 +16,8 @@ export function Player({
   onToggleDim,
 }: PlayerProps) {
   return (
-    <footer className="player" aria-label="Listening controls">
-      <div className="player-live-rail" aria-hidden="true">
+    <footer className="player" aria-label="Monitor output controls">
+      <div className="player-selection-rail" aria-hidden="true">
         <span />
       </div>
       <div className="player-source">
@@ -29,17 +29,17 @@ export function Player({
               ? `${channel.details.receiver} · ${channel.details.input}`
               : "Press a card to select a source"}
           </span>
-          <span className={channel ? "live-badge" : "waiting-badge"}>
+          <span className={channel ? "source-selected-badge" : "waiting-badge"}>
             <i aria-hidden="true" /> {channel ? "Selected" : "Waiting"}
           </span>
         </div>
       </div>
       <p className="safety-state" aria-live="polite">
         {muted
-          ? "Listening is muted"
+          ? "Monitor output is muted"
           : dimmed
-            ? "Listening is dimmed"
-            : "Listening is active"}
+            ? "Monitor output is dimmed"
+            : "Monitor output is unmuted"}
       </p>
       <div className="player-controls">
         <button

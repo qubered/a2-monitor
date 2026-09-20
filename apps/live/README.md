@@ -73,10 +73,12 @@ The first runnable slice is the A2 channel grid. It currently provides:
   tokens and locally bundled project fonts;
 - fabricated wireless and wired sources with separate RF, audio, battery and
   check verdicts, including unknown and not-applicable states;
-- the required two-step alert/listen behavior: the first press acknowledges an
+- the required two-step alert/selection behavior: the first press acknowledges an
   active alert and the next press selects the channel;
 - local filters, a capability-honest detail surface and persistent theme choice;
-- a fixed listening bar that starts muted and keeps mute and dim visible; and
+- a fixed monitor-output bar that starts muted and keeps mute and dim visible;
+- neutral local source selection labelled `Selected`, without claiming that
+  fabricated state is confirmed listening; and
 - unit-level interaction coverage plus verified desktop and iPad portrait
   rendering against the canonical design reference;
 - a typed HTTP snapshot adapter which rejects unknown or malformed state; and
@@ -110,7 +112,7 @@ npm run check --workspace @a2-monitor/live
 - [x] npm workspace and independent React/Vite production build
 - [x] shared Paper/dark design tokens and offline font assets
 - [x] A2 channel grid, filters, alert acknowledgement and detail surface
-- [x] muted-by-default listen selection with visible mute and dim controls
+- [x] muted-by-default source selection with visible mute and dim controls
 - [x] interaction tests and desktop/iPad visual checks
 - [x] backend health and fabricated snapshot endpoint
 - [x] Live snapshot loading, explicit waiting/offline/error states and reconnect
