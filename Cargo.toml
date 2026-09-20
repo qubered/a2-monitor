@@ -1,3 +1,13 @@
 [workspace]
-members = []
+members = [
+  "crates/audio-core",
+  "crates/audio-host-api",
+  "services/audio-node",
+]
 resolver = "3"
+
+[workspace.package]
+edition = "2024"
+license = "LicenseRef-Proprietary"
+rust-version = "1.98"
+version = "0.0.0"

@@ -1,0 +1,17 @@
+[package]
+name = "a2-audio-node"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+a2-audio-core = { path = "../../crates/audio-core" }
+a2-audio-host-api = { path = "../../crates/audio-host-api" }
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "a2-synthetic-capture"
+path = "src/bin/synthetic-capture.rs"
