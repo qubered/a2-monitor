@@ -16,13 +16,14 @@ is recoverable at commit `6c123f3b44f69392da62ee9da0f61d07c7999daf`
 ## Why the contract layer was withdrawn
 
 The repository reached 66,000 words of specification, 18 ADRs and five review
-rounds without a single measurement. The fifth review established that the one
-piece of running code that enforced rigour — the evidence verifier — did not
-verify: it compared declared artifact hashes but never resolved `store_key`,
-read bytes, checked length or recomputed SHA-256, and the checked-in passing
-fixture used placeholder hashes against nonexistent stores. It also found the
-canonical command envelope conflated bootstrap and Live authority, and that
-canonical events and ledger chunks accepted arbitrary objects.
+rounds without a single measurement. The fifth review established that the
+first evidence verifier did not verify stored bytes and that its passing
+fixture used placeholder hashes against nonexistent stores. The recoverable
+baseline includes a later attempted byte-reading repair, but that repair
+remained unproven end to end and still allowed caller-created summaries to
+fabricate promotion. The review also found the canonical command envelope
+conflated bootstrap and Live authority, and that canonical events and ledger
+chunks accepted arbitrary objects.
 
 Those artifacts were wrong *and* premature. A broken contract in
 `packages/protocol` with a green CI badge is worse than no contract, because it

@@ -1,18 +1,31 @@
 # Phase 0 evidence contract
 
-**Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
+**Status:** Hypothesis; verifier-conformance foundation only, no product evidence.
+See [open questions](../open-questions.md).
 
 This document states what an evidence contract must do. It does **not**
-describe anything that exists. The previous catalogue, manifest schemas and
-verifier were withdrawn: the verifier compared declared artifact hashes but
-never resolved the storage key, read bytes, checked length or recomputed
-SHA-256, and the checked-in passing fixture used placeholder hashes against
-nonexistent stores. It asserted an assurance level the project did not have.
+describe a production promotion path that exists. The previous catalogue,
+manifest schemas and verifier were withdrawn after the original implementation
+failed to verify stored bytes. A later repair attempted filesystem verification
+but remained unproven end to end and kept unsafe promotion trust edges. The
+checked-in evidence still did not justify the assurance claim.
+
+The dependency-free foundation in [`tools/evidence`](../../tools/evidence)
+now exercises strict bounded JSON, artifact-root containment, byte length and
+SHA-256 recomputation, ES256 consistency under a supplied conformance keyring,
+per-trial time/fault record checks and verifier-computed predicates. Its only
+accepted catalogue kind is explicitly
+non-promotional and every output says `promotionEligible: false`. Metrics,
+timelines, fault occurrences, runner identity, catalogue and keyring remain
+supplied conformance inputs; they cannot promote a phase until runtime-specific
+extractors and trusted authorities establish them independently. See
+[ADR 0020](../decisions/0020-evidence-verifier-trust-boundary.md).
 
 When this is rebuilt against a working runtime, it must hold:
 
-- the verifier, not the runner, computes pass. The runner supplies assertion
-  IDs and artifact hashes, never a trusted pass/fail field;
+- the verifier, not the runner, computes pass. A trusted catalogue owns the
+  assertion IDs; the runner supplies artifact hashes and run facts, never a
+  trusted pass/fail field;
 - the verifier opens every artifact beneath an explicit artifact root, hashes
   the bytes itself, parses the metrics document and evaluates the catalogue
   predicate (`eq`, `lt`, `lte`, `gt`, `gte`, `abs_lte`). Every predicate must
@@ -70,8 +83,9 @@ response serialization cannot erase evidence of invalid data. Runnable audio cod
 lock guards, applicable sanitizers, dependency/license/secret scanning and
 signed evidence emission before it can promote a phase.
 
-The verifier CLI takes `verify-run MANIFEST RESULT CATALOG KEYRING
-MANIFEST_SCHEMA RESULT_SCHEMA ARTIFACT_ROOT`; the artifact root is mandatory
-and path traversal is rejected. `verify-promotion` accepts only independently
-verified run summaries and matches the named coverage rows, not merely a list
-of test IDs.
+The current CLI takes `verify-conformance-run CATALOG MANIFEST RESULT KEYRING
+ARTIFACT_ROOT`; the artifact root is mandatory and unsafe aliases, symlinks and
+special files are rejected. It deliberately has no `verify-promotion` command.
+The future production CLI must consume pinned or signed catalogue/keyring trust
+anchors and either reverify full bundles or accept only independently signed
+verified summaries matched against exact named coverage rows.

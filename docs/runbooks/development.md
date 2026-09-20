@@ -13,6 +13,16 @@ git status --short --branch
 ./scripts/check-repo.sh
 ```
 
+The repository check includes the non-promotional evidence-verifier
+conformance suite. Run it directly while changing verifier code:
+
+```sh
+node --test tools/evidence/*.test.mjs
+```
+
+A passing conformance run proves parser/verifier behavior only. It cannot be
+attached as Phase 0 product evidence.
+
 Component READMEs own their exact setup and checks. The root may expose thin
 orchestration scripts once at least two real components need them, but it must
 not hide the underlying Cargo/npm commands or hardware evidence profile.

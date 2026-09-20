@@ -67,6 +67,7 @@ spike deliberately does not use it.
 | `packages/protocol` | Versioned contracts shared across components |
 | `packages/ui` | Reusable presentation components and design tokens |
 | `infra/appliance` | Appliance packaging, networking, certificates, updates |
+| `tools/evidence` | Non-promotional evidence-verifier conformance tooling |
 | `tests` | Cross-component, hardware-in-loop, soak, and performance tests |
 | `docs` | Product, architecture, research, decisions, and runbooks |
 
