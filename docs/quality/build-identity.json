@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.a0d81f543c6c7bbd",
-  "sourceSha256": "a0d81f543c6c7bbd35aea0634b6386e868296386b3462bdf443252e2768834e3",
-  "inputCount": 242,
+  "buildId": "a2-0.0.0+sha256.bf785eb7d111eaa1",
+  "sourceSha256": "bf785eb7d111eaa1bc2c25343cc0e1b3b7fc921510e6466f88c48a1f0886a2a0",
+  "inputCount": 245,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -61,11 +61,11 @@
     },
     {
       "path": "Cargo.lock",
-      "sha256": "e34b4b83126e044c84e200a8bc8d437ea330dbf8586128e70126355492918a76"
+      "sha256": "d4a247180bb4f9672832c325e98a45cff3acad4a2621c7b784547dcc05e47969"
     },
     {
       "path": "Cargo.toml",
-      "sha256": "0edfca0d204dfa866503ce189838d2d6fa426dbb2496f7d5497b20e15b46e1b1"
+      "sha256": "93c915bfc9b869993105407a7c014bab5f711ebc62bdfa7a4c8472e739c68c64"
     },
     {
       "path": "README.md",
@@ -288,6 +288,18 @@
       "sha256": "25af940444d77fc858bfb68546dea3e1880d8d987b30920ac348a347d1df868a"
     },
     {
+      "path": "crates/replay/Cargo.toml",
+      "sha256": "946da87e2059b9711449c4a911b308a5a9759407fb6fce04e3518fd43d68bdbf"
+    },
+    {
+      "path": "crates/replay/README.md",
+      "sha256": "cfae60bab5b7817baa13e8743a01ac5b4ec6c0feaeef5c362e8fed7768c586ae"
+    },
+    {
+      "path": "crates/replay/src/lib.rs",
+      "sha256": "63ea64b64ebb6071b8dbf9acfe566e404363cd10977fd19261ce47c12a4ca8f6"
+    },
+    {
       "path": "crates/supervisor/Cargo.toml",
       "sha256": "994194e4d8d489f5ba948cdaf5cf83aebb00ed20dfd5448b69d1c77ba45181c4"
     },
@@ -333,7 +345,7 @@
     },
     {
       "path": "docs/architecture/implementation-structure.md",
-      "sha256": "4df8ccdf0ee4ed17bb21650899b9d1d24c8eda7ca8435d327cf9552fd54c64fe"
+      "sha256": "6c707d6c6a6d57d1a8d04ea4b34da4cc60ca159ce8eceb372a13384c07e7ef4d"
     },
     {
       "path": "docs/architecture/latency.md",
@@ -373,7 +385,7 @@
     },
     {
       "path": "docs/architecture/time-and-replay.md",
-      "sha256": "1b4cd74b6f804cb3dc1d16026a6ece328547d02746fd6282b429ab53d8a97afd"
+      "sha256": "f2c23529e449b4d6edfdf16ac5cf43f50de883657e4180ce1b8abed7e1d47692"
     },
     {
       "path": "docs/decisions/0000-template.md",
@@ -573,7 +585,7 @@
     },
     {
       "path": "docs/quality/cargo-dependency-inventory.json",
-      "sha256": "5c9bb6a81b5f65f566a1feedecec6bebc7aa0594f6fb47a914a95999072d9665"
+      "sha256": "2d25c8de6cdfcf88e0be6a367c67b5c59d1b75fcf355978e57c556e98acd65d5"
     },
     {
       "path": "docs/quality/client-and-appliance-profiles.md",
@@ -833,7 +845,7 @@
     },
     {
       "path": "scripts/cargo-license-policy.json",
-      "sha256": "93378c781cebeee36ae69672d59aa76d3347839e10f25ffe094687db5d96f44a"
+      "sha256": "6055fd2290723fae31b4ee26f377f9db2e16a5b95e4c2899608021f281966266"
     },
     {
       "path": "scripts/check-markdown-links.rb",

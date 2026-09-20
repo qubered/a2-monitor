@@ -44,6 +44,13 @@ name = "a2-pcm-abi"
 version = "0.0.0"
 
 [[package]]
+name = "a2-replay"
+version = "0.0.0"
+dependencies = [
+ "a2-audio-host-api",
+]
+
+[[package]]
 name = "a2-supervisor"
 version = "0.0.0"
 dependencies = [

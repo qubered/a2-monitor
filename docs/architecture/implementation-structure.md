@@ -117,6 +117,9 @@ Rules:
 - `media` owns pure 48 kHz source-frame-to-RTP/RTCP arithmetic and session
   fencing. It has no clock, random, codec, socket or WebRTC dependency; those
   capabilities remain in the future media-worker composition boundary.
+- `replay` owns the preallocated in-memory timeline/retention state-machine
+  model. Its current single-threaded slots and readers are not the durable
+  segmented file format, recovery scanner or concurrent replay-worker handoff.
 - `opus-sys-safe` is the only project crate permitted to call `libopus` FFI.
 - `ipc` and generated native DTOs contain transport mechanics, not show-domain
   authority decisions.

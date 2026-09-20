@@ -8,6 +8,7 @@
     "a2-ipc@0.0.0",
     "a2-media@0.0.0",
     "a2-pcm-abi@0.0.0",
+    "a2-replay@0.0.0",
     "a2-supervisor@0.0.0"
   ],
   "packages": {

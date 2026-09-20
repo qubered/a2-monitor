@@ -1,0 +1,12 @@
+[package]
+name = "a2-replay"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+a2-audio-host-api = { path = "../audio-host-api" }
+
+[lib]
+path = "src/lib.rs"
