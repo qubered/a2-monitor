@@ -86,6 +86,19 @@ The runnable native scaffold now contains:
   restart/quarantine, and confirmed-death shutdown deadlines behind injected
   process and clock boundaries.
 
+The audio-node library also has a bounded in-process worker-control adapter.
+It decodes either Phase 0T JSON or Protobuf candidate bytes into the shared v2
+semantic type, maps the full boot ID, worker ID, role, generation, readiness
+evidence and heartbeat sequence, compares that full tuple with a trusted
+connection-bound identity, verifies the claimed role against configured
+supervisor state, and only then dispatches ready or heartbeat events. The bound
+identity must come from the spawn/connection registry, not the decoded message;
+the comparison is a routing fence, not peer authentication. Health probes,
+unknown workers, peer mismatches and configured-role mismatches fail before
+supervisor mutation. This composes two codec candidates with lifecycle policy;
+it does not choose a production codec or provide sockets, peer authentication,
+framing, process creation, privilege separation or codec/media work.
+
 The callback path and ring push are covered by an allocation-counting test
 after setup. The callback types expose no lock or I/O facility, and the current
 implementation contains no locking primitive on that path; this is structural

@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.c5a992fe21c639f8",
-  "sourceSha256": "c5a992fe21c639f8f41968e49b286117e6913fce001cc0c36b06bd14229c992c",
-  "inputCount": 250,
+  "buildId": "a2-0.0.0+sha256.51a8aafec304e0c6",
+  "sourceSha256": "51a8aafec304e0c612f51c283acef2f0eeefc286c195fd5f1cb53c58c0e4f1e8",
+  "inputCount": 251,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -61,7 +61,7 @@
     },
     {
       "path": "Cargo.lock",
-      "sha256": "f27ba444bc5d0dd4db3e59123f46327dbda88770821dd82123b83a1784f951b7"
+      "sha256": "8fdd92690d8879c22ed343e085950ad01806781adcb232eefc75a90194becf92"
     },
     {
       "path": "Cargo.toml",
@@ -597,7 +597,7 @@
     },
     {
       "path": "docs/quality/cargo-dependency-inventory.json",
-      "sha256": "939985c00ec6423430bcae5efc9350fdc65771dd054452e14df9b9aeddc0b8f6"
+      "sha256": "3af578b76bb4597f0cb59c5de6795d8c0cfeedeb5e570e736a6318f51d4abba2"
     },
     {
       "path": "docs/quality/client-and-appliance-profiles.md",
@@ -897,11 +897,11 @@
     },
     {
       "path": "services/audio-node/Cargo.toml",
-      "sha256": "4d91d4e37fa4b2d1d92cabfb88669b30868cead901a7abdef33c572ad23829f8"
+      "sha256": "1f6c3d3ee8631e7c4aa02e2655463ce0d32701466367125b5c168b8b7d5e1092"
     },
     {
       "path": "services/audio-node/README.md",
-      "sha256": "d802c92d913bf45c6db0e07db8546d4870604b522dc5bf4ebc8011ffc4afca55"
+      "sha256": "73e4a65af5f59266f83c926c4cc5ce6948429be29815fc53f591c2e1d1fc7c8a"
     },
     {
       "path": "services/audio-node/src/bin/media-worker-smoke.rs",
@@ -917,7 +917,11 @@
     },
     {
       "path": "services/audio-node/src/lib.rs",
-      "sha256": "aa324595176d2a09fb265f1e8018d673a4693e5433f7769035ecae8f048f3325"
+      "sha256": "2d983ea60310fb473242421d4884991082eb716a97263a57767bc65550f3f692"
+    },
+    {
+      "path": "services/audio-node/src/worker_control.rs",
+      "sha256": "58b2196ea4642bd4fcbc6c2805e3ce90edc3ccbf7bc1f90bc36c53940299b689"
     },
     {
       "path": "services/backend/README.md",
