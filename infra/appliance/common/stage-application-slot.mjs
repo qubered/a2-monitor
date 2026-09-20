@@ -27,6 +27,7 @@ const ROLES = new Set([
   "node_runtime",
   "backend",
   "backend_dependency",
+  "protocol_runtime",
   "protocol_schema",
   "manager_asset",
   "live_asset",
@@ -418,13 +419,39 @@ async function validateProtocolPackage(root) {
     "v0/http/live-snapshot-response.schema.json",
     "protocol schema directory",
   );
-  return [
-    { relativePath: "package.json", source: packageFile },
-    ...schemas.map((file) => ({
+  const validationRoot = path.join(root, "validation");
+  const validation = await collectTree(
+    validationRoot,
+    "protocol validation runtime",
+  );
+  assertAllowedExtensions(
+    validation,
+    new Set([".mjs", ".mts"]),
+    "protocol validation runtime",
+  );
+  requireRelativeFile(
+    validation,
+    "strict-ajv.mjs",
+    "protocol validation runtime",
+  );
+  requireRelativeFile(
+    validation,
+    "strict-ajv.d.mts",
+    "protocol validation runtime",
+  );
+  return {
+    runtime: [
+      { relativePath: "package.json", source: packageFile },
+      ...validation.map((file) => ({
+        relativePath: `validation/${file.relativePath}`,
+        source: file.source,
+      })),
+    ],
+    schemas: schemas.map((file) => ({
       relativePath: `schema/${file.relativePath}`,
       source: file.source,
     })),
-  ];
+  };
 }
 
 async function validateBackendDependencies(root) {
@@ -758,7 +785,14 @@ function validateManifestShape(manifest) {
         return "backend";
       }
       if (entry.path.startsWith("backend/node_modules/@a2-monitor/protocol/")) {
-        return "protocol_schema";
+        if (
+          entry.path.startsWith(
+            "backend/node_modules/@a2-monitor/protocol/schema/",
+          )
+        ) {
+          return "protocol_schema";
+        }
+        return "protocol_runtime";
       }
       if (entry.path.startsWith("backend/node_modules/"))
         return "backend_dependency";
@@ -795,7 +829,12 @@ function validateManifestShape(manifest) {
     ["backend/package.json", "backend", false],
     [
       "backend/node_modules/@a2-monitor/protocol/package.json",
-      "protocol_schema",
+      "protocol_runtime",
+      false,
+    ],
+    [
+      "backend/node_modules/@a2-monitor/protocol/validation/strict-ajv.mjs",
+      "protocol_runtime",
       false,
     ],
     [
@@ -992,7 +1031,13 @@ export async function stageApplicationSlot(options) {
     );
     entries.push(
       ...(await copyTree(
-        protocolFiles,
+        protocolFiles.runtime,
+        temporarySlot,
+        "backend/node_modules/@a2-monitor/protocol",
+        "protocol_runtime",
+      )),
+      ...(await copyTree(
+        protocolFiles.schemas,
         temporarySlot,
         "backend/node_modules/@a2-monitor/protocol",
         "protocol_schema",

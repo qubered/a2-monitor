@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "generatedFrom": "package-lock.json",
   "regenerationCommand": "node scripts/generate-node-dependency-inventory.mjs",
-  "lockfileSha256": "c8e781a83947359f3fe8e364d8809c7e4016f18a222617e63ecd7a525d2770a4",
+  "lockfileSha256": "cbf3ab6da39ee58a86705a6887d76561ac7647ad609a3ba4842118b71bd9cc8b",
   "componentCount": 301,
   "licenseCounts": [
     {
@@ -1228,6 +1228,7 @@
         "node_modules/@fastify/ajv-compiler/node_modules/ajv",
         "node_modules/ajv-formats/node_modules/ajv",
         "node_modules/fast-json-stringify/node_modules/ajv",
+        "packages/protocol/node_modules/ajv",
         "services/backend/node_modules/ajv"
       ]
     },
@@ -1803,6 +1804,7 @@
         "node_modules/@fastify/ajv-compiler/node_modules/ajv/node_modules/fast-uri",
         "node_modules/ajv-formats/node_modules/fast-uri",
         "node_modules/fast-json-stringify/node_modules/ajv/node_modules/fast-uri",
+        "packages/protocol/node_modules/fast-uri",
         "services/backend/node_modules/fast-uri"
       ]
     },
@@ -2169,6 +2171,7 @@
         "node_modules/@fastify/ajv-compiler/node_modules/json-schema-traverse",
         "node_modules/ajv-formats/node_modules/json-schema-traverse",
         "node_modules/fast-json-stringify/node_modules/json-schema-traverse",
+        "packages/protocol/node_modules/json-schema-traverse",
         "services/backend/node_modules/json-schema-traverse"
       ]
     },

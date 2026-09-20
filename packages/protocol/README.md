@@ -45,18 +45,29 @@ and regeneration command; never edit it by hand. The generated client applies
 per-response byte limits before JSON parsing, so schema validation never starts
 from an unbounded buffered body.
 
+`validation/strict-ajv.mjs` is the Node/backend runtime for authoritative JSON
+Schema validation. Its factory fixes Draft 2020-12 strictness and format
+validation while disabling coercion, defaults, and property removal. The
+backend and fixture tooling import this factory; callers cannot supply option
+overrides. Response serialization validates the supplied value and the exact
+parsed JSON value so serialization hooks cannot bypass the contract. Browser
+clients continue to use the generated bounded parsers and do not import Ajv.
+
 Generate and verify the committed artifact with:
 
 ```sh
 npm run generate --workspace @a2-monitor/protocol
 npm run generate:check --workspace @a2-monitor/protocol
+npm run validate:fixtures --workspace @a2-monitor/protocol
 npm run test --workspace @a2-monitor/protocol
 ```
 
 The generator is deterministic and `--check` compares the complete expected
 output, failing when the committed artifact is absent or stale. Repository
-checks run this freshness gate. Compatibility fixtures cover the current and
-previous deployment pair while the schema major remains `0`; incompatible
+checks run this freshness gate. The fixture validator rejects any schema not
+registered in its accepted/rejected matrix and executes that matrix with the
+same strict Ajv factory as Fastify. Compatibility fixtures cover the current
+and previous deployment pair while the schema major remains `0`; incompatible
 major versions and undeclared fields are negative vectors. A future schema
 major needs its own directory and explicit negotiation rather than silently
 relaxing these closed parsers.

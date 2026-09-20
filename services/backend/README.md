@@ -48,9 +48,11 @@ contract source.
 
 The packaged artifact contains an exact Node patch, compiled JavaScript/static
 assets and an adjacent signed native addon. Fastify 5 is pinned at 5.12.2 or
-newer and uses an explicit strict, non-mutating Ajv 2020 compiler. Responses
-are validated before ordinary JSON serialization; runtime conformance vectors
-must agree with tools and generated Rust/TypeScript types.
+newer and uses the protocol package's shared strict, non-mutating Ajv 2020
+factory. Responses are validated before ordinary JSON serialization, then the
+exact serialized JSON value is validated again so prototype inheritance,
+getters, or `toJSON` cannot change the wire contract. Runtime conformance
+vectors must agree with tools and generated Rust/TypeScript types.
 
 SQLite runs through pinned `better-sqlite3` in a dedicated storage worker with
 one writer queue, reviewed SQL migrations, disabled extension loading and a
@@ -70,10 +72,11 @@ The Phase 0T skeleton exposes two read-only routes:
 - `GET /api/v1/live/snapshot` returns a bounded, explicitly fabricated Live
   snapshot for development.
 
-Both responses use the Draft 2020-12 schemas in `packages/protocol`. Fastify is
-configured with strict, non-mutating Ajv 2020 validation and validates response
-data before ordinary `JSON.stringify` serialization. Undeclared response fields
-fail closed.
+Both responses use the Draft 2020-12 schemas and shared validator runtime in
+`packages/protocol`. Fastify validates both the supplied response object and the
+exact value produced by ordinary `JSON.stringify` serialization. Undeclared,
+inherited-only, coerced, defaulted, removed, or post-validation transformed
+response data fails closed.
 
 Run the backend on `http://127.0.0.1:3000` with:
 

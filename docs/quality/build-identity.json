@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.22435ec39eda9d6b",
-  "sourceSha256": "22435ec39eda9d6bb8edcda5b234fd8be71cd87a54fabbf41cd71e7e9dc6965c",
-  "inputCount": 212,
+  "buildId": "a2-0.0.0+sha256.948e75cb3b6e68ee",
+  "sourceSha256": "948e75cb3b6e68ee56f713f570af883ba83ea4aa95c8c253ae0e57473e96754d",
+  "inputCount": 216,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -557,7 +557,7 @@
     },
     {
       "path": "docs/quality/node-dependency-inventory.json",
-      "sha256": "3b83671dd499f38754cc76fca2f3b30dc5694e5cc8b99e66cc2af5ab964ce56a"
+      "sha256": "83c40422a4984791517eb824aff99597b49e0d660360e36b44a9eda3549b8896"
     },
     {
       "path": "docs/quality/performance-baselines.md",
@@ -621,7 +621,7 @@
     },
     {
       "path": "infra/appliance/common/README.md",
-      "sha256": "bf41cf5a28bfb1f072dd655abc0ce9f1649e330966d6ea7c1bbaab3ab34ec2bc"
+      "sha256": "0575bffcf2b8ef7627ccc06bd3383ebbb3eb19451dcf04c837503b42afba218b"
     },
     {
       "path": "infra/appliance/common/application-slot-manifest.schema.json",
@@ -629,11 +629,11 @@
     },
     {
       "path": "infra/appliance/common/stage-application-slot.mjs",
-      "sha256": "0e3ec224e60fd212f61eefc903d161285d6c72bc7eb3efe6db7af5b4a5bfc2f4"
+      "sha256": "1947e47d2103b0a90d0ea2691c83e39b2340c47e8b75a637c119464211ab5b16"
     },
     {
       "path": "infra/appliance/common/stage-application-slot.test.mjs",
-      "sha256": "4555e66797602e83d6e91fbfd325793ae748e624712e0bae14675cb0a66b5bca"
+      "sha256": "9364dbe9e8cb2220c3670dacd482b7439c1d0711c4c984ebb837f83804a103ec"
     },
     {
       "path": "infra/appliance/macos/README.md",
@@ -673,7 +673,7 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "c8e781a83947359f3fe8e364d8809c7e4016f18a222617e63ecd7a525d2770a4"
+      "sha256": "cbf3ab6da39ee58a86705a6887d76561ac7647ad609a3ba4842118b71bd9cc8b"
     },
     {
       "path": "package.json",
@@ -681,7 +681,7 @@
     },
     {
       "path": "packages/protocol/README.md",
-      "sha256": "8c878f224f859bd1f7431ce345d5bce20a2aaa83f3578f39995771f10dab8919"
+      "sha256": "58bb95ad48d3926930338224235e981b97c8061991d253dd90cf9f079c9ef72c"
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/health-response.valid.json",
@@ -725,7 +725,7 @@
     },
     {
       "path": "packages/protocol/package.json",
-      "sha256": "d7ed835209d62109bdd98ccaf00bb51a82d4752d685928a8468a8a7ffe740f2c"
+      "sha256": "c515014ea0410662738eaf560218f16ad7b5f74c9625af76bfbeae72975f60c6"
     },
     {
       "path": "packages/protocol/schema/v0/http/health-response.schema.json",
@@ -740,6 +740,10 @@
       "sha256": "751e282e01ae3f129799b80b6840d41de775a795d80501c27bc5a288ad246fc1"
     },
     {
+      "path": "packages/protocol/scripts/validate-http-contract-fixtures.mjs",
+      "sha256": "a4bb24a72da77b58a1436c6db53872af1569e1a6199dc53863e03f68aa8dc1c0"
+    },
+    {
       "path": "packages/protocol/specification.md",
       "sha256": "2622f1828388923c6bf4d0a92f0712443781956ca234b18d543a2c97f4b61358"
     },
@@ -749,7 +753,19 @@
     },
     {
       "path": "packages/protocol/tests/http-contracts.test.ts",
-      "sha256": "21a876637cb78a0046a44f6671fb335801486e8093b2cc3ee356213f6a6fd605"
+      "sha256": "23c845fcd1248ecea79e6f3784b9545542795e9d81c0af9835f65f7c51a917c1"
+    },
+    {
+      "path": "packages/protocol/tests/strict-ajv.test.mjs",
+      "sha256": "44a7a61b8db260e8918e127c83a5239f4433b9efce8de1b2c818faa341c56fe5"
+    },
+    {
+      "path": "packages/protocol/validation/strict-ajv.d.mts",
+      "sha256": "1dd04c600a8794ecf4916229476adb48471d2cd589a1bfa7e21f44a1de475156"
+    },
+    {
+      "path": "packages/protocol/validation/strict-ajv.mjs",
+      "sha256": "6d8131a5a1b18e4cac0f99eac15a776d51944191718fdeace0cad2ae90b8cfc4"
     },
     {
       "path": "packages/ui/README.md",
@@ -825,7 +841,7 @@
     },
     {
       "path": "services/backend/README.md",
-      "sha256": "fd009881527dc03bd3e108b4937c8d1421d38f496b19dc887c1eb2b1434d50a6"
+      "sha256": "3538b96ed0a9a9e2d0234be12e6b372263e2337633caa0733c208f26360dc0bd"
     },
     {
       "path": "services/backend/package.json",
@@ -837,11 +853,11 @@
     },
     {
       "path": "services/backend/src/server.test.ts",
-      "sha256": "1429a99750981374100ca2ee376b96e503ff74c86c5a83dd8a319f60c4104fee"
+      "sha256": "37b3b7f1e60888f66b4a9e55f13d923351cee0f786d4f8102765ec59cb117aec"
     },
     {
       "path": "services/backend/src/server.ts",
-      "sha256": "71e47b7bd0ac9e43dc0b93bbee3b849d00e8f3a38cc82c78ceaef14f3b5dfac7"
+      "sha256": "565934a27c6bee9780907c7bc7da9aa0d539d69ce6430e9903f2f60f994bd1ab"
     },
     {
       "path": "services/backend/src/start.ts",

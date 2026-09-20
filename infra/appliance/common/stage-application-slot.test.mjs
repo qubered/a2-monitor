@@ -124,6 +124,14 @@ async function makeFixture(root) {
     `${JSON.stringify({ name: "@a2-monitor/protocol", type: "module" })}\n`,
   );
   await put(
+    path.join(inputs, "protocol", "validation", "strict-ajv.mjs"),
+    "export const createStrictAjv2020 = () => ({});\n",
+  );
+  await put(
+    path.join(inputs, "protocol", "validation", "strict-ajv.d.mts"),
+    "export function createStrictAjv2020(): object;\n",
+  );
+  await put(
     path.join(
       inputs,
       "protocol",
@@ -238,6 +246,14 @@ test("stages and verifies a deterministic closed application slot", async () => 
       manifest.files.some(
         (entry) =>
           entry.path === "licenses/node/LICENSE" && entry.role === "license",
+      ),
+    );
+    assert.ok(
+      manifest.files.some(
+        (entry) =>
+          entry.path ===
+            "backend/node_modules/@a2-monitor/protocol/validation/strict-ajv.mjs" &&
+          entry.role === "protocol_runtime",
       ),
     );
     assert.ok(
