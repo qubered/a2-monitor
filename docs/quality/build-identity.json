@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.948e75cb3b6e68ee",
-  "sourceSha256": "948e75cb3b6e68ee56f713f570af883ba83ea4aa95c8c253ae0e57473e96754d",
-  "inputCount": 216,
+  "buildId": "a2-0.0.0+sha256.793e1c36cca050e1",
+  "sourceSha256": "793e1c36cca050e1b648472311c6ef12b562f4cc7eaa4f001a52b2e4bb83bce2",
+  "inputCount": 221,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -61,7 +61,7 @@
     },
     {
       "path": "Cargo.lock",
-      "sha256": "07050d85b6d0a2effa8828d9900ec2e00947a79740817c49b53dc0c9a059cee6"
+      "sha256": "26f02b7a9353c2323f077f4b50567ef7eff232b683f35e8d686614269d05de2a"
     },
     {
       "path": "Cargo.toml",
@@ -257,11 +257,11 @@
     },
     {
       "path": "crates/supervisor/Cargo.toml",
-      "sha256": "19d659cc9f4947493802517fa9073d9aab26852583f3075328bc4da9fbb2a9a3"
+      "sha256": "994194e4d8d489f5ba948cdaf5cf83aebb00ed20dfd5448b69d1c77ba45181c4"
     },
     {
       "path": "crates/supervisor/README.md",
-      "sha256": "8eb633cd219901b7af0b388d05c349c41d2f0b8d9c9cfa4214d52dc9524fb13d"
+      "sha256": "9dc4f9000af1229b855a7d6fd8c8531edfb15178f8c691c0ddd537c193fe303c"
     },
     {
       "path": "crates/supervisor/src/bin/smoke.rs",
@@ -269,7 +269,7 @@
     },
     {
       "path": "crates/supervisor/src/lib.rs",
-      "sha256": "16eb5ead600e7a24a48854b7cae9aaf31a931ccbb53a286c525721593dc14300"
+      "sha256": "8cf90d55e5120398d5d7221e5145ae5e5213831ddd53d90270d5d226079b5cc3"
     },
     {
       "path": "docs/README.md",
@@ -329,7 +329,7 @@
     },
     {
       "path": "docs/architecture/process-and-update-lifecycle.md",
-      "sha256": "777560cc42d59f885be6c1ab70442f181d8e873cfe5ce35174405044af616001"
+      "sha256": "9d5186c8c7e3f6f3dbefc491eb26ccbcfdf30ef759de72e6977dd1d1235b0933"
     },
     {
       "path": "docs/architecture/runtime-command-contract.md",
@@ -537,7 +537,7 @@
     },
     {
       "path": "docs/quality/cargo-dependency-inventory.json",
-      "sha256": "593c897c909ebeb3ce9ea5c5b41fa3f57ac5ff20cc8941045b99261885a6b896"
+      "sha256": "00030a41d1d5c5241bd0b9e18d323a75d65034c49922048c349b7c748dca38cd"
     },
     {
       "path": "docs/quality/client-and-appliance-profiles.md",
@@ -617,31 +617,43 @@
     },
     {
       "path": "infra/appliance/README.md",
-      "sha256": "a6b3eb1d445146d8b4a130e5f1a8c94ea555bece4481eac09f83c09d2366cc1b"
+      "sha256": "01503204f7cd632a81d95442ae98d6fd49b27f5280f202d8e13d1e334f9261e9"
     },
     {
       "path": "infra/appliance/common/README.md",
-      "sha256": "0575bffcf2b8ef7627ccc06bd3383ebbb3eb19451dcf04c837503b42afba218b"
+      "sha256": "3fa5c314378cbcddd36b3fd5d88512da9a318cb350de0aa23f616175a73e24e9"
     },
     {
       "path": "infra/appliance/common/application-slot-manifest.schema.json",
-      "sha256": "ae98ad6ba0b9c7d659a4f8e843f01ef9f2479588f4d9320e74094d23ab236c90"
+      "sha256": "48221dd6d2c1e83ac8ee5912fefb9f0a4d013cae4e278c5c53d50ec2f7075ef7"
+    },
+    {
+      "path": "infra/appliance/common/process-boundaries.v0.json",
+      "sha256": "275410484fd3c8f51dccda1a76bc9a897e15cad0404799ad6bc6803aede4fed8"
     },
     {
       "path": "infra/appliance/common/stage-application-slot.mjs",
-      "sha256": "1947e47d2103b0a90d0ea2691c83e39b2340c47e8b75a637c119464211ab5b16"
+      "sha256": "efaad9c6bcbe109b64c09ecfbedae9ea6bb819f085606c1b52e40cb75a1c3552"
     },
     {
       "path": "infra/appliance/common/stage-application-slot.test.mjs",
-      "sha256": "9364dbe9e8cb2220c3670dacd482b7439c1d0711c4c984ebb837f83804a103ec"
+      "sha256": "cb4d30eb447412cbcd632c377ca1b09b3d2ed30df7b79a918a170fccf4ff891f"
+    },
+    {
+      "path": "infra/appliance/common/validate-process-boundaries.mjs",
+      "sha256": "97d4309d35ac4126a96bb834ea3cea2a9c9c21876c808be327b1452d5fecea18"
+    },
+    {
+      "path": "infra/appliance/common/validate-process-boundaries.test.mjs",
+      "sha256": "f4528bc1e5da9db5215c3abe3b02fe45e9797051a9e0c2d45e890505e39d3ee8"
     },
     {
       "path": "infra/appliance/macos/README.md",
-      "sha256": "4259ee62270298b1e4e1270bfeb5ef17eb2daad358e325ffb8eef5cdf83005d7"
+      "sha256": "7702cf350a2e9eeefff3fc35ebb5359c4a76aa31cea5cd16560599f86e9312a6"
     },
     {
       "path": "infra/appliance/macos/build-unsigned-pkg.sh",
-      "sha256": "8cd770b188ba8e48af087e22faa39b6edece381100383e4ec74c0643f8ca9974"
+      "sha256": "35acd543a164d854f2c94a832bf6da1b759a4e8824901b7f67547b96461751dd"
     },
     {
       "path": "infra/appliance/macos/inspect-unsigned-pkg.sh",
@@ -649,19 +661,19 @@
     },
     {
       "path": "infra/appliance/macos/test-unsigned-pkg.sh",
-      "sha256": "ff06a2bcb0d3b1cbe6226cb59191ae6bd81af2156b54613d3d48bda553da84e1"
+      "sha256": "ede62887eb3ccbd1739edf5de836328bd7cb660e357b6aa550bceef281f148b0"
     },
     {
       "path": "infra/appliance/windows/New-A2WindowsLayout.ps1",
-      "sha256": "8439518f7a35f25df1b8391b2e84f8c0bba2b82b5131601f90adff2b02cfd0fd"
+      "sha256": "0047990114ee351308d170efc262038a23f978ab1b4abd5ff6cb12bbb62055cd"
     },
     {
       "path": "infra/appliance/windows/README.md",
-      "sha256": "fad0084dba180a4f505203ab66e66ee81433cd74631a4b91e912e50a5864a286"
+      "sha256": "7d953686fdfcf4d4590e682c1b87d0b68dcf545cb02ede9d0a25adc491f5097b"
     },
     {
       "path": "infra/appliance/windows/Test-A2WindowsLayout.ps1",
-      "sha256": "523a54aa818a1c6cad1b205be324b6034f40065a8a625b0fd171247240d3e6de"
+      "sha256": "804647dabe074112c34a88f554fcbf2e7b587b405bb5a0aa7b3e165446279abc"
     },
     {
       "path": "integrations/sennheiser-ewdx/README.md",
@@ -793,7 +805,7 @@
     },
     {
       "path": "scripts/check-repo.sh",
-      "sha256": "ddc6493260abba3ce8b97e2578748130c2d0fb1bfc9d3a92e4ebb91885fa571b"
+      "sha256": "a4e328d8b3926ac89107d5fa4a5a3a2e4ec7af9c8e7c9efbef8c527c9627194f"
     },
     {
       "path": "scripts/generate-build-identity.mjs",
@@ -841,7 +853,7 @@
     },
     {
       "path": "services/backend/README.md",
-      "sha256": "3538b96ed0a9a9e2d0234be12e6b372263e2337633caa0733c208f26360dc0bd"
+      "sha256": "f0a2b89373a89315ea074be03aa9c9f6f4c49441370dcc4aa93f4170060eb5cd"
     },
     {
       "path": "services/backend/package.json",
@@ -850,6 +862,14 @@
     {
       "path": "services/backend/src/fixtures/live-snapshot.ts",
       "sha256": "c52fcfba7552b6f67c56799e38ee781c1ef860dffa039dcb20cb61f528d5567b"
+    },
+    {
+      "path": "services/backend/src/process-lifecycle.test.ts",
+      "sha256": "fabf85609803294b5089a6461d0661c5d1ed792c93fa2fab9507fafd2df23441"
+    },
+    {
+      "path": "services/backend/src/process-lifecycle.ts",
+      "sha256": "8668a57ba2ee28a269bebda393897cbadc12c35a2b794c6c54d345f97f81b13f"
     },
     {
       "path": "services/backend/src/server.test.ts",
@@ -861,7 +881,7 @@
     },
     {
       "path": "services/backend/src/start.ts",
-      "sha256": "0ed5000bd83b6cea670ee8d84b68d5d123c28a2da1f85f4b45ce5f44259f48cd"
+      "sha256": "92dac2b8951590ab3843b6182271c85bbbec836ce796fa0021eab4ec3ca18dd9"
     },
     {
       "path": "services/backend/tsconfig.json",

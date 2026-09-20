@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: $0 --output-dir DIR --build-id ID --version VERSION --audio-node FILE --supervisor FILE --backend-dist DIR --backend-dependencies DIR --protocol-package DIR --manager-dist DIR --live-dist DIR --node-runtime FILE --build-identity FILE --release-metadata FILE --cargo-lock FILE --npm-lock FILE --cargo-inventory FILE --node-inventory FILE --node-license FILE [--arch aarch64|x86_64] [--identifier ID] [--install-location PATH]" >&2
+  echo "usage: $0 --output-dir DIR --build-id ID --version VERSION --audio-node FILE --supervisor FILE --backend-dist DIR --backend-dependencies DIR --protocol-package DIR --manager-dist DIR --live-dist DIR --node-runtime FILE --build-identity FILE --release-metadata FILE --cargo-lock FILE --npm-lock FILE --cargo-inventory FILE --node-inventory FILE --node-license FILE --process-contract FILE [--arch aarch64|x86_64] [--identifier ID] [--install-location PATH]" >&2
 }
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
@@ -29,6 +29,7 @@ npm_lock=""
 cargo_inventory=""
 node_inventory=""
 node_license=""
+process_contract=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -53,12 +54,13 @@ while [[ $# -gt 0 ]]; do
     --cargo-inventory) cargo_inventory="${2-}"; shift 2 ;;
     --node-inventory) node_inventory="${2-}"; shift 2 ;;
     --node-license) node_license="${2-}"; shift 2 ;;
+    --process-contract) process_contract="${2-}"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown argument: $1" >&2; usage; exit 2 ;;
   esac
 done
 
-for required in output_dir build_id version audio_node supervisor backend_dist backend_dependencies protocol_package manager_dist live_dist node_runtime build_identity release_metadata cargo_lock npm_lock cargo_inventory node_inventory node_license; do
+for required in output_dir build_id version audio_node supervisor backend_dist backend_dependencies protocol_package manager_dist live_dist node_runtime build_identity release_metadata cargo_lock npm_lock cargo_inventory node_inventory node_license process_contract; do
   if [[ -z "${!required}" ]]; then
     echo "missing required argument: --${required//_/-}" >&2
     usage
@@ -114,7 +116,8 @@ node "$stager" stage \
   --npm-lock "$npm_lock" \
   --cargo-inventory "$cargo_inventory" \
   --node-inventory "$node_inventory" \
-  --node-license "$node_license"
+  --node-license "$node_license" \
+  --process-contract "$process_contract"
 
 slot="$stage_root/slots/$build_id"
 node "$stager" verify --slot "$slot"

@@ -7,9 +7,9 @@ directory, refuses overwrite, and never calls `installer`, signing, notarization
 or stapling tools.
 
 The wrapper requires the build identity, closed release metadata, Cargo/npm
-locks, generated dependency inventories and Node licence input and forwards
-them unchanged to the portable stager. The package version must equal the
-version in the build identity.
+locks, generated dependency inventories, Node licence input and closed process-
+boundary contract and forwards them unchanged to the portable stager. The
+package version must equal the version in the build identity.
 
 `inspect-unsigned-pkg.sh` uses `xar`, `pkgutil --expand-full` and `xmllint` to
 reject a signature, verify identifier/version/install location, and prove that

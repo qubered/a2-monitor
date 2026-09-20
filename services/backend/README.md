@@ -78,6 +78,12 @@ exact value produced by ordinary `JSON.stringify` serialization. Undeclared,
 inherited-only, coerced, defaulted, removed, or post-validation transformed
 response data fails closed.
 
+The standalone process handles `SIGINT` and `SIGTERM` by closing Fastify once,
+which stops accepting new requests and waits for Fastify's ordinary close
+hooks. Signal handlers are installed only after listen succeeds and are removed
+after shutdown. This is process-local graceful shutdown only: no backend supervisor,
+storage worker, database queue or storage-drain protocol exists yet.
+
 Run the backend on `http://127.0.0.1:3000` with:
 
 ```sh

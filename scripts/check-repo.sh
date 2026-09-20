@@ -103,10 +103,12 @@ fi
 
 node --test \
   infra/appliance/common/stage-application-slot.test.mjs \
+  infra/appliance/common/validate-process-boundaries.test.mjs \
   scripts/generate-node-dependency-inventory.test.mjs \
   scripts/generate-cargo-dependency-inventory.test.mjs \
   scripts/generate-build-identity.test.mjs
 node scripts/generate-node-dependency-inventory.mjs --check
+node infra/appliance/common/validate-process-boundaries.mjs
 node scripts/generate-cargo-dependency-inventory.mjs --check
 node packages/protocol/scripts/generate-http-contracts.mjs --check
 node scripts/generate-build-identity.mjs --check

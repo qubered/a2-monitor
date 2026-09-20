@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import {
   chmod,
   lstat,
@@ -82,6 +83,13 @@ async function makeFixture(root) {
   await put(path.join(inputs, "package-lock.json"), "{}\n");
   await put(path.join(inputs, "cargo-inventory.json"), "{}\n");
   await put(path.join(inputs, "node-inventory.json"), "{}\n");
+  await put(
+    path.join(inputs, "process-boundaries.v0.json"),
+    await readFile(
+      new URL("./process-boundaries.v0.json", import.meta.url),
+      "utf8",
+    ),
+  );
   await put(
     path.join(inputs, "build-identity.json"),
     `${JSON.stringify({
@@ -179,6 +187,7 @@ async function makeFixture(root) {
     "npm-lock": path.join(inputs, "package-lock.json"),
     "cargo-inventory": path.join(inputs, "cargo-inventory.json"),
     "node-inventory": path.join(inputs, "node-inventory.json"),
+    "process-contract": path.join(inputs, "process-boundaries.v0.json"),
   };
 }
 
@@ -246,6 +255,13 @@ test("stages and verifies a deterministic closed application slot", async () => 
       manifest.files.some(
         (entry) =>
           entry.path === "licenses/node/LICENSE" && entry.role === "license",
+      ),
+    );
+    assert.ok(
+      manifest.files.some(
+        (entry) =>
+          entry.path === "config/process-boundaries.v0.json" &&
+          entry.role === "process_contract",
       ),
     );
     assert.ok(
@@ -624,5 +640,41 @@ test("verification rejects tampering, extra files, traversal, and unknown manife
     await chmod(manifestPath, 0o644);
     await writeFile(manifestPath, `${JSON.stringify(manifest)}\n`);
     await assert.rejects(verifyApplicationSlot(slot), /path has invalid role/);
+  });
+});
+
+test("verification rejects a self-consistent but invalid process contract", async () => {
+  await withFixture(async (root, options) => {
+    const slot = await stageApplicationSlot({
+      ...options,
+      "output-root": path.join(root, "out"),
+    });
+    const contractPath = path.join(
+      slot,
+      "config",
+      "process-boundaries.v0.json",
+    );
+    const manifestPath = path.join(slot, "slot-manifest.json");
+    await chmod(contractPath, 0o644);
+    await chmod(manifestPath, 0o644);
+    const contract = JSON.parse(await readFile(contractPath, "utf8"));
+    contract.boundaries[0].current.privilegeVerified = true;
+    const contractBytes = `${JSON.stringify(contract, null, 2)}\n`;
+    await writeFile(contractPath, contractBytes);
+
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    const entry = manifest.files.find(
+      (candidate) => candidate.path === "config/process-boundaries.v0.json",
+    );
+    entry.size = Buffer.byteLength(contractBytes);
+    entry.sha256 = createHash("sha256").update(contractBytes).digest("hex");
+    await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    await chmod(contractPath, 0o444);
+    await chmod(manifestPath, 0o444);
+
+    await assert.rejects(
+      verifyApplicationSlot(slot),
+      /privilegeVerified must remain false/,
+    );
   });
 });

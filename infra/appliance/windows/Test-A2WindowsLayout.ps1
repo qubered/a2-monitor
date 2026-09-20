@@ -87,6 +87,7 @@ try {
         CargoInventory = (Join-Path $RepositoryRoot "docs/quality/cargo-dependency-inventory.json")
         NodeInventory = (Join-Path $RepositoryRoot "docs/quality/node-dependency-inventory.json")
         NodeLicense = $NodeLicense
+        ProcessContract = (Join-Path $RepositoryRoot "infra/appliance/common/process-boundaries.v0.json")
     }
     $Output = & (Join-Path $PSScriptRoot "New-A2WindowsLayout.ps1") @Arguments
     $LayoutRoot = $Output[-1]
@@ -98,7 +99,8 @@ try {
         "slot-manifest.json",
         "bin/a2-synthetic-capture.exe",
         "bin/a2-supervisor-smoke.exe",
-        "runtime/node.exe"
+        "runtime/node.exe",
+        "config/process-boundaries.v0.json"
     )) {
         if (-not (Test-Path -LiteralPath (Join-Path $Slot $Required) -PathType Leaf)) {
             throw "Layout is missing $Required"

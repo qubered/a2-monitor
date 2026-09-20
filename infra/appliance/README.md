@@ -39,7 +39,9 @@ the same security and availability contract.
 The platform-neutral unsigned layout-smoke generator and its closed manifest
 contract are documented in [`common/README.md`](common/README.md). It stages
 only explicit, already-built inputs into an inactive version slot; it is not an
-installer or activation mechanism.
+installer or activation mechanism. The slot also carries the validated
+`scaffold-only` process-boundary inventory; it records current versus target
+ownership without launching a process or claiming confinement.
 
 The Darwin-only unsigned flat-package smoke wrapper is documented in
 [`macos/README.md`](macos/README.md). The PowerShell boundary that emits a

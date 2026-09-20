@@ -17,6 +17,7 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { readAndValidateProcessBoundaryContract } from "./validate-process-boundaries.mjs";
 
 const MANIFEST_NAME = "slot-manifest.json";
 const SCHEMA_VERSION = 1;
@@ -29,6 +30,7 @@ const ROLES = new Set([
   "backend_dependency",
   "protocol_runtime",
   "protocol_schema",
+  "process_contract",
   "manager_asset",
   "live_asset",
   "license",
@@ -53,6 +55,7 @@ const REQUIRED_STAGE_OPTIONS = [
   "cargo-inventory",
   "node-inventory",
   "node-license",
+  "process-contract",
 ];
 const BACKEND_EXTENSIONS = new Set([
   ".js",
@@ -778,6 +781,8 @@ function validateManifestShape(manifest) {
       if (entry.path === manifest.entrypoints.nodeRuntime)
         return "node_runtime";
       if (entry.path === "licenses/node/LICENSE") return "license";
+      if (entry.path === "config/process-boundaries.v0.json")
+        return "process_contract";
       if (
         entry.path === "backend/package.json" ||
         entry.path.startsWith("backend/dist/")
@@ -848,6 +853,7 @@ function validateManifestShape(manifest) {
       false,
     ],
     ["licenses/node/LICENSE", "license", false],
+    ["config/process-boundaries.v0.json", "process_contract", false],
   ];
   for (const [requiredPath, role, executable] of requiredEntries) {
     const entry = entriesByPath.get(requiredPath);
@@ -924,6 +930,11 @@ export async function stageApplicationSlot(options) {
     options.arch,
   );
   await assertRegularFile(options["node-license"], "Node licence");
+  await assertRegularFile(
+    options["process-contract"],
+    "process-boundary contract",
+  );
+  await readAndValidateProcessBoundaryContract(options["process-contract"]);
   for (const [name, label] of [
     ["cargo-lock", "Cargo lockfile"],
     ["npm-lock", "npm lockfile"],
@@ -1003,6 +1014,12 @@ export async function stageApplicationSlot(options) {
         temporarySlot,
         "licenses/node/LICENSE",
         "license",
+      ),
+      await copyEntry(
+        options["process-contract"],
+        temporarySlot,
+        "config/process-boundaries.v0.json",
+        "process_contract",
       ),
     );
     entries.push(
@@ -1139,6 +1156,9 @@ export async function verifyApplicationSlot(slot) {
       fail(`slot file mode mismatch: ${entry.path}`);
     }
   }
+  await readAndValidateProcessBoundaryContract(
+    path.join(slot, "config", "process-boundaries.v0.json"),
+  );
   return manifest;
 }
 
