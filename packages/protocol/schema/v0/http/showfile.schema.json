@@ -109,7 +109,7 @@
           "imageUrl": {
             "type": ["string", "null"],
             "minLength": 1,
-            "maxLength": 2048
+            "maxLength": 300000
           },
           "monitor": {
             "type": "object",

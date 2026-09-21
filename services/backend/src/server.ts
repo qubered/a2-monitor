@@ -47,9 +47,14 @@ const productionIdParamsSchema = {
 } as const;
 
 const IMAGE_URL_SCHEMES = ["http://", "https://"];
+const DATA_IMAGE_URL =
+  /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/]+=*$/;
 
 function isValidImageUrl(imageUrl: string): boolean {
-  return IMAGE_URL_SCHEMES.some((scheme) => imageUrl.startsWith(scheme));
+  return (
+    IMAGE_URL_SCHEMES.some((scheme) => imageUrl.startsWith(scheme)) ||
+    DATA_IMAGE_URL.test(imageUrl)
+  );
 }
 
 type BuildServerOptions = {

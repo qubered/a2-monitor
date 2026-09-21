@@ -1,4 +1,12 @@
-import { Antenna, AudioLines, Battery, ImageOff, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
+import {
+  Antenna,
+  AudioLines,
+  Battery,
+  ImageOff,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import type { Showfile } from "@a2-monitor/protocol/http";
 import type { ObservedDevice } from "../showfile";
 import { EmptyState } from "./EmptyState";
@@ -36,6 +44,8 @@ type Channel = Showfile["channels"][number];
 type Monitor = NonNullable<Channel["monitor"]>;
 
 const DEFAULT_MONITOR: Monitor = { battery: true, rf: true, audio: true };
+
+const MAX_IMAGE_DATA_URL_LENGTH = 300000;
 
 const MONITOR_DIMENSIONS = [
   { key: "battery", label: "Battery", icon: Battery },
@@ -89,28 +99,78 @@ function ChannelImage({
   imageUrl: string | null | undefined;
   onChange: (imageUrl: string | null) => void;
 }) {
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  function pickFile() {
+    setError(null);
+    fileInput.current?.click();
+  }
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setError(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result);
+      if (dataUrl.length > MAX_IMAGE_DATA_URL_LENGTH) {
+        setError("Photo is too large. Choose an image under 200 KB.");
+        return;
+      }
+      onChange(dataUrl);
+    };
+    reader.onerror = () => setError("The photo could not be read.");
+    reader.readAsDataURL(file);
+  }
+
   return (
-    <div className="flex items-center gap-2">
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          alt=""
-          className="size-9 shrink-0 rounded-full border-2 border-line-2 object-cover"
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt=""
+            className="size-11 shrink-0 rounded-full border-2 border-line-2 object-cover"
+          />
+        ) : (
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-line-2 text-muted-foreground">
+            <ImageOff className="size-4" aria-hidden="true" />
+          </span>
+        )}
+        <input
+          ref={fileInput}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          aria-label={`Channel ${position + 1} photo upload`}
+          className="sr-only"
+          onChange={handleFileChange}
         />
-      ) : (
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-line-2 text-muted-foreground">
-          <ImageOff className="size-4" aria-hidden="true" />
+        <Button type="button" variant="outline" size="sm" onClick={pickFile}>
+          <Upload aria-hidden="true" />
+          {imageUrl ? "Replace" : "Upload"}
+        </Button>
+        {imageUrl ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={`Channel ${position + 1} remove photo`}
+            onClick={() => {
+              setError(null);
+              onChange(null);
+            }}
+          >
+            <Trash2 aria-hidden="true" />
+          </Button>
+        ) : null}
+      </div>
+      {error ? (
+        <span role="alert" className="text-badge text-out">
+          {error}
         </span>
-      )}
-      <Input
-        aria-label={`Channel ${position + 1} image URL`}
-        className="w-32"
-        placeholder="https://…"
-        title={imageUrl ?? undefined}
-        value={imageUrl ?? ""}
-        maxLength={2048}
-        onChange={(event) => onChange(event.target.value || null)}
-      />
+      ) : null}
     </div>
   );
 }
@@ -192,7 +252,7 @@ export function ChannelsTab({
                 <TableCell className="font-mono text-table tabular-nums text-muted-foreground">
                   {position + 1}
                 </TableCell>
-                <TableCell>
+                <TableCell className="min-w-44">
                   <ChannelImage
                     position={position}
                     imageUrl={channel.imageUrl}

@@ -8,8 +8,24 @@ externally tested release.
 
 ## Unreleased
 
+### Added
+
+- Manager: a Productions section for listing, creating, activating and
+  removing named local productions, backed by a new
+  `GET/POST /api/v1/productions`, `POST /api/v1/productions/:id/activate`
+  and `DELETE /api/v1/productions/:id` API. `GET/PUT /api/v1/showfile`
+  keep working unchanged against whichever production is active
+  (ADR 0024).
+- Manager channels: an optional mic type, an uploaded headshot photo
+  (read locally and stored inline as the channel's `imageUrl`, capped at
+  200 KB), and per-dimension battery/RF/audio monitoring toggles.
+
 ### Changed
 
+- Manager navigation moved from horizontal tabs to a settings-style sidebar
+  (Show, Productions, Receivers, Channels), and the Show and Receivers
+  panels moved from stacked cards to data tables, matching the Channels
+  panel that was already a table.
 - Rebuilt the Manager UI on Tailwind CSS and shadcn-style component
   primitives (Button, Card, Input, Select, Table, Tabs, Badge) layered over
   the existing `packages/ui` design tokens, so Paper/dark theming is

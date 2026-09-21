@@ -237,6 +237,53 @@ describe("backend health and Live snapshot", () => {
     expect(response.statusCode).toBe(400);
     expect(response.json()).toEqual({ error: "invalid-showfile" });
   });
+
+  it("accepts an uploaded base64 image data URL and rejects a malformed one", async () => {
+    const server = trackedServer();
+    const initial = await server.inject({
+      method: "GET",
+      url: "/api/v1/showfile",
+    });
+
+    const uploaded = await server.inject({
+      method: "PUT",
+      url: "/api/v1/showfile",
+      payload: {
+        ...initial.json(),
+        device: { name: "USB Interface", channelCount: 2 },
+        channels: [
+          {
+            inputIndex: 0,
+            name: "Alice",
+            imageUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAE=",
+          },
+        ],
+      },
+    });
+    expect(uploaded.statusCode).toBe(200);
+    expect(uploaded.json()).toMatchObject({
+      channels: [
+        { imageUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAE=" },
+      ],
+    });
+
+    const malformed = await server.inject({
+      method: "PUT",
+      url: "/api/v1/showfile",
+      payload: {
+        ...uploaded.json(),
+        channels: [
+          {
+            inputIndex: 0,
+            name: "Alice",
+            imageUrl: "data:text/html;base64,PHNjcmlwdD4=",
+          },
+        ],
+      },
+    });
+    expect(malformed.statusCode).toBe(400);
+    expect(malformed.json()).toEqual({ error: "invalid-showfile" });
+  });
 });
 
 describe("backend productions", () => {

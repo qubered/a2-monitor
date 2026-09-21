@@ -6,9 +6,9 @@
 //   - schema/v0/http/shure-telemetry.schema.json
 //   - schema/v0/http/production-list.schema.json
 // Regenerate: npm run generate --workspace @a2-monitor/protocol
-// Schema-SHA256: 740ec84a1172232bd3f1712d57062498e6812b611c6d92bbb232099dd06ed32b
+// Schema-SHA256: 8d85960fd98b3b85fa6722138d496b60d4ca7d334f93b501fedddb57faac9f77
 // Generator-SHA256: 0958ee82e61352afdeb2f1a4ccd424817cd21b98d7ccea02a8b1e082d75d5d83
-// Body-SHA256: b47a2328f5a090048ab0aa0510ac0d4708d203547e535bfa84d938137071b92a
+// Body-SHA256: 731bc371c56c4a4781c6f1045d33c10a3054cf9a7de3f099e09834558bf5a926
 
 export type HealthResponse = {
   status: "ok";
@@ -611,7 +611,7 @@ const showfileSchema = {
           imageUrl: {
             type: ["string", "null"],
             minLength: 1,
-            maxLength: 2048,
+            maxLength: 300000,
           },
           monitor: {
             type: "object",

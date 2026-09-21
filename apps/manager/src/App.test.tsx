@@ -228,7 +228,7 @@ describe("Manager showfile editor", () => {
     expect(window.localStorage.getItem("a2-monitor-theme")).toBe("dark");
   });
 
-  it("sets a channel's mic type, image URL, and turns off RF monitoring", async () => {
+  it("sets a channel's mic type, uploads a photo, and turns off RF monitoring", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -247,8 +247,14 @@ describe("Manager showfile editor", () => {
     await user.click(rfToggle);
     expect(rfToggle.getAttribute("aria-pressed")).toBe("false");
 
-    const imageInput = screen.getByLabelText("Channel 1 image URL");
-    await user.type(imageInput, "https://example.com/alice.jpg");
+    const photoFile = new File(["hello"], "alice.png", {
+      type: "image/png",
+    });
+    await user.upload(
+      screen.getByLabelText("Channel 1 photo upload"),
+      photoFile,
+    );
+    await screen.findByRole("button", { name: "Channel 1 remove photo" });
 
     await user.click(screen.getByRole("button", { name: "Save showfile" }));
 
@@ -258,7 +264,7 @@ describe("Manager showfile editor", () => {
     );
     const body = String(saveCall?.[1]?.body);
     expect(body).toContain('"micType":"headset"');
-    expect(body).toContain('"imageUrl":"https://example.com/alice.jpg"');
+    expect(body).toContain('"imageUrl":"data:image/png;base64,aGVsbG8="');
     expect(body).toContain(
       '"monitor":{"battery":true,"rf":false,"audio":true}',
     );

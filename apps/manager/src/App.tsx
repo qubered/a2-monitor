@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FolderKanban, Radio, SlidersHorizontal, Theater } from "lucide-react";
 import type {
   ProductionList,
   Showfile,
@@ -22,7 +23,13 @@ import { ProductionsTab } from "./components/ProductionsTab";
 import { ReceiversTab } from "./components/ReceiversTab";
 import { ShowTab } from "./components/ShowTab";
 import { Button } from "./components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsGroupLabel,
+  TabsList,
+  TabsTrigger,
+} from "./components/ui/tabs";
 
 type Theme = "system" | "light" | "dark";
 type SaveState = "loading" | "saved" | "dirty" | "saving" | "error";
@@ -264,21 +271,28 @@ export function App() {
             orientation="vertical"
             className="flex flex-col gap-6 md:flex-row md:items-start"
           >
-            <TabsList className="md:w-52 md:shrink-0 md:gap-1 md:border-r-2 md:border-line-2 md:pr-4">
-              <TabsTrigger value="show">Show</TabsTrigger>
+            <TabsList className="w-full md:w-64 md:shrink-0 md:border-r-2 md:border-line-2 md:pr-4">
+              <TabsGroupLabel>Show setup</TabsGroupLabel>
+              <TabsTrigger value="show">
+                <Theater aria-hidden="true" />
+                Show
+              </TabsTrigger>
               <TabsTrigger value="productions">
+                <FolderKanban aria-hidden="true" />
                 Productions
                 {productions?.productions.length
                   ? ` · ${productions.productions.length}`
                   : ""}
               </TabsTrigger>
               <TabsTrigger value="receivers">
+                <Radio aria-hidden="true" />
                 Receivers
                 {showfile.shureReceivers.length
                   ? ` · ${showfile.shureReceivers.length}`
                   : ""}
               </TabsTrigger>
               <TabsTrigger value="channels">
+                <SlidersHorizontal aria-hidden="true" />
                 Channels
                 {showfile.channels.length
                   ? ` · ${showfile.channels.length}`
