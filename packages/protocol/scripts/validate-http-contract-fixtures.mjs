@@ -35,6 +35,15 @@ const contracts = [
       "fixtures/v0/http/incompatible/live-snapshot-response.unknown-field.json",
     ],
   },
+  {
+    name: "showfile",
+    schema: "schema/v0/http/showfile.schema.json",
+    accepted: [
+      "fixtures/v0/http/current/showfile.valid.json",
+      "fixtures/v0/http/previous/showfile.valid.json",
+    ],
+    rejected: ["fixtures/v0/http/incompatible/showfile.unknown-field.json"],
+  },
 ];
 
 async function readJson(relativePath) {

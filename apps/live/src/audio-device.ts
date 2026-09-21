@@ -1,4 +1,4 @@
-import type { LiveChannel } from "@a2-monitor/protocol/http";
+import type { LiveChannel, Showfile } from "@a2-monitor/protocol/http";
 
 export type AudioDeviceState = {
   schemaVersion: 0;
@@ -134,13 +134,23 @@ export function createHttpAudioDeviceSource(
 
 export function synthesizeDeviceChannels(
   state: AudioDeviceState,
+  showfile?: Showfile | null,
 ): LiveChannel[] {
   if (state.status !== "ready" || !state.device || !state.channels) return [];
+  const savedNames =
+    showfile?.device?.name === state.device.name &&
+    showfile.device.channelCount === state.device.channelCount
+      ? new Map(
+          showfile.channels.map(({ inputIndex, name }) => [inputIndex, name]),
+        )
+      : new Map<number, string>();
   return state.channels.map(({ index, label }) => ({
     id: `device-channel-${index}`,
     number: index + 1,
-    character: label || `Input ${index + 1}`,
-    performer: "Identity unknown",
+    character: savedNames.get(index) ?? (label || `Input ${index + 1}`),
+    performer: savedNames.has(index)
+      ? `Physical input ${index + 1}`
+      : "Identity unknown",
     kind: "wired",
     zone: state.device?.name ?? "Audio device",
     levelDbfs: null,

@@ -66,11 +66,14 @@ loop, but it is not an operating-system crash or privilege boundary.
 
 ## Current implementation
 
-The Phase 0T skeleton exposes two read-only routes:
+The running local MVP exposes:
 
 - `GET /healthz` reports the backend process health contract; and
 - `GET /api/v1/live/snapshot` returns a bounded, explicitly fabricated Live
-  snapshot for development.
+  snapshot for development;
+- `GET /api/v1/showfile` returns one revisioned local MVP showfile; and
+- `PUT /api/v1/showfile` validates and saves it with optimistic revision
+  conflict detection.
 
 Both responses use the Draft 2020-12 schemas and shared validator runtime in
 `packages/protocol`. Fastify validates both the supplied response object and the
@@ -90,6 +93,8 @@ Run the backend on `http://127.0.0.1:3000` with:
 npm run dev --workspace @a2-monitor/backend
 ```
 
-This scaffold has no database, authorization, WebSocket, node connection, or
-real telemetry. It does not establish a hardware, latency, security, receiver,
-or operator result.
+The macOS MVP persists the showfile as an atomically replaced JSON file under
+its application-support directory. This scaffold has no production database,
+authorization, WebSocket, node connection, immutable activation or real
+telemetry. It does not establish a hardware, latency, security, receiver, or
+operator result.

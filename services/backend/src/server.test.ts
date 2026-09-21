@@ -41,6 +41,38 @@ describe("backend health and Live snapshot", () => {
     expect(response.json()).toEqual(fabricatedLiveSnapshot);
   });
 
+  it("saves and returns a revisioned local showfile", async () => {
+    const server = trackedServer();
+    const initial = await server.inject({
+      method: "GET",
+      url: "/api/v1/showfile",
+    });
+    expect(initial.statusCode).toBe(200);
+    expect(initial.json().revision).toBe(0);
+
+    const saved = await server.inject({
+      method: "PUT",
+      url: "/api/v1/showfile",
+      payload: {
+        ...initial.json(),
+        show: { name: "Winter Circus" },
+        device: { name: "USB Interface", channelCount: 2 },
+        channels: [
+          { inputIndex: 0, name: "Alice" },
+          { inputIndex: 1, name: "Bob" },
+        ],
+      },
+    });
+
+    expect(saved.statusCode).toBe(200);
+    expect(saved.json()).toMatchObject({
+      revision: 1,
+      show: { name: "Winter Circus" },
+      channels: [{ name: "Alice" }, { name: "Bob" }],
+    });
+    expect(saved.json().updatedAtUtc).toBeTruthy();
+  });
+
   it("fails closed when a provider adds an undeclared response field", async () => {
     const invalidSnapshot = {
       ...fabricatedLiveSnapshot,

@@ -149,7 +149,13 @@ async function main() {
   const common = { cwd: appRoot, stdio: ["ignore", log, log] };
   const backend = spawn(process.execPath, ["services/backend/dist/start.js"], {
     ...common,
-    env: { ...process.env },
+    env: {
+      ...process.env,
+      A2_DATA_DIR: resolve(
+        process.env.HOME ?? "/tmp",
+        "Library/Application Support/A2 Monitor",
+      ),
+    },
   });
   const gateway = spawn(
     process.execPath,
@@ -163,6 +169,7 @@ async function main() {
         A2_LISTEN_HOST: host,
         A2_LISTEN_PORT: "4173",
         A2_LIVE_DIR: resolve(appRoot, "apps/live/dist"),
+        A2_MANAGER_DIR: resolve(appRoot, "apps/manager/dist"),
         A2_BACKEND_ORIGIN: "http://127.0.0.1:3000",
       },
     },

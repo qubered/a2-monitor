@@ -2,59 +2,81 @@
 
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 
-describe("Manager shell", () => {
+const storedShowfile = {
+  schemaVersion: "0",
+  revision: 2,
+  updatedAtUtc: "2026-09-21T00:00:00Z",
+  show: { name: "Winter Circus" },
+  device: { name: "USB Interface", channelCount: 2 },
+  channels: [
+    { inputIndex: 0, name: "Alice" },
+    { inputIndex: 1, name: "Bob" },
+  ],
+};
+
+describe("Manager showfile editor", () => {
+  const fetchMock = vi.fn(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(input);
+      if (path === "/audio/v0/device") {
+        return Response.json({
+          schemaVersion: 0,
+          status: "ready",
+          detail: "Capture active.",
+          device: {
+            name: "USB Interface",
+            sampleRateHz: 48000,
+            channelCount: 2,
+          },
+          channels: [
+            { index: 0, label: "Input 1" },
+            { index: 1, label: "Input 2" },
+          ],
+        });
+      }
+      if (path === "/api/v1/showfile" && init?.method === "PUT") {
+        const body = JSON.parse(String(init.body)) as typeof storedShowfile;
+        return Response.json({
+          ...body,
+          revision: body.revision + 1,
+          updatedAtUtc: "2026-09-21T00:01:00Z",
+        });
+      }
+      return Response.json(storedShowfile);
+    },
+  );
+
   beforeEach(() => {
     window.localStorage.clear();
     document.documentElement.removeAttribute("data-theme");
+    vi.stubGlobal("fetch", fetchMock);
+    fetchMock.mockClear();
   });
 
-  afterEach(cleanup);
-
-  it("labels fabricated state and never reports unknown setup as empty totals", () => {
-    render(<App />);
-
-    expect(screen.getByText("Fabricated local setup")).toBeTruthy();
-    expect(screen.getByText("Management backend unavailable.")).toBeTruthy();
-    expect(screen.getAllByText("– Unknown").length).toBeGreaterThan(0);
-    expect(screen.queryByText(/0 people|0 microphones|0 paths/i)).toBeNull();
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
   });
 
-  it("opens a setup area through a semantic button", async () => {
+  it("loads observed inputs, edits a name and saves a new revision", async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(
-      screen.getByRole("button", { name: "Open people and roles" }),
+    const input = await screen.findByLabelText("Channel 2 name");
+    expect((input as HTMLInputElement).value).toBe("Bob");
+    await user.clear(input);
+    await user.type(input, "Talkback");
+    await user.click(screen.getByRole("button", { name: "Save showfile" }));
+
+    expect(await screen.findByText("Revision 3")).toBeTruthy();
+    const saveCall = fetchMock.mock.calls.find(
+      ([path, init]) =>
+        String(path) === "/api/v1/showfile" && init?.method === "PUT",
     );
-
-    expect(
-      screen.getByRole("heading", { name: "People and roles", level: 1 }),
-    ).toBeTruthy();
-    expect(
-      screen.getByText(
-        "Waiting for the management API before people or roles can be shown.",
-      ),
-    ).toBeTruthy();
-    expect(
-      screen
-        .getByRole("button", { name: "People and roles" })
-        .getAttribute("aria-current"),
-    ).toBe("page");
-  });
-
-  it("reports readiness as unavailable instead of inventing a validation result", async () => {
-    const user = userEvent.setup();
-    render(<App />);
-
-    await user.click(screen.getByRole("button", { name: "Check readiness" }));
-
-    expect(screen.getByRole("status").textContent).toContain(
-      "Readiness could not be checked.",
-    );
-    expect(screen.queryByText(/ready to activate/i)).toBeNull();
+    expect(String(saveCall?.[1]?.body)).toContain('"name":"Talkback"');
   });
 
   it("persists an explicit dark theme", async () => {

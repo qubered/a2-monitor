@@ -31,7 +31,8 @@ button {
 
 button:focus-visible,
 select:focus-visible,
-input:focus-visible {
+input:focus-visible,
+a:focus-visible {
   outline: var(--size-2) solid var(--red);
   outline-offset: var(--space-1);
 }
@@ -186,6 +187,20 @@ input:focus-visible {
   border-radius: var(--radius-pill);
   background: var(--card);
   font-size: var(--font-ui);
+}
+
+.manager-link {
+  min-height: var(--target);
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-4);
+  border: var(--size-2) solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--ink);
+  font-size: var(--font-ui);
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .filters {
@@ -758,6 +773,25 @@ input:focus-visible {
   font-family: var(--font-mono);
   font-size: var(--font-ui);
   text-align: right;
+}
+
+.volume-control {
+  min-width: calc(var(--target-primary) * 2);
+  min-height: var(--target);
+  display: flex;
+  align-items: center;
+}
+
+.volume-control input {
+  width: 100%;
+  min-height: var(--target);
+  accent-color: var(--red);
+  cursor: pointer;
+}
+
+.volume-control input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .detail-backdrop {

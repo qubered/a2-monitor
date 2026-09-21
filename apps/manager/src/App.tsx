@@ -1,59 +1,15 @@
 import { useEffect, useState } from "react";
+import type { Showfile } from "@a2-monitor/protocol/http";
+import {
+  loadObservedDevice,
+  loadShowfile,
+  projectShowfileToDevice,
+  saveShowfile,
+  type ObservedDevice,
+} from "./showfile";
 
 type Theme = "system" | "light" | "dark";
-type Section = "overview" | "people" | "inventory" | "paths";
-
-const sections: Array<{ id: Section; label: string }> = [
-  { id: "overview", label: "Overview" },
-  { id: "people", label: "People and roles" },
-  { id: "inventory", label: "Microphone inventory" },
-  { id: "paths", label: "Signal paths" },
-];
-
-const setupAreas = [
-  {
-    title: "People and roles",
-    detail: "No people or roles are loaded.",
-    status: "Unknown",
-  },
-  {
-    title: "Microphone inventory",
-    detail: "No elements, transmitters, or prepared spares are loaded.",
-    status: "Unknown",
-  },
-  {
-    title: "Signal paths",
-    detail: "No receiver paths or captured inputs are loaded.",
-    status: "Unknown",
-  },
-];
-
-const sectionContent: Record<
-  Exclude<Section, "overview">,
-  { title: string; description: string; waitingFor: string }
-> = {
-  people: {
-    title: "People and roles",
-    description:
-      "People, roles, cast alternatives, and assignments stay separate so changes do not rewrite history.",
-    waitingFor:
-      "Waiting for the management API before people or roles can be shown.",
-  },
-  inventory: {
-    title: "Microphone inventory",
-    description:
-      "Elements, transmitters, prepared spares, and condition history belong to independent physical records.",
-    waitingFor:
-      "Waiting for the management API before microphone assets can be shown.",
-  },
-  paths: {
-    title: "Signal paths",
-    description:
-      "Receiver channels and captured inputs remain explicit. Manager never connects to the device network.",
-    waitingFor:
-      "Waiting for the management API before receiver or audio paths can be shown.",
-  },
-};
+type SaveState = "loading" | "saved" | "dirty" | "saving" | "error";
 
 function readTheme(): Theme {
   const saved = window.localStorage.getItem("a2-monitor-theme");
@@ -62,8 +18,10 @@ function readTheme(): Theme {
 
 export function App() {
   const [theme, setTheme] = useState<Theme>(readTheme);
-  const [section, setSection] = useState<Section>("overview");
-  const [validationRequested, setValidationRequested] = useState(false);
+  const [showfile, setShowfile] = useState<Showfile | null>(null);
+  const [device, setDevice] = useState<ObservedDevice | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>("loading");
+  const [message, setMessage] = useState("Loading showfile and audio inputs.");
 
   useEffect(() => {
     if (theme === "system") {
@@ -75,8 +33,61 @@ export function App() {
     }
   }, [theme]);
 
-  const selectedSection =
-    section === "overview" ? null : sectionContent[section];
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.all([
+      loadShowfile(controller.signal),
+      loadObservedDevice(controller.signal),
+    ])
+      .then(([loaded, observed]) => {
+        const projected = projectShowfileToDevice(loaded, observed);
+        const changed =
+          loaded.device?.name !== projected.device?.name ||
+          loaded.device?.channelCount !== projected.device?.channelCount ||
+          loaded.channels.length !== projected.channels.length;
+        setDevice(observed);
+        setShowfile(projected);
+        setSaveState(changed ? "dirty" : "saved");
+        setMessage(
+          changed
+            ? "Observed inputs are ready. Save this showfile to bind their names."
+            : "Showfile loaded from this Mac.",
+        );
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        setSaveState("error");
+        setMessage(
+          error instanceof Error ? error.message : "Manager could not start.",
+        );
+      });
+    return () => controller.abort();
+  }, []);
+
+  function update(next: Showfile) {
+    setShowfile(next);
+    setSaveState("dirty");
+    setMessage("Unsaved changes.");
+  }
+
+  async function save() {
+    if (!showfile || saveState === "saving") return;
+    setSaveState("saving");
+    setMessage("Saving showfile on this Mac.");
+    try {
+      const saved = await saveShowfile(showfile);
+      setShowfile(saved);
+      setSaveState("saved");
+      setMessage("Showfile saved. Live now uses these channel names.");
+    } catch (error) {
+      setSaveState("error");
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "The showfile could not be saved.",
+      );
+    }
+  }
 
   return (
     <div className="manager-app">
@@ -87,10 +98,12 @@ export function App() {
           <em>Manager</em>
         </div>
         <div className="draft-name">
-          <span>Draft production</span>
-          <strong>The Winter Circus</strong>
+          <span>Local showfile</span>
+          <strong>{showfile?.show.name ?? "Waiting"}</strong>
         </div>
-        <span className="fabricated-badge">Fabricated local setup</span>
+        <a className="line-button live-link" href="/">
+          Open Live
+        </a>
         <label className="theme-picker">
           <span>Theme</span>
           <select
@@ -104,116 +117,122 @@ export function App() {
         </label>
       </header>
 
-      <section className="connection-notice" aria-live="polite">
+      <section className={`connection-notice state-${saveState}`} role="status">
         <div>
-          <strong>Management backend unavailable.</strong>
-          <span>
-            This shell uses fabricated labels only. No show, inventory, or
-            hardware state is loaded.
-          </span>
+          <strong>
+            {saveState === "loading"
+              ? "Loading showfile."
+              : saveState === "saving"
+                ? "Saving showfile."
+                : saveState === "saved"
+                  ? "Showfile saved."
+                  : saveState === "dirty"
+                    ? "Showfile has unsaved changes."
+                    : "Showfile unavailable."}
+          </strong>
+          <span>{message}</span>
         </div>
-        <span className="unknown-badge">– Unknown</span>
+        {showfile ? (
+          <span className="revision-badge">Revision {showfile.revision}</span>
+        ) : null}
       </section>
 
-      <nav className="section-tabs" aria-label="Manager sections">
-        {sections.map((item) => (
-          <button
-            type="button"
-            aria-current={section === item.id ? "page" : undefined}
-            onClick={() => {
-              setSection(item.id);
-              setValidationRequested(false);
-            }}
-            key={item.id}
-          >
-            {item.label}
-          </button>
-        ))}
-      </nav>
-
       <main>
-        {selectedSection ? (
-          <section className="empty-section" aria-labelledby="section-title">
-            <span className="overline">Draft setup</span>
-            <h1 id="section-title">{selectedSection.title}</h1>
-            <p>{selectedSection.description}</p>
-            <div className="empty-state">
-              <strong>Nothing loaded</strong>
-              <span>{selectedSection.waitingFor}</span>
-            </div>
-          </section>
-        ) : (
-          <>
-            <section className="page-heading" aria-labelledby="overview-title">
-              <div>
-                <span className="overline">Draft setup</span>
-                <h1 id="overview-title">Prepare a production</h1>
-                <p>
-                  Build identity and path intent here. Observed hardware state
-                  will remain separate when the backend exists.
-                </p>
-              </div>
-              <div className="revision-readout">
-                <span>Revision</span>
-                <strong>Unknown</strong>
-              </div>
-            </section>
+        <section className="page-heading" aria-labelledby="showfile-title">
+          <div>
+            <span className="overline">Show setup</span>
+            <h1 id="showfile-title">Build a showfile</h1>
+            <p>
+              Name the show and each observed physical input. Saved names appear
+              in Live on every connected device.
+            </p>
+          </div>
+          <button
+            className="primary-button"
+            type="button"
+            disabled={
+              !showfile || saveState === "saving" || saveState === "saved"
+            }
+            onClick={() => void save()}
+          >
+            {saveState === "saving" ? "Saving" : "Save showfile"}
+          </button>
+        </section>
 
-            <section className="setup-grid" aria-label="Production setup areas">
-              {setupAreas.map((area) => (
-                <article className="setup-card" key={area.title}>
-                  <div className="card-heading">
-                    <h2>{area.title}</h2>
-                    <span className="unknown-badge">– {area.status}</span>
-                  </div>
-                  <p>{area.detail}</p>
-                  <button
-                    type="button"
-                    className="line-button"
-                    onClick={() => {
-                      const target = sections.find(
-                        (item) => item.label === area.title,
-                      );
-                      if (target) setSection(target.id);
-                    }}
-                  >
-                    Open {area.title.toLowerCase()}
-                  </button>
-                </article>
-              ))}
+        {showfile ? (
+          <form
+            className="showfile-editor"
+            onSubmit={(event) => event.preventDefault()}
+          >
+            <section
+              className="show-details"
+              aria-labelledby="show-details-title"
+            >
+              <div>
+                <span className="overline">Identity</span>
+                <h2 id="show-details-title">Show</h2>
+              </div>
+              <label>
+                <span>Show name</span>
+                <input
+                  value={showfile.show.name}
+                  maxLength={120}
+                  onChange={(event) =>
+                    update({ ...showfile, show: { name: event.target.value } })
+                  }
+                />
+              </label>
             </section>
 
             <section
-              className="activation-card"
-              aria-labelledby="activation-title"
+              className="channel-editor"
+              aria-labelledby="channel-editor-title"
             >
-              <div>
-                <span className="overline">Activation</span>
-                <h2 id="activation-title">No activation result</h2>
-                <p>
-                  Validation requires an observed node manifest and a saved
-                  immutable revision. Neither is available in this shell.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => setValidationRequested(true)}
-              >
-                Check readiness
-              </button>
-            </section>
-
-            {validationRequested ? (
-              <section className="validation-result" role="status">
-                <strong>Readiness could not be checked.</strong>
-                <span>
-                  Connect the management backend and audio node before
-                  validating or activating a production.
+              <div className="channel-editor-heading">
+                <div>
+                  <span className="overline">Observed device</span>
+                  <h2 id="channel-editor-title">
+                    {device?.name ??
+                      showfile.device?.name ??
+                      "Device unavailable"}
+                  </h2>
+                </div>
+                <span className="device-readout">
+                  {device
+                    ? `${device.channelCount} inputs · ${device.sampleRateHz / 1000} kHz`
+                    : "Input state unknown"}
                 </span>
-              </section>
-            ) : null}
-          </>
+              </div>
+              <div className="channel-name-list">
+                {showfile.channels.map((channel, position) => (
+                  <label className="channel-name-row" key={channel.inputIndex}>
+                    <span className="channel-number">
+                      {channel.inputIndex + 1}
+                    </span>
+                    <span className="channel-input">Physical input</span>
+                    <input
+                      aria-label={`Channel ${channel.inputIndex + 1} name`}
+                      value={channel.name}
+                      maxLength={120}
+                      onChange={(event) => {
+                        const channels = [...showfile.channels];
+                        channels[position] = {
+                          ...channel,
+                          name: event.target.value,
+                        };
+                        update({ ...showfile, channels });
+                      }}
+                    />
+                  </label>
+                ))}
+              </div>
+            </section>
+          </form>
+        ) : (
+          <section className="empty-state">
+            <strong>No editable showfile.</strong>
+            <span>{message}</span>
+          </section>
         )}
       </main>
     </div>

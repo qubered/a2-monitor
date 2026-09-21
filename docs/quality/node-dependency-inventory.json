@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "generatedFrom": "package-lock.json",
   "regenerationCommand": "node scripts/generate-node-dependency-inventory.mjs",
-  "lockfileSha256": "1a8c8f00e0d8474676d2ca12713e625165698c1f2b04c2873d1b505224b67109",
+  "lockfileSha256": "e72acbde3a875486749f7182c158363b88cefe14aa31aa7d39001b9d65d8dbc9",
   "componentCount": 303,
   "licenseCounts": [
     {

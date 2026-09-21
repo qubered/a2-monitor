@@ -1,25 +1,36 @@
 import type { LiveChannel as Channel } from "@a2-monitor/protocol/http";
 import type { PlaybackUpdate } from "../audio-playback";
+import {
+  DIM_ATTENUATION_DB,
+  MAX_MONITOR_GAIN_DB,
+  MIN_MONITOR_GAIN_DB,
+} from "../audio-playback";
 
 type PlayerProps = {
   channel: Channel | null;
   muted: boolean;
   dimmed: boolean;
+  gainDb: number;
   playback: PlaybackUpdate;
   directListeningAvailable: boolean;
   onToggleMute: () => void;
   onToggleDim: () => void;
+  onGainChange: (gainDb: number) => void;
 };
 
 export function Player({
   channel,
   muted,
   dimmed,
+  gainDb,
   playback,
   directListeningAvailable,
   onToggleMute,
   onToggleDim,
+  onGainChange,
 }: PlayerProps) {
+  const effectiveGainDb = gainDb + (dimmed ? DIM_ATTENUATION_DB : 0);
+  const gainLabel = `${effectiveGainDb > 0 ? "+" : ""}${effectiveGainDb}`;
   return (
     <footer className="player" aria-label="Monitor output controls">
       <div className="player-selection-rail" aria-hidden="true">
@@ -77,8 +88,20 @@ export function Player({
         >
           Dim
         </button>
+        <label className="volume-control">
+          <span className="sr-only">Monitor volume</span>
+          <input
+            type="range"
+            min={MIN_MONITOR_GAIN_DB}
+            max={MAX_MONITOR_GAIN_DB}
+            step="1"
+            value={gainDb}
+            disabled={!directListeningAvailable}
+            onChange={(event) => onGainChange(Number(event.target.value))}
+          />
+        </label>
         <span className="output-level">
-          {muted ? "−∞" : dimmed ? "−30" : "−18"} dB
+          {muted ? "−∞" : gainLabel.replace("-", "−")} dB
         </span>
       </div>
     </footer>

@@ -17,6 +17,7 @@ const gateway = new ListenGateway({
   device: process.env.A2_AUDIO_DEVICE,
   captureBinary: process.env.A2_CAPTURE_BIN ?? defaultCaptureBinary,
   webRoot: process.env.A2_LIVE_DIR,
+  managerRoot: process.env.A2_MANAGER_DIR,
   backendOrigin: process.env.A2_BACKEND_ORIGIN,
 });
 
