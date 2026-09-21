@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.05e616a20a68b0b7",
-  "sourceSha256": "05e616a20a68b0b703b579202cbd2c0085b734961cb43d3e01e136eb2ffcae7e",
+  "buildId": "a2-0.0.0+sha256.bd1d63dfc3a406ad",
+  "sourceSha256": "bd1d63dfc3a406adc4bb1f09eef9249d5d0b34cf73d530bbdb5993d3c79b43b7",
   "inputCount": 306,
   "inputs": [
     {
@@ -425,7 +425,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256": "083ed011fe940b9040961ebb0d703ebb9faaf78fa06e544f87471bb7492960bf"
+      "sha256": "02a6b6cef13898902fe87164ed3c1d4d3d18912c0d0475967eef95f57cf70f83"
     },
     {
       "path": "docs/api/show-management-and-control.md",
@@ -817,7 +817,7 @@
     },
     {
       "path": "infra/appliance/macos/README.md",
-      "sha256": "2039dbb97bf16b14d541ab178bbeba7bda5c7d28d0f7399a5614f4148b05ba62"
+      "sha256": "c7dbd8ce847aef3cac55746373f9c0a2400af88bfab36997b05fd23b9a2aceab"
     },
     {
       "path": "infra/appliance/macos/build-mvp-app.sh",
@@ -833,7 +833,7 @@
     },
     {
       "path": "infra/appliance/macos/mvp-app/A2MonitorApp.swift",
-      "sha256": "38657c0bd84325c8cdd44b4319754baae4d65ce1703e7b57fadcd3861d6c6a91"
+      "sha256": "d2ea2cec312f55fa9855a865a4111e43000967793abe45cf71169ae35dfd025c"
     },
     {
       "path": "infra/appliance/macos/mvp-app/Info.plist",
@@ -841,7 +841,7 @@
     },
     {
       "path": "infra/appliance/macos/mvp-app/launcher.mjs",
-      "sha256": "b8fc181f389cd60dea5523d7b0354408f4943a8e88c57d097000615c203dfef0"
+      "sha256": "5670b4708225dfd1df77187adc76f234b0edf51ecf41769bcdf425dd10f9365b"
     },
     {
       "path": "infra/appliance/macos/test-unsigned-pkg.sh",

@@ -40,10 +40,13 @@ A2_NODE_BIN=/path/to/node-24-arm64 \
 open "build/macos-mvp/A2 Monitor.app"
 ```
 
-At launch, choose an observed 48 kHz input device and whether the page is
-available only on the host or on its local network. The app opens the local page
-and then lives in the menu bar instead of keeping a modal window on top. Its menu
-opens Live or Manager, starts or stops the server, opens the log, and quits.
+At launch, the app opens an A2 Monitor window: pick an observed 48 kHz input
+device and whether the page is available only on the host or on its local
+network, then click Start Server. The app opens the local page in the default
+browser and lives in the menu bar; its icon and the window's own buttons open
+Live or Manager, start or stop the server, open the log, and quit. Closing the
+window only hides it — reopen it from the menu bar's "Show A2 Monitor" item.
+The last chosen device and network scope are remembered for next launch.
 Receiver configuration lives in Manager. Logs are written to
 `~/Library/Logs/A2 Monitor/mvp.log`.
 

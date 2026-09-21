@@ -201,7 +201,7 @@ async function main() {
       host === "0.0.0.0"
         ? "\n\nThis MVP has no authentication. Use a trusted local network only."
         : "";
-    if (process.env.A2_APP_SHELL === "menu-bar") {
+    if (process.env.A2_APP_SHELL === "app") {
       await new Promise((resolvePromise) => {
         resolveShellStop = resolvePromise;
       });

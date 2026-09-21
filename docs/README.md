@@ -79,6 +79,7 @@ boundary; production evidence promotion remains deferred.
 - [Temporary PCM listen MVP](decisions/0021-temporary-pcm-listen-mvp.md)
 - [Local MVP showfile](decisions/0022-local-mvp-showfile.md)
 - [Menu-bar shell and temporary Shure MVP host](decisions/0023-menu-bar-shell-and-shure-mvp-host.md)
+- [App window for device and network selection](decisions/0024-app-window-device-and-network-selection.md)
 
 ## Reference
 
