@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.facd50ae4f3c3b31",
-  "sourceSha256": "facd50ae4f3c3b317706e3e12b4a3d4605dac97f46a7adebc379c03c292274e2",
-  "inputCount": 256,
+  "buildId": "a2-0.0.0+sha256.925cc8bd78b1f009",
+  "sourceSha256": "925cc8bd78b1f0093643c509f7262bce79248fa28a06393f8496ac14469647bd",
+  "inputCount": 271,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -61,7 +61,7 @@
     },
     {
       "path": "Cargo.lock",
-      "sha256": "8fdd92690d8879c22ed343e085950ad01806781adcb232eefc75a90194becf92"
+      "sha256": "a9ba48c3730564efbde1b8cdf2accd073a7b268cd42d5d1583624502fc5b2db4"
     },
     {
       "path": "Cargo.toml",
@@ -77,7 +77,7 @@
     },
     {
       "path": "apps/live/README.md",
-      "sha256": "54c65b5cbc0958b9c1b6fbb90a40f9e05347885d0cedbee946e71c98bbbff160"
+      "sha256": "ce1ce02f1a202b415e9f8d4765eaad021c4edb37dcd6530a5f17650813b49a19"
     },
     {
       "path": "apps/live/index.html",
@@ -89,15 +89,31 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "5dff66678de9a7150e3f76b193dde829bad9834c4b72a0c9db792940dbfee5ee"
+      "sha256": "3a99de43d7d780d6cc612ccfb27bd3d9c170b1086bc800506ebd1a0eb38c5622"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "228281b3399283b80951434051b5098e5311738ad917653a56a7230279c5187e"
+      "sha256": "0b9a84ba43572c687187074ec9ddd8b7b31a9fa5e2f733bf9c6ffba55f840cd2"
+    },
+    {
+      "path": "apps/live/src/audio-device.test.ts",
+      "sha256": "2f7acae9fbc9d2ed84cbaaf39b5fbfa5ce2310c5c2e29b55c49d010fce5fdc12"
+    },
+    {
+      "path": "apps/live/src/audio-device.ts",
+      "sha256": "f1691d417aad7295579884ba11fb137f508b5b2aae527ef55100a57ebf84bbc3"
+    },
+    {
+      "path": "apps/live/src/audio-playback.test.ts",
+      "sha256": "5f1fe0ec6be4f9483b9715243683619c5bded5aea64882a3d3ffba6d9cdc3f61"
+    },
+    {
+      "path": "apps/live/src/audio-playback.ts",
+      "sha256": "f0ea3ecc577d90fa6c9be77756b9d2ab1643f8ee1493bd33a2ff6090926355a6"
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
-      "sha256": "327b02ffe192351ff455e45b4f56249201f2ce2442f0987957637e6e87579770"
+      "sha256": "85f9d60084476c059cb8024f4eca46f59b2906e8f28f27a7b99efea8fbf946e4"
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
@@ -109,7 +125,7 @@
     },
     {
       "path": "apps/live/src/components/Player.tsx",
-      "sha256": "b176715b2c1bff6e093d3071ab5d657d25c997f32ace5964e71efe15545595da"
+      "sha256": "e74a3ff39755c262beb80a05c3fdfaef0e1d6c2e615908e87ff8239d4afb7f67"
     },
     {
       "path": "apps/live/src/components/StatusStrip.tsx",
@@ -137,7 +153,11 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "dc7c1e32b5270d20472e344365f6cb82b3ac453b8c09d4faaba39a77d4b42689"
+      "sha256": "0852d4b19f535cfce68555ef356f2b7ddb016039f52131e4e795036ebf854db1"
+    },
+    {
+      "path": "apps/live/src/useAudioDevice.ts",
+      "sha256": "b35b518a0744792fea17f94e9b9492c32167194273f1bfcf1ffdc5a2e0bbe905"
     },
     {
       "path": "apps/live/src/useLiveSnapshot.ts",
@@ -161,7 +181,7 @@
     },
     {
       "path": "apps/live/vite.config.ts",
-      "sha256": "fd27e0788c97bdd409e9faec5450faf8082030d1ddeed8679c1333d9bba2c4c6"
+      "sha256": "065f1774f00dd6d227274472778652278dd49eeeb0096aa9b300152dd020b66b"
     },
     {
       "path": "apps/manager/README.md",
@@ -341,7 +361,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256": "5695792ac69fa56a3241cccd83a984d792ff2bbd9d7240e4bed4999cb4698168"
+      "sha256": "650c9270df5ee5d444e2a0f0f36f5babf5d3547f26a283fbd3f30050b256efde"
     },
     {
       "path": "docs/api/show-management-and-control.md",
@@ -421,7 +441,7 @@
     },
     {
       "path": "docs/decisions/0002-webrtc-opus.md",
-      "sha256": "b2a9c80acc6d597384492b5b8ec623e2900625bd102e66b03214a7d1cdcd699b"
+      "sha256": "28377d1f1a12f9ff0b6383e572a0371fd9aa31bb5a02e15f1d2f514f921ff5da"
     },
     {
       "path": "docs/decisions/0003-cross-platform-single-capture-device.md",
@@ -494,6 +514,10 @@
     {
       "path": "docs/decisions/0020-evidence-verifier-trust-boundary.md",
       "sha256": "71d746ecbf346b1a5fcb6aa751ef2a7011aa01ce01b0a0b300c3ce788066829a"
+    },
+    {
+      "path": "docs/decisions/0021-temporary-pcm-listen-mvp.md",
+      "sha256": "ff194c613336e3e567a7794e0dbe39d013fb3dd6f0024ea0b18fa8d83eb5e85b"
     },
     {
       "path": "docs/design/DESIGN.md",
@@ -609,7 +633,7 @@
     },
     {
       "path": "docs/quality/cargo-dependency-inventory.json",
-      "sha256": "3af578b76bb4597f0cb59c5de6795d8c0cfeedeb5e570e736a6318f51d4abba2"
+      "sha256": "6a9c2492dfb52f47a4a74ed0b045383bdc99afe79b33b5aac6ec6015627e49ba"
     },
     {
       "path": "docs/quality/client-and-appliance-profiles.md",
@@ -629,7 +653,7 @@
     },
     {
       "path": "docs/quality/node-dependency-inventory.json",
-      "sha256": "83c40422a4984791517eb824aff99597b49e0d660360e36b44a9eda3549b8896"
+      "sha256": "f2eafcbd58c6d86ee054b900f12ac85d18b2ac1f11400bcbd33a4afd915afd19"
     },
     {
       "path": "docs/quality/performance-baselines.md",
@@ -757,11 +781,11 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "cbf3ab6da39ee58a86705a6887d76561ac7647ad609a3ba4842118b71bd9cc8b"
+      "sha256": "7d200f8d49657c846e67fbb98c54b4f3a5073dda47c1b44a01fd8f13ba35fc65"
     },
     {
       "path": "package.json",
-      "sha256": "2b396c138b180def985264856594d71a08a66c35141e20cf34047cfe79cb1a48"
+      "sha256": "41b05cad8764079a6181be768755ef15ad5fb9f5cd83e03a57d5fb87f394cd03"
     },
     {
       "path": "packages/protocol/README.md",
@@ -869,7 +893,7 @@
     },
     {
       "path": "scripts/cargo-license-policy.json",
-      "sha256": "6055fd2290723fae31b4ee26f377f9db2e16a5b95e4c2899608021f281966266"
+      "sha256": "c28360866002e4fd921a4956c3403c1ae5819259caf58441a0d81655d46b30b6"
     },
     {
       "path": "scripts/check-markdown-links.rb",
@@ -881,7 +905,7 @@
     },
     {
       "path": "scripts/dev.mjs",
-      "sha256": "ee0f2e1c591e422e0ba7a142a3662a7e7f4cc998edd50ca1d02828d1406e6218"
+      "sha256": "f8a45e30b01f9bd8d034159e5bde1bcb3ebccc1717b306d6f7940984afcc7e5e"
     },
     {
       "path": "scripts/generate-build-identity.mjs",
@@ -913,11 +937,15 @@
     },
     {
       "path": "services/audio-node/Cargo.toml",
-      "sha256": "1f6c3d3ee8631e7c4aa02e2655463ce0d32701466367125b5c168b8b7d5e1092"
+      "sha256": "2bc50535ce011ffe0e14c260c6409b34e3c1e0e1aadb8e132dfa5735a8baad2b"
     },
     {
       "path": "services/audio-node/README.md",
-      "sha256": "f53ed2bef802ed88c86616f744af005b08b1b70534040adcb285b564ba989527"
+      "sha256": "16b69f89aa176e7d1c0455323c9febec8ed00e8745aca99f5469220e254c3b4b"
+    },
+    {
+      "path": "services/audio-node/src/bin/device-capture.rs",
+      "sha256": "797e2c3fde366d7d06eaaf72c5670fb86eb6a7d78e62e320b73510244fe20630"
     },
     {
       "path": "services/audio-node/src/bin/media-worker-smoke.rs",
@@ -978,6 +1006,38 @@
     {
       "path": "services/backend/tsconfig.json",
       "sha256": "740b16e7387baa9e3e7950206504b161419ff211cc238fc3989e091ffbb64a67"
+    },
+    {
+      "path": "services/listen-gateway/README.md",
+      "sha256": "c51eb7505c7a218922ac52875d2dc5701258e3ac432876d6f3ca6bf5394f69c1"
+    },
+    {
+      "path": "services/listen-gateway/package.json",
+      "sha256": "1d4e21c0b7d40078ad7b15dc62fe71d6c45e89b73b5becca727253483642bfd3"
+    },
+    {
+      "path": "services/listen-gateway/src/capture.test.ts",
+      "sha256": "428f1bffda138f2fef9d8f96eb5106d88e15dfeb5aca3f9f285c6a837c08f09e"
+    },
+    {
+      "path": "services/listen-gateway/src/capture.ts",
+      "sha256": "674922e0a5a567854fda32b695cb5999890554e9f177739952066a8f4527e44a"
+    },
+    {
+      "path": "services/listen-gateway/src/server.test.ts",
+      "sha256": "d2b3685ba151764793089cd990a15517ea8faa650020d470a453cf2f864f8122"
+    },
+    {
+      "path": "services/listen-gateway/src/server.ts",
+      "sha256": "6c503c555018712bd6ad7a9eb77bb45e459a01bbebbc318ecba053b45de6b634"
+    },
+    {
+      "path": "services/listen-gateway/src/start.ts",
+      "sha256": "efe753ead4736b061f873347543281e0ca0a2f2718cc2ee14c3f8ad7d886f58c"
+    },
+    {
+      "path": "services/listen-gateway/tsconfig.json",
+      "sha256": "fec362dd18dc62f576d07b6c3e9759ce68f9a1ff4929f0cc866172ebf973acb1"
     },
     {
       "path": "tests/README.md",

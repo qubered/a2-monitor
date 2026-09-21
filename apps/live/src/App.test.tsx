@@ -2,10 +2,12 @@
 
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LiveSnapshot } from "@a2-monitor/protocol/http";
 import { App } from "./App";
 import { initialChannels } from "./dev-data/channels";
+import type { AudioDeviceSource } from "./audio-device";
+import type { PlaybackFactory } from "./audio-playback";
 import {
   createStaticSnapshotSource,
   SnapshotContractError,
@@ -259,5 +261,54 @@ describe("Live channel grid", () => {
     expect(
       screen.getByText("Offline", { selector: ".node-state strong" }),
     ).toBeTruthy();
+  });
+
+  it("replaces fabricated cards with observed device inputs and starts them muted", async () => {
+    const user = userEvent.setup();
+    const audioDeviceSource: AudioDeviceSource = {
+      load: async () => ({
+        schemaVersion: 0,
+        status: "ready",
+        detail: "Capture active.",
+        device: {
+          name: "USB Interface",
+          sampleRateHz: 48000,
+          channelCount: 2,
+        },
+        channels: [
+          { index: 0, label: "Input 1" },
+          { index: 1, label: "Talkback" },
+        ],
+      }),
+    };
+    const setMuted = vi.fn(async () => undefined);
+    const close = vi.fn();
+    const playbackFactory = vi.fn<PlaybackFactory>((options) => {
+      options.onUpdate({ status: "listening", detail: "Receiving input 2." });
+      return { setMuted, setDimmed: vi.fn(), close };
+    });
+
+    render(
+      <App
+        snapshotSource={snapshotSource}
+        audioDeviceSource={audioDeviceSource}
+        playbackFactory={playbackFactory}
+      />,
+    );
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Select Talkback, channel 2",
+      }),
+    );
+
+    expect(screen.queryByText("Vera Castellan")).toBeNull();
+    expect(screen.getAllByText("Identity unknown").length).toBeGreaterThan(0);
+    expect(playbackFactory).toHaveBeenCalledWith(
+      expect.objectContaining({ channel: 1, sampleRateHz: 48000 }),
+    );
+    expect(setMuted).toHaveBeenCalledWith(true);
+    expect(screen.getByText("Listening")).toBeTruthy();
+    expect(screen.getByText("Monitor output is muted")).toBeTruthy();
   });
 });

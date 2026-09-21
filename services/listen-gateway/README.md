@@ -1,0 +1,25 @@
+# Listen gateway
+
+Development-only direct audio-node transport for the local MVP. It launches
+`a2-device-capture` with one exact device name, exposes the observed inputs at
+`GET /audio/v0/device`, and streams one selected mono Float32LE input at
+`/audio/v0/listen?channel=N` over WebSocket.
+
+The gateway is deliberately outside the management backend. It has no release
+authorization, encryption, jitter recovery or performance claim and must not be
+exposed to an untrusted network. ADR 0021 records its temporary scope.
+
+List the host's input devices:
+
+```sh
+npm run devices
+```
+
+Start the complete local application with an exact name from that output:
+
+```sh
+A2_AUDIO_DEVICE="Exact device name" npm run dev
+```
+
+The default bind is `127.0.0.1:3001`. `A2_CAPTURE_BIN`, `A2_LISTEN_HOST` and
+`A2_LISTEN_PORT` may override the development defaults.

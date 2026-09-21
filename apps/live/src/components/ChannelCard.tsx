@@ -74,6 +74,7 @@ export function ChannelCard({
   onOpenDetail,
 }: ChannelCardProps) {
   const alerting = Boolean(channel.alert && !acknowledged);
+  const observedDeviceInput = channel.id.startsWith("device-channel-");
   const handlePrimaryAction = alerting ? onAcknowledge : onSelect;
   const primaryAction = alerting ? "Acknowledge" : "Select";
 
@@ -92,11 +93,18 @@ export function ChannelCard({
       />
 
       <div className="channel-tile">
-        <div className="photo-placeholder" aria-label="Headshot not added">
+        <div
+          className="photo-placeholder"
+          aria-label={
+            observedDeviceInput ? "Identity unknown" : "Headshot not added"
+          }
+        >
           <span className="channel-number">
             {String(channel.number).padStart(2, "0")}
           </span>
-          <span className="photo-missing">Photo not added</span>
+          <span className="photo-missing">
+            {observedDeviceInput ? "Identity unknown" : "Photo not added"}
+          </span>
           {selected ? (
             <span className="selected-badge">
               <i aria-hidden="true" /> Selected

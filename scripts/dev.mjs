@@ -4,6 +4,9 @@ const children = [
   spawn("npm", ["run", "dev", "--workspace", "@a2-monitor/backend"], {
     stdio: "inherit",
   }),
+  spawn("npm", ["run", "dev", "--workspace", "@a2-monitor/listen-gateway"], {
+    stdio: "inherit",
+  }),
   spawn("npm", ["run", "dev", "--workspace", "@a2-monitor/live"], {
     stdio: "inherit",
   }),

@@ -89,11 +89,13 @@ The first runnable slice is the A2 channel grid. It currently provides:
 - explicit waiting, backend-unavailable, invalid-response and reconnect states
   which never replace unknown data with zero or healthy values.
 
-The Live grid now reads the Phase 0T snapshot route through Vite's local backend
-proxy. The backend response is still fabricated: this slice does not connect to
-an audio node, receiver or real show, and selecting a channel changes only local
-UI state. Fabricated data is labelled in the header, missing headshots render as
-missing, and no support or performance claim follows from this build.
+The Live grid reads the Phase 0T snapshot route through Vite's local backend
+proxy. That backend response remains fabricated and has no audio-node or receiver
+connection. Independently, when the temporary local listen gateway is configured,
+Live shows the physical device's observed input count, keeps identity unknown,
+and receives selected-channel audio directly from the node gateway. Fabricated
+data is labelled in the header, missing headshots render as missing, and no
+support or performance claim follows from this build.
 
 ## Run locally
 
@@ -101,7 +103,8 @@ Use Node.js 24 from the repository's `.node-version` file.
 
 ```sh
 npm ci
-npm run dev
+npm run devices
+A2_AUDIO_DEVICE="Exact device name" npm run dev
 ```
 
 Vite serves the app at `http://127.0.0.1:4173`. Component checks are:
@@ -120,6 +123,7 @@ npm run check --workspace @a2-monitor/live
 - [x] backend health and fabricated snapshot endpoint
 - [x] Live snapshot loading, explicit waiting/offline/error states and reconnect
 - [x] resumable guided mic-check prototype with explicit per-dimension verdicts
+- [x] local physical-device input selection and muted direct PCM listening MVP
 - [ ] external meter store and bounded rendering path
 - [ ] audio-node media/control integration and real listening
 - [ ] A1 mix-confidence, server-synchronized mic check and replay surfaces

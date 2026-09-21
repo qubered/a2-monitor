@@ -76,6 +76,7 @@ boundary; production evidence promotion remains deferred.
 - [Workspaces, testing and native packaging](decisions/0018-workspaces-testing-and-native-packaging.md)
 - [Cue-optional operation and show-time scope](decisions/0019-cue-optional-and-show-time-scope.md)
 - [Evidence verifier trust boundary](decisions/0020-evidence-verifier-trust-boundary.md)
+- [Temporary PCM listen MVP](decisions/0021-temporary-pcm-listen-mvp.md)
 
 ## Reference
 

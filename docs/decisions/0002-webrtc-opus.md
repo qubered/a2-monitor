@@ -29,6 +29,10 @@ WebRTC signaling and authorization belong to the management backend. Media
 flows directly between the selected audio node and the browser when network
 topology permits.
 
+ADR 0021 permits a raw-PCM WebSocket only as a local, non-promotional MVP path
+while this production transport is being completed. It does not change the
+accepted transport profile.
+
 ## Consequences
 
 ### Positive

@@ -1,9 +1,12 @@
 import type { LiveChannel as Channel } from "@a2-monitor/protocol/http";
+import type { PlaybackUpdate } from "../audio-playback";
 
 type PlayerProps = {
   channel: Channel | null;
   muted: boolean;
   dimmed: boolean;
+  playback: PlaybackUpdate;
+  directListeningAvailable: boolean;
   onToggleMute: () => void;
   onToggleDim: () => void;
 };
@@ -12,6 +15,8 @@ export function Player({
   channel,
   muted,
   dimmed,
+  playback,
+  directListeningAvailable,
   onToggleMute,
   onToggleDim,
 }: PlayerProps) {
@@ -35,11 +40,23 @@ export function Player({
         </div>
       </div>
       <p className="safety-state" aria-live="polite">
-        {muted
-          ? "Monitor output is muted"
-          : dimmed
-            ? "Monitor output is dimmed"
-            : "Monitor output is unmuted"}
+        <strong className={`playback-${playback.status}`}>
+          {playback.status === "idle"
+            ? "Not listening"
+            : playback.status === "connecting"
+              ? "Connecting"
+              : playback.status === "listening"
+                ? "Listening"
+                : "Listening error"}
+        </strong>
+        <span>{playback.detail}</span>
+        <span>
+          {muted
+            ? "Monitor output is muted"
+            : dimmed
+              ? "Monitor output is dimmed"
+              : "Monitor output is unmuted"}
+        </span>
       </p>
       <div className="player-controls">
         <button
@@ -47,6 +64,7 @@ export function Player({
           type="button"
           onClick={onToggleMute}
           aria-pressed={muted}
+          disabled={!directListeningAvailable || !channel}
         >
           Mute
         </button>
@@ -55,6 +73,7 @@ export function Player({
           type="button"
           onClick={onToggleDim}
           aria-pressed={dimmed}
+          disabled={!directListeningAvailable || !channel}
         >
           Dim
         </button>
