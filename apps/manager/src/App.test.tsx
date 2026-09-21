@@ -144,6 +144,6 @@ describe("Manager showfile editor", () => {
     await user.selectOptions(screen.getByLabelText("Theme"), "dark");
 
     expect(document.documentElement.dataset.theme).toBe("dark");
-    expect(window.localStorage.getItem("a2-monitor-theme")).toBe("dark");
+    expect(window.localStorage.getItem("pulse-theme")).toBe("dark");
   });
 });

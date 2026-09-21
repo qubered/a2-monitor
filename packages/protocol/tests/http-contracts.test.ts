@@ -274,7 +274,7 @@ describe("generated HTTP client", () => {
   it("rejects a response by declared length before reading its body", async () => {
     const fetchResponse = vi.fn(async () =>
       Response.json(
-        { status: "ok", service: "a2-backend", version: "0.0.0" },
+        { status: "ok", service: "pulse-backend", version: "0.0.0" },
         { headers: { "content-length": "4097" } },
       ),
     );

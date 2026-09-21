@@ -19,7 +19,7 @@ type Theme = "system" | "light" | "dark";
 type SaveState = "loading" | "saved" | "dirty" | "saving" | "error";
 
 function readTheme(): Theme {
-  const saved = window.localStorage.getItem("a2-monitor-theme");
+  const saved = window.localStorage.getItem("pulse-theme");
   return saved === "light" || saved === "dark" ? saved : "system";
 }
 
@@ -42,10 +42,10 @@ export function App() {
   useEffect(() => {
     if (theme === "system") {
       document.documentElement.removeAttribute("data-theme");
-      window.localStorage.removeItem("a2-monitor-theme");
+      window.localStorage.removeItem("pulse-theme");
     } else {
       document.documentElement.dataset.theme = theme;
-      window.localStorage.setItem("a2-monitor-theme", theme);
+      window.localStorage.setItem("pulse-theme", theme);
     }
   }, [theme]);
 
@@ -112,13 +112,24 @@ export function App() {
     <div className="min-h-screen bg-paper text-foreground">
       <header className="flex min-h-17 flex-wrap items-center gap-5 border-b-2 border-line-2 bg-paper-2 px-6 py-3">
         <div
-          className="flex items-baseline gap-2 font-display text-section font-extrabold"
+          className="flex items-center gap-2 font-display text-section font-bold"
           aria-label="Pulse Manager"
         >
-          <span aria-hidden="true" className="text-red">
-            ▲
+          <span aria-hidden="true" className="inline-flex text-ok">
+            <svg
+              viewBox="0 0 100 100"
+              width="20"
+              height="20"
+              fill="currentColor"
+            >
+              <rect x="8" y="38" width="12" height="24" rx="6" />
+              <rect x="27" y="24" width="12" height="52" rx="6" />
+              <rect x="46" y="8" width="12" height="84" rx="6" />
+              <rect x="65" y="24" width="12" height="52" rx="6" />
+              <rect x="84" y="38" width="12" height="24" rx="6" />
+            </svg>
           </span>
-          <b className="font-wordmark text-page">Pulse</b>
+          <b className="font-wordmark text-page font-semibold">Pulse</b>
           <em className="font-body text-ui font-semibold not-italic text-muted-foreground">
             Manager
           </em>

@@ -5,13 +5,13 @@
 //   - schema/v0/http/showfile.schema.json
 //   - schema/v0/http/shure-telemetry.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: 9caa1991c624e9c686cde4f84b80736d8ee34a100bdc2bddd0ce4b0e1bb520bd
-// Generator-SHA256: 7332ccaa39a3356f13cd579a0ec27fa08c2d30c34329709ecb964ba326edb8a9
-// Body-SHA256: 3a37c556453004a8a9ba8a351bcdb78e1abfe4dc6352c6a68234724d9eeb3ef8
+// Schema-SHA256: bd52feaf9f3b2b5cf62a395fe6c1bfcdae7e6229c4032a96683791f76de68794
+// Generator-SHA256: 3c0249ca1ce836c25261ef748e25dc478b3ab6868e02eaf9c12067acbd8da457
+// Body-SHA256: 2cc09511578e4b4feab617ac8a59be2da0272886d904890b65203ec8b18afece
 
 export type HealthResponse = {
   status: "ok";
-  service: "a2-backend";
+  service: "pulse-backend";
   version: string;
 };
 
@@ -196,7 +196,7 @@ const healthResponseSchema = {
       const: "ok",
     },
     service: {
-      const: "a2-backend",
+      const: "pulse-backend",
     },
     version: {
       type: "string",

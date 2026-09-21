@@ -64,7 +64,7 @@ export const micCheckDimensions = [
 ] as const;
 
 function storageKey(showName: string, channelId: string) {
-  return `a2-monitor-mic-check:${showName}:${channelId}`;
+  return `pulse-mic-check:${showName}:${channelId}`;
 }
 
 export function loadMicCheck(

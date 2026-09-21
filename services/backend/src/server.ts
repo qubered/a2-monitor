@@ -53,7 +53,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     { schema: { response: { 200: healthResponseSchema } } },
     async (): Promise<HealthResponse> => ({
       status: "ok",
-      service: "a2-backend",
+      service: "pulse-backend",
       version: "0.0.0",
     }),
   );

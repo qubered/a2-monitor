@@ -37,7 +37,7 @@ const filterLabels: Record<Filter, string> = {
 const emptyChannels: LiveChannel[] = [];
 
 function readTheme(): Theme {
-  const saved = window.localStorage.getItem("a2-monitor-theme");
+  const saved = window.localStorage.getItem("pulse-theme");
   return saved === "light" || saved === "dark" ? saved : "system";
 }
 
@@ -57,7 +57,7 @@ function readStringSet(key: string): Set<string> {
 }
 
 function readMonitorGainDb(): number {
-  const stored = window.localStorage.getItem("a2-monitor-gain-db");
+  const stored = window.localStorage.getItem("pulse-gain-db");
   if (stored === null) return DEFAULT_MONITOR_GAIN_DB;
   const saved = Number(stored);
   return Number.isFinite(saved)
@@ -129,10 +129,10 @@ export function App({
   const [filter, setFilter] = useState<Filter>("all");
   const [theme, setTheme] = useState<Theme>(readTheme);
   const [acknowledged, setAcknowledged] = useState<Set<string>>(() =>
-    readStringSet("a2-monitor-acknowledged"),
+    readStringSet("pulse-acknowledged"),
   );
   const [selectedId, setSelectedId] = useState<string | null>(() =>
-    window.localStorage.getItem("a2-monitor-selected-channel"),
+    window.localStorage.getItem("pulse-selected-channel"),
   );
   const [detailId, setDetailId] = useState<string | null>(null);
   const [micCheckId, setMicCheckId] = useState<string | null>(null);
@@ -175,25 +175,25 @@ export function App({
   useEffect(() => {
     if (theme === "system") {
       document.documentElement.removeAttribute("data-theme");
-      window.localStorage.removeItem("a2-monitor-theme");
+      window.localStorage.removeItem("pulse-theme");
     } else {
       document.documentElement.dataset.theme = theme;
-      window.localStorage.setItem("a2-monitor-theme", theme);
+      window.localStorage.setItem("pulse-theme", theme);
     }
   }, [theme]);
 
   useEffect(() => {
     window.localStorage.setItem(
-      "a2-monitor-acknowledged",
+      "pulse-acknowledged",
       JSON.stringify([...acknowledged]),
     );
   }, [acknowledged]);
 
   useEffect(() => {
     if (selectedId) {
-      window.localStorage.setItem("a2-monitor-selected-channel", selectedId);
+      window.localStorage.setItem("pulse-selected-channel", selectedId);
     } else {
-      window.localStorage.removeItem("a2-monitor-selected-channel");
+      window.localStorage.removeItem("pulse-selected-channel");
     }
   }, [selectedId]);
 
@@ -227,7 +227,7 @@ export function App({
 
   useEffect(() => {
     outputState.current = { muted, dimmed, gainDb };
-    window.localStorage.setItem("a2-monitor-gain-db", String(gainDb));
+    window.localStorage.setItem("pulse-gain-db", String(gainDb));
     playbackSession.current?.setGainDb(gainDb);
     playbackSession.current?.setDimmed(dimmed);
     void playbackSession.current?.setMuted(muted);
@@ -323,7 +323,20 @@ export function App({
     <div className="live-app">
       <header className="app-header">
         <div className="brand" aria-label="Pulse">
-          <span aria-hidden="true">▲</span>
+          <span aria-hidden="true">
+            <svg
+              viewBox="0 0 100 100"
+              width="20"
+              height="20"
+              fill="currentColor"
+            >
+              <rect x="8" y="38" width="12" height="24" rx="6" />
+              <rect x="27" y="24" width="12" height="52" rx="6" />
+              <rect x="46" y="8" width="12" height="84" rx="6" />
+              <rect x="65" y="24" width="12" height="52" rx="6" />
+              <rect x="84" y="38" width="12" height="24" rx="6" />
+            </svg>
+          </span>
           <b>Pulse</b>
         </div>
         <div className="show-name">

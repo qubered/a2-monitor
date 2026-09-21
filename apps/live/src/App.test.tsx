@@ -153,7 +153,7 @@ describe("Live channel grid", () => {
     await user.selectOptions(screen.getByLabelText("Theme"), "dark");
 
     expect(document.documentElement.dataset.theme).toBe("dark");
-    expect(window.localStorage.getItem("a2-monitor-theme")).toBe("dark");
+    expect(window.localStorage.getItem("pulse-theme")).toBe("dark");
   });
 
   it("runs and resumes a named eight-dimension mic check", async () => {
@@ -185,9 +185,7 @@ describe("Live channel grid", () => {
     await user.click(screen.getByRole("button", { name: "Continue check" }));
 
     expect(screen.getByText("Step 2 · A2 verdict")).toBeTruthy();
-    expect(window.localStorage.getItem("a2-monitor-operator-name")).toBe(
-      "Jamie",
-    );
+    expect(window.localStorage.getItem("pulse-operator-name")).toBe("Jamie");
   });
 
   it("names what it is waiting for without showing invented channel counts", () => {

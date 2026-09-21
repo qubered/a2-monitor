@@ -26,7 +26,7 @@ describe("backend health and Live snapshot", () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({
       status: "ok",
-      service: "a2-backend",
+      service: "pulse-backend",
       version: "0.0.0",
     });
   });
