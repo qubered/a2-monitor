@@ -8,7 +8,15 @@
     { "id": "receiver-a", "name": "Stage left", "host": "192.0.2.10", "model": "ULXD4D", "channelCount": 2 }
   ],
   "channels": [
-    { "inputIndex": 0, "name": "Marguerite", "shureReceiverId": "receiver-a", "shureChannelIndex": 0 },
+    {
+      "inputIndex": 0,
+      "name": "Marguerite",
+      "shureReceiverId": "receiver-a",
+      "shureChannelIndex": 0,
+      "micType": "headset",
+      "imageUrl": "https://example.com/headshots/marguerite.jpg",
+      "monitor": { "battery": true, "rf": true, "audio": true }
+    },
     { "inputIndex": 1, "name": "Talkback" }
   ]
 }

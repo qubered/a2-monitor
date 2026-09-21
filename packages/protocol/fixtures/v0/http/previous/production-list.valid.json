@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "0",
+  "activeId": "default",
+  "productions": [
+    {
+      "id": "default",
+      "name": "Untitled show",
+      "revision": 0,
+      "updatedAtUtc": null,
+      "channelCount": 0,
+      "receiverCount": 0
+    }
+  ]
+}

@@ -80,6 +80,7 @@ boundary; production evidence promotion remains deferred.
 - [Local MVP showfile](decisions/0022-local-mvp-showfile.md)
 - [Menu-bar shell and temporary Shure MVP host](decisions/0023-menu-bar-shell-and-shure-mvp-host.md)
 - [App window for device and network selection](decisions/0024-app-window-device-and-network-selection.md)
+- [Manager production library and inline photo upload](decisions/0025-manager-production-library-and-photo-upload.md)
 
 ## Reference
 

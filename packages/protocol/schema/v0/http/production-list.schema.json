@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://a2-monitor.local/schema/v0/http/production-list.schema.json",
+  "title": "Production list",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "activeId", "productions"],
+  "properties": {
+    "schemaVersion": { "const": "0" },
+    "activeId": { "type": ["string", "null"], "minLength": 1, "maxLength": 64 },
+    "productions": {
+      "type": "array",
+      "maxItems": 256,
+      "items": { "$ref": "#/$defs/production" }
+    }
+  },
+  "$defs": {
+    "production": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "revision",
+        "updatedAtUtc",
+        "channelCount",
+        "receiverCount"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+        "updatedAtUtc": { "type": ["string", "null"], "format": "date-time" },
+        "channelCount": { "type": "integer", "minimum": 0, "maximum": 128 },
+        "receiverCount": { "type": "integer", "minimum": 0, "maximum": 64 }
+      }
+    }
+  }
+}

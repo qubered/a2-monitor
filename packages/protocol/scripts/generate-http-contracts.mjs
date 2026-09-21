@@ -30,6 +30,12 @@ const contracts = [
     typeName: "ShureTelemetry",
     parserName: "parseShureTelemetry",
   },
+  {
+    schemaPath: "schema/v0/http/production-list.schema.json",
+    typeName: "ProductionList",
+    parserName: "parseProductionList",
+    definitionNames: { production: "ProductionSummary" },
+  },
 ];
 
 const outputPath = path.join(packageRoot, "generated/http-contracts.ts");

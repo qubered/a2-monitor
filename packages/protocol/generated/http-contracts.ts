@@ -4,10 +4,11 @@
 //   - schema/v0/http/live-snapshot-response.schema.json
 //   - schema/v0/http/showfile.schema.json
 //   - schema/v0/http/shure-telemetry.schema.json
+//   - schema/v0/http/production-list.schema.json
 // Regenerate: npm run generate --workspace @a2-monitor/protocol
-// Schema-SHA256: 9caa1991c624e9c686cde4f84b80736d8ee34a100bdc2bddd0ce4b0e1bb520bd
-// Generator-SHA256: 7332ccaa39a3356f13cd579a0ec27fa08c2d30c34329709ecb964ba326edb8a9
-// Body-SHA256: 3a37c556453004a8a9ba8a351bcdb78e1abfe4dc6352c6a68234724d9eeb3ef8
+// Schema-SHA256: 8d85960fd98b3b85fa6722138d496b60d4ca7d334f93b501fedddb57faac9f77
+// Generator-SHA256: 0958ee82e61352afdeb2f1a4ccd424817cd21b98d7ccea02a8b1e082d75d5d83
+// Body-SHA256: 731bc371c56c4a4781c6f1045d33c10a3054cf9a7de3f099e09834558bf5a926
 
 export type HealthResponse = {
   status: "ok";
@@ -110,6 +111,20 @@ export type Showfile = {
     name: string;
     shureChannelIndex?: number | null;
     shureReceiverId?: string | null;
+    micType?:
+      | "lavalier"
+      | "headset"
+      | "handheld"
+      | "boundary"
+      | "instrument"
+      | "other"
+      | null;
+    imageUrl?: string | null;
+    monitor?: {
+      battery: boolean;
+      rf: boolean;
+      audio: boolean;
+    };
   }>;
 };
 
@@ -165,6 +180,21 @@ export type ShureTelemetry = {
       availability: "observed" | "unavailable" | "stale";
     }>;
   }>;
+};
+
+export type ProductionSummary = {
+  id: string;
+  name: string;
+  revision: number;
+  updatedAtUtc: string | null;
+  channelCount: number;
+  receiverCount: number;
+};
+
+export type ProductionList = {
+  schemaVersion: "0";
+  activeId: string | null;
+  productions: Array<ProductionSummary>;
 };
 
 export class ProtocolContractError extends Error {
@@ -567,6 +597,38 @@ const showfileSchema = {
             minLength: 1,
             maxLength: 64,
           },
+          micType: {
+            enum: [
+              "lavalier",
+              "headset",
+              "handheld",
+              "boundary",
+              "instrument",
+              "other",
+              null,
+            ],
+          },
+          imageUrl: {
+            type: ["string", "null"],
+            minLength: 1,
+            maxLength: 300000,
+          },
+          monitor: {
+            type: "object",
+            additionalProperties: false,
+            required: ["battery", "rf", "audio"],
+            properties: {
+              battery: {
+                type: "boolean",
+              },
+              rf: {
+                type: "boolean",
+              },
+              audio: {
+                type: "boolean",
+              },
+            },
+          },
         },
       },
     },
@@ -841,6 +903,77 @@ const shureTelemetrySchema = {
   },
 } as const;
 
+const productionListSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://a2-monitor.local/schema/v0/http/production-list.schema.json",
+  title: "Production list",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "activeId", "productions"],
+  properties: {
+    schemaVersion: {
+      const: "0",
+    },
+    activeId: {
+      type: ["string", "null"],
+      minLength: 1,
+      maxLength: 64,
+    },
+    productions: {
+      type: "array",
+      maxItems: 256,
+      items: {
+        $ref: "#/$defs/production",
+      },
+    },
+  },
+  $defs: {
+    production: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "id",
+        "name",
+        "revision",
+        "updatedAtUtc",
+        "channelCount",
+        "receiverCount",
+      ],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        revision: {
+          type: "integer",
+          minimum: 0,
+          maximum: 2147483647,
+        },
+        updatedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        channelCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 128,
+        },
+        receiverCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 64,
+        },
+      },
+    },
+  },
+} as const;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -1048,6 +1181,14 @@ export function parseShureTelemetry(value: unknown): ShureTelemetry {
     value,
     shureTelemetrySchema,
     "ShureTelemetry",
+  );
+}
+
+export function parseProductionList(value: unknown): ProductionList {
+  return parseWithSchema<ProductionList>(
+    value,
+    productionListSchema,
+    "ProductionList",
   );
 }
 
