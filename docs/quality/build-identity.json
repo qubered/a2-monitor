@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.c6e5397cdffcd7ed",
-  "sourceSha256": "c6e5397cdffcd7ed5332621a312ece38de78868daa52b0f5cd3aeac996076bfb",
+  "buildId": "a2-0.0.0+sha256.5aaa061620271c0a",
+  "sourceSha256": "5aaa061620271c0a8764ce208739c776bec2854449ea877b10dfa704e72684d3",
   "inputCount": 307,
   "inputs": [
     {
@@ -37,7 +37,7 @@
     },
     {
       "path": ".github/workflows/repository.yml",
-      "sha256": "c8ffcafbe30cb799278688db8b7d2527a66bfdaaf8c0401fb81598f5272ab1e1"
+      "sha256": "969a8d1562a4b4127c054338f52294de08f2b81afddbb6325423a79934d10a2b"
     },
     {
       "path": ".gitignore",
