@@ -10,6 +10,8 @@ import {
   type AudioDeviceSource,
 } from "./audio-device";
 import {
+  clampMonitorGainDb,
+  DEFAULT_MONITOR_GAIN_DB,
   webAudioPlaybackFactory,
   type PlaybackFactory,
   type PlaybackSession,
@@ -18,6 +20,7 @@ import {
 import { httpSnapshotSource, type SnapshotSource } from "./snapshot";
 import { useAudioDevice } from "./useAudioDevice";
 import { useLiveSnapshot, type SnapshotState } from "./useLiveSnapshot";
+import { useShowfile } from "./useShowfile";
 
 type Filter = "all" | "needs-someone" | "wireless" | "wired";
 type Theme = "system" | "light" | "dark";
@@ -49,6 +52,15 @@ function readStringSet(key: string): Set<string> {
   } catch {
     return new Set();
   }
+}
+
+function readMonitorGainDb(): number {
+  const stored = window.localStorage.getItem("a2-monitor-gain-db");
+  if (stored === null) return DEFAULT_MONITOR_GAIN_DB;
+  const saved = Number(stored);
+  return Number.isFinite(saved)
+    ? clampMonitorGainDb(saved)
+    : DEFAULT_MONITOR_GAIN_DB;
 }
 
 function SnapshotNotice({
@@ -124,20 +136,24 @@ export function App({
   const [micCheckId, setMicCheckId] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
   const [dimmed, setDimmed] = useState(false);
+  const [gainDb, setGainDb] = useState(readMonitorGainDb);
   const [playback, setPlayback] = useState<PlaybackUpdate>({
     status: "idle",
     detail: "Select an observed device input to listen.",
   });
   const playbackSession = useRef<PlaybackSession | null>(null);
+  const outputState = useRef({ muted: true, dimmed: false, gainDb });
   const { state: snapshotState, reconnect } = useLiveSnapshot(snapshotSource);
   const audioDeviceState = useAudioDevice(audioDeviceSource);
+  const showfile = useShowfile();
+  const hasSavedShowfile = (showfile?.revision ?? 0) > 0;
   const snapshot = snapshotState.snapshot;
   const deviceChannels = useMemo(
     () =>
       audioDeviceState.status === "ready"
-        ? synthesizeDeviceChannels(audioDeviceState.device)
+        ? synthesizeDeviceChannels(audioDeviceState.device, showfile)
         : emptyChannels,
-    [audioDeviceState],
+    [audioDeviceState, showfile],
   );
   const usingDeviceChannels = audioDeviceState.status === "ready";
   const device =
@@ -193,7 +209,9 @@ export function App({
       sampleRateHz: deviceSampleRateHz,
       onUpdate: setPlayback,
     });
-    void session.setMuted(true);
+    session.setGainDb(outputState.current.gainDb);
+    session.setDimmed(outputState.current.dimmed);
+    void session.setMuted(outputState.current.muted);
     playbackSession.current = session;
     return () => {
       if (playbackSession.current === session) playbackSession.current = null;
@@ -207,9 +225,12 @@ export function App({
   ]);
 
   useEffect(() => {
+    outputState.current = { muted, dimmed, gainDb };
+    window.localStorage.setItem("a2-monitor-gain-db", String(gainDb));
+    playbackSession.current?.setGainDb(gainDb);
     playbackSession.current?.setDimmed(dimmed);
     void playbackSession.current?.setMuted(muted);
-  }, [dimmed, muted]);
+  }, [dimmed, gainDb, muted]);
 
   useEffect(() => {
     function handleKeyboard(event: KeyboardEvent) {
@@ -267,7 +288,6 @@ export function App({
   function selectChannel(channel: LiveChannel) {
     setSelectedId(channel.id);
     if (channel.id.startsWith("device-channel-")) {
-      setMuted(true);
       setPlayback({
         status: "connecting",
         detail: `Connecting to input ${channel.number}.`,
@@ -295,12 +315,16 @@ export function App({
         <div className="show-name">
           <strong>
             {usingDeviceChannels
-              ? device?.name
+              ? hasSavedShowfile
+                ? showfile?.show.name
+                : device?.name
               : (snapshot?.show.name ?? "Show state unavailable")}
           </strong>
           <span>
             {usingDeviceChannels
-              ? "Observed audio device · channel identity unknown"
+              ? hasSavedShowfile
+                ? `${device?.name ?? "Observed audio device"} · saved names from Manager`
+                : "Observed audio device · channel identity unknown"
               : snapshot
                 ? `${snapshot.show.venue} · ${snapshot.show.performanceLabel}`
                 : "Waiting for validated data"}
@@ -349,6 +373,9 @@ export function App({
             <option value="dark">Dark</option>
           </select>
         </label>
+        <a className="manager-link" href="/manager/">
+          Manager
+        </a>
       </header>
 
       <SnapshotNotice state={snapshotState} onReconnect={reconnect} />
@@ -438,10 +465,12 @@ export function App({
         channel={selectedChannel}
         muted={muted}
         dimmed={dimmed}
+        gainDb={gainDb}
         playback={visiblePlayback}
         directListeningAvailable={usingDeviceChannels}
         onToggleMute={() => setMuted((value) => !value)}
         onToggleDim={() => setDimmed((value) => !value)}
+        onGainChange={(value) => setGainDb(clampMonitorGainDb(value))}
       />
 
       {detailChannel ? (

@@ -48,15 +48,20 @@ Initial route families are:
 Exact pluralization is frozen with the first OpenAPI contract; the resource and
 transaction boundaries are the durable decision.
 
-### Phase 0T running subset
+### Local MVP running subset
 
-The scaffold currently implements only `GET /healthz` and
-`GET /api/v1/live/snapshot`. Their closed Draft 2020-12 response schemas live in
+The scaffold implements `GET /healthz`, `GET /api/v1/live/snapshot`, and the
+local-MVP `GET/PUT /api/v1/showfile` resource. Their closed Draft 2020-12 schemas live in
 `packages/protocol/schema/v0/http`. The snapshot contains fabricated development
 state and identifies that provenance in-band; it is not an observed node,
 receiver, hardware, or show result. Fastify validates both responses through the
 same strict, non-mutating Ajv 2020 registry used for route validation and uses
 ordinary JSON serialization after validation.
+
+The showfile holds one show name, exact device name/count and physical-input
+names. PUT uses the submitted revision as an optimistic precondition and returns
+409 on conflict. ADR 0022 limits this mutable file to the local MVP; it is not
+the immutable production aggregate described elsewhere in this document.
 
 OpenAPI generation, authentication, subscriptions, commands and persistence
 remain unimplemented. The running subset does not freeze those adjacent

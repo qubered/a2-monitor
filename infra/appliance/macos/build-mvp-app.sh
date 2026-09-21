@@ -24,9 +24,11 @@ case "$output_dir" in
   *) echo "Output directory must be inside the repository." >&2; exit 1 ;;
 esac
 
-rm -rf "$output_dir"
+rm -rf "$app" "$archive"
+mkdir -p "$output_dir"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources/bin" "$app/Contents/Resources/app"
 mkdir -p "$app/Contents/Resources/app/apps/live" \
+  "$app/Contents/Resources/app/apps/manager" \
   "$app/Contents/Resources/app/packages/protocol" \
   "$app/Contents/Resources/app/services/backend" \
   "$app/Contents/Resources/app/services/listen-gateway"
@@ -35,6 +37,7 @@ cd "$repo_root"
 npm run build --workspace @a2-monitor/backend
 npm run build --workspace @a2-monitor/listen-gateway
 npm run build --workspace @a2-monitor/live
+npm run build --workspace @a2-monitor/manager
 cargo build --locked --release --bin a2-device-capture
 
 runtime_root="$(mktemp -d)"
@@ -49,7 +52,6 @@ done
 (cd "$runtime_root" && npm ci --omit=dev --ignore-scripts)
 
 cp -R "$runtime_root/node_modules" "$app/Contents/Resources/app/node_modules"
-rm "$app/Contents/Resources/app/node_modules/@a2-monitor/manager"
 rm "$app/Contents/Resources/app/node_modules/@a2-monitor/ui"
 cp -R services/backend/dist "$app/Contents/Resources/app/services/backend/dist"
 cp services/backend/package.json "$app/Contents/Resources/app/services/backend/package.json"
@@ -59,6 +61,8 @@ cp -R services/listen-gateway/dist "$app/Contents/Resources/app/services/listen-
 cp services/listen-gateway/package.json "$app/Contents/Resources/app/services/listen-gateway/package.json"
 cp -R apps/live/dist "$app/Contents/Resources/app/apps/live/dist"
 cp apps/live/package.json "$app/Contents/Resources/app/apps/live/package.json"
+cp -R apps/manager/dist "$app/Contents/Resources/app/apps/manager/dist"
+cp apps/manager/package.json "$app/Contents/Resources/app/apps/manager/package.json"
 cp -R packages/protocol/schema packages/protocol/validation "$app/Contents/Resources/app/packages/protocol/"
 cp packages/protocol/package.json "$app/Contents/Resources/app/packages/protocol/package.json"
 cp -R "$runtime_root/packages/protocol/node_modules" \

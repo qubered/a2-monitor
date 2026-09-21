@@ -6,6 +6,7 @@ import {
   createHttpContractClient,
   parseHealthResponse,
   parseLiveSnapshot,
+  parseShowfile,
   ProtocolContractError,
   ProtocolHttpError,
 } from "../generated/http-contracts";
@@ -61,6 +62,13 @@ describe("generated HTTP contract compatibility", () => {
       "incompatible/live-snapshot-response.major-version.json",
     );
     expect(() => parseLiveSnapshot(value)).toThrow(ProtocolContractError);
+  });
+
+  it("accepts a showfile and rejects unknown fields", async () => {
+    const value = await fixture("current/showfile.valid.json");
+    const invalid = await fixture("incompatible/showfile.unknown-field.json");
+    expect(parseShowfile(value)).toEqual(value);
+    expect(() => parseShowfile(invalid)).toThrow(ProtocolContractError);
   });
 
   it("rejects a normalized but impossible calendar date", async () => {

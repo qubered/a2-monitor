@@ -285,7 +285,12 @@ describe("Live channel grid", () => {
     const close = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>((options) => {
       options.onUpdate({ status: "listening", detail: "Receiving input 2." });
-      return { setMuted, setDimmed: vi.fn(), close };
+      return {
+        setMuted,
+        setDimmed: vi.fn(),
+        setGainDb: vi.fn(),
+        close,
+      };
     });
 
     render(
@@ -295,6 +300,14 @@ describe("Live channel grid", () => {
         playbackFactory={playbackFactory}
       />,
     );
+
+    expect(
+      (
+        screen.getByRole("slider", {
+          name: "Monitor volume",
+        }) as HTMLInputElement
+      ).value,
+    ).toBe("-18");
 
     await user.click(
       await screen.findByRole("button", {
@@ -310,5 +323,14 @@ describe("Live channel grid", () => {
     expect(setMuted).toHaveBeenCalledWith(true);
     expect(screen.getByText("Listening")).toBeTruthy();
     expect(screen.getByText("Monitor output is muted")).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "Mute" }));
+    expect(setMuted).toHaveBeenLastCalledWith(false);
+    setMuted.mockClear();
+    await user.click(
+      screen.getByRole("button", { name: "Select Input 1, channel 1" }),
+    );
+    expect(setMuted).toHaveBeenCalledWith(false);
+    expect(screen.getByText("Monitor output is unmuted")).toBeTruthy();
   });
 });

@@ -2,10 +2,11 @@
 // Sources:
 //   - schema/v0/http/health-response.schema.json
 //   - schema/v0/http/live-snapshot-response.schema.json
+//   - schema/v0/http/showfile.schema.json
 // Regenerate: npm run generate --workspace @a2-monitor/protocol
-// Schema-SHA256: 828254c07886b2bf109cc95603e521b139df1db266e41d2148aeae4e0121a0d1
-// Generator-SHA256: 751e282e01ae3f129799b80b6840d41de775a795d80501c27bc5a288ad246fc1
-// Body-SHA256: a7813db8697a72bee8887e11de5890f51d7bf478b7cb4dca99d3e950abbcf3ba
+// Schema-SHA256: 910ee50290f164269918b47902b67cfdd4a6fef88fc2c34a5f1cc2e93499b0db
+// Generator-SHA256: 965a55a224eb055c504271222180be769e8525e577be261c248068419aaaf0e8
+// Body-SHA256: ab40f4e183142dcfe365de70eb57aadee22098ab5b20c13d73c0822c2a93490c
 
 export type HealthResponse = {
   status: "ok";
@@ -65,6 +66,23 @@ export type LiveSnapshot = {
     sampleRateHz: number | null;
   };
   channels: Array<LiveChannel>;
+};
+
+export type Showfile = {
+  schemaVersion: "0";
+  revision: number;
+  updatedAtUtc: string | null;
+  show: {
+    name: string;
+  };
+  device: {
+    name: string;
+    channelCount: number;
+  } | null;
+  channels: Array<{
+    inputIndex: number;
+    name: string;
+  }>;
 };
 
 export class ProtocolContractError extends Error {
@@ -329,6 +347,86 @@ const liveSnapshotSchema = {
   },
 } as const;
 
+const showfileSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://a2-monitor.local/schema/v0/http/showfile.schema.json",
+  title: "Local showfile",
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "schemaVersion",
+    "revision",
+    "updatedAtUtc",
+    "show",
+    "device",
+    "channels",
+  ],
+  properties: {
+    schemaVersion: {
+      const: "0",
+    },
+    revision: {
+      type: "integer",
+      minimum: 0,
+      maximum: 2147483647,
+    },
+    updatedAtUtc: {
+      type: ["string", "null"],
+      format: "date-time",
+    },
+    show: {
+      type: "object",
+      additionalProperties: false,
+      required: ["name"],
+      properties: {
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+      },
+    },
+    device: {
+      type: ["object", "null"],
+      additionalProperties: false,
+      required: ["name", "channelCount"],
+      properties: {
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 240,
+        },
+        channelCount: {
+          type: "integer",
+          minimum: 1,
+          maximum: 128,
+        },
+      },
+    },
+    channels: {
+      type: "array",
+      maxItems: 128,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["inputIndex", "name"],
+        properties: {
+          inputIndex: {
+            type: "integer",
+            minimum: 0,
+            maximum: 127,
+          },
+          name: {
+            type: "string",
+            minLength: 1,
+            maxLength: 120,
+          },
+        },
+      },
+    },
+  },
+} as const;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -525,6 +623,10 @@ export function parseLiveSnapshot(value: unknown): LiveSnapshot {
     liveSnapshotSchema,
     "LiveSnapshot",
   );
+}
+
+export function parseShowfile(value: unknown): Showfile {
+  return parseWithSchema<Showfile>(value, showfileSchema, "Showfile");
 }
 
 export type ProtocolFetch = (

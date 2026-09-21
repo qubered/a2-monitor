@@ -8,7 +8,17 @@ export type PlaybackUpdate = {
 export interface PlaybackSession {
   setMuted(muted: boolean): Promise<void>;
   setDimmed(dimmed: boolean): void;
+  setGainDb(gainDb: number): void;
   close(): void;
+}
+
+export const MIN_MONITOR_GAIN_DB = -60;
+export const MAX_MONITOR_GAIN_DB = 12;
+export const DEFAULT_MONITOR_GAIN_DB = -18;
+export const DIM_ATTENUATION_DB = -12;
+
+export function clampMonitorGainDb(value: number): number {
+  return Math.min(MAX_MONITOR_GAIN_DB, Math.max(MIN_MONITOR_GAIN_DB, value));
 }
 
 export type PlaybackFactory = (options: {
@@ -49,6 +59,7 @@ export function createWebAudioPlaybackFactory(dependencies?: {
     let queuedSamples = 0;
     let muted = true;
     let dimmed = false;
+    let gainDb = DEFAULT_MONITOR_GAIN_DB;
     let closed = false;
     let receivedAudio = false;
 
@@ -59,7 +70,8 @@ export function createWebAudioPlaybackFactory(dependencies?: {
     gain.connect(context.destination);
 
     function applyGain() {
-      gain.gain.value = muted ? 0 : dimmed ? 0.0316 : 1;
+      const effectiveGainDb = gainDb + (dimmed ? DIM_ATTENUATION_DB : 0);
+      gain.gain.value = muted ? 0 : 10 ** (effectiveGainDb / 20);
     }
 
     function fail(detail: string) {
@@ -155,6 +167,10 @@ export function createWebAudioPlaybackFactory(dependencies?: {
       },
       setDimmed(nextDimmed) {
         dimmed = nextDimmed;
+        applyGain();
+      },
+      setGainDb(nextGainDb) {
+        gainDb = clampMonitorGainDb(nextGainDb);
         applyGain();
       },
       close() {

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://a2-monitor.local/schema/v0/http/showfile.schema.json",
+  "title": "Local showfile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "revision",
+    "updatedAtUtc",
+    "show",
+    "device",
+    "channels"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "0" },
+    "revision": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+    "updatedAtUtc": { "type": ["string", "null"], "format": "date-time" },
+    "show": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 }
+      }
+    },
+    "device": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["name", "channelCount"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "channelCount": { "type": "integer", "minimum": 1, "maximum": 128 }
+      }
+    },
+    "channels": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["inputIndex", "name"],
+        "properties": {
+          "inputIndex": { "type": "integer", "minimum": 0, "maximum": 127 },
+          "name": { "type": "string", "minLength": 1, "maxLength": 120 }
+        }
+      }
+    }
+  }
+}

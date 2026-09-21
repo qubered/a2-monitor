@@ -82,6 +82,9 @@ describe("bounded Web Audio playback", () => {
     await session.setMuted(false);
     expect(FakeAudioContext.latest.gain.gain.value).toBeCloseTo(0.0316);
     expect(FakeAudioContext.latest.resume).toHaveBeenCalledOnce();
+    session.setDimmed(false);
+    session.setGainDb(6);
+    expect(FakeAudioContext.latest.gain.gain.value).toBeCloseTo(1.995, 3);
     session.close();
   });
 

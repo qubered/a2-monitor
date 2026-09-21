@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "0",
+  "revision": 3,
+  "updatedAtUtc": "2026-09-21T08:00:00Z",
+  "show": { "name": "The Winter Circus" },
+  "device": { "name": "USB Interface", "channelCount": 2 },
+  "channels": [
+    { "inputIndex": 0, "name": "Marguerite" },
+    { "inputIndex": 1, "name": "Talkback" }
+  ]
+}

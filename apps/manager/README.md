@@ -37,10 +37,11 @@ separate npm workspace and deployable static bundle. It shares generated
 protocol clients, accessible headless UI primitives and design tokens with
 Live, but not Live's show-time entry point or media session code.
 
-The current Phase 0T shell is intentionally disconnected from the management
-API. It renders only fabricated labels and explicit unknown/empty states; it
-does not claim that a production, hardware manifest, validation result, or
-activation exists.
+The local MVP implements one narrow management workflow: edit a show name and
+the names of the physical inputs observed by the configured audio device. It
+loads and saves the versioned `/api/v1/showfile` contract and remains separate
+from Live and its media code. This mutable local showfile is not an activated
+production revision, hardware manifest, validation result or audit history.
 
 ## Local development
 
@@ -58,6 +59,5 @@ Run its format, lint, interaction-test, type, and production-build checks with:
 npm run check --workspace @a2-monitor/manager
 ```
 
-Manager must remain independently buildable and must not import from
-`apps/live`. Its next data integration must use a management API contract added
-for a running backend path rather than inventing a UI-only resource shape.
+Manager is also available at `/manager/` inside the macOS MVP app. It must remain
+independently buildable and must not import from `apps/live`.

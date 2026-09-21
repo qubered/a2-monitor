@@ -46,6 +46,11 @@ and shows the LAN URLs when network access is selected. Keep the displayed
 dialog open; **Stop Server** shuts down capture, the gateway and the backend.
 Logs are written to `~/Library/Logs/A2 Monitor/mvp.log`.
 
+Open **Manager** from Live to name the show and physical inputs. The app stores
+that local MVP showfile at
+`~/Library/Application Support/A2 Monitor/showfile.json`; it survives app
+restart and is read by every Live client connected to the Mac.
+
 This is an ad-hoc-signed development bundle, not the signed, hardened, notarized
 installer described by ADR 0018. The LAN option exposes ADR 0021's unauthenticated
 raw PCM transport and is suitable only for a trusted local network. It must not

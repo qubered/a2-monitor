@@ -20,6 +20,11 @@ const contracts = [
     parserName: "parseLiveSnapshot",
     definitionNames: { channel: "LiveChannel" },
   },
+  {
+    schemaPath: "schema/v0/http/showfile.schema.json",
+    typeName: "Showfile",
+    parserName: "parseShowfile",
+  },
 ];
 
 const outputPath = path.join(packageRoot, "generated/http-contracts.ts");

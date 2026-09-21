@@ -97,6 +97,12 @@ and receives selected-channel audio directly from the node gateway. Fabricated
 data is labelled in the header, missing headshots render as missing, and no
 support or performance claim follows from this build.
 
+When Manager has saved the local MVP showfile for the exact observed device,
+Live projects its show and channel names onto those physical inputs. Listening
+starts muted. After the operator unmutes, input changes preserve mute, dim and
+gain state. Monitor gain is adjustable from `-60 dB` through `+12 dB`; dim adds
+`-12 dB` attenuation to the selected value.
+
 ## Run locally
 
 Use Node.js 24 from the repository's `.node-version` file.

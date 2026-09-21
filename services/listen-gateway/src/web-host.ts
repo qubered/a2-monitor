@@ -18,6 +18,7 @@ const CONTENT_TYPES: Readonly<Record<string, string>> = {
 
 export type WebHostOptions = {
   webRoot?: string;
+  managerRoot?: string;
   backendOrigin?: string;
 };
 
@@ -118,6 +119,19 @@ export async function handleWebRequest(
   if (url.pathname.startsWith("/api/") && options.backendOrigin) {
     proxyToBackend(incoming, response, options.backendOrigin);
     return true;
+  }
+  if (url.pathname === "/manager" && options.managerRoot) {
+    response.writeHead(302, { Location: "/manager/" });
+    response.end();
+    return true;
+  }
+  if (url.pathname.startsWith("/manager/") && options.managerRoot) {
+    return serveStatic(
+      incoming,
+      response,
+      options.managerRoot,
+      url.pathname.slice("/manager".length),
+    );
   }
   if (options.webRoot) {
     return serveStatic(incoming, response, options.webRoot, url.pathname);
