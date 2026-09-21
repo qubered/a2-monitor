@@ -6,6 +6,7 @@ import { MicCheck } from "./components/MicCheck";
 import { Player } from "./components/Player";
 import {
   httpAudioDeviceSource,
+  resolvePatchedInputIndex,
   synthesizeDeviceChannels,
   type AudioDeviceSource,
 } from "./audio-device";
@@ -21,6 +22,7 @@ import { httpSnapshotSource, type SnapshotSource } from "./snapshot";
 import { useAudioDevice } from "./useAudioDevice";
 import { useLiveSnapshot, type SnapshotState } from "./useLiveSnapshot";
 import { useShowfile } from "./useShowfile";
+import { useShureTelemetry } from "./useShureTelemetry";
 
 type Filter = "all" | "needs-someone" | "wireless" | "wired";
 type Theme = "system" | "light" | "dark";
@@ -146,14 +148,15 @@ export function App({
   const { state: snapshotState, reconnect } = useLiveSnapshot(snapshotSource);
   const audioDeviceState = useAudioDevice(audioDeviceSource);
   const showfile = useShowfile();
+  const shure = useShureTelemetry();
   const hasSavedShowfile = (showfile?.revision ?? 0) > 0;
   const snapshot = snapshotState.snapshot;
   const deviceChannels = useMemo(
     () =>
       audioDeviceState.status === "ready"
-        ? synthesizeDeviceChannels(audioDeviceState.device, showfile)
+        ? synthesizeDeviceChannels(audioDeviceState.device, showfile, shure)
         : emptyChannels,
-    [audioDeviceState, showfile],
+    [audioDeviceState, showfile, shure],
   );
   const usingDeviceChannels = audioDeviceState.status === "ready";
   const device =
@@ -163,9 +166,7 @@ export function App({
   const deviceSampleRateHz = device?.sampleRateHz;
   const selectedDeviceIndex =
     audioDeviceState.status === "ready"
-      ? audioDeviceState.device.channels?.find(
-          ({ index }) => `device-channel-${index}` === selectedId,
-        )?.index
+      ? resolvePatchedInputIndex(selectedId, audioDeviceState.device, showfile)
       : undefined;
   const channels = usingDeviceChannels
     ? deviceChannels
@@ -288,9 +289,20 @@ export function App({
   function selectChannel(channel: LiveChannel) {
     setSelectedId(channel.id);
     if (channel.id.startsWith("device-channel-")) {
+      const nextInput =
+        audioDeviceState.status === "ready"
+          ? resolvePatchedInputIndex(
+              channel.id,
+              audioDeviceState.device,
+              showfile,
+            )
+          : undefined;
       setPlayback({
-        status: "connecting",
-        detail: `Connecting to input ${channel.number}.`,
+        status: nextInput === undefined ? "idle" : "connecting",
+        detail:
+          channel.details.input === "Audio input not patched"
+            ? "This show channel is not patched to an audio input."
+            : `Connecting to ${channel.details.input}.`,
       });
     }
   }
@@ -301,7 +313,9 @@ export function App({
       : {
           status: "idle" as const,
           detail: usingDeviceChannels
-            ? "Select an observed device input to listen."
+            ? selectedChannel?.details.input === "Audio input not patched"
+              ? "This show channel is not patched to an audio input."
+              : "Select an observed device input to listen."
             : "Direct audio node listening is unavailable.",
         };
 

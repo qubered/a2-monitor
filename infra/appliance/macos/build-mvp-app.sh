@@ -71,7 +71,12 @@ cp -R "$runtime_root/packages/protocol/node_modules" \
 cp target/release/a2-device-capture "$app/Contents/Resources/bin/a2-device-capture"
 cp "$node_bin" "$app/Contents/Resources/bin/node"
 cp infra/appliance/macos/mvp-app/launcher.mjs "$app/Contents/Resources/launcher.mjs"
-cp infra/appliance/macos/mvp-app/A2-Monitor "$app/Contents/MacOS/A2 Monitor"
+xcrun swiftc \
+  -O \
+  -target arm64-apple-macos14.0 \
+  -framework AppKit \
+  infra/appliance/macos/mvp-app/A2MonitorApp.swift \
+  -o "$app/Contents/MacOS/A2 Monitor"
 chmod 755 "$app/Contents/MacOS/A2 Monitor" "$app/Contents/Resources/bin/"*
 
 cp infra/appliance/macos/mvp-app/Info.plist "$app/Contents/Info.plist"

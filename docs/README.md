@@ -77,6 +77,8 @@ boundary; production evidence promotion remains deferred.
 - [Cue-optional operation and show-time scope](decisions/0019-cue-optional-and-show-time-scope.md)
 - [Evidence verifier trust boundary](decisions/0020-evidence-verifier-trust-boundary.md)
 - [Temporary PCM listen MVP](decisions/0021-temporary-pcm-listen-mvp.md)
+- [Local MVP showfile](decisions/0022-local-mvp-showfile.md)
+- [Menu-bar shell and temporary Shure MVP host](decisions/0023-menu-bar-shell-and-shure-mvp-host.md)
 
 ## Reference
 

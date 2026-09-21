@@ -44,6 +44,17 @@ const contracts = [
     ],
     rejected: ["fixtures/v0/http/incompatible/showfile.unknown-field.json"],
   },
+  {
+    name: "shure-telemetry",
+    schema: "schema/v0/http/shure-telemetry.schema.json",
+    accepted: [
+      "fixtures/v0/http/current/shure-telemetry.valid.json",
+      "fixtures/v0/http/previous/shure-telemetry.valid.json",
+    ],
+    rejected: [
+      "fixtures/v0/http/incompatible/shure-telemetry.unknown-field.json",
+    ],
+  },
 ];
 
 async function readJson(relativePath) {

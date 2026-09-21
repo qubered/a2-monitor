@@ -3,10 +3,11 @@
 //   - schema/v0/http/health-response.schema.json
 //   - schema/v0/http/live-snapshot-response.schema.json
 //   - schema/v0/http/showfile.schema.json
+//   - schema/v0/http/shure-telemetry.schema.json
 // Regenerate: npm run generate --workspace @a2-monitor/protocol
-// Schema-SHA256: 910ee50290f164269918b47902b67cfdd4a6fef88fc2c34a5f1cc2e93499b0db
-// Generator-SHA256: 965a55a224eb055c504271222180be769e8525e577be261c248068419aaaf0e8
-// Body-SHA256: ab40f4e183142dcfe365de70eb57aadee22098ab5b20c13d73c0822c2a93490c
+// Schema-SHA256: 4f70eabf3c0ebac59a27b04f5b2eecc06710cad06e6e1add18d203ba1f5b734e
+// Generator-SHA256: 7332ccaa39a3356f13cd579a0ec27fa08c2d30c34329709ecb964ba326edb8a9
+// Body-SHA256: fc2da356ecc5079abe5efadd82a5b99b57fa16b540285d38132b5a050d7aa516
 
 export type HealthResponse = {
   status: "ok";
@@ -80,8 +81,28 @@ export type Showfile = {
     channelCount: number;
   } | null;
   channels: Array<{
-    inputIndex: number;
+    inputIndex: number | null;
     name: string;
+    shureChannelIndex?: number | null;
+  }>;
+};
+
+export type ShureTelemetry = {
+  schemaVersion: "0";
+  status: "unconfigured" | "connecting" | "ready" | "stale" | "error";
+  detail: string;
+  receiver: {
+    host: string;
+    model: string | null;
+    firmware: string | null;
+    compatibility: "compatible-read-only";
+  } | null;
+  channels: Array<{
+    index: number;
+    batteryBars: number | null;
+    batteryChargePercent: number | null;
+    observedAtUtc: string | null;
+    availability: "observed" | "unavailable" | "stale";
   }>;
 };
 
@@ -412,7 +433,7 @@ const showfileSchema = {
         required: ["inputIndex", "name"],
         properties: {
           inputIndex: {
-            type: "integer",
+            type: ["integer", "null"],
             minimum: 0,
             maximum: 127,
           },
@@ -420,6 +441,95 @@ const showfileSchema = {
             type: "string",
             minLength: 1,
             maxLength: 120,
+          },
+          shureChannelIndex: {
+            type: ["integer", "null"],
+            minimum: 0,
+            maximum: 127,
+          },
+        },
+      },
+    },
+  },
+} as const;
+
+const shureTelemetrySchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://a2-monitor.local/schema/v0/http/shure-telemetry.schema.json",
+  title: "Shure receiver telemetry",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "status", "detail", "receiver", "channels"],
+  properties: {
+    schemaVersion: {
+      const: "0",
+    },
+    status: {
+      enum: ["unconfigured", "connecting", "ready", "stale", "error"],
+    },
+    detail: {
+      type: "string",
+      minLength: 1,
+      maxLength: 240,
+    },
+    receiver: {
+      type: ["object", "null"],
+      additionalProperties: false,
+      required: ["host", "model", "firmware", "compatibility"],
+      properties: {
+        host: {
+          type: "string",
+          minLength: 1,
+          maxLength: 255,
+        },
+        model: {
+          type: ["string", "null"],
+          maxLength: 64,
+        },
+        firmware: {
+          type: ["string", "null"],
+          maxLength: 64,
+        },
+        compatibility: {
+          const: "compatible-read-only",
+        },
+      },
+    },
+    channels: {
+      type: "array",
+      maxItems: 128,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: [
+          "index",
+          "batteryBars",
+          "batteryChargePercent",
+          "observedAtUtc",
+          "availability",
+        ],
+        properties: {
+          index: {
+            type: "integer",
+            minimum: 0,
+            maximum: 127,
+          },
+          batteryBars: {
+            type: ["integer", "null"],
+            minimum: 0,
+            maximum: 5,
+          },
+          batteryChargePercent: {
+            type: ["integer", "null"],
+            minimum: 0,
+            maximum: 100,
+          },
+          observedAtUtc: {
+            type: ["string", "null"],
+            format: "date-time",
+          },
+          availability: {
+            enum: ["observed", "unavailable", "stale"],
           },
         },
       },
@@ -627,6 +737,14 @@ export function parseLiveSnapshot(value: unknown): LiveSnapshot {
 
 export function parseShowfile(value: unknown): Showfile {
   return parseWithSchema<Showfile>(value, showfileSchema, "Showfile");
+}
+
+export function parseShureTelemetry(value: unknown): ShureTelemetry {
+  return parseWithSchema<ShureTelemetry>(
+    value,
+    shureTelemetrySchema,
+    "ShureTelemetry",
+  );
 }
 
 export type ProtocolFetch = (

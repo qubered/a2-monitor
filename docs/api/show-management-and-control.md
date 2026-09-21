@@ -29,21 +29,21 @@ selection and hard response limits are consistent across collections.
 
 Initial route families are:
 
-| Purpose | Representative routes |
-| --- | --- |
-| People and assets | `GET/POST /api/v1/people`, `GET/PATCH /api/v1/people/{id}`, `POST /api/v1/attachment-uploads`, `POST /api/v1/attachment-uploads/{id}/finalize` |
-| Roles and cast | `GET/POST /api/v1/productions/{id}/roles`, `GET/POST /api/v1/performances/{id}/cast-assignments` |
-| Microphone inventory | `GET/POST /api/v1/microphone-assets`, `GET /api/v1/microphone-assets/{id}/history` |
-| Cues | `GET/POST /api/v1/productions/{id}/cue-lists`, `GET/PATCH /api/v1/cue-lists/{id}/cues/{cueId}` |
-| Performance state | `GET /api/v1/performances/{id}`, `GET /api/v1/performances/{id}/identity-manifest` |
-| Tasks and incidents | `GET/POST /api/v1/performances/{id}/tasks`, `GET/POST /api/v1/performances/{id}/incidents` |
-| Conversations | `GET/POST /api/v1/performances/{id}/conversations`, `GET/POST /api/v1/conversations/{id}/messages` |
-| Message state | `POST /api/v1/messages/{id}/reactions`, `PUT /api/v1/conversations/{id}/read-cursor`, `POST /api/v1/conversations/{id}/pages` |
-| Workspaces | `GET/PUT /api/v1/users/me/workspaces/{templateId}` |
-| Offline show pack | `POST /api/v1/performances/{id}/show-pack-exports` |
-| Show-time commands | `POST /api/v1/performances/{id}/commands/{command}` |
-| Subscriptions | `GET /api/v1/subscriptions` upgraded to the selected WebSocket protocol |
-| Audit/history | `GET /api/v1/performances/{id}/events`, `GET /api/v1/audit-events` |
+| Purpose              | Representative routes                                                                                                                          |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| People and assets    | `GET/POST /api/v1/people`, `GET/PATCH /api/v1/people/{id}`, `POST /api/v1/attachment-uploads`, `POST /api/v1/attachment-uploads/{id}/finalize` |
+| Roles and cast       | `GET/POST /api/v1/productions/{id}/roles`, `GET/POST /api/v1/performances/{id}/cast-assignments`                                               |
+| Microphone inventory | `GET/POST /api/v1/microphone-assets`, `GET /api/v1/microphone-assets/{id}/history`                                                             |
+| Cues                 | `GET/POST /api/v1/productions/{id}/cue-lists`, `GET/PATCH /api/v1/cue-lists/{id}/cues/{cueId}`                                                 |
+| Performance state    | `GET /api/v1/performances/{id}`, `GET /api/v1/performances/{id}/identity-manifest`                                                             |
+| Tasks and incidents  | `GET/POST /api/v1/performances/{id}/tasks`, `GET/POST /api/v1/performances/{id}/incidents`                                                     |
+| Conversations        | `GET/POST /api/v1/performances/{id}/conversations`, `GET/POST /api/v1/conversations/{id}/messages`                                             |
+| Message state        | `POST /api/v1/messages/{id}/reactions`, `PUT /api/v1/conversations/{id}/read-cursor`, `POST /api/v1/conversations/{id}/pages`                  |
+| Workspaces           | `GET/PUT /api/v1/users/me/workspaces/{templateId}`                                                                                             |
+| Offline show pack    | `POST /api/v1/performances/{id}/show-pack-exports`                                                                                             |
+| Show-time commands   | `POST /api/v1/performances/{id}/commands/{command}`                                                                                            |
+| Subscriptions        | `GET /api/v1/subscriptions` upgraded to the selected WebSocket protocol                                                                        |
+| Audit/history        | `GET /api/v1/performances/{id}/events`, `GET /api/v1/audit-events`                                                                             |
 
 Exact pluralization is frozen with the first OpenAPI contract; the resource and
 transaction boundaries are the durable decision.
@@ -58,10 +58,17 @@ receiver, hardware, or show result. Fastify validates both responses through the
 same strict, non-mutating Ajv 2020 registry used for route validation and uses
 ordinary JSON serialization after validation.
 
-The showfile holds one show name, exact device name/count and physical-input
-names. PUT uses the submitted revision as an optimistic precondition and returns
-409 on conflict. ADR 0022 limits this mutable file to the local MVP; it is not
-the immutable production aggregate described elsewhere in this document.
+The showfile holds one show name, exact device name/count and ordered logical
+channels with optional physical-input and normalized Shure receiver-channel
+patches. PUT uses the submitted revision as an optimistic precondition and
+returns 409 on conflict. ADR 0022 limits this mutable file to the local MVP; it
+is not the immutable production aggregate described elsewhere in this document.
+
+The listen gateway also exposes the local-MVP `GET /audio/v0/shure` projection.
+Its closed schema reports read-only receiver identity, compatibility state,
+battery bars/percentage and freshness. ADR 0023 makes the gateway an explicitly
+temporary integration host; raw command strings and control actions are never
+returned to a browser.
 
 OpenAPI generation, authentication, subscriptions, commands and persistence
 remain unimplemented. The running subset does not freeze those adjacent

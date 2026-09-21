@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import type { Showfile } from "@a2-monitor/protocol/http";
+import type { Showfile, ShureTelemetry } from "@a2-monitor/protocol/http";
 import {
   loadObservedDevice,
   loadShowfile,
+  loadShureTelemetry,
   projectShowfileToDevice,
   saveShowfile,
   type ObservedDevice,
@@ -20,6 +21,7 @@ export function App() {
   const [theme, setTheme] = useState<Theme>(readTheme);
   const [showfile, setShowfile] = useState<Showfile | null>(null);
   const [device, setDevice] = useState<ObservedDevice | null>(null);
+  const [shure, setShure] = useState<ShureTelemetry | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("loading");
   const [message, setMessage] = useState("Loading showfile and audio inputs.");
 
@@ -38,14 +40,17 @@ export function App() {
     void Promise.all([
       loadShowfile(controller.signal),
       loadObservedDevice(controller.signal),
+      loadShureTelemetry(controller.signal).catch(() => null),
     ])
-      .then(([loaded, observed]) => {
+      .then(([loaded, observed, receiver]) => {
         const projected = projectShowfileToDevice(loaded, observed);
         const changed =
           loaded.device?.name !== projected.device?.name ||
           loaded.device?.channelCount !== projected.device?.channelCount ||
-          loaded.channels.length !== projected.channels.length;
+          JSON.stringify(loaded.channels) !==
+            JSON.stringify(projected.channels);
         setDevice(observed);
+        setShure(receiver);
         setShowfile(projected);
         setSaveState(changed ? "dirty" : "saved");
         setMessage(
@@ -143,8 +148,8 @@ export function App() {
             <span className="overline">Show setup</span>
             <h1 id="showfile-title">Build a showfile</h1>
             <p>
-              Name the show and each observed physical input. Saved names appear
-              in Live on every connected device.
+              Add the channels you use, name them, then patch each one to a
+              physical audio input and optional Shure receiver channel.
             </p>
           </div>
           <button
@@ -190,41 +195,149 @@ export function App() {
             >
               <div className="channel-editor-heading">
                 <div>
-                  <span className="overline">Observed device</span>
-                  <h2 id="channel-editor-title">
-                    {device?.name ??
-                      showfile.device?.name ??
-                      "Device unavailable"}
-                  </h2>
+                  <span className="overline">Channel patch</span>
+                  <h2 id="channel-editor-title">Show channels</h2>
                 </div>
-                <span className="device-readout">
-                  {device
-                    ? `${device.channelCount} inputs · ${device.sampleRateHz / 1000} kHz`
-                    : "Input state unknown"}
-                </span>
+                <button
+                  className="line-button"
+                  type="button"
+                  onClick={() =>
+                    update({
+                      ...showfile,
+                      channels: [
+                        ...showfile.channels,
+                        {
+                          inputIndex: null,
+                          name: `Channel ${showfile.channels.length + 1}`,
+                          shureChannelIndex: null,
+                        },
+                      ],
+                    })
+                  }
+                >
+                  Add channel
+                </button>
               </div>
+              <p className="patch-summary">
+                {device
+                  ? `${device.name} · ${device.channelCount} inputs · ${device.sampleRateHz / 1000} kHz`
+                  : "Audio input state unknown"}
+                {shure?.receiver
+                  ? ` · Shure ${shure.receiver.model ?? "receiver"} at ${shure.receiver.host}`
+                  : " · Shure receiver not configured"}
+              </p>
               <div className="channel-name-list">
                 {showfile.channels.map((channel, position) => (
-                  <label className="channel-name-row" key={channel.inputIndex}>
-                    <span className="channel-number">
-                      {channel.inputIndex + 1}
-                    </span>
-                    <span className="channel-input">Physical input</span>
-                    <input
-                      aria-label={`Channel ${channel.inputIndex + 1} name`}
-                      value={channel.name}
-                      maxLength={120}
-                      onChange={(event) => {
-                        const channels = [...showfile.channels];
-                        channels[position] = {
-                          ...channel,
-                          name: event.target.value,
-                        };
-                        update({ ...showfile, channels });
-                      }}
-                    />
-                  </label>
+                  <div className="channel-name-row" key={position}>
+                    <span className="channel-number">{position + 1}</span>
+                    <label>
+                      <span>Name</span>
+                      <input
+                        aria-label={`Channel ${position + 1} name`}
+                        value={channel.name}
+                        maxLength={120}
+                        onChange={(event) => {
+                          const channels = [...showfile.channels];
+                          channels[position] = {
+                            ...channel,
+                            name: event.target.value,
+                          };
+                          update({ ...showfile, channels });
+                        }}
+                      />
+                    </label>
+                    <label>
+                      <span>Audio input</span>
+                      <select
+                        aria-label={`Channel ${position + 1} audio input`}
+                        value={channel.inputIndex ?? ""}
+                        onChange={(event) => {
+                          const channels = [...showfile.channels];
+                          channels[position] = {
+                            ...channel,
+                            inputIndex:
+                              event.target.value === ""
+                                ? null
+                                : Number(event.target.value),
+                          };
+                          update({ ...showfile, channels });
+                        }}
+                      >
+                        <option value="">Not patched</option>
+                        {device?.channels.map((input) => (
+                          <option
+                            key={input.index}
+                            value={input.index}
+                            disabled={showfile.channels.some(
+                              (other, index) =>
+                                index !== position &&
+                                other.inputIndex === input.index,
+                            )}
+                          >
+                            Input {input.index + 1} · {input.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      <span>Shure channel</span>
+                      <select
+                        aria-label={`Channel ${position + 1} Shure channel`}
+                        value={channel.shureChannelIndex ?? ""}
+                        onChange={(event) => {
+                          const channels = [...showfile.channels];
+                          channels[position] = {
+                            ...channel,
+                            shureChannelIndex:
+                              event.target.value === ""
+                                ? null
+                                : Number(event.target.value),
+                          };
+                          update({ ...showfile, channels });
+                        }}
+                      >
+                        <option value="">None</option>
+                        {shure?.receiver
+                          ? shure.channels.map((receiverChannel) => (
+                              <option
+                                key={receiverChannel.index}
+                                value={receiverChannel.index}
+                                disabled={showfile.channels.some(
+                                  (other, index) =>
+                                    index !== position &&
+                                    other.shureChannelIndex ===
+                                      receiverChannel.index,
+                                )}
+                              >
+                                Receiver {receiverChannel.index + 1}
+                              </option>
+                            ))
+                          : null}
+                      </select>
+                    </label>
+                    <button
+                      className="remove-channel"
+                      type="button"
+                      aria-label={`Remove channel ${position + 1}`}
+                      onClick={() =>
+                        update({
+                          ...showfile,
+                          channels: showfile.channels.filter(
+                            (_, index) => index !== position,
+                          ),
+                        })
+                      }
+                    >
+                      Remove
+                    </button>
+                  </div>
                 ))}
+                {showfile.channels.length === 0 ? (
+                  <div className="empty-state">
+                    <strong>No show channels.</strong>
+                    <span>Add a channel, then patch it to an input.</span>
+                  </div>
+                ) : null}
               </div>
             </section>
           </form>

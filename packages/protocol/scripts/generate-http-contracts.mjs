@@ -25,6 +25,11 @@ const contracts = [
     typeName: "Showfile",
     parserName: "parseShowfile",
   },
+  {
+    schemaPath: "schema/v0/http/shure-telemetry.schema.json",
+    typeName: "ShureTelemetry",
+    parserName: "parseShureTelemetry",
+  },
 ];
 
 const outputPath = path.join(packageRoot, "generated/http-contracts.ts");

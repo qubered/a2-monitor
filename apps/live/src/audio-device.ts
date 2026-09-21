@@ -1,4 +1,8 @@
-import type { LiveChannel, Showfile } from "@a2-monitor/protocol/http";
+import type {
+  LiveChannel,
+  Showfile,
+  ShureTelemetry,
+} from "@a2-monitor/protocol/http";
 
 export type AudioDeviceState = {
   schemaVersion: 0;
@@ -135,40 +139,123 @@ export function createHttpAudioDeviceSource(
 export function synthesizeDeviceChannels(
   state: AudioDeviceState,
   showfile?: Showfile | null,
+  shure?: ShureTelemetry | null,
 ): LiveChannel[] {
   if (state.status !== "ready" || !state.device || !state.channels) return [];
-  const savedNames =
+  const hasExactShowfile =
     showfile?.device?.name === state.device.name &&
-    showfile.device.channelCount === state.device.channelCount
-      ? new Map(
-          showfile.channels.map(({ inputIndex, name }) => [inputIndex, name]),
-        )
-      : new Map<number, string>();
-  return state.channels.map(({ index, label }) => ({
-    id: `device-channel-${index}`,
-    number: index + 1,
-    character: savedNames.get(index) ?? (label || `Input ${index + 1}`),
-    performer: savedNames.has(index)
-      ? `Physical input ${index + 1}`
-      : "Identity unknown",
-    kind: "wired",
-    zone: state.device?.name ?? "Audio device",
-    levelDbfs: null,
-    statuses: {
-      rf: "not-applicable",
-      audio: "unknown",
-      battery: "not-applicable",
-      check: "unknown",
-    },
-    details: {
-      receiver: "Not applicable · wired input",
-      input: `${state.device?.name ?? "Audio device"} · input ${index + 1}`,
-      rfLevelDbm: null,
-      linkQualityPercent: null,
-      batteryRemaining: null,
-      telemetryAge: "Identity and level not observed",
-    },
-  }));
+    showfile.device.channelCount === state.device.channelCount &&
+    showfile.revision > 0;
+  const configured = hasExactShowfile
+    ? showfile.channels
+    : state.channels.map(({ index, label }) => ({
+        inputIndex: index,
+        name: label || `Input ${index + 1}`,
+        shureChannelIndex: null,
+      }));
+  return configured.map((configuredChannel, position) => {
+    const inputIndex = configuredChannel.inputIndex;
+    const receiverChannel =
+      configuredChannel.shureChannelIndex === undefined ||
+      configuredChannel.shureChannelIndex === null
+        ? undefined
+        : shure?.channels.find(
+            ({ index }) => index === configuredChannel.shureChannelIndex,
+          );
+    const batteryObserved = receiverChannel?.availability === "observed";
+    const batteryValue =
+      receiverChannel?.batteryChargePercent ?? receiverChannel?.batteryBars;
+    const batteryStatus = !batteryObserved
+      ? "unknown"
+      : batteryValue === null || batteryValue === undefined
+        ? "unknown"
+        : receiverChannel?.batteryChargePercent !== null
+          ? batteryValue <= 10
+            ? "fault"
+            : batteryValue <= 20
+              ? "caution"
+              : "good"
+          : batteryValue === 0
+            ? "fault"
+            : batteryValue === 1
+              ? "caution"
+              : "good";
+    const batteryRemaining = batteryObserved
+      ? [
+          receiverChannel?.batteryChargePercent === null
+            ? null
+            : `${receiverChannel?.batteryChargePercent}%`,
+          receiverChannel?.batteryBars === null
+            ? null
+            : `${receiverChannel?.batteryBars} / 5 bars`,
+        ]
+          .filter(Boolean)
+          .join(" · ") || null
+      : null;
+    return {
+      id: `device-channel-${position}`,
+      number: position + 1,
+      character: configuredChannel.name,
+      performer: hasExactShowfile
+        ? inputIndex === null
+          ? "Audio not patched"
+          : `Physical input ${inputIndex + 1}`
+        : "Identity unknown",
+      kind: configuredChannel.shureChannelIndex == null ? "wired" : "wireless",
+      zone: state.device?.name ?? "Audio device",
+      levelDbfs: null,
+      statuses: {
+        rf:
+          configuredChannel.shureChannelIndex == null
+            ? "not-applicable"
+            : "unknown",
+        audio: "unknown",
+        battery:
+          configuredChannel.shureChannelIndex == null
+            ? "not-applicable"
+            : batteryStatus,
+        check: "unknown",
+      },
+      details: {
+        receiver:
+          configuredChannel.shureChannelIndex == null
+            ? "Not applicable · wired input"
+            : shure?.receiver
+              ? `Shure ${shure.receiver.model ?? "receiver"} · channel ${configuredChannel.shureChannelIndex + 1}`
+              : `Shure channel ${configuredChannel.shureChannelIndex + 1} · telemetry unavailable`,
+        input:
+          inputIndex === null
+            ? "Audio input not patched"
+            : `${state.device?.name ?? "Audio device"} · input ${inputIndex + 1}`,
+        rfLevelDbm: null,
+        linkQualityPercent: null,
+        batteryRemaining,
+        telemetryAge: batteryObserved
+          ? `Battery observed ${receiverChannel?.observedAtUtc ?? "at unknown time"}`
+          : configuredChannel.shureChannelIndex == null
+            ? "Identity and level not observed"
+            : (shure?.detail ?? "Shure telemetry unavailable"),
+      },
+    };
+  });
+}
+
+export function resolvePatchedInputIndex(
+  channelId: string | null,
+  state: AudioDeviceState,
+  showfile?: Showfile | null,
+): number | undefined {
+  if (state.status !== "ready" || !state.device || !state.channels) return;
+  const match = /^device-channel-(\d+)$/.exec(channelId ?? "");
+  if (!match) return;
+  const position = Number(match[1]);
+  const exact =
+    showfile?.revision !== undefined &&
+    showfile.revision > 0 &&
+    showfile.device?.name === state.device.name &&
+    showfile.device.channelCount === state.device.channelCount;
+  if (exact) return showfile.channels[position]?.inputIndex ?? undefined;
+  return state.channels[position]?.index;
 }
 
 export const httpAudioDeviceSource = createHttpAudioDeviceSource();

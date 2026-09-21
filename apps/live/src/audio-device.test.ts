@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
+import type { Showfile, ShureTelemetry } from "@a2-monitor/protocol/http";
 import {
   createHttpAudioDeviceSource,
   parseAudioDeviceState,
+  resolvePatchedInputIndex,
   synthesizeDeviceChannels,
   type AudioDeviceState,
 } from "./audio-device";
@@ -71,5 +73,65 @@ describe("audio device adapter", () => {
       statuses: { audio: "unknown", check: "unknown" },
       details: { telemetryAge: "Identity and level not observed" },
     });
+  });
+
+  it("projects configured input patches and observed Shure battery telemetry", () => {
+    const state = parseAudioDeviceState({
+      schemaVersion: 0,
+      status: "ready",
+      detail: "Capture active.",
+      device: { name: "USB Interface", sampleRateHz: 48000, channelCount: 2 },
+      channels: [
+        { index: 0, label: "Input 1" },
+        { index: 1, label: "Input 2" },
+      ],
+    });
+    const showfile: Showfile = {
+      schemaVersion: "0",
+      revision: 3,
+      updatedAtUtc: "2026-09-21T00:00:00Z",
+      show: { name: "Test" },
+      device: { name: "USB Interface", channelCount: 2 },
+      channels: [
+        { inputIndex: 1, name: "Lead", shureChannelIndex: 0 },
+        { inputIndex: null, name: "Spare", shureChannelIndex: null },
+      ],
+    };
+    const shure: ShureTelemetry = {
+      schemaVersion: "0",
+      status: "ready",
+      detail: "Current.",
+      receiver: {
+        host: "192.0.2.10",
+        model: "ULXD4D",
+        firmware: "2.7.10",
+        compatibility: "compatible-read-only",
+      },
+      channels: [
+        {
+          index: 0,
+          batteryBars: 1,
+          batteryChargePercent: 18,
+          observedAtUtc: "2026-09-21T00:00:00Z",
+          availability: "observed",
+        },
+      ],
+    };
+
+    const channels = synthesizeDeviceChannels(state, showfile, shure);
+    expect(channels[0]).toMatchObject({
+      character: "Lead",
+      performer: "Physical input 2",
+      kind: "wireless",
+      statuses: { battery: "caution" },
+      details: { batteryRemaining: "18% · 1 / 5 bars" },
+    });
+    expect(channels[1]).toMatchObject({ performer: "Audio not patched" });
+    expect(resolvePatchedInputIndex("device-channel-0", state, showfile)).toBe(
+      1,
+    );
+    expect(
+      resolvePatchedInputIndex("device-channel-1", state, showfile),
+    ).toBeUndefined();
   });
 });

@@ -9,6 +9,7 @@ import {
   type CaptureManagerOptions,
 } from "./capture.js";
 import { handleWebRequest, type WebHostOptions } from "./web-host.js";
+import { ShureMonitor, type ShureMonitorOptions } from "./shure.js";
 
 const MAX_CLIENTS = 32;
 const MAX_BUFFERED_BYTES = 256 * 1024;
@@ -21,6 +22,8 @@ type Listener = {
 export type ListenGatewayOptions = CaptureManagerOptions &
   WebHostOptions & {
     captureManager?: CaptureManager;
+    shureMonitor?: ShureMonitor;
+    shure?: ShureMonitorOptions;
   };
 
 function rejectUpgrade(socket: Duplex, status: number, reason: string): void {
@@ -60,6 +63,7 @@ function extractMono(chunk: CaptureAudioChunk, channel: number): Buffer {
 
 export class ListenGateway {
   readonly capture: CaptureManager;
+  readonly shure: ShureMonitor;
   readonly server: Server;
   private readonly webSockets: WebSocketServer;
   private readonly listeners = new Set<Listener>();
@@ -72,6 +76,7 @@ export class ListenGateway {
         captureBinary: options.captureBinary,
         processFactory: options.processFactory,
       });
+    this.shure = options.shureMonitor ?? new ShureMonitor(options.shure);
     this.webSockets = new WebSocketServer({
       noServer: true,
       perMessageDeflate: false,
@@ -80,6 +85,16 @@ export class ListenGateway {
     this.server = createServer((request, response) => {
       if (request.method === "GET" && request.url === "/audio/v0/device") {
         const body = JSON.stringify(this.capture.getState());
+        response.writeHead(200, {
+          "Cache-Control": "no-store",
+          "Content-Type": "application/json; charset=utf-8",
+          "Content-Length": Buffer.byteLength(body),
+        });
+        response.end(body);
+        return;
+      }
+      if (request.method === "GET" && request.url === "/audio/v0/shure") {
+        const body = JSON.stringify(this.shure.getState());
         response.writeHead(200, {
           "Cache-Control": "no-store",
           "Content-Type": "application/json; charset=utf-8",
@@ -163,10 +178,12 @@ export class ListenGateway {
 
   startCapture(): void {
     this.capture.start();
+    this.shure.start();
   }
 
   async close(): Promise<void> {
     this.capture.stop();
+    this.shure.close();
     for (const listener of this.listeners) listener.socket.terminate();
     this.listeners.clear();
     await new Promise<void>((resolve, reject) => {
