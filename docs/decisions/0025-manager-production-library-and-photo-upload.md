@@ -1,4 +1,4 @@
-# ADR 0024: Manager production library and inline photo upload
+# ADR 0025: Manager production library and inline photo upload
 
 - **Status:** Accepted for the local MVP only
 - **Date:** 2026-09-21

@@ -15,7 +15,7 @@ externally tested release.
   `GET/POST /api/v1/productions`, `POST /api/v1/productions/:id/activate`
   and `DELETE /api/v1/productions/:id` API. `GET/PUT /api/v1/showfile`
   keep working unchanged against whichever production is active
-  (ADR 0024).
+  (ADR 0025).
 - Manager channels: an optional mic type, an uploaded headshot photo
   (read locally and stored inline as the channel's `imageUrl`, capped at
   200 KB), and per-dimension battery/RF/audio monitoring toggles.

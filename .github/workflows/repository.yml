@@ -85,6 +85,15 @@ jobs:
       - name: Check synthetic unsigned macOS package
         if: runner.os == 'macOS'
         run: bash infra/appliance/macos/test-unsigned-pkg.sh
+      - name: Compile macOS menu-bar app
+        if: runner.os == 'macOS'
+        run: |
+          xcrun swiftc \
+            -O \
+            -target arm64-apple-macos14.0 \
+            -framework AppKit \
+            infra/appliance/macos/mvp-app/A2MonitorApp.swift \
+            -o "$RUNNER_TEMP/A2MonitorApp-compile-check"
       - name: Require a clean tracked checkout
         run: |
           git diff --exit-code
