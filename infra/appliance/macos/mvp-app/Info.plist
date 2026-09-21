@@ -12,6 +12,7 @@
   <key>CFBundleVersion</key><string>1</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>NSHighResolutionCapable</key><true/>
+  <key>LSUIElement</key><true/>
   <key>NSMicrophoneUsageDescription</key><string>A2 Monitor captures the explicitly selected audio device so listeners can monitor its channels.</string>
 </dict>
 </plist>

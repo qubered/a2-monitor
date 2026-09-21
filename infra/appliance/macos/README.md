@@ -42,12 +42,13 @@ open "build/macos-mvp/A2 Monitor.app"
 
 At launch, choose an observed 48 kHz input device and whether the page is
 available only on the host or on its local network. The app opens the local page
-and shows the LAN URLs when network access is selected. Keep the displayed
-dialog open; **Stop Server** shuts down capture, the gateway and the backend.
-Logs are written to `~/Library/Logs/A2 Monitor/mvp.log`.
+and then lives in the menu bar instead of keeping a modal window on top. Its menu
+opens Live or Manager, configures one read-only Shure receiver IP/channel count,
+starts or stops the server, opens the log, and quits. Logs are written to
+`~/Library/Logs/A2 Monitor/mvp.log`.
 
-Open **Manager** from Live to name the show and physical inputs. The app stores
-that local MVP showfile at
+Open **Manager** from Live to add/remove show channels and patch them to physical
+inputs and optional Shure receiver channels. The app stores that local MVP showfile at
 `~/Library/Application Support/A2 Monitor/showfile.json`; it survives app
 restart and is read by every Live client connected to the Mac.
 

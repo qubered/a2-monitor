@@ -41,8 +41,17 @@
         "additionalProperties": false,
         "required": ["inputIndex", "name"],
         "properties": {
-          "inputIndex": { "type": "integer", "minimum": 0, "maximum": 127 },
-          "name": { "type": "string", "minLength": 1, "maxLength": 120 }
+          "inputIndex": {
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "maximum": 127
+          },
+          "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "shureChannelIndex": {
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "maximum": 127
+          }
         }
       }
     }

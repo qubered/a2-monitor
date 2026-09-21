@@ -1,5 +1,0 @@
-#!/bin/sh
-set -eu
-
-resources="$(CDPATH= cd -- "$(dirname "$0")/../Resources" && pwd)"
-exec "$resources/bin/node" "$resources/launcher.mjs"

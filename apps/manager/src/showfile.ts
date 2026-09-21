@@ -1,4 +1,9 @@
-import { parseShowfile, type Showfile } from "@a2-monitor/protocol/http";
+import {
+  parseShowfile,
+  parseShureTelemetry,
+  type Showfile,
+  type ShureTelemetry,
+} from "@a2-monitor/protocol/http";
 
 export type ObservedDevice = {
   name: string;
@@ -57,6 +62,14 @@ export async function loadObservedDevice(
   return parseObservedDevice(await response.json());
 }
 
+export async function loadShureTelemetry(
+  signal?: AbortSignal,
+): Promise<ShureTelemetry> {
+  const response = await fetch("/audio/v0/shure", { signal });
+  if (!response.ok) throw new Error("Shure telemetry could not be loaded.");
+  return parseShureTelemetry(await response.json());
+}
+
 export async function saveShowfile(showfile: Showfile): Promise<Showfile> {
   const response = await fetch("/api/v1/showfile", {
     method: "PUT",
@@ -74,18 +87,29 @@ export function projectShowfileToDevice(
   showfile: Showfile,
   device: ObservedDevice,
 ): Showfile {
-  const savedNames =
-    showfile.device?.name === device.name
-      ? new Map(
-          showfile.channels.map(({ inputIndex, name }) => [inputIndex, name]),
-        )
-      : new Map<number, string>();
+  const exactDevice =
+    showfile.device?.name === device.name &&
+    showfile.device.channelCount === device.channelCount;
+  const channels =
+    showfile.revision === 0 && showfile.channels.length === 0
+      ? device.channels.map(({ index, label }) => ({
+          inputIndex: index,
+          name: label || `Channel ${index + 1}`,
+          shureChannelIndex: null,
+        }))
+      : showfile.channels.map((channel) => ({
+          ...channel,
+          inputIndex:
+            exactDevice &&
+            channel.inputIndex !== null &&
+            channel.inputIndex < device.channelCount
+              ? channel.inputIndex
+              : null,
+          shureChannelIndex: channel.shureChannelIndex ?? null,
+        }));
   return {
     ...showfile,
     device: { name: device.name, channelCount: device.channelCount },
-    channels: device.channels.map(({ index, label }) => ({
-      inputIndex: index,
-      name: savedNames.get(index) ?? label ?? `Channel ${index + 1}`,
-    })),
+    channels,
   };
 }

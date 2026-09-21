@@ -99,6 +99,7 @@ function waitForStop(message) {
 }
 
 let activeDialog;
+let resolveShellStop;
 
 async function waitUntilReady() {
   const deadline = Date.now() + 20_000;
@@ -183,6 +184,7 @@ async function main() {
   };
   const stopFromSignal = () => {
     activeDialog?.kill();
+    resolveShellStop?.();
     void stop();
   };
   process.once("SIGINT", stopFromSignal);
@@ -199,9 +201,15 @@ async function main() {
       host === "0.0.0.0"
         ? "\n\nThis MVP has no authentication. Use a trusted local network only."
         : "";
-    await waitForStop(
-      `Listening from “${device}”.\n\nOpen on another device:\n${access}${warning}`,
-    );
+    if (process.env.A2_APP_SHELL === "menu-bar") {
+      await new Promise((resolvePromise) => {
+        resolveShellStop = resolvePromise;
+      });
+    } else {
+      await waitForStop(
+        `Listening from “${device}”.\n\nOpen on another device:\n${access}${warning}`,
+      );
+    }
   } finally {
     await stop();
   }

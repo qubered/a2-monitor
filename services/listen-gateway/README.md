@@ -28,3 +28,9 @@ set `A2_LIVE_DIR` to serve the compiled Live application and
 `A2_BACKEND_ORIGIN` proxies same-origin `/api/` requests to the management
 backend. These options keep the browser on one origin; they do not add transport
 authentication or encryption.
+
+When `A2_SHURE_HOST` is an explicit IP address, the MVP also opens a read-only
+Shure command-string connection on TCP 2202. `A2_SHURE_CHANNELS` selects the
+queried channel count. `GET /audio/v0/shure` returns the closed normalized
+battery contract. This temporary host is governed by ADR 0023 and is not a
+physical-hardware support claim.

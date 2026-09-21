@@ -37,11 +37,12 @@ separate npm workspace and deployable static bundle. It shares generated
 protocol clients, accessible headless UI primitives and design tokens with
 Live, but not Live's show-time entry point or media session code.
 
-The local MVP implements one narrow management workflow: edit a show name and
-the names of the physical inputs observed by the configured audio device. It
-loads and saves the versioned `/api/v1/showfile` contract and remains separate
-from Live and its media code. This mutable local showfile is not an activated
-production revision, hardware manifest, validation result or audit history.
+The local MVP implements one narrow management workflow: edit a show name, add
+or remove ordered logical channels, and patch each channel to one observed
+physical input and optional normalized Shure receiver channel. It loads and
+saves the versioned `/api/v1/showfile` contract and remains separate from Live
+and its media code. This mutable local showfile is not an activated production
+revision, hardware manifest, validation result or audit history.
 
 ## Local development
 

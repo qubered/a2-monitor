@@ -4,6 +4,20 @@
 
 **Research checked:** 2026-09-18
 
+## Local MVP implementation
+
+The macOS MVP includes a bounded read-only command-string client for one
+explicitly configured receiver IP and channel count. It queries `MODEL`,
+`FW_VER`, `BATT_BARS`, and `BATT_CHARGE`, accepts fragmented/coalesced
+unsolicited `REP` frames, and exposes normalized battery bars/percentage with
+freshness. The menu-bar app stores only the local IP and channel count in macOS
+user defaults.
+
+This client currently runs in the listen-gateway process under ADR 0023 because
+the dedicated adapter process/IPC is not built. It is parser/simulator evidence,
+not physical receiver evidence; every tuple remains unverified and is labelled
+`compatible-read-only`.
+
 ## Decision
 
 The audio node will implement Shure's receiver command-string protocol as the
@@ -28,27 +42,27 @@ is selected.
 “Planned” means the model is in adapter scope; it becomes `verified` only after
 the exact firmware tuple passes the hardware suite.
 
-| Family | Receiver model | Channels | Direct node path | Planned state and notes |
-| --- | --- | ---: | --- | --- |
-| Axient Digital | AD4D and AD4D-DC | 2 | TCP 2202 | Planned; DC-power and regional variants share the profile unless their reported behavior differs. |
-| Axient Digital | AD4Q and AD4Q-DC | 4 | TCP 2202 | Planned; include Quadversity and frequency-diversity capabilities when reported. |
-| Axient Digital / ULX-D | ANX4, including DC-power SKUs | Dynamic: up to 16 AD or 24 ULX-D | TCP 2202 | Planned; discover licensed/available channels and Axient Digital versus ULX-D operating mode. Never assume a fixed count or that both modes run at once. |
-| Axient Digital | ADX5D | 2 portable | No ordinary receiver-Ethernet path established | Listed as conditional/unsupported for direct v1 integration. Networked WWB use depends on its supported accessory/workflow and needs a separate proven path. |
-| ULX-D | ULXD4 | 1 | TCP 2202 | Planned; no Dante audio on the single receiver, but network control is supported. |
-| ULX-D | ULXD4D | 2 | TCP 2202 | Planned; this and ULXD4Q are sometimes informally called “ULXD4DQ”; they are separate models. |
-| ULX-D | ULXD4Q | 4 | TCP 2202 | Planned. |
-| ULX-D Government | ULXD4-GV | 1 | TCP 2202 | Planned as an explicit variant; permanently enabled encryption behavior must be represented. |
-| ULX-D Government | ULXD4D-GV | 2 | TCP 2202 | Planned as an explicit variant. |
-| ULX-D Government | ULXD4Q-GV | 4 | TCP 2202 | Planned as an explicit variant. |
-| QLX-D | QLXD4 | 1 | TCP 2202 | Planned; capability set is smaller than Axient Digital and must stay model-specific. |
-| SLX-D | SLXD4 | 1 | TCP 2202 | Planned legacy-generation profile; controller access must be enabled on the receiver. |
-| SLX-D | SLXD4D | 2 | TCP 2202 | Planned legacy-generation profile; controller access must be enabled. |
-| SLX-D | SLXD5 | 1 portable | No direct Ethernet path | Listed but unsupported for direct v1 integration. |
-| SLX-D+ | SLXD4+ | 1 | TCP 2202 | Planned as a distinct protocol profile from legacy SLX-D. |
-| SLX-D+ | SLXD4D+ | 2 | TCP 2202 | Planned. |
-| SLX-D+ | SLXD4Q+ | 4 | TCP 2202 | Planned; non-Dante quad receiver. |
-| SLX-D+ | SLXD4QDAN+ | 4 | TCP 2202 | Planned; Dante-capable quad receiver. |
-| SLX-D+ | SLXD5+ | 1 portable | No direct Ethernet path established | Listed but unsupported for direct v1 integration. Bluetooth/mobile support is not treated as a server integration API. |
+| Family                 | Receiver model                |                         Channels | Direct node path                               | Planned state and notes                                                                                                                                      |
+| ---------------------- | ----------------------------- | -------------------------------: | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Axient Digital         | AD4D and AD4D-DC              |                                2 | TCP 2202                                       | Planned; DC-power and regional variants share the profile unless their reported behavior differs.                                                            |
+| Axient Digital         | AD4Q and AD4Q-DC              |                                4 | TCP 2202                                       | Planned; include Quadversity and frequency-diversity capabilities when reported.                                                                             |
+| Axient Digital / ULX-D | ANX4, including DC-power SKUs | Dynamic: up to 16 AD or 24 ULX-D | TCP 2202                                       | Planned; discover licensed/available channels and Axient Digital versus ULX-D operating mode. Never assume a fixed count or that both modes run at once.     |
+| Axient Digital         | ADX5D                         |                       2 portable | No ordinary receiver-Ethernet path established | Listed as conditional/unsupported for direct v1 integration. Networked WWB use depends on its supported accessory/workflow and needs a separate proven path. |
+| ULX-D                  | ULXD4                         |                                1 | TCP 2202                                       | Planned; no Dante audio on the single receiver, but network control is supported.                                                                            |
+| ULX-D                  | ULXD4D                        |                                2 | TCP 2202                                       | Planned; this and ULXD4Q are sometimes informally called “ULXD4DQ”; they are separate models.                                                                |
+| ULX-D                  | ULXD4Q                        |                                4 | TCP 2202                                       | Planned.                                                                                                                                                     |
+| ULX-D Government       | ULXD4-GV                      |                                1 | TCP 2202                                       | Planned as an explicit variant; permanently enabled encryption behavior must be represented.                                                                 |
+| ULX-D Government       | ULXD4D-GV                     |                                2 | TCP 2202                                       | Planned as an explicit variant.                                                                                                                              |
+| ULX-D Government       | ULXD4Q-GV                     |                                4 | TCP 2202                                       | Planned as an explicit variant.                                                                                                                              |
+| QLX-D                  | QLXD4                         |                                1 | TCP 2202                                       | Planned; capability set is smaller than Axient Digital and must stay model-specific.                                                                         |
+| SLX-D                  | SLXD4                         |                                1 | TCP 2202                                       | Planned legacy-generation profile; controller access must be enabled on the receiver.                                                                        |
+| SLX-D                  | SLXD4D                        |                                2 | TCP 2202                                       | Planned legacy-generation profile; controller access must be enabled.                                                                                        |
+| SLX-D                  | SLXD5                         |                       1 portable | No direct Ethernet path                        | Listed but unsupported for direct v1 integration.                                                                                                            |
+| SLX-D+                 | SLXD4+                        |                                1 | TCP 2202                                       | Planned as a distinct protocol profile from legacy SLX-D.                                                                                                    |
+| SLX-D+                 | SLXD4D+                       |                                2 | TCP 2202                                       | Planned.                                                                                                                                                     |
+| SLX-D+                 | SLXD4Q+                       |                                4 | TCP 2202                                       | Planned; non-Dante quad receiver.                                                                                                                            |
+| SLX-D+                 | SLXD4QDAN+                    |                                4 | TCP 2202                                       | Planned; Dante-capable quad receiver.                                                                                                                        |
+| SLX-D+                 | SLXD5+                        |                       1 portable | No direct Ethernet path established            | Listed but unsupported for direct v1 integration. Bluetooth/mobile support is not treated as a server integration API.                                       |
 
 Frequency-band and country SKUs are covered by their base receiver row unless
 the hardware reports a distinct model or the protocol differs. The manifest
@@ -70,17 +84,17 @@ domain capabilities.
 The adapter uses a common event envelope, not a lowest-common-denominator
 payload. A capability descriptor determines what the Live UI renders.
 
-| Capability | AD4D/Q | ANX4 | ULXD4/D/Q | QLXD4 | SLXD4/D | SLX-D+ rack |
-| --- | :---: | :---: | :---: | :---: | :---: | :---: |
-| Frequency / link state | Yes | Yes | Yes | Yes | Yes | Yes |
-| Per-antenna RF / RSSI | Yes | Yes | Yes | Vendor-scale RF | RSSI | RSSI |
-| Channel/link quality | Yes | Yes | Model/firmware dependent | No | No | No |
-| Interference state | Yes | Yes | Yes | Limited/none | Limited/none | Yes |
-| Receiver audio meter | Peak/RMS | Peak/RMS | Vendor meter | Vendor meter | Peak/RMS | Peak/RMS |
-| Battery bars/runtime | Yes | Yes | Yes | Yes | Yes | Yes |
-| Battery health/cycles/type | Rich | Rich | Model/TX dependent | Model/TX dependent | Limited | Limited/model dependent |
-| Rich transmitter slots | AD/ADX dependent | Mode/TX dependent | TX dependent | TX dependent | Limited | TX dependent |
-| Receiver mode features | Quadversity, FD, transmission mode | Axient/ULX-D mode, licensed channels | HD/FD/audio summing by chassis | Limited | Limited | Model dependent |
+| Capability                 |               AD4D/Q               |                 ANX4                 |           ULXD4/D/Q            |       QLXD4        |   SLXD4/D    |       SLX-D+ rack       |
+| -------------------------- | :--------------------------------: | :----------------------------------: | :----------------------------: | :----------------: | :----------: | :---------------------: |
+| Frequency / link state     |                Yes                 |                 Yes                  |              Yes               |        Yes         |     Yes      |           Yes           |
+| Per-antenna RF / RSSI      |                Yes                 |                 Yes                  |              Yes               |  Vendor-scale RF   |     RSSI     |          RSSI           |
+| Channel/link quality       |                Yes                 |                 Yes                  |    Model/firmware dependent    |         No         |      No      |           No            |
+| Interference state         |                Yes                 |                 Yes                  |              Yes               |    Limited/none    | Limited/none |           Yes           |
+| Receiver audio meter       |              Peak/RMS              |               Peak/RMS               |          Vendor meter          |    Vendor meter    |   Peak/RMS   |        Peak/RMS         |
+| Battery bars/runtime       |                Yes                 |                 Yes                  |              Yes               |        Yes         |     Yes      |           Yes           |
+| Battery health/cycles/type |                Rich                |                 Rich                 |       Model/TX dependent       | Model/TX dependent |   Limited    | Limited/model dependent |
+| Rich transmitter slots     |          AD/ADX dependent          |          Mode/TX dependent           |          TX dependent          |    TX dependent    |   Limited    |      TX dependent       |
+| Receiver mode features     | Quadversity, FD, transmission mode | Axient/ULX-D mode, licensed channels | HD/FD/audio summing by chassis |      Limited       |   Limited    |     Model dependent     |
 
 This table is a design scope, not a guarantee for every firmware. At runtime,
 required-command probing and the compatibility manifest are authoritative.

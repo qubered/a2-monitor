@@ -16,9 +16,11 @@ multi-user conflict handling; those systems do not exist yet.
 ## Decision
 
 Add one backend-owned, versioned local showfile contract containing the show
-name, exact observed device identity and a name for each physical input. Manager
-is the only editing surface. Live reads the saved projection and falls back to
-observed device labels when the showfile is absent or belongs to another device.
+name, exact observed device identity and an ordered list of logical show
+channels. Each channel has a name, an optional physical audio-input patch and an
+optional normalized receiver-channel patch. Manager is the only editing
+surface. Live reads the saved projection and falls back to observed device
+labels when the showfile is absent or belongs to another device.
 
 The backend assigns a monotonically increasing revision and rejects a save whose
 base revision is stale. The macOS MVP stores the closed JSON contract at
@@ -28,11 +30,12 @@ closed rather than being repaired or treated as an empty show.
 
 ## Consequences
 
-- A double-clicked local MVP can name a show and its physical channels.
+- A double-clicked local MVP can add/remove show channels and patch them to
+  physical audio and receiver inputs.
 - Backend ownership preserves the Manager/Live boundary and gives both browsers
   the same saved names.
-- Device name and channel count prevent names from silently moving onto a
-  different interface.
+- Device name and channel count prevent patches from silently moving onto a
+  different interface. Unpatched channels remain explicit and cannot listen.
 - This file is mutable local setup, not an immutable activated production
   revision, database, backup format or collaboration protocol.
 

@@ -87,17 +87,26 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     },
     async (request, reply): Promise<Showfile | undefined> => {
       const candidate = request.body as Showfile;
-      const indexes = new Set(
-        candidate.channels.map(({ inputIndex }) => inputIndex),
-      );
+      const patchedInputs = candidate.channels
+        .map(({ inputIndex }) => inputIndex)
+        .filter((inputIndex): inputIndex is number => inputIndex !== null);
+      const shureChannels = candidate.channels
+        .map(({ shureChannelIndex }) => shureChannelIndex)
+        .filter(
+          (channelIndex): channelIndex is number =>
+            channelIndex !== undefined && channelIndex !== null,
+        );
       const invalid =
         candidate.show.name.trim().length === 0 ||
         candidate.channels.some(({ name }) => name.trim().length === 0) ||
-        indexes.size !== candidate.channels.length ||
-        (candidate.device === null && candidate.channels.length > 0) ||
+        new Set(patchedInputs).size !== patchedInputs.length ||
+        new Set(shureChannels).size !== shureChannels.length ||
+        (candidate.device === null && patchedInputs.length > 0) ||
         (candidate.device !== null &&
           candidate.channels.some(
-            ({ inputIndex }) => inputIndex >= candidate.device!.channelCount,
+            ({ inputIndex }) =>
+              inputIndex !== null &&
+              inputIndex >= candidate.device!.channelCount,
           ));
       if (invalid) {
         await reply.code(400).send({ error: "invalid-showfile" });

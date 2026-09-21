@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "0",
+  "status": "ready",
+  "detail": "Read-only Shure telemetry is current.",
+  "receiver": {
+    "host": "192.0.2.10",
+    "model": "ULXD4D",
+    "firmware": "2.7.10",
+    "compatibility": "compatible-read-only"
+  },
+  "channels": [
+    {
+      "index": 0,
+      "batteryBars": 4,
+      "batteryChargePercent": 78,
+      "observedAtUtc": "2026-09-21T00:00:00Z",
+      "availability": "observed"
+    }
+  ]
+}

@@ -16,6 +16,7 @@
     "./schema/health-response": "./schema/v0/http/health-response.schema.json",
     "./schema/live-snapshot-response": "./schema/v0/http/live-snapshot-response.schema.json",
     "./schema/showfile": "./schema/v0/http/showfile.schema.json",
+    "./schema/shure-telemetry": "./schema/v0/http/shure-telemetry.schema.json",
     "./validation/strict-ajv": {
       "types": "./validation/strict-ajv.d.mts",
       "default": "./validation/strict-ajv.mjs"
