@@ -1,0 +1,207 @@
+import { Trash2 } from "lucide-react";
+import type { Showfile, ShureTelemetry } from "@a2-monitor/protocol/http";
+import { EmptyState } from "./EmptyState";
+import { Badge, type BadgeProps } from "./ui/badge";
+import { Button } from "./ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardOverline,
+  CardTitle,
+} from "./ui/card";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+
+function receiverId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `receiver-${Date.now()}`;
+}
+
+function statusVariant(status: string | undefined): BadgeProps["variant"] {
+  switch (status) {
+    case "ready":
+      return "ok";
+    case "connecting":
+    case "degraded":
+    case "stale":
+      return "warn";
+    case "error":
+      return "out";
+    default:
+      return "neutral";
+  }
+}
+
+export function ReceiversTab({
+  showfile,
+  shure,
+  onChange,
+}: {
+  showfile: Showfile;
+  shure: ShureTelemetry | null;
+  onChange: (next: Showfile) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <CardOverline>Wireless inventory</CardOverline>
+          <h2 className="mt-1 font-display text-section leading-tight text-foreground">
+            Shure receivers
+          </h2>
+          <p className="mt-1 max-w-xl text-caption text-muted-foreground">
+            Add every receiver unit here. Use an explicit control-network IP
+            address.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() =>
+            onChange({
+              ...showfile,
+              shureReceivers: [
+                ...showfile.shureReceivers,
+                {
+                  id: receiverId(),
+                  name: `Receiver ${showfile.shureReceivers.length + 1}`,
+                  host: "192.168.1.100",
+                  channelCount: 4,
+                },
+              ],
+            })
+          }
+        >
+          Add receiver
+        </Button>
+      </div>
+
+      {showfile.shureReceivers.length === 0 ? (
+        <EmptyState
+          title="No wireless receivers."
+          detail="Add a unit to patch its channels."
+        />
+      ) : (
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(20rem,1fr))] gap-4">
+          {showfile.shureReceivers.map((receiver, position) => {
+            const observed = shure?.receivers.find(
+              ({ id }) => id === receiver.id,
+            );
+            return (
+              <Card key={receiver.id}>
+                <CardHeader>
+                  <div className="flex flex-col gap-1">
+                    <CardOverline>Receiver {position + 1}</CardOverline>
+                    <CardTitle>{receiver.name || "Unnamed receiver"}</CardTitle>
+                  </div>
+                  <Badge
+                    variant={
+                      observed ? statusVariant(observed.status) : "neutral"
+                    }
+                  >
+                    {observed
+                      ? `${observed.status} · ${observed.model ?? "model unknown"}`
+                      : "Save to connect"}
+                  </Badge>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2 flex flex-col gap-2">
+                      <Label htmlFor={`receiver-${receiver.id}-name`}>
+                        Unit name
+                      </Label>
+                      <Input
+                        id={`receiver-${receiver.id}-name`}
+                        aria-label={`Receiver ${position + 1} name`}
+                        value={receiver.name}
+                        maxLength={120}
+                        onChange={(event) => {
+                          const shureReceivers = [...showfile.shureReceivers];
+                          shureReceivers[position] = {
+                            ...receiver,
+                            name: event.target.value,
+                          };
+                          onChange({ ...showfile, shureReceivers });
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor={`receiver-${receiver.id}-host`}>
+                        Control IP
+                      </Label>
+                      <Input
+                        id={`receiver-${receiver.id}-host`}
+                        aria-label={`Receiver ${position + 1} control IP`}
+                        value={receiver.host}
+                        maxLength={45}
+                        onChange={(event) => {
+                          const shureReceivers = [...showfile.shureReceivers];
+                          shureReceivers[position] = {
+                            ...receiver,
+                            host: event.target.value,
+                          };
+                          onChange({ ...showfile, shureReceivers });
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor={`receiver-${receiver.id}-count`}>
+                        Channels
+                      </Label>
+                      <Input
+                        id={`receiver-${receiver.id}-count`}
+                        aria-label={`Receiver ${position + 1} channel count`}
+                        type="number"
+                        min={1}
+                        max={128}
+                        value={receiver.channelCount}
+                        onChange={(event) => {
+                          const shureReceivers = [...showfile.shureReceivers];
+                          shureReceivers[position] = {
+                            ...receiver,
+                            channelCount: Math.max(
+                              1,
+                              Math.min(128, Number(event.target.value)),
+                            ),
+                          };
+                          onChange({ ...showfile, shureReceivers });
+                        }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="justify-end">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    aria-label={`Remove receiver ${position + 1}`}
+                    onClick={() =>
+                      onChange({
+                        ...showfile,
+                        shureReceivers: showfile.shureReceivers.filter(
+                          ({ id }) => id !== receiver.id,
+                        ),
+                        channels: showfile.channels.map((channel) =>
+                          channel.shureReceiverId === receiver.id
+                            ? {
+                                ...channel,
+                                shureReceiverId: null,
+                                shureChannelIndex: null,
+                              }
+                            : channel,
+                        ),
+                      })
+                    }
+                  >
+                    <Trash2 aria-hidden="true" />
+                    Remove
+                  </Button>
+                </CardFooter>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

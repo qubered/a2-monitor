@@ -8,6 +8,12 @@ import {
   saveShowfile,
   type ObservedDevice,
 } from "./showfile";
+import { ChannelsTab } from "./components/ChannelsTab";
+import { EmptyState } from "./components/EmptyState";
+import { ReceiversTab } from "./components/ReceiversTab";
+import { ShowTab } from "./components/ShowTab";
+import { Button } from "./components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 
 type Theme = "system" | "light" | "dark";
 type SaveState = "loading" | "saved" | "dirty" | "saving" | "error";
@@ -17,9 +23,13 @@ function readTheme(): Theme {
   return saved === "light" || saved === "dark" ? saved : "system";
 }
 
-function receiverId(): string {
-  return globalThis.crypto?.randomUUID?.() ?? `receiver-${Date.now()}`;
-}
+const noticeStyles: Record<SaveState, string> = {
+  loading: "bg-rep-soft",
+  saved: "bg-ok-soft",
+  dirty: "bg-warn-soft",
+  saving: "bg-warn-soft",
+  error: "bg-out-soft",
+};
 
 export function App() {
   const [theme, setTheme] = useState<Theme>(readTheme);
@@ -99,23 +109,35 @@ export function App() {
   }
 
   return (
-    <div className="manager-app">
-      <header className="app-header">
-        <div className="brand" aria-label="A2 Monitor Manager">
-          <span aria-hidden="true">▲</span>
-          <strong>A2</strong> <b>Monitor</b>
-          <em>Manager</em>
+    <div className="min-h-screen bg-paper text-foreground">
+      <header className="flex min-h-17 flex-wrap items-center gap-5 border-b-2 border-line-2 bg-paper-2 px-6 py-3">
+        <div
+          className="flex items-baseline gap-2 font-display text-section font-extrabold"
+          aria-label="A2 Monitor Manager"
+        >
+          <span aria-hidden="true" className="text-red">
+            ▲
+          </span>
+          <strong>A2</strong> <b className="font-wordmark text-page">Monitor</b>
+          <em className="font-body text-ui font-semibold not-italic text-muted-foreground">
+            Manager
+          </em>
         </div>
-        <div className="draft-name">
-          <span>Local showfile</span>
-          <strong>{showfile?.show.name ?? "Waiting"}</strong>
+        <div className="flex flex-col border-l-2 border-line-2 pl-5 leading-tight">
+          <span className="font-mono text-badge text-faint">
+            Local showfile
+          </span>
+          <strong className="font-display text-cardhead">
+            {showfile?.show.name ?? "Waiting"}
+          </strong>
         </div>
-        <a className="line-button live-link" href="/">
-          Open Live
-        </a>
-        <label className="theme-picker">
-          <span>Theme</span>
+        <Button variant="outline" asChild className="ml-auto">
+          <a href="/">Open Live</a>
+        </Button>
+        <label className="flex flex-col gap-1">
+          <span className="font-mono text-badge text-faint">Theme</span>
           <select
+            className="min-h-11 rounded-full border-2 border-line-2 bg-card px-4 text-ui"
             value={theme}
             onChange={(event) => setTheme(event.target.value as Theme)}
           >
@@ -126,9 +148,12 @@ export function App() {
         </label>
       </header>
 
-      <section className={`connection-notice state-${saveState}`} role="status">
-        <div>
-          <strong>
+      <section
+        className={`flex min-h-14 flex-wrap items-center justify-between gap-4 border-b-2 border-line-2 px-6 py-3 ${noticeStyles[saveState]}`}
+        role="status"
+      >
+        <div className="flex flex-col gap-1">
+          <strong className="font-display text-cardhead">
             {saveState === "loading"
               ? "Loading showfile."
               : saveState === "saving"
@@ -139,372 +164,75 @@ export function App() {
                     ? "Showfile has unsaved changes."
                     : "Showfile unavailable."}
           </strong>
-          <span>{message}</span>
+          <span className="text-caption text-ink-2">{message}</span>
         </div>
         {showfile ? (
-          <span className="revision-badge">Revision {showfile.revision}</span>
+          <span className="font-mono text-caption tabular-nums text-rep">
+            Revision {showfile.revision}
+          </span>
         ) : null}
       </section>
 
-      <main>
-        <section className="page-heading" aria-labelledby="showfile-title">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
+        <div className="flex flex-wrap items-start justify-between gap-6">
           <div>
-            <span className="overline">Show setup</span>
-            <h1 id="showfile-title">Build a showfile</h1>
-            <p>
+            <span className="font-mono text-badge text-faint">Show setup</span>
+            <h1 className="my-1 font-display text-page leading-tight tracking-tight text-foreground">
+              Build a showfile
+            </h1>
+            <p className="max-w-xl text-ui text-ink-2">
               Add the channels you use, name them, then patch each one to a
               physical audio input and optional Shure receiver channel.
             </p>
           </div>
-          <button
-            className="primary-button"
-            type="button"
+          <Button
+            size="primary"
             disabled={
               !showfile || saveState === "saving" || saveState === "saved"
             }
             onClick={() => void save()}
           >
             {saveState === "saving" ? "Saving" : "Save showfile"}
-          </button>
-        </section>
+          </Button>
+        </div>
 
         {showfile ? (
-          <form
-            className="showfile-editor"
-            onSubmit={(event) => event.preventDefault()}
-          >
-            <section
-              className="show-details"
-              aria-labelledby="show-details-title"
-            >
-              <div>
-                <span className="overline">Identity</span>
-                <h2 id="show-details-title">Show</h2>
-              </div>
-              <label>
-                <span>Show name</span>
-                <input
-                  value={showfile.show.name}
-                  maxLength={120}
-                  onChange={(event) =>
-                    update({ ...showfile, show: { name: event.target.value } })
-                  }
-                />
-              </label>
-            </section>
-
-            <section
-              className="receiver-editor"
-              aria-labelledby="receiver-editor-title"
-            >
-              <div className="channel-editor-heading">
-                <div>
-                  <span className="overline">Wireless inventory</span>
-                  <h2 id="receiver-editor-title">Shure receivers</h2>
-                </div>
-                <button
-                  className="line-button"
-                  type="button"
-                  onClick={() =>
-                    update({
-                      ...showfile,
-                      shureReceivers: [
-                        ...showfile.shureReceivers,
-                        {
-                          id: receiverId(),
-                          name: `Receiver ${showfile.shureReceivers.length + 1}`,
-                          host: "192.168.1.100",
-                          channelCount: 4,
-                        },
-                      ],
-                    })
-                  }
-                >
-                  Add receiver
-                </button>
-              </div>
-              <p className="patch-summary">
-                Add every receiver unit here. Use an explicit control-network IP
-                address.
-              </p>
-              <div className="receiver-list">
-                {showfile.shureReceivers.map((receiver, position) => {
-                  const observed = shure?.receivers.find(
-                    ({ id }) => id === receiver.id,
-                  );
-                  return (
-                    <div className="receiver-row" key={receiver.id}>
-                      <label>
-                        <span>Unit name</span>
-                        <input
-                          aria-label={`Receiver ${position + 1} name`}
-                          value={receiver.name}
-                          maxLength={120}
-                          onChange={(event) => {
-                            const shureReceivers = [...showfile.shureReceivers];
-                            shureReceivers[position] = {
-                              ...receiver,
-                              name: event.target.value,
-                            };
-                            update({ ...showfile, shureReceivers });
-                          }}
-                        />
-                      </label>
-                      <label>
-                        <span>Control IP</span>
-                        <input
-                          aria-label={`Receiver ${position + 1} control IP`}
-                          value={receiver.host}
-                          maxLength={45}
-                          onChange={(event) => {
-                            const shureReceivers = [...showfile.shureReceivers];
-                            shureReceivers[position] = {
-                              ...receiver,
-                              host: event.target.value,
-                            };
-                            update({ ...showfile, shureReceivers });
-                          }}
-                        />
-                      </label>
-                      <label>
-                        <span>Channels</span>
-                        <input
-                          aria-label={`Receiver ${position + 1} channel count`}
-                          type="number"
-                          min={1}
-                          max={128}
-                          value={receiver.channelCount}
-                          onChange={(event) => {
-                            const shureReceivers = [...showfile.shureReceivers];
-                            shureReceivers[position] = {
-                              ...receiver,
-                              channelCount: Math.max(
-                                1,
-                                Math.min(128, Number(event.target.value)),
-                              ),
-                            };
-                            update({ ...showfile, shureReceivers });
-                          }}
-                        />
-                      </label>
-                      <span
-                        className={`receiver-status state-${observed?.status ?? "unconfigured"}`}
-                      >
-                        {observed
-                          ? `${observed.status} · ${observed.model ?? "model unknown"}`
-                          : "Save to connect"}
-                      </span>
-                      <button
-                        className="remove-channel"
-                        type="button"
-                        aria-label={`Remove receiver ${position + 1}`}
-                        onClick={() =>
-                          update({
-                            ...showfile,
-                            shureReceivers: showfile.shureReceivers.filter(
-                              ({ id }) => id !== receiver.id,
-                            ),
-                            channels: showfile.channels.map((channel) =>
-                              channel.shureReceiverId === receiver.id
-                                ? {
-                                    ...channel,
-                                    shureReceiverId: null,
-                                    shureChannelIndex: null,
-                                  }
-                                : channel,
-                            ),
-                          })
-                        }
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  );
-                })}
-                {showfile.shureReceivers.length === 0 ? (
-                  <div className="empty-state">
-                    <strong>No wireless receivers.</strong>
-                    <span>Add a unit to patch its channels.</span>
-                  </div>
-                ) : null}
-              </div>
-            </section>
-
-            <section
-              className="channel-editor"
-              aria-labelledby="channel-editor-title"
-            >
-              <div className="channel-editor-heading">
-                <div>
-                  <span className="overline">Channel patch</span>
-                  <h2 id="channel-editor-title">Show channels</h2>
-                </div>
-                <button
-                  className="line-button"
-                  type="button"
-                  onClick={() =>
-                    update({
-                      ...showfile,
-                      channels: [
-                        ...showfile.channels,
-                        {
-                          inputIndex: null,
-                          name: `Channel ${showfile.channels.length + 1}`,
-                          shureReceiverId: null,
-                          shureChannelIndex: null,
-                        },
-                      ],
-                    })
-                  }
-                >
-                  Add channel
-                </button>
-              </div>
-              <p className="patch-summary">
-                {device
-                  ? `${device.name} · ${device.channelCount} inputs · ${device.sampleRateHz / 1000} kHz`
-                  : "Audio input state unknown"}
+          <Tabs defaultValue="show">
+            <TabsList>
+              <TabsTrigger value="show">Show</TabsTrigger>
+              <TabsTrigger value="receivers">
+                Receivers
                 {showfile.shureReceivers.length
-                  ? ` · ${showfile.shureReceivers.length} Shure receiver unit${showfile.shureReceivers.length === 1 ? "" : "s"}`
-                  : " · Shure receivers not configured"}
-              </p>
-              <div className="channel-name-list">
-                {showfile.channels.map((channel, position) => (
-                  <div className="channel-name-row" key={position}>
-                    <span className="channel-number">{position + 1}</span>
-                    <label>
-                      <span>Name</span>
-                      <input
-                        aria-label={`Channel ${position + 1} name`}
-                        value={channel.name}
-                        maxLength={120}
-                        onChange={(event) => {
-                          const channels = [...showfile.channels];
-                          channels[position] = {
-                            ...channel,
-                            name: event.target.value,
-                          };
-                          update({ ...showfile, channels });
-                        }}
-                      />
-                    </label>
-                    <label>
-                      <span>Audio input</span>
-                      <select
-                        aria-label={`Channel ${position + 1} audio input`}
-                        value={channel.inputIndex ?? ""}
-                        onChange={(event) => {
-                          const channels = [...showfile.channels];
-                          channels[position] = {
-                            ...channel,
-                            inputIndex:
-                              event.target.value === ""
-                                ? null
-                                : Number(event.target.value),
-                          };
-                          update({ ...showfile, channels });
-                        }}
-                      >
-                        <option value="">Not patched</option>
-                        {device?.channels.map((input) => (
-                          <option
-                            key={input.index}
-                            value={input.index}
-                            disabled={showfile.channels.some(
-                              (other, index) =>
-                                index !== position &&
-                                other.inputIndex === input.index,
-                            )}
-                          >
-                            Input {input.index + 1} · {input.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      <span>Shure channel</span>
-                      <select
-                        aria-label={`Channel ${position + 1} Shure channel`}
-                        value={
-                          channel.shureReceiverId != null &&
-                          channel.shureChannelIndex != null
-                            ? `${channel.shureReceiverId}:${channel.shureChannelIndex}`
-                            : ""
-                        }
-                        onChange={(event) => {
-                          const channels = [...showfile.channels];
-                          const separator = event.target.value.lastIndexOf(":");
-                          channels[position] = {
-                            ...channel,
-                            shureReceiverId:
-                              event.target.value === ""
-                                ? null
-                                : event.target.value.slice(0, separator),
-                            shureChannelIndex:
-                              event.target.value === ""
-                                ? null
-                                : Number(
-                                    event.target.value.slice(separator + 1),
-                                  ),
-                          };
-                          update({ ...showfile, channels });
-                        }}
-                      >
-                        <option value="">None</option>
-                        {showfile.shureReceivers.flatMap((receiver) =>
-                          Array.from(
-                            { length: receiver.channelCount },
-                            (_, receiverChannelIndex) => (
-                              <option
-                                key={`${receiver.id}:${receiverChannelIndex}`}
-                                value={`${receiver.id}:${receiverChannelIndex}`}
-                                disabled={showfile.channels.some(
-                                  (other, index) =>
-                                    index !== position &&
-                                    other.shureReceiverId === receiver.id &&
-                                    other.shureChannelIndex ===
-                                      receiverChannelIndex,
-                                )}
-                              >
-                                {receiver.name} · channel{" "}
-                                {receiverChannelIndex + 1}
-                              </option>
-                            ),
-                          ),
-                        )}
-                      </select>
-                    </label>
-                    <button
-                      className="remove-channel"
-                      type="button"
-                      aria-label={`Remove channel ${position + 1}`}
-                      onClick={() =>
-                        update({
-                          ...showfile,
-                          channels: showfile.channels.filter(
-                            (_, index) => index !== position,
-                          ),
-                        })
-                      }
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-                {showfile.channels.length === 0 ? (
-                  <div className="empty-state">
-                    <strong>No show channels.</strong>
-                    <span>Add a channel, then patch it to an input.</span>
-                  </div>
-                ) : null}
-              </div>
-            </section>
-          </form>
+                  ? ` · ${showfile.shureReceivers.length}`
+                  : ""}
+              </TabsTrigger>
+              <TabsTrigger value="channels">
+                Channels
+                {showfile.channels.length
+                  ? ` · ${showfile.channels.length}`
+                  : ""}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="show">
+              <ShowTab showfile={showfile} onChange={update} />
+            </TabsContent>
+            <TabsContent value="receivers">
+              <ReceiversTab
+                showfile={showfile}
+                shure={shure}
+                onChange={update}
+              />
+            </TabsContent>
+            <TabsContent value="channels">
+              <ChannelsTab
+                showfile={showfile}
+                device={device}
+                onChange={update}
+              />
+            </TabsContent>
+          </Tabs>
         ) : (
-          <section className="empty-state">
-            <strong>No editable showfile.</strong>
-            <span>{message}</span>
-          </section>
+          <EmptyState title="No editable showfile." detail={message} />
         )}
       </main>
     </div>
