@@ -76,6 +76,10 @@ The first runnable slice is the A2 channel grid. It currently provides:
 - the required two-step alert/selection behavior: the first press acknowledges an
   active alert and the next press selects the channel;
 - local filters, a capability-honest detail surface and persistent theme choice;
+- a resumable eight-dimension guided mic check with named A2/A1 verdicts and
+  per-channel device-local progress;
+- device-local persistence for selected source and alert acknowledgements;
+- automatic five-second snapshot refresh while the backend remains available;
 - a fixed monitor-output bar that starts muted and keeps mute and dim visible;
 - neutral local source selection labelled `Selected`, without claiming that
   fabricated state is confirmed listening; and
@@ -97,8 +101,7 @@ Use Node.js 24 from the repository's `.node-version` file.
 
 ```sh
 npm ci
-npm run dev --workspace @a2-monitor/backend
-npm run dev --workspace @a2-monitor/live
+npm run dev
 ```
 
 Vite serves the app at `http://127.0.0.1:4173`. Component checks are:
@@ -116,9 +119,10 @@ npm run check --workspace @a2-monitor/live
 - [x] interaction tests and desktop/iPad visual checks
 - [x] backend health and fabricated snapshot endpoint
 - [x] Live snapshot loading, explicit waiting/offline/error states and reconnect
+- [x] resumable guided mic-check prototype with explicit per-dimension verdicts
 - [ ] external meter store and bounded rendering path
 - [ ] audio-node media/control integration and real listening
-- [ ] A1 mix-confidence, guided mic check and replay surfaces
+- [ ] A1 mix-confidence, server-synchronized mic check and replay surfaces
 
 The next application slice should add the independent Manager shell. The next
 Live data slice should add bounded subscription/delta handling only after its

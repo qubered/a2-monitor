@@ -3,13 +3,18 @@ import type { LiveChannel as Channel } from "@a2-monitor/protocol/http";
 type ChannelDetailProps = {
   channel: Channel;
   onClose: () => void;
+  onRunCheck: () => void;
 };
 
 function measured(value: string | number | null, unit = "") {
   return value === null ? "Unknown" : `${value}${unit}`;
 }
 
-export function ChannelDetail({ channel, onClose }: ChannelDetailProps) {
+export function ChannelDetail({
+  channel,
+  onClose,
+  onRunCheck,
+}: ChannelDetailProps) {
   return (
     <div className="detail-backdrop" role="presentation" onMouseDown={onClose}>
       <section
@@ -64,6 +69,11 @@ export function ChannelDetail({ channel, onClose }: ChannelDetailProps) {
             </dl>
           </section>
         </div>
+        <footer className="detail-actions">
+          <button className="line-button" type="button" onClick={onRunCheck}>
+            Run a check
+          </button>
+        </footer>
       </section>
     </div>
   );

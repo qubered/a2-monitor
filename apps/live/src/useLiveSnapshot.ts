@@ -12,7 +12,7 @@ export type SnapshotState =
       message: string;
     };
 
-export function useLiveSnapshot(source: SnapshotSource) {
+export function useLiveSnapshot(source: SnapshotSource, refreshMs = 5000) {
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<SnapshotState>({
     status: "waiting",
@@ -22,8 +22,15 @@ export function useLiveSnapshot(source: SnapshotSource) {
   useEffect(() => {
     const controller = new AbortController();
 
+    let refreshTimer: number | undefined;
     void source.load(controller.signal).then(
-      (snapshot) => setState({ status: "ready", snapshot }),
+      (snapshot) => {
+        setState({ status: "ready", snapshot });
+        refreshTimer = window.setTimeout(
+          () => setAttempt((current) => current + 1),
+          refreshMs,
+        );
+      },
       (error: unknown) => {
         if (controller.signal.aborted) return;
         setState((current) => ({
@@ -37,8 +44,11 @@ export function useLiveSnapshot(source: SnapshotSource) {
       },
     );
 
-    return () => controller.abort();
-  }, [attempt, source]);
+    return () => {
+      controller.abort();
+      if (refreshTimer !== undefined) window.clearTimeout(refreshTimer);
+    };
+  }, [attempt, refreshMs, source]);
 
   return {
     state,
