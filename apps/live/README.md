@@ -118,7 +118,7 @@ A2_AUDIO_DEVICE="Exact device name" npm run dev
 Vite serves the app at `http://127.0.0.1:4173`. Component checks are:
 
 ```sh
-npm run check --workspace @a2-monitor/live
+npm run check --workspace @rvlt/pulse-live
 ```
 
 ## Build progress

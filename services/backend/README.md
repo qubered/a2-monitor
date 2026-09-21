@@ -90,7 +90,7 @@ storage worker, database queue or storage-drain protocol exists yet.
 Run the backend on `http://127.0.0.1:3000` with:
 
 ```sh
-npm run dev --workspace @a2-monitor/backend
+npm run dev --workspace @rvlt/pulse-backend
 ```
 
 The macOS MVP persists the showfile as an atomically replaced JSON file under

@@ -7,7 +7,7 @@ import "@fontsource/hanken-grotesk/latin-600.css";
 import "@fontsource/hanken-grotesk/latin-700.css";
 import "@fontsource/jetbrains-mono/latin-400.css";
 import "@fontsource/jetbrains-mono/latin-600.css";
-import "@a2-monitor/ui/tokens.css";
+import "@rvlt/pulse-ui/tokens.css";
 import "./styles.css";
 
 import { StrictMode } from "react";

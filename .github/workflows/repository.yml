@@ -92,8 +92,8 @@ jobs:
             -O \
             -target arm64-apple-macos14.0 \
             -framework AppKit \
-            infra/appliance/macos/mvp-app/A2MonitorApp.swift \
-            -o "$RUNNER_TEMP/A2MonitorApp-compile-check"
+            infra/appliance/macos/mvp-app/PulseApp.swift \
+            -o "$RUNNER_TEMP/PulseApp-compile-check"
       - name: Require a clean tracked checkout
         run: |
           git diff --exit-code

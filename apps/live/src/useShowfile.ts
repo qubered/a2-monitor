@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { parseShowfile, type Showfile } from "@a2-monitor/protocol/http";
+import { parseShowfile, type Showfile } from "@rvlt/pulse-protocol/http";
 
 export function useShowfile(refreshMs = 2000): Showfile | null {
   const [showfile, setShowfile] = useState<Showfile | null>(null);

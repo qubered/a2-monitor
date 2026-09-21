@@ -1,4 +1,4 @@
-import type { LiveChannel } from "@a2-monitor/protocol/http";
+import type { LiveChannel } from "@rvlt/pulse-protocol/http";
 
 // Fabricated development data. Nothing here describes a real production.
 export const initialChannels: LiveChannel[] = [

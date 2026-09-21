@@ -2,7 +2,7 @@ import type {
   LiveChannel,
   Showfile,
   ShureTelemetry,
-} from "@a2-monitor/protocol/http";
+} from "@rvlt/pulse-protocol/http";
 
 export type AudioDeviceState = {
   schemaVersion: 0;

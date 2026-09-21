@@ -62,14 +62,14 @@ package_path="$work_dir/output/a2-monitor-0.0.0-macos-aarch64-unsigned.pkg"
   --package "$package_path" \
   --identifier com.a2monitor.appliance \
   --version 0.0.0 \
-  --install-location "/Library/Application Support/A2 Monitor" \
+  --install-location "/Library/Application Support/Pulse" \
   --build-id "$build_id" >/dev/null
 
 if "$script_dir/inspect-unsigned-pkg.sh" \
   --package "$package_path" \
   --identifier com.example.wrong \
   --version 0.0.0 \
-  --install-location "/Library/Application Support/A2 Monitor" \
+  --install-location "/Library/Application Support/Pulse" \
   --build-id "$build_id" >/dev/null 2>&1; then
   echo "inspection accepted the wrong identifier" >&2
   exit 1
@@ -107,7 +107,7 @@ pkgbuild \
   --scripts "$work_dir/installer-scripts" \
   --identifier com.a2monitor.appliance \
   --version 0.0.0 \
-  --install-location "/Library/Application Support/A2 Monitor" \
+  --install-location "/Library/Application Support/Pulse" \
   --ownership preserve \
   "$work_dir/scripted-build/a2-monitor-component.pkg" >/dev/null
 productbuild --package "$work_dir/scripted-build/a2-monitor-component.pkg" "$work_dir/scripted.pkg" >/dev/null
@@ -115,7 +115,7 @@ if "$script_dir/inspect-unsigned-pkg.sh" \
   --package "$work_dir/scripted.pkg" \
   --identifier com.a2monitor.appliance \
   --version 0.0.0 \
-  --install-location "/Library/Application Support/A2 Monitor" \
+  --install-location "/Library/Application Support/Pulse" \
   --build-id "$build_id" >/dev/null 2>&1; then
   echo "inspection accepted an installer script" >&2
   exit 1
@@ -126,7 +126,7 @@ pkgbuild \
   --root "$tampered_root" \
   --identifier com.a2monitor.appliance \
   --version 0.0.0 \
-  --install-location "/Library/Application Support/A2 Monitor" \
+  --install-location "/Library/Application Support/Pulse" \
   --ownership preserve \
   "$work_dir/extra-build/a2-monitor-component.pkg" >/dev/null
 productbuild --package "$work_dir/extra-build/a2-monitor-component.pkg" "$work_dir/extra.pkg" >/dev/null
@@ -134,7 +134,7 @@ if "$script_dir/inspect-unsigned-pkg.sh" \
   --package "$work_dir/extra.pkg" \
   --identifier com.a2monitor.appliance \
   --version 0.0.0 \
-  --install-location "/Library/Application Support/A2 Monitor" \
+  --install-location "/Library/Application Support/Pulse" \
   --build-id "$build_id" >/dev/null 2>&1; then
   echo "inspection accepted an unmanifested payload file" >&2
   exit 1
@@ -148,7 +148,7 @@ pkgbuild \
   --root "$tampered_root" \
   --identifier com.a2monitor.appliance \
   --version 0.0.0 \
-  --install-location "/Library/Application Support/A2 Monitor" \
+  --install-location "/Library/Application Support/Pulse" \
   --ownership preserve \
   "$work_dir/symlink-build/a2-monitor-component.pkg" >/dev/null
 productbuild --package "$work_dir/symlink-build/a2-monitor-component.pkg" "$work_dir/symlink.pkg" >/dev/null
@@ -156,7 +156,7 @@ if "$script_dir/inspect-unsigned-pkg.sh" \
   --package "$work_dir/symlink.pkg" \
   --identifier com.a2monitor.appliance \
   --version 0.0.0 \
-  --install-location "/Library/Application Support/A2 Monitor" \
+  --install-location "/Library/Application Support/Pulse" \
   --build-id "$build_id" >/dev/null 2>&1; then
   echo "inspection accepted a payload symbolic link" >&2
   exit 1

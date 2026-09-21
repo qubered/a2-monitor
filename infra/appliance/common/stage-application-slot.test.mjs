@@ -129,7 +129,7 @@ async function makeFixture(root) {
   }
   await put(
     path.join(inputs, "protocol", "package.json"),
-    `${JSON.stringify({ name: "@a2-monitor/protocol", type: "module" })}\n`,
+    `${JSON.stringify({ name: "@rvlt/pulse-protocol", type: "module" })}\n`,
   );
   await put(
     path.join(inputs, "protocol", "validation", "strict-ajv.mjs"),
@@ -268,7 +268,7 @@ test("stages and verifies a deterministic closed application slot", async () => 
       manifest.files.some(
         (entry) =>
           entry.path ===
-            "backend/node_modules/@a2-monitor/protocol/validation/strict-ajv.mjs" &&
+            "backend/node_modules/@rvlt/pulse-protocol/validation/strict-ajv.mjs" &&
           entry.role === "protocol_runtime",
       ),
     );
@@ -276,7 +276,7 @@ test("stages and verifies a deterministic closed application slot", async () => 
       manifest.files.some(
         (entry) =>
           entry.path ===
-            "backend/node_modules/@a2-monitor/protocol/schema/v0/http/health-response.schema.json" &&
+            "backend/node_modules/@rvlt/pulse-protocol/schema/v0/http/health-response.schema.json" &&
           entry.role === "protocol_schema",
       ),
     );
@@ -530,10 +530,10 @@ test("rejects missing production dependencies and a bundled protocol workspace l
   });
 
   await withFixture(async (root, options) => {
-    await mkdir(path.join(options["backend-dependencies"], "@a2-monitor"));
+    await mkdir(path.join(options["backend-dependencies"], "@rvlt"));
     await symlink(
       options["protocol-package"],
-      path.join(options["backend-dependencies"], "@a2-monitor", "protocol"),
+      path.join(options["backend-dependencies"], "@rvlt", "pulse-protocol"),
     );
     await assert.rejects(
       stageApplicationSlot({

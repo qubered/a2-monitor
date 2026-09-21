@@ -1,5 +1,5 @@
 import { Trash2 } from "lucide-react";
-import type { Showfile } from "@a2-monitor/protocol/http";
+import type { Showfile } from "@rvlt/pulse-protocol/http";
 import type { ObservedDevice } from "../showfile";
 import { EmptyState } from "./EmptyState";
 import { Button } from "./ui/button";

@@ -1,4 +1,4 @@
-import type { Showfile } from "@a2-monitor/protocol/http";
+import type { Showfile } from "@rvlt/pulse-protocol/http";
 import {
   Card,
   CardContent,

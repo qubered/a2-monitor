@@ -44,7 +44,7 @@ for silence says so on its card rather than reading as healthy. Where a cue
 source is connected, cue-aware silence arming may refine this; it never replaces
 it.
 
-**The product owns show time.** A2 Monitor is a soft replacement for the vendor
+**The product owns show time.** Pulse is a soft replacement for the vendor
 wireless tools, and the boundary is time rather than capability: during a
 performance the work happens here, and the channel detail carries every value an
 operator would otherwise open Wireless Workbench or Wireless Systems Manager to

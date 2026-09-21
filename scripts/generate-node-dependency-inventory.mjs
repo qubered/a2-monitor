@@ -44,7 +44,7 @@ function directDependencyNames(lockfile) {
       "peerDependencies",
     ]) {
       for (const name of Object.keys(metadata[field] ?? {})) {
-        if (!name.startsWith("@a2-monitor/")) {
+        if (!name.startsWith("@rvlt/pulse-")) {
           names.add(name);
         }
       }

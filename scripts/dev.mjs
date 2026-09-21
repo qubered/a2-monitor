@@ -1,13 +1,13 @@
 import { spawn } from "node:child_process";
 
 const children = [
-  spawn("npm", ["run", "dev", "--workspace", "@a2-monitor/backend"], {
+  spawn("npm", ["run", "dev", "--workspace", "@rvlt/pulse-backend"], {
     stdio: "inherit",
   }),
-  spawn("npm", ["run", "dev", "--workspace", "@a2-monitor/listen-gateway"], {
+  spawn("npm", ["run", "dev", "--workspace", "@rvlt/pulse-listen-gateway"], {
     stdio: "inherit",
   }),
-  spawn("npm", ["run", "dev", "--workspace", "@a2-monitor/live"], {
+  spawn("npm", ["run", "dev", "--workspace", "@rvlt/pulse-live"], {
     stdio: "inherit",
   }),
 ];

@@ -6,7 +6,7 @@ const host = process.env.A2_LISTEN_HOST ?? "127.0.0.1";
 const rawPort = process.env.A2_LISTEN_PORT ?? "3001";
 const port = Number(rawPort);
 const defaultCaptureBinary = fileURLToPath(
-  new URL("../../../target/debug/a2-device-capture", import.meta.url),
+  new URL("../../../target/debug/pulse-device-capture", import.meta.url),
 );
 
 if (!Number.isInteger(port) || port < 1 || port > 65_535) {

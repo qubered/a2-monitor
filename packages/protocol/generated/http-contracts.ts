@@ -4,7 +4,7 @@
 //   - schema/v0/http/live-snapshot-response.schema.json
 //   - schema/v0/http/showfile.schema.json
 //   - schema/v0/http/shure-telemetry.schema.json
-// Regenerate: npm run generate --workspace @a2-monitor/protocol
+// Regenerate: npm run generate --workspace @rvlt/pulse-protocol
 // Schema-SHA256: 9caa1991c624e9c686cde4f84b80736d8ee34a100bdc2bddd0ce4b0e1bb520bd
 // Generator-SHA256: 7332ccaa39a3356f13cd579a0ec27fa08c2d30c34329709ecb964ba326edb8a9
 // Body-SHA256: 3a37c556453004a8a9ba8a351bcdb78e1abfe4dc6352c6a68234724d9eeb3ef8

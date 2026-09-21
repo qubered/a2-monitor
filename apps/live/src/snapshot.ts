@@ -4,7 +4,7 @@ import {
   ProtocolContractError,
   ProtocolHttpError,
   type LiveSnapshot,
-} from "@a2-monitor/protocol/http";
+} from "@rvlt/pulse-protocol/http";
 
 export interface SnapshotSource {
   load(signal: AbortSignal): Promise<LiveSnapshot>;

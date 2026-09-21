@@ -35,5 +35,5 @@ name = "a2-media-worker-smoke"
 path = "src/bin/media-worker-smoke.rs"
 
 [[bin]]
-name = "a2-device-capture"
+name = "pulse-device-capture"
 path = "src/bin/device-capture.rs"

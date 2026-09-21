@@ -28,7 +28,7 @@ numbers on different receiver units remain distinct.
 
 The backend assigns a monotonically increasing revision and rejects a save whose
 base revision is stale. The macOS MVP stores the closed JSON contract at
-`~/Library/Application Support/A2 Monitor/showfile.json`, writes a sibling
+`~/Library/Application Support/Pulse/showfile.json`, writes a sibling
 temporary file and atomically renames it into place. The pre-inventory MVP shape
 is migrated once by adding an empty receiver list and clearing ambiguous legacy
 receiver-channel patches; other invalid persisted bytes fail closed.

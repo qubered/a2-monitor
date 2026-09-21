@@ -155,7 +155,7 @@ export class CaptureManager extends EventEmitter {
     super();
     this.device = options.device;
     this.captureBinary =
-      options.captureBinary ?? "target/debug/a2-device-capture";
+      options.captureBinary ?? "target/debug/pulse-device-capture";
     this.processFactory = options.processFactory ?? defaultProcessFactory;
     this.state = {
       schemaVersion: 0,

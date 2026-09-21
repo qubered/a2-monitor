@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Showfile, ShureTelemetry } from "@a2-monitor/protocol/http";
+import type { Showfile, ShureTelemetry } from "@rvlt/pulse-protocol/http";
 import {
   loadObservedDevice,
   loadShowfile,
@@ -113,7 +113,7 @@ export function App() {
       <header className="flex min-h-17 flex-wrap items-center gap-5 border-b-2 border-line-2 bg-paper-2 px-6 py-3">
         <div
           className="flex items-baseline gap-2 font-display text-section font-extrabold"
-          aria-label="A2 Monitor Manager"
+          aria-label="Pulse Manager"
         >
           <span aria-hidden="true" className="text-red">
             ▲

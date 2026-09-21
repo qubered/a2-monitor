@@ -1,7 +1,7 @@
 import type {
   LiveChannel as Channel,
   Verdict,
-} from "@a2-monitor/protocol/http";
+} from "@rvlt/pulse-protocol/http";
 
 const verdictLabels: Record<Verdict, string> = {
   good: "good",

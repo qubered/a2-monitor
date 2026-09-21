@@ -53,13 +53,13 @@ Manager on `127.0.0.1:4174`:
 
 ```sh
 npm ci
-npm run dev --workspace @a2-monitor/manager
+npm run dev --workspace @rvlt/pulse-manager
 ```
 
 Run its format, lint, interaction-test, type, and production-build checks with:
 
 ```sh
-npm run check --workspace @a2-monitor/manager
+npm run check --workspace @rvlt/pulse-manager
 ```
 
 Manager is also available at `/manager/` inside the macOS MVP app. It must remain

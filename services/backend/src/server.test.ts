@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import type { LiveSnapshot } from "@a2-monitor/protocol/http";
+import type { LiveSnapshot } from "@rvlt/pulse-protocol/http";
 import { fabricatedLiveSnapshot } from "./fixtures/live-snapshot.js";
 import { buildServer } from "./server.js";
 

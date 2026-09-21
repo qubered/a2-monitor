@@ -56,10 +56,10 @@ clients continue to use the generated bounded parsers and do not import Ajv.
 Generate and verify the committed artifact with:
 
 ```sh
-npm run generate --workspace @a2-monitor/protocol
-npm run generate:check --workspace @a2-monitor/protocol
-npm run validate:fixtures --workspace @a2-monitor/protocol
-npm run test --workspace @a2-monitor/protocol
+npm run generate --workspace @rvlt/pulse-protocol
+npm run generate:check --workspace @rvlt/pulse-protocol
+npm run validate:fixtures --workspace @rvlt/pulse-protocol
+npm run test --workspace @rvlt/pulse-protocol
 ```
 
 The generator is deterministic and `--check` compares the complete expected

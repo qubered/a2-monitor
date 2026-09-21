@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
   parseShureTelemetry,
   type ShureTelemetry,
-} from "@a2-monitor/protocol/http";
+} from "@rvlt/pulse-protocol/http";
 
 export function useShureTelemetry(refreshMs = 2000): ShureTelemetry | null {
   const [telemetry, setTelemetry] = useState<ShureTelemetry | null>(null);

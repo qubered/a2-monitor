@@ -1,4 +1,4 @@
-# A2 Monitor — design language
+# Pulse — design language
 
 - **Version:** 1.0.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
@@ -28,7 +28,7 @@ is [`prototype/index.html`](prototype/index.html).
 
 ### 1.1 Built on RVLT
 
-A2 Monitor is built on the **RVLT design language**, not on a separate system
+Pulse is built on the **RVLT design language**, not on a separate system
 that resembles it. Tokens, type roles, shapes, shadows and component behaviour
 come from `rvlt-designlanguage` DESIGN.md §15.1 / Appendix A (v1.1.0) as
 published. This document records the domain mapping on top of it and nothing
@@ -41,7 +41,7 @@ The sibling product [gearflow `DESIGN.md`](https://github.com/TwoToned/gearflow/
 is the precedent for how a second product adopts the language, and this document
 follows it where it diverges from the marketing site. Both accessed 2026-09-19.
 
-### 1.1.1 Where A2 Monitor deliberately diverges
+### 1.1.1 Where Pulse deliberately diverges
 
 Two, and only two. Both are recorded here so they read as decisions rather than
 drift.
@@ -150,7 +150,7 @@ words, not implied by a pale colour.
 
 ### 3.1 Surfaces
 
-RVLT ships a dark default and an opt-in light "Paper" theme. **A2 Monitor
+RVLT ships a dark default and an opt-in light "Paper" theme. **Pulse
 defaults to Paper.** Dark is a straight theme switch, not a separate design, and
 both are first class.
 

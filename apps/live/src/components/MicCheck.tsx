@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { LiveChannel as Channel } from "@a2-monitor/protocol/http";
+import type { LiveChannel as Channel } from "@rvlt/pulse-protocol/http";
 import {
   loadMicCheck,
   micCheckDimensions,

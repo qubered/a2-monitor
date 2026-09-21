@@ -1,8 +1,8 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import showfileSchema from "@a2-monitor/protocol/schema/showfile" with { type: "json" };
-import type { Showfile } from "@a2-monitor/protocol/http";
-import { createStrictAjv2020 } from "@a2-monitor/protocol/validation/strict-ajv";
+import showfileSchema from "@rvlt/pulse-protocol/schema/showfile" with { type: "json" };
+import type { Showfile } from "@rvlt/pulse-protocol/http";
+import { createStrictAjv2020 } from "@rvlt/pulse-protocol/validation/strict-ajv";
 
 const validateShowfile = createStrictAjv2020().compile(showfileSchema);
 

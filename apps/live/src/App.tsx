@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { LiveChannel } from "@a2-monitor/protocol/http";
+import type { LiveChannel } from "@rvlt/pulse-protocol/http";
 import { ChannelCard } from "./components/ChannelCard";
 import { ChannelDetail } from "./components/ChannelDetail";
 import { MicCheck } from "./components/MicCheck";
@@ -322,7 +322,7 @@ export function App({
   return (
     <div className="live-app">
       <header className="app-header">
-        <div className="brand" aria-label="A2 Monitor">
+        <div className="brand" aria-label="Pulse">
           <span aria-hidden="true">▲</span>
           <strong>A2</strong> <b>Monitor</b>
         </div>

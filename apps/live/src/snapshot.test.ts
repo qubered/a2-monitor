@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
-import type { LiveSnapshot } from "@a2-monitor/protocol/http";
+import type { LiveSnapshot } from "@rvlt/pulse-protocol/http";
 import { initialChannels } from "./dev-data/channels";
 import {
   createHttpSnapshotSource,

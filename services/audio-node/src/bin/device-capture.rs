@@ -24,7 +24,7 @@ where
             }
             Ok(Command::Capture { device_name })
         }
-        _ => Err("usage: a2-device-capture --list | --device <exact-device-name>"),
+        _ => Err("usage: pulse-device-capture --list | --device <exact-device-name>"),
     }
 }
 
@@ -370,7 +370,7 @@ mod supported {
     use std::error::Error;
 
     pub fn run(_command: Command) -> Result<(), Box<dyn Error>> {
-        Err("a2-device-capture is supported only on macOS (CoreAudio) and Windows (WASAPI)".into())
+        Err("pulse-device-capture is supported only on macOS (CoreAudio) and Windows (WASAPI)".into())
     }
 }
 
@@ -379,7 +379,7 @@ fn main() {
         .map_err(|error| -> Box<dyn std::error::Error> { error.into() })
         .and_then(supported::run);
     if let Err(error) = result {
-        eprintln!("a2-device-capture: {error}");
+        eprintln!("pulse-device-capture: {error}");
         std::process::exit(2);
     }
 }

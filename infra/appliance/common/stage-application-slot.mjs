@@ -398,11 +398,11 @@ async function validateProtocolPackage(root) {
   await assertRegularFile(packageFile, "protocol package metadata");
   const packageJson = JSON.parse(await readFile(packageFile, "utf8"));
   if (
-    packageJson.name !== "@a2-monitor/protocol" ||
+    packageJson.name !== "@rvlt/pulse-protocol" ||
     packageJson.type !== "module"
   ) {
     fail(
-      "protocol package metadata must identify @a2-monitor/protocol as an ES module",
+      "protocol package metadata must identify @rvlt/pulse-protocol as an ES module",
     );
   }
   const schemaRoot = path.join(root, "schema");
@@ -468,11 +468,11 @@ async function validateBackendDependencies(root) {
   }
   for (const file of files) {
     if (
-      file.relativePath === "@a2-monitor/protocol" ||
-      file.relativePath.startsWith("@a2-monitor/protocol/")
+      file.relativePath === "@rvlt/pulse-protocol" ||
+      file.relativePath.startsWith("@rvlt/pulse-protocol/")
     ) {
       fail(
-        "backend production dependencies must not contain @a2-monitor/protocol; use --protocol-package",
+        "backend production dependencies must not contain @rvlt/pulse-protocol; use --protocol-package",
       );
     }
   }
@@ -789,10 +789,10 @@ function validateManifestShape(manifest) {
       ) {
         return "backend";
       }
-      if (entry.path.startsWith("backend/node_modules/@a2-monitor/protocol/")) {
+      if (entry.path.startsWith("backend/node_modules/@rvlt/pulse-protocol/")) {
         if (
           entry.path.startsWith(
-            "backend/node_modules/@a2-monitor/protocol/schema/",
+            "backend/node_modules/@rvlt/pulse-protocol/schema/",
           )
         ) {
           return "protocol_schema";
@@ -833,22 +833,22 @@ function validateManifestShape(manifest) {
     [`${manifest.frontendRoots.live}/index.html`, "live_asset", false],
     ["backend/package.json", "backend", false],
     [
-      "backend/node_modules/@a2-monitor/protocol/package.json",
+      "backend/node_modules/@rvlt/pulse-protocol/package.json",
       "protocol_runtime",
       false,
     ],
     [
-      "backend/node_modules/@a2-monitor/protocol/validation/strict-ajv.mjs",
+      "backend/node_modules/@rvlt/pulse-protocol/validation/strict-ajv.mjs",
       "protocol_runtime",
       false,
     ],
     [
-      "backend/node_modules/@a2-monitor/protocol/schema/v0/http/health-response.schema.json",
+      "backend/node_modules/@rvlt/pulse-protocol/schema/v0/http/health-response.schema.json",
       "protocol_schema",
       false,
     ],
     [
-      "backend/node_modules/@a2-monitor/protocol/schema/v0/http/live-snapshot-response.schema.json",
+      "backend/node_modules/@rvlt/pulse-protocol/schema/v0/http/live-snapshot-response.schema.json",
       "protocol_schema",
       false,
     ],
@@ -1052,13 +1052,13 @@ export async function stageApplicationSlot(options) {
       ...(await copyTree(
         protocolFiles.runtime,
         temporarySlot,
-        "backend/node_modules/@a2-monitor/protocol",
+        "backend/node_modules/@rvlt/pulse-protocol",
         "protocol_runtime",
       )),
       ...(await copyTree(
         protocolFiles.schemas,
         temporarySlot,
-        "backend/node_modules/@a2-monitor/protocol",
+        "backend/node_modules/@rvlt/pulse-protocol",
         "protocol_schema",
       )),
     );
