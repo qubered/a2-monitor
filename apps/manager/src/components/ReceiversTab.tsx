@@ -1,5 +1,10 @@
 import { Trash2 } from "lucide-react";
 import type { Showfile, ShureTelemetry } from "@a2-monitor/protocol/http";
+import {
+  SHURE_MODEL_INFO,
+  SHURE_RECEIVER_MODELS,
+  type ShureReceiverModel,
+} from "@a2-monitor/protocol/shure-models";
 import { EmptyState } from "./EmptyState";
 import { Badge, type BadgeProps } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -13,10 +18,19 @@ import {
 } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 function receiverId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `receiver-${Date.now()}`;
 }
+
+const DEFAULT_MODEL: ShureReceiverModel = "ULXD4D";
 
 function statusVariant(status: string | undefined): BadgeProps["variant"] {
   switch (status) {
@@ -66,7 +80,9 @@ export function ReceiversTab({
                   id: receiverId(),
                   name: `Receiver ${showfile.shureReceivers.length + 1}`,
                   host: "192.168.1.100",
-                  channelCount: 4,
+                  model: DEFAULT_MODEL,
+                  channelCount:
+                    SHURE_MODEL_INFO[DEFAULT_MODEL].defaultChannelCount,
                 },
               ],
             })
@@ -125,6 +141,44 @@ export function ReceiversTab({
                         }}
                       />
                     </div>
+                    <div className="col-span-2 flex flex-col gap-2">
+                      <Label htmlFor={`receiver-${receiver.id}-model`}>
+                        Model
+                      </Label>
+                      <Select
+                        value={receiver.model}
+                        onValueChange={(value) => {
+                          const model = value as ShureReceiverModel;
+                          const info = SHURE_MODEL_INFO[model];
+                          const shureReceivers = [...showfile.shureReceivers];
+                          shureReceivers[position] = {
+                            ...receiver,
+                            model,
+                            channelCount: info.dynamicChannelCount
+                              ? Math.min(
+                                  Math.max(receiver.channelCount, 1),
+                                  info.maxChannelCount,
+                                )
+                              : info.defaultChannelCount,
+                          };
+                          onChange({ ...showfile, shureReceivers });
+                        }}
+                      >
+                        <SelectTrigger
+                          id={`receiver-${receiver.id}-model`}
+                          aria-label={`Receiver ${position + 1} model`}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SHURE_RECEIVER_MODELS.map((model) => (
+                            <SelectItem key={model} value={model}>
+                              {SHURE_MODEL_INFO[model].label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className="flex flex-col gap-2">
                       <Label htmlFor={`receiver-${receiver.id}-host`}>
                         Control IP
@@ -144,30 +198,52 @@ export function ReceiversTab({
                         }}
                       />
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor={`receiver-${receiver.id}-count`}>
-                        Channels
-                      </Label>
-                      <Input
-                        id={`receiver-${receiver.id}-count`}
-                        aria-label={`Receiver ${position + 1} channel count`}
-                        type="number"
-                        min={1}
-                        max={128}
-                        value={receiver.channelCount}
-                        onChange={(event) => {
-                          const shureReceivers = [...showfile.shureReceivers];
-                          shureReceivers[position] = {
-                            ...receiver,
-                            channelCount: Math.max(
-                              1,
-                              Math.min(128, Number(event.target.value)),
-                            ),
-                          };
-                          onChange({ ...showfile, shureReceivers });
-                        }}
-                      />
-                    </div>
+                    {SHURE_MODEL_INFO[receiver.model as ShureReceiverModel]
+                      ?.dynamicChannelCount ? (
+                      <div className="flex flex-col gap-2">
+                        <Label htmlFor={`receiver-${receiver.id}-count`}>
+                          Channels
+                        </Label>
+                        <Input
+                          id={`receiver-${receiver.id}-count`}
+                          aria-label={`Receiver ${position + 1} channel count`}
+                          type="number"
+                          min={1}
+                          max={
+                            SHURE_MODEL_INFO[
+                              receiver.model as ShureReceiverModel
+                            ].maxChannelCount
+                          }
+                          value={receiver.channelCount}
+                          onChange={(event) => {
+                            const info =
+                              SHURE_MODEL_INFO[
+                                receiver.model as ShureReceiverModel
+                              ];
+                            const shureReceivers = [...showfile.shureReceivers];
+                            shureReceivers[position] = {
+                              ...receiver,
+                              channelCount: Math.max(
+                                1,
+                                Math.min(
+                                  info.maxChannelCount,
+                                  Number(event.target.value),
+                                ),
+                              ),
+                            };
+                            onChange({ ...showfile, shureReceivers });
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <Label>Channels</Label>
+                        <span className="min-h-11 content-center font-mono text-caption text-muted-foreground">
+                          {receiver.channelCount} channel
+                          {receiver.channelCount === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
                 <CardFooter className="justify-end">

@@ -10,11 +10,41 @@
     "firmware": "2.7.10",
     "compatibility": "compatible-read-only",
     "status": "ready",
-    "detail": "Read-only Shure battery telemetry is current.",
+    "detail": "Read-only Shure telemetry is current.",
+    "capabilities": {
+      "antennaDiversity": true,
+      "linkQuality": true,
+      "interference": true,
+      "audioMeter": true,
+      "batteryHealth": true,
+      "transmitterDetail": true
+    },
     "channels": [{
       "index": 0,
+      "linkStatus": "active",
       "batteryBars": 4,
       "batteryChargePercent": 78,
+      "batteryType": "SB900A",
+      "batteryCycleCount": 42,
+      "batteryRunTimeMinutes": 245,
+      "antennas": [
+        { "label": "A", "active": true },
+        { "label": "B", "active": false }
+      ],
+      "rfLevelDbm": -58,
+      "rfLevelRaw": 62,
+      "linkQualityRaw": 5,
+      "interference": "none",
+      "audioLevelDbfs": -86,
+      "audioLevelRaw": 34,
+      "frequencyRaw": "0537925",
+      "groupChannelRaw": "19 037",
+      "transmitter": {
+        "type": "ULXD1",
+        "name": "Marguerite",
+        "muted": false
+      },
+      "warnings": [],
       "observedAtUtc": "2026-09-21T00:00:00Z",
       "availability": "observed"
     }]

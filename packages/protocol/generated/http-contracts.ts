@@ -5,9 +5,9 @@
 //   - schema/v0/http/showfile.schema.json
 //   - schema/v0/http/shure-telemetry.schema.json
 // Regenerate: npm run generate --workspace @a2-monitor/protocol
-// Schema-SHA256: 70b372c9fd03f80b5088b840db6046f0c76e09c5be67d487827840f03bc462a7
+// Schema-SHA256: 9caa1991c624e9c686cde4f84b80736d8ee34a100bdc2bddd0ce4b0e1bb520bd
 // Generator-SHA256: 7332ccaa39a3356f13cd579a0ec27fa08c2d30c34329709ecb964ba326edb8a9
-// Body-SHA256: 9b757405abd2dfb03ec72c216c21459c7a8909476012b748ace6f97de6bda68e
+// Body-SHA256: 3a37c556453004a8a9ba8a351bcdb78e1abfe4dc6352c6a68234724d9eeb3ef8
 
 export type HealthResponse = {
   status: "ok";
@@ -84,6 +84,25 @@ export type Showfile = {
     id: string;
     name: string;
     host: string;
+    model:
+      | "AD4D"
+      | "AD4D-DC"
+      | "AD4Q"
+      | "AD4Q-DC"
+      | "ANX4"
+      | "ULXD4"
+      | "ULXD4D"
+      | "ULXD4Q"
+      | "ULXD4-GV"
+      | "ULXD4D-GV"
+      | "ULXD4Q-GV"
+      | "QLXD4"
+      | "SLXD4"
+      | "SLXD4D"
+      | "SLXD4+"
+      | "SLXD4D+"
+      | "SLXD4Q+"
+      | "SLXD4QDAN+";
     channelCount: number;
   }>;
   channels: Array<{
@@ -108,10 +127,40 @@ export type ShureTelemetry = {
     compatibility: "compatible-read-only";
     status: "connecting" | "ready" | "stale" | "error";
     detail: string;
+    capabilities: {
+      antennaDiversity: boolean;
+      linkQuality: boolean;
+      interference: boolean;
+      audioMeter: boolean;
+      batteryHealth: boolean;
+      transmitterDetail: boolean;
+    };
     channels: Array<{
       index: number;
+      linkStatus: "no-transmitter" | "active" | "unavailable";
       batteryBars: number | null;
       batteryChargePercent: number | null;
+      batteryType: string | null;
+      batteryCycleCount: number | null;
+      batteryRunTimeMinutes: number | null;
+      antennas: Array<{
+        label: "A" | "B" | "C" | "D";
+        active: boolean | null;
+      }>;
+      rfLevelDbm: number | null;
+      rfLevelRaw: number | null;
+      linkQualityRaw: number | null;
+      interference: "none" | "detected" | "unavailable";
+      audioLevelDbfs: number | null;
+      audioLevelRaw: number | null;
+      frequencyRaw: string | null;
+      groupChannelRaw: string | null;
+      transmitter: {
+        type: string | null;
+        name: string | null;
+        muted: boolean | null;
+      };
+      warnings: Array<string>;
       observedAtUtc: string | null;
       availability: "observed" | "unavailable" | "stale";
     }>;
@@ -443,7 +492,7 @@ const showfileSchema = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["id", "name", "host", "channelCount"],
+        required: ["id", "name", "host", "model", "channelCount"],
         properties: {
           id: {
             type: "string",
@@ -459,6 +508,28 @@ const showfileSchema = {
             type: "string",
             minLength: 1,
             maxLength: 45,
+          },
+          model: {
+            enum: [
+              "AD4D",
+              "AD4D-DC",
+              "AD4Q",
+              "AD4Q-DC",
+              "ANX4",
+              "ULXD4",
+              "ULXD4D",
+              "ULXD4Q",
+              "ULXD4-GV",
+              "ULXD4D-GV",
+              "ULXD4Q-GV",
+              "QLXD4",
+              "SLXD4",
+              "SLXD4D",
+              "SLXD4+",
+              "SLXD4D+",
+              "SLXD4Q+",
+              "SLXD4QDAN+",
+            ],
           },
           channelCount: {
             type: "integer",
@@ -543,6 +614,7 @@ const shureTelemetrySchema = {
           "compatibility",
           "status",
           "detail",
+          "capabilities",
           "channels",
         ],
         properties: {
@@ -580,6 +652,38 @@ const shureTelemetrySchema = {
             minLength: 1,
             maxLength: 240,
           },
+          capabilities: {
+            type: "object",
+            additionalProperties: false,
+            required: [
+              "antennaDiversity",
+              "linkQuality",
+              "interference",
+              "audioMeter",
+              "batteryHealth",
+              "transmitterDetail",
+            ],
+            properties: {
+              antennaDiversity: {
+                type: "boolean",
+              },
+              linkQuality: {
+                type: "boolean",
+              },
+              interference: {
+                type: "boolean",
+              },
+              audioMeter: {
+                type: "boolean",
+              },
+              batteryHealth: {
+                type: "boolean",
+              },
+              transmitterDetail: {
+                type: "boolean",
+              },
+            },
+          },
           channels: {
             type: "array",
             maxItems: 128,
@@ -588,8 +692,23 @@ const shureTelemetrySchema = {
               additionalProperties: false,
               required: [
                 "index",
+                "linkStatus",
                 "batteryBars",
                 "batteryChargePercent",
+                "batteryType",
+                "batteryCycleCount",
+                "batteryRunTimeMinutes",
+                "antennas",
+                "rfLevelDbm",
+                "rfLevelRaw",
+                "linkQualityRaw",
+                "interference",
+                "audioLevelDbfs",
+                "audioLevelRaw",
+                "frequencyRaw",
+                "groupChannelRaw",
+                "transmitter",
+                "warnings",
                 "observedAtUtc",
                 "availability",
               ],
@@ -598,6 +717,9 @@ const shureTelemetrySchema = {
                   type: "integer",
                   minimum: 0,
                   maximum: 127,
+                },
+                linkStatus: {
+                  enum: ["no-transmitter", "active", "unavailable"],
                 },
                 batteryBars: {
                   type: ["integer", "null"],
@@ -608,6 +730,100 @@ const shureTelemetrySchema = {
                   type: ["integer", "null"],
                   minimum: 0,
                   maximum: 100,
+                },
+                batteryType: {
+                  type: ["string", "null"],
+                  maxLength: 32,
+                },
+                batteryCycleCount: {
+                  type: ["integer", "null"],
+                  minimum: 0,
+                  maximum: 100000,
+                },
+                batteryRunTimeMinutes: {
+                  type: ["integer", "null"],
+                  minimum: 0,
+                  maximum: 1440,
+                },
+                antennas: {
+                  type: "array",
+                  maxItems: 4,
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: ["label", "active"],
+                    properties: {
+                      label: {
+                        enum: ["A", "B", "C", "D"],
+                      },
+                      active: {
+                        type: ["boolean", "null"],
+                      },
+                    },
+                  },
+                },
+                rfLevelDbm: {
+                  type: ["integer", "null"],
+                  minimum: -160,
+                  maximum: 0,
+                },
+                rfLevelRaw: {
+                  type: ["integer", "null"],
+                  minimum: 0,
+                  maximum: 1023,
+                },
+                linkQualityRaw: {
+                  type: ["integer", "null"],
+                  minimum: 0,
+                  maximum: 1023,
+                },
+                interference: {
+                  enum: ["none", "detected", "unavailable"],
+                },
+                audioLevelDbfs: {
+                  type: ["integer", "null"],
+                  minimum: -160,
+                  maximum: 0,
+                },
+                audioLevelRaw: {
+                  type: ["integer", "null"],
+                  minimum: 0,
+                  maximum: 1023,
+                },
+                frequencyRaw: {
+                  type: ["string", "null"],
+                  maxLength: 16,
+                },
+                groupChannelRaw: {
+                  type: ["string", "null"],
+                  maxLength: 16,
+                },
+                transmitter: {
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["type", "name", "muted"],
+                  properties: {
+                    type: {
+                      type: ["string", "null"],
+                      maxLength: 64,
+                    },
+                    name: {
+                      type: ["string", "null"],
+                      maxLength: 64,
+                    },
+                    muted: {
+                      type: ["boolean", "null"],
+                    },
+                  },
+                },
+                warnings: {
+                  type: "array",
+                  maxItems: 8,
+                  items: {
+                    type: "string",
+                    minLength: 1,
+                    maxLength: 120,
+                  },
                 },
                 observedAtUtc: {
                   type: ["string", "null"],

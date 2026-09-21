@@ -40,11 +40,33 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "name", "host", "channelCount"],
+        "required": ["id", "name", "host", "model", "channelCount"],
         "properties": {
           "id": { "type": "string", "minLength": 1, "maxLength": 64 },
           "name": { "type": "string", "minLength": 1, "maxLength": 120 },
           "host": { "type": "string", "minLength": 1, "maxLength": 45 },
+          "model": {
+            "enum": [
+              "AD4D",
+              "AD4D-DC",
+              "AD4Q",
+              "AD4Q-DC",
+              "ANX4",
+              "ULXD4",
+              "ULXD4D",
+              "ULXD4Q",
+              "ULXD4-GV",
+              "ULXD4D-GV",
+              "ULXD4Q-GV",
+              "QLXD4",
+              "SLXD4",
+              "SLXD4D",
+              "SLXD4+",
+              "SLXD4D+",
+              "SLXD4Q+",
+              "SLXD4QDAN+"
+            ]
+          },
           "channelCount": { "type": "integer", "minimum": 1, "maximum": 128 }
         }
       }

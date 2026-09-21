@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.3e002a6530662ea7",
-  "sourceSha256": "3e002a6530662ea757bc795b003b63bbefc0f37eae497fa3bdbf651ea4873094",
-  "inputCount": 305,
+  "buildId": "a2-0.0.0+sha256.05e616a20a68b0b7",
+  "sourceSha256": "05e616a20a68b0b703b579202cbd2c0085b734961cb43d3e01e136eb2ffcae7e",
+  "inputCount": 306,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -53,7 +53,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "99271bd71b7c0ae312279939decae8afa9554e1642e9558267a10bc2275745c5"
+      "sha256": "d97493e675b2da2342e4dbddd2b374f6e92c4a93625d716775e17ab824d8f86a"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -97,11 +97,11 @@
     },
     {
       "path": "apps/live/src/audio-device.test.ts",
-      "sha256": "1da821294ca9947866266349b48106110441631fe5ca518c97a226d42eceb388"
+      "sha256": "9eb416d8ff392c3f4e6bc8d6f7ab5a886e3401c2e3f55657f825ca4e44181fcd"
     },
     {
       "path": "apps/live/src/audio-device.ts",
-      "sha256": "a0d6ce6addedf78b8f74b4c6729f82d27024ef37423a6f581cacfd5fbff3339f"
+      "sha256": "f0d40ae4eae9d7f2b35d7b1f6bc3530d0e2f7622299b72bc96c6ff7769a3ac63"
     },
     {
       "path": "apps/live/src/audio-playback.test.ts",
@@ -205,7 +205,7 @@
     },
     {
       "path": "apps/manager/src/App.test.tsx",
-      "sha256": "5ff23ce277d51e5a368f855fa0b90dc642ea66a0aef3bce00c2e4fe677c23626"
+      "sha256": "d3cad5a3bd974e873a7d8fcc69079d3ca69f6a175bf568689ac61d9f3da38be1"
     },
     {
       "path": "apps/manager/src/App.tsx",
@@ -221,7 +221,7 @@
     },
     {
       "path": "apps/manager/src/components/ReceiversTab.tsx",
-      "sha256": "2cafaf03c65deeb787695b6489dcfb831cd46f0287c8d31cbfad098be4ef9a0f"
+      "sha256": "e46bfebebdd1f114e30a7353980971d0a399da2e4af275e570dfc57f9b59f03b"
     },
     {
       "path": "apps/manager/src/components/ShowTab.tsx",
@@ -669,7 +669,7 @@
     },
     {
       "path": "docs/integrations/shure-wireless.md",
-      "sha256": "2929d946272e6622e6c729bf4ff67df5c4e71ed8be1395096a7afd1e154975d8"
+      "sha256": "6eb5c6692345131760296b63dde4fd9bf8ae3d6ae296d2f058432c9a6c7bc22c"
     },
     {
       "path": "docs/open-questions.md",
@@ -889,11 +889,11 @@
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/showfile.valid.json",
-      "sha256": "0bf5300b6b735f16388b0c19ce2d5dfeaab6394e5e434e9abbf58e816c0c3f1e"
+      "sha256": "ff66de27cca2a3a4de58f81051f7267bf39901e51087b43caa89e90d2c2fe9e7"
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/shure-telemetry.valid.json",
-      "sha256": "e3c312b294e3f9821228e3f5e03b65f1f1511cac250c5a6e2573733d9bdd1d6f"
+      "sha256": "2e7b85a67a388adcdb574ae27866e62d15b2da6bb1fb7432f9cbfd26291c3284"
     },
     {
       "path": "packages/protocol/fixtures/v0/http/incompatible/health-response.unknown-field.json",
@@ -937,7 +937,7 @@
     },
     {
       "path": "packages/protocol/generated/http-contracts.ts",
-      "sha256": "aea1131cb55467c1d37e104a6997b16a5c6d7a0037bffeffd081677c5d9d5f75"
+      "sha256": "dea99ec18410c5f8d4608018f718c51dc670fd8ffbbf21aea53d02731de4fd79"
     },
     {
       "path": "packages/protocol/model/aggregate-transitions.v0.json",
@@ -945,7 +945,11 @@
     },
     {
       "path": "packages/protocol/package.json",
-      "sha256": "c3ab7d02b60b1cf3ad60e2416c4c06155149257ff61df9ac8ecd68c6ec93a940"
+      "sha256": "ac640efef4ffe3001fa51d490841794ec71a1e28b7f0acd5eb742844cda07661"
+    },
+    {
+      "path": "packages/protocol/receivers/shure-models.ts",
+      "sha256": "54b71df2e0b48f9ef802f8957072dcad31db971b49bc85350025dd79cdcf2704"
     },
     {
       "path": "packages/protocol/schema/v0/http/health-response.schema.json",
@@ -957,11 +961,11 @@
     },
     {
       "path": "packages/protocol/schema/v0/http/showfile.schema.json",
-      "sha256": "94d9cd232f49d6a7e139523b341e6d73d0fabeea544d30fa4e6b7a706a57c4b6"
+      "sha256": "101b32b0bcd78a39337f82c983fcf7869f2c26417d8ae2336aad03afdf99c34a"
     },
     {
       "path": "packages/protocol/schema/v0/http/shure-telemetry.schema.json",
-      "sha256": "59e2074568d8c2b5cd5b2dd5c70f114cc4ff019925bf5835adf83a962dc0ec9f"
+      "sha256": "fd96f981161fa8e00bf62ba0f554a5e78879b38cc6808e4a148f223a10edbe8b"
     },
     {
       "path": "packages/protocol/scripts/generate-http-contracts.mjs",
@@ -1157,11 +1161,11 @@
     },
     {
       "path": "services/listen-gateway/src/shure.test.ts",
-      "sha256": "81164c5ac1a9d986592aab04ed41272fed36952600d1ec6c7101f2ea3e9bc297"
+      "sha256": "957ad19e5a1116870c26442aab7b0f186d8e74799ac4d970a2f607d244ca73f0"
     },
     {
       "path": "services/listen-gateway/src/shure.ts",
-      "sha256": "7287edcc15c35e1ac628c9f01e92a7057f459aa35e55afff1e0930df132ea07a"
+      "sha256": "95faf165a48185c9bcb68be0a2dabb21982bc4c74f1fb657d31c1e83730b6994"
     },
     {
       "path": "services/listen-gateway/src/start.ts",

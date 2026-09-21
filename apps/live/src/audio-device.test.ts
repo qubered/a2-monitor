@@ -97,6 +97,7 @@ describe("audio device adapter", () => {
           id: "stage-left",
           name: "Stage left",
           host: "192.0.2.10",
+          model: "ULXD4D",
           channelCount: 2,
         },
       ],
@@ -124,11 +125,37 @@ describe("audio device adapter", () => {
           compatibility: "compatible-read-only",
           status: "ready",
           detail: "Current.",
+          capabilities: {
+            antennaDiversity: true,
+            linkQuality: false,
+            interference: true,
+            audioMeter: true,
+            batteryHealth: true,
+            transmitterDetail: true,
+          },
           channels: [
             {
               index: 0,
+              linkStatus: "active",
               batteryBars: 1,
               batteryChargePercent: 18,
+              batteryType: null,
+              batteryCycleCount: null,
+              batteryRunTimeMinutes: 95,
+              antennas: [
+                { label: "A", active: true },
+                { label: "B", active: false },
+              ],
+              rfLevelDbm: -52,
+              rfLevelRaw: 76,
+              linkQualityRaw: null,
+              interference: "none",
+              audioLevelDbfs: null,
+              audioLevelRaw: null,
+              frequencyRaw: "0537925",
+              groupChannelRaw: "19 037",
+              transmitter: { type: "ULXD1", name: "Lead", muted: false },
+              warnings: [],
               observedAtUtc: "2026-09-21T00:00:00Z",
               availability: "observed",
             },
@@ -142,8 +169,14 @@ describe("audio device adapter", () => {
       character: "Lead",
       performer: "Physical input 2",
       kind: "wireless",
-      statuses: { battery: "caution" },
-      details: { batteryRemaining: "18% · 1 / 5 bars" },
+      statuses: { battery: "caution", rf: "good" },
+      details: {
+        batteryRemaining: "18% · 1 / 5 bars · 1h 35m remaining",
+        rfLevelDbm: -52,
+        linkQualityPercent: null,
+        receiver:
+          "Stage left · ULXD4D · channel 1 · Antenna A active · No interference",
+      },
     });
     expect(channels[1]).toMatchObject({ performer: "Audio not patched" });
     expect(resolvePatchedInputIndex("device-channel-0", state, showfile)).toBe(

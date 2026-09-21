@@ -50,6 +50,18 @@ externally tested release.
 
 ### Added
 
+- Expanded the Shure receiver integration from battery-only telemetry to the
+  full read-only suite the coverage matrix scopes: an explicit per-receiver
+  model picker in Manager (with channel count derived from the model, except
+  the dynamically-licensed ANX4), a shared model/capability registry
+  (`@a2-monitor/protocol/shure-models`), and a per-family command-string
+  adapter in listen-gateway covering RF level, antenna diversity, channel/link
+  quality, interference detection, a receiver audio meter, transmitter
+  identity/mute, and transmitter battery health (type, cycle count, runtime).
+  Live now shows RF/antenna/interference status alongside battery. Every
+  value stays `null`/unavailable rather than fabricated when a model's
+  capability profile does not support it; the adapter remains
+  `compatible-read-only` pending hardware acceptance testing.
 - Added the first runnable Live application slice: a responsive A2 channel
   grid with fabricated local data, independent status dimensions, alert
   acknowledgement, listen selection, channel detail, Paper/dark themes and a
