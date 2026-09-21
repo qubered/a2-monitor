@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "0",
+  "activeId": "production-a",
+  "productions": [
+    {
+      "id": "production-a",
+      "name": "The Winter Circus",
+      "revision": 3,
+      "updatedAtUtc": "2026-09-21T08:00:00Z",
+      "channelCount": 2,
+      "receiverCount": 1
+    },
+    {
+      "id": "production-b",
+      "name": "Spring Gala",
+      "revision": 0,
+      "updatedAtUtc": null,
+      "channelCount": 0,
+      "receiverCount": 0
+    }
+  ]
+}

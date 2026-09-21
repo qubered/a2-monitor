@@ -27,7 +27,17 @@ if (!("scrollIntoView" in Element.prototype)) {
   });
 }
 
-const storedShowfile = {
+type StoredShowfile = {
+  schemaVersion: string;
+  revision: number;
+  updatedAtUtc: string | null;
+  show: { name: string };
+  device: { name: string; channelCount: number } | null;
+  channels: Array<Record<string, unknown>>;
+  shureReceivers?: unknown[];
+};
+
+const storedShowfile: StoredShowfile = {
   schemaVersion: "0",
   revision: 2,
   updatedAtUtc: "2026-09-21T00:00:00Z",
@@ -39,10 +49,27 @@ const storedShowfile = {
   ],
 };
 
+function summarizeProduction(id: string, showfile: StoredShowfile) {
+  return {
+    id,
+    name: showfile.show.name,
+    revision: showfile.revision,
+    updatedAtUtc: showfile.updatedAtUtc,
+    channelCount: showfile.channels.length,
+    receiverCount: showfile.shureReceivers?.length ?? 0,
+  };
+}
+
 describe("Manager showfile editor", () => {
+  let showfiles: Record<string, StoredShowfile>;
+  let activeId: string;
+  let nextId: number;
+
   const fetchMock = vi.fn(
     async (input: RequestInfo | URL, init?: RequestInit) => {
       const path = String(input);
+      const method = init?.method ?? "GET";
+
       if (path === "/audio/v0/device") {
         return Response.json({
           schemaVersion: 0,
@@ -59,21 +86,75 @@ describe("Manager showfile editor", () => {
           ],
         });
       }
-      if (path === "/api/v1/showfile" && init?.method === "PUT") {
-        const body = JSON.parse(String(init.body)) as typeof storedShowfile;
-        return Response.json({
+      if (path === "/api/v1/showfile" && method === "PUT") {
+        const body = JSON.parse(String(init?.body)) as StoredShowfile;
+        const saved: StoredShowfile = {
           ...body,
           revision: body.revision + 1,
           updatedAtUtc: "2026-09-21T00:01:00Z",
+        };
+        showfiles[activeId] = saved;
+        return Response.json(saved);
+      }
+      if (path === "/api/v1/showfile") {
+        return Response.json(showfiles[activeId]);
+      }
+      if (path === "/api/v1/productions" && method === "POST") {
+        const { name } = JSON.parse(String(init?.body)) as { name: string };
+        const id = `p${nextId++}`;
+        showfiles[id] = {
+          schemaVersion: "0",
+          revision: 0,
+          updatedAtUtc: null,
+          show: { name },
+          device: null,
+          shureReceivers: [],
+          channels: [],
+        };
+        activeId = id;
+        return new Response(
+          JSON.stringify({
+            schemaVersion: "0",
+            activeId,
+            productions: Object.entries(showfiles).map(([entryId, sf]) =>
+              summarizeProduction(entryId, sf),
+            ),
+          }),
+          { status: 201, headers: { "content-type": "application/json" } },
+        );
+      }
+      const activateMatch = /^\/api\/v1\/productions\/([^/]+)\/activate$/.exec(
+        path,
+      );
+      if (activateMatch && method === "POST") {
+        activeId = activateMatch[1]!;
+        return Response.json({
+          schemaVersion: "0",
+          activeId,
+          productions: Object.entries(showfiles).map(([entryId, sf]) =>
+            summarizeProduction(entryId, sf),
+          ),
         });
       }
-      return Response.json(storedShowfile);
+      if (path === "/api/v1/productions") {
+        return Response.json({
+          schemaVersion: "0",
+          activeId,
+          productions: Object.entries(showfiles).map(([entryId, sf]) =>
+            summarizeProduction(entryId, sf),
+          ),
+        });
+      }
+      return Response.json(showfiles[activeId]);
     },
   );
 
   beforeEach(() => {
     window.localStorage.clear();
     document.documentElement.removeAttribute("data-theme");
+    showfiles = { p1: { ...storedShowfile, shureReceivers: [] } };
+    activeId = "p1";
+    nextId = 2;
     vi.stubGlobal("fetch", fetchMock);
     fetchMock.mockClear();
   });
@@ -145,5 +226,61 @@ describe("Manager showfile editor", () => {
 
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(window.localStorage.getItem("a2-monitor-theme")).toBe("dark");
+  });
+
+  it("sets a channel's mic type, image URL, and turns off RF monitoring", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /channels/i }));
+
+    const micTypeSelect = await screen.findByRole("combobox", {
+      name: "Channel 1 mic type",
+    });
+    await user.click(micTypeSelect);
+    await user.click(await screen.findByRole("option", { name: "Headset" }));
+
+    const rfToggle = screen.getByRole("button", {
+      name: "Channel 1 rf monitoring",
+    });
+    expect(rfToggle.getAttribute("aria-pressed")).toBe("true");
+    await user.click(rfToggle);
+    expect(rfToggle.getAttribute("aria-pressed")).toBe("false");
+
+    const imageInput = screen.getByLabelText("Channel 1 image URL");
+    await user.type(imageInput, "https://example.com/alice.jpg");
+
+    await user.click(screen.getByRole("button", { name: "Save showfile" }));
+
+    const saveCall = fetchMock.mock.calls.find(
+      ([path, init]) =>
+        String(path) === "/api/v1/showfile" && init?.method === "PUT",
+    );
+    const body = String(saveCall?.[1]?.body);
+    expect(body).toContain('"micType":"headset"');
+    expect(body).toContain('"imageUrl":"https://example.com/alice.jpg"');
+    expect(body).toContain(
+      '"monitor":{"battery":true,"rf":false,"audio":true}',
+    );
+  });
+
+  it("creates a production and switches the active showfile to it", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /productions/i }));
+    await screen.findAllByText("Q3 All-Hands");
+
+    await user.type(screen.getByLabelText("New production"), "Spring Gala");
+    await user.click(screen.getByRole("button", { name: "Create" }));
+
+    await screen.findAllByText("Spring Gala");
+    const rows = await screen.findAllByRole("row");
+    const springRow = rows.find((row) =>
+      row.textContent?.includes("Spring Gala"),
+    );
+    expect(springRow?.textContent).toContain("Active");
+
+    expect(await screen.findByText("Revision 0")).toBeTruthy();
   });
 });

@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react";
+import { Antenna, AudioLines, Battery, ImageOff, Trash2 } from "lucide-react";
 import type { Showfile } from "@a2-monitor/protocol/http";
 import type { ObservedDevice } from "../showfile";
 import { EmptyState } from "./EmptyState";
@@ -22,6 +22,98 @@ import {
 } from "./ui/table";
 
 const NONE = "none";
+
+const MIC_TYPES = [
+  { value: "lavalier", label: "Lavalier" },
+  { value: "headset", label: "Headset" },
+  { value: "handheld", label: "Handheld" },
+  { value: "boundary", label: "Boundary" },
+  { value: "instrument", label: "Instrument" },
+  { value: "other", label: "Other" },
+] as const;
+
+type Channel = Showfile["channels"][number];
+type Monitor = NonNullable<Channel["monitor"]>;
+
+const DEFAULT_MONITOR: Monitor = { battery: true, rf: true, audio: true };
+
+const MONITOR_DIMENSIONS = [
+  { key: "battery", label: "Battery", icon: Battery },
+  { key: "rf", label: "RF", icon: Antenna },
+  { key: "audio", label: "Audio", icon: AudioLines },
+] as const;
+
+function MonitorToggle({
+  position,
+  monitor,
+  onChange,
+}: {
+  position: number;
+  monitor: Monitor | undefined;
+  onChange: (monitor: Monitor) => void;
+}) {
+  const current = monitor ?? DEFAULT_MONITOR;
+  return (
+    <div className="flex items-center gap-2">
+      {MONITOR_DIMENSIONS.map(({ key, label, icon: Icon }) => {
+        const active = current[key];
+        return (
+          <button
+            key={key}
+            type="button"
+            aria-pressed={active}
+            aria-label={`Channel ${position + 1} ${label.toLowerCase()} monitoring`}
+            title={`${label} monitoring ${active ? "on" : "off"}`}
+            onClick={() => onChange({ ...current, [key]: !active })}
+            className={
+              "flex size-11 items-center justify-center rounded-full border-2 transition-transform duration-[120ms] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring active:translate-y-0.5 " +
+              (active
+                ? "border-ok bg-ok-soft text-ok"
+                : "border-line-2 bg-card text-muted-foreground")
+            }
+          >
+            <Icon className="size-4" aria-hidden="true" />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ChannelImage({
+  position,
+  imageUrl,
+  onChange,
+}: {
+  position: number;
+  imageUrl: string | null | undefined;
+  onChange: (imageUrl: string | null) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt=""
+          className="size-9 shrink-0 rounded-full border-2 border-line-2 object-cover"
+        />
+      ) : (
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-line-2 text-muted-foreground">
+          <ImageOff className="size-4" aria-hidden="true" />
+        </span>
+      )}
+      <Input
+        aria-label={`Channel ${position + 1} image URL`}
+        className="w-32"
+        placeholder="https://…"
+        title={imageUrl ?? undefined}
+        value={imageUrl ?? ""}
+        maxLength={2048}
+        onChange={(event) => onChange(event.target.value || null)}
+      />
+    </div>
+  );
+}
 
 export function ChannelsTab({
   showfile,
@@ -61,6 +153,9 @@ export function ChannelsTab({
                   name: `Channel ${showfile.channels.length + 1}`,
                   shureReceiverId: null,
                   shureChannelIndex: null,
+                  micType: null,
+                  imageUrl: null,
+                  monitor: DEFAULT_MONITOR,
                 },
               ],
             })
@@ -80,9 +175,12 @@ export function ChannelsTab({
           <TableHeader>
             <TableRow>
               <TableHead className="w-14">#</TableHead>
+              <TableHead>Photo</TableHead>
               <TableHead>Name</TableHead>
+              <TableHead>Mic type</TableHead>
               <TableHead>Audio input</TableHead>
               <TableHead>Shure channel</TableHead>
+              <TableHead>Monitor</TableHead>
               <TableHead className="w-16">
                 <span className="sr-only">Remove</span>
               </TableHead>
@@ -93,6 +191,17 @@ export function ChannelsTab({
               <TableRow key={position}>
                 <TableCell className="font-mono text-table tabular-nums text-muted-foreground">
                   {position + 1}
+                </TableCell>
+                <TableCell>
+                  <ChannelImage
+                    position={position}
+                    imageUrl={channel.imageUrl}
+                    onChange={(imageUrl) => {
+                      const channels = [...showfile.channels];
+                      channels[position] = { ...channel, imageUrl };
+                      onChange({ ...showfile, channels });
+                    }}
+                  />
                 </TableCell>
                 <TableCell className="min-w-40">
                   <Input
@@ -108,6 +217,36 @@ export function ChannelsTab({
                       onChange({ ...showfile, channels });
                     }}
                   />
+                </TableCell>
+                <TableCell className="min-w-36">
+                  <Select
+                    value={channel.micType ?? NONE}
+                    onValueChange={(value) => {
+                      const channels = [...showfile.channels];
+                      channels[position] = {
+                        ...channel,
+                        micType:
+                          value === NONE
+                            ? null
+                            : (value as NonNullable<Channel["micType"]>),
+                      };
+                      onChange({ ...showfile, channels });
+                    }}
+                  >
+                    <SelectTrigger
+                      aria-label={`Channel ${position + 1} mic type`}
+                    >
+                      <SelectValue placeholder="Not set" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NONE}>Not set</SelectItem>
+                      {MIC_TYPES.map((micType) => (
+                        <SelectItem key={micType.value} value={micType.value}>
+                          {micType.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </TableCell>
                 <TableCell className="min-w-44">
                   <Select
@@ -205,6 +344,17 @@ export function ChannelsTab({
                       )}
                     </SelectContent>
                   </Select>
+                </TableCell>
+                <TableCell>
+                  <MonitorToggle
+                    position={position}
+                    monitor={channel.monitor}
+                    onChange={(monitor) => {
+                      const channels = [...showfile.channels];
+                      channels[position] = { ...channel, monitor };
+                      onChange({ ...showfile, channels });
+                    }}
+                  />
                 </TableCell>
                 <TableCell>
                   <Button

@@ -12,6 +12,7 @@ function TabsList({
     <TabsPrimitive.List
       className={cn(
         "flex min-h-14 items-center gap-2 overflow-x-auto",
+        "data-[orientation=vertical]:min-h-0 data-[orientation=vertical]:flex-col data-[orientation=vertical]:items-stretch data-[orientation=vertical]:overflow-x-visible",
         className,
       )}
       {...props}
@@ -30,6 +31,7 @@ function TabsTrigger({
         "data-[state=active]:border-ink data-[state=active]:bg-ink data-[state=active]:text-paper data-[state=active]:shadow-card",
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring",
         "active:translate-y-0.5",
+        "data-[orientation=vertical]:justify-start data-[orientation=vertical]:rounded-md data-[orientation=vertical]:px-4",
         className,
       )}
       {...props}

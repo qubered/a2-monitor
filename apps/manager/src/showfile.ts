@@ -1,6 +1,8 @@
 import {
+  parseProductionList,
   parseShowfile,
   parseShureTelemetry,
+  type ProductionList,
   type Showfile,
   type ShureTelemetry,
 } from "@a2-monitor/protocol/http";
@@ -85,6 +87,42 @@ export async function saveShowfile(showfile: Showfile): Promise<Showfile> {
   }
   if (!response.ok) throw new Error("The showfile could not be saved.");
   return parseShowfile(await response.json());
+}
+
+export async function loadProductions(
+  signal?: AbortSignal,
+): Promise<ProductionList> {
+  const response = await fetch("/api/v1/productions", { signal });
+  if (!response.ok) throw new Error("The production list could not be loaded.");
+  return parseProductionList(await response.json());
+}
+
+export async function createProduction(name: string): Promise<ProductionList> {
+  const response = await fetch("/api/v1/productions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!response.ok) throw new Error("The production could not be created.");
+  return parseProductionList(await response.json());
+}
+
+export async function activateProduction(id: string): Promise<ProductionList> {
+  const response = await fetch(
+    `/api/v1/productions/${encodeURIComponent(id)}/activate`,
+    { method: "POST" },
+  );
+  if (!response.ok) throw new Error("The production could not be activated.");
+  return parseProductionList(await response.json());
+}
+
+export async function deleteProduction(id: string): Promise<ProductionList> {
+  const response = await fetch(
+    `/api/v1/productions/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+  );
+  if (!response.ok) throw new Error("The production could not be removed.");
+  return parseProductionList(await response.json());
 }
 
 export function projectShowfileToDevice(
