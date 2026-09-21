@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "generatedFrom": "package-lock.json",
   "regenerationCommand": "node scripts/generate-node-dependency-inventory.mjs",
-  "lockfileSha256": "cbf3ab6da39ee58a86705a6887d76561ac7647ad609a3ba4842118b71bd9cc8b",
-  "componentCount": 301,
+  "lockfileSha256": "7d200f8d49657c846e67fbb98c54b4f3a5073dda47c1b44a01fd8f13ba35fc65",
+  "componentCount": 303,
   "licenseCounts": [
     {
       "license": "Apache-2.0",
@@ -35,7 +35,7 @@
     },
     {
       "license": "MIT",
-      "count": 232
+      "count": 234
     },
     {
       "license": "MIT-0",
@@ -1028,6 +1028,17 @@
       "optional": false,
       "locations": [
         "node_modules/@types/react-dom"
+      ]
+    },
+    {
+      "name": "@types/ws",
+      "version": "8.18.1",
+      "license": "MIT",
+      "direct": true,
+      "developmentOnly": true,
+      "optional": false,
+      "locations": [
+        "node_modules/@types/ws"
       ]
     },
     {
@@ -3309,6 +3320,17 @@
       "optional": false,
       "locations": [
         "node_modules/word-wrap"
+      ]
+    },
+    {
+      "name": "ws",
+      "version": "8.18.3",
+      "license": "MIT",
+      "direct": true,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/ws"
       ]
     },
     {

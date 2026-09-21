@@ -80,7 +80,9 @@ The runnable native scaffold now contains:
   model plus a separate atomic in-process SPSC composition model;
 - `crates/media`, dependency-free 48 kHz source-frame-to-RTP/RTCP arithmetic
   and media-session identity fencing;
-- `services/audio-node`, a deterministic synthetic host and smoke binary; and
+- `services/audio-node`, a deterministic synthetic host, smoke binaries and a
+  local-MVP `a2-device-capture` adapter for one exact 48 kHz Core Audio/WASAPI
+  input; and
 - `crates/supervisor`, a deterministic native-worker lifecycle policy with
   boot/generation fencing, role-specific readiness gates, bounded heartbeats,
   restart/quarantine, and confirmed-death shutdown deadlines behind injected

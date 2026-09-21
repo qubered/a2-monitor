@@ -1,10 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { LiveChannel } from "@a2-monitor/protocol/http";
 import { ChannelCard } from "./components/ChannelCard";
 import { ChannelDetail } from "./components/ChannelDetail";
 import { MicCheck } from "./components/MicCheck";
 import { Player } from "./components/Player";
+import {
+  httpAudioDeviceSource,
+  synthesizeDeviceChannels,
+  type AudioDeviceSource,
+} from "./audio-device";
+import {
+  webAudioPlaybackFactory,
+  type PlaybackFactory,
+  type PlaybackSession,
+  type PlaybackUpdate,
+} from "./audio-playback";
 import { httpSnapshotSource, type SnapshotSource } from "./snapshot";
+import { useAudioDevice } from "./useAudioDevice";
 import { useLiveSnapshot, type SnapshotState } from "./useLiveSnapshot";
 
 type Filter = "all" | "needs-someone" | "wireless" | "wired";
@@ -93,8 +105,12 @@ function SnapshotNotice({
 
 export function App({
   snapshotSource = httpSnapshotSource,
+  audioDeviceSource = httpAudioDeviceSource,
+  playbackFactory = webAudioPlaybackFactory,
 }: {
   snapshotSource?: SnapshotSource;
+  audioDeviceSource?: AudioDeviceSource;
+  playbackFactory?: PlaybackFactory;
 }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [theme, setTheme] = useState<Theme>(readTheme);
@@ -108,9 +124,36 @@ export function App({
   const [micCheckId, setMicCheckId] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
   const [dimmed, setDimmed] = useState(false);
+  const [playback, setPlayback] = useState<PlaybackUpdate>({
+    status: "idle",
+    detail: "Select an observed device input to listen.",
+  });
+  const playbackSession = useRef<PlaybackSession | null>(null);
   const { state: snapshotState, reconnect } = useLiveSnapshot(snapshotSource);
+  const audioDeviceState = useAudioDevice(audioDeviceSource);
   const snapshot = snapshotState.snapshot;
-  const channels = snapshot?.channels ?? emptyChannels;
+  const deviceChannels = useMemo(
+    () =>
+      audioDeviceState.status === "ready"
+        ? synthesizeDeviceChannels(audioDeviceState.device)
+        : emptyChannels,
+    [audioDeviceState],
+  );
+  const usingDeviceChannels = audioDeviceState.status === "ready";
+  const device =
+    audioDeviceState.status === "ready"
+      ? audioDeviceState.device.device
+      : undefined;
+  const deviceSampleRateHz = device?.sampleRateHz;
+  const selectedDeviceIndex =
+    audioDeviceState.status === "ready"
+      ? audioDeviceState.device.channels?.find(
+          ({ index }) => `device-channel-${index}` === selectedId,
+        )?.index
+      : undefined;
+  const channels = usingDeviceChannels
+    ? deviceChannels
+    : (snapshot?.channels ?? emptyChannels);
 
   useEffect(() => {
     if (theme === "system") {
@@ -136,6 +179,37 @@ export function App({
       window.localStorage.removeItem("a2-monitor-selected-channel");
     }
   }, [selectedId]);
+
+  useEffect(() => {
+    if (
+      !usingDeviceChannels ||
+      selectedDeviceIndex === undefined ||
+      deviceSampleRateHz === undefined
+    ) {
+      return;
+    }
+    const session: PlaybackSession = playbackFactory({
+      channel: selectedDeviceIndex,
+      sampleRateHz: deviceSampleRateHz,
+      onUpdate: setPlayback,
+    });
+    void session.setMuted(true);
+    playbackSession.current = session;
+    return () => {
+      if (playbackSession.current === session) playbackSession.current = null;
+      session.close();
+    };
+  }, [
+    deviceSampleRateHz,
+    playbackFactory,
+    selectedDeviceIndex,
+    usingDeviceChannels,
+  ]);
+
+  useEffect(() => {
+    playbackSession.current?.setDimmed(dimmed);
+    void playbackSession.current?.setMuted(muted);
+  }, [dimmed, muted]);
 
   useEffect(() => {
     function handleKeyboard(event: KeyboardEvent) {
@@ -192,7 +266,24 @@ export function App({
 
   function selectChannel(channel: LiveChannel) {
     setSelectedId(channel.id);
+    if (channel.id.startsWith("device-channel-")) {
+      setMuted(true);
+      setPlayback({
+        status: "connecting",
+        detail: `Connecting to input ${channel.number}.`,
+      });
+    }
   }
+
+  const visiblePlayback =
+    usingDeviceChannels && selectedDeviceIndex !== undefined
+      ? playback
+      : {
+          status: "idle" as const,
+          detail: usingDeviceChannels
+            ? "Select an observed device input to listen."
+            : "Direct audio node listening is unavailable.",
+        };
 
   return (
     <div className="live-app">
@@ -202,33 +293,43 @@ export function App({
           <strong>A2</strong> <b>Monitor</b>
         </div>
         <div className="show-name">
-          <strong>{snapshot?.show.name ?? "Show state unavailable"}</strong>
+          <strong>
+            {usingDeviceChannels
+              ? device?.name
+              : (snapshot?.show.name ?? "Show state unavailable")}
+          </strong>
           <span>
-            {snapshot
-              ? `${snapshot.show.venue} · ${snapshot.show.performanceLabel}`
-              : "Waiting for validated data"}
+            {usingDeviceChannels
+              ? "Observed audio device · channel identity unknown"
+              : snapshot
+                ? `${snapshot.show.venue} · ${snapshot.show.performanceLabel}`
+                : "Waiting for validated data"}
           </span>
         </div>
         <div
-          className={`node-state node-${snapshot?.node.status ?? "unknown"}`}
+          className={`node-state node-${usingDeviceChannels ? "ready" : (snapshot?.node.status ?? "unknown")}`}
         >
           <span>Node</span>
           <strong>
-            {snapshot?.node.status === "ready" &&
-            snapshot.node.channelCount !== null &&
-            snapshot.node.sampleRateHz !== null
-              ? `${snapshot.node.channelCount} ch · ${snapshot.node.sampleRateHz / 1000}k`
-              : snapshot?.node.status === "waiting"
-                ? "Waiting"
-                : snapshot?.node.status === "offline"
-                  ? "Offline"
-                  : "Unknown"}
+            {usingDeviceChannels && device
+              ? `${device.channelCount} ch · ${device.sampleRateHz / 1000}k`
+              : snapshot?.node.status === "ready" &&
+                  snapshot.node.channelCount !== null &&
+                  snapshot.node.sampleRateHz !== null
+                ? `${snapshot.node.channelCount} ch · ${snapshot.node.sampleRateHz / 1000}k`
+                : snapshot?.node.status === "waiting"
+                  ? "Waiting"
+                  : snapshot?.node.status === "offline"
+                    ? "Offline"
+                    : "Unknown"}
           </strong>
         </div>
-        {snapshot ? (
+        {usingDeviceChannels ? (
+          <span className="observed-badge">Observed device inputs</span>
+        ) : snapshot ? (
           <span className="fabricated-badge">{snapshot.source.label}</span>
         ) : null}
-        {snapshot ? (
+        {snapshot && !usingDeviceChannels ? (
           <button
             className="alert-count"
             type="button"
@@ -251,6 +352,17 @@ export function App({
       </header>
 
       <SnapshotNotice state={snapshotState} onReconnect={reconnect} />
+
+      {audioDeviceState.status === "error" ? (
+        <section className="snapshot-notice snapshot-error" aria-live="polite">
+          <div>
+            <strong>Direct listening unavailable.</strong>
+            <span>
+              {audioDeviceState.message} Showing the existing channel grid.
+            </span>
+          </div>
+        </section>
+      ) : null}
 
       {snapshot?.node.status === "waiting" ? (
         <section
@@ -278,7 +390,7 @@ export function App({
         </section>
       ) : null}
 
-      {snapshot ? (
+      {snapshot || usingDeviceChannels ? (
         <nav className="filters" aria-label="Channel filters">
           <span className="filter-label">Showing</span>
           {(Object.keys(filterLabels) as Filter[]).map((filterOption) => (
@@ -296,7 +408,7 @@ export function App({
       ) : null}
 
       <main className="channel-main">
-        {snapshot ? (
+        {snapshot || usingDeviceChannels ? (
           <>
             <div className="grid-heading">
               <h1>{filterLabels[filter]}</h1>
@@ -326,6 +438,8 @@ export function App({
         channel={selectedChannel}
         muted={muted}
         dimmed={dimmed}
+        playback={visiblePlayback}
+        directListeningAvailable={usingDeviceChannels}
         onToggleMute={() => setMuted((value) => !value)}
         onToggleDim={() => setDimmed((value) => !value)}
       />
