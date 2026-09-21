@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { LiveChannel } from "@a2-monitor/protocol/http";
 import { ChannelCard } from "./components/ChannelCard";
 import { ChannelDetail } from "./components/ChannelDetail";
+import { MicCheck } from "./components/MicCheck";
 import { Player } from "./components/Player";
 import { httpSnapshotSource, type SnapshotSource } from "./snapshot";
 import { useLiveSnapshot, type SnapshotState } from "./useLiveSnapshot";
@@ -21,6 +22,21 @@ const emptyChannels: LiveChannel[] = [];
 function readTheme(): Theme {
   const saved = window.localStorage.getItem("a2-monitor-theme");
   return saved === "light" || saved === "dark" ? saved : "system";
+}
+
+function readStringSet(key: string): Set<string> {
+  try {
+    const value = JSON.parse(
+      window.localStorage.getItem(key) ?? "[]",
+    ) as unknown;
+    return new Set(
+      Array.isArray(value)
+        ? value.filter((item): item is string => typeof item === "string")
+        : [],
+    );
+  } catch {
+    return new Set();
+  }
 }
 
 function SnapshotNotice({
@@ -82,11 +98,14 @@ export function App({
 }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [theme, setTheme] = useState<Theme>(readTheme);
-  const [acknowledged, setAcknowledged] = useState<Set<string>>(
-    () => new Set(),
+  const [acknowledged, setAcknowledged] = useState<Set<string>>(() =>
+    readStringSet("a2-monitor-acknowledged"),
   );
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() =>
+    window.localStorage.getItem("a2-monitor-selected-channel"),
+  );
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [micCheckId, setMicCheckId] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
   const [dimmed, setDimmed] = useState(false);
   const { state: snapshotState, reconnect } = useLiveSnapshot(snapshotSource);
@@ -102,6 +121,21 @@ export function App({
       window.localStorage.setItem("a2-monitor-theme", theme);
     }
   }, [theme]);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      "a2-monitor-acknowledged",
+      JSON.stringify([...acknowledged]),
+    );
+  }, [acknowledged]);
+
+  useEffect(() => {
+    if (selectedId) {
+      window.localStorage.setItem("a2-monitor-selected-channel", selectedId);
+    } else {
+      window.localStorage.removeItem("a2-monitor-selected-channel");
+    }
+  }, [selectedId]);
 
   useEffect(() => {
     function handleKeyboard(event: KeyboardEvent) {
@@ -136,6 +170,8 @@ export function App({
     channels.find((channel) => channel.id === selectedId) ?? null;
   const detailChannel =
     channels.find((channel) => channel.id === detailId) ?? null;
+  const micCheckChannel =
+    channels.find((channel) => channel.id === micCheckId) ?? null;
   const alertCount = channels.filter(
     (channel) => channel.alert && !acknowledged.has(channel.id),
   ).length;
@@ -298,6 +334,18 @@ export function App({
         <ChannelDetail
           channel={detailChannel}
           onClose={() => setDetailId(null)}
+          onRunCheck={() => {
+            setMicCheckId(detailChannel.id);
+            setDetailId(null);
+          }}
+        />
+      ) : null}
+
+      {micCheckChannel && snapshot ? (
+        <MicCheck
+          channel={micCheckChannel}
+          showName={snapshot.show.name}
+          onClose={() => setMicCheckId(null)}
         />
       ) : null}
     </div>

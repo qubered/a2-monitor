@@ -19,7 +19,8 @@ body {
 }
 
 button,
-select {
+select,
+input {
   color: inherit;
   font: inherit;
 }
@@ -29,7 +30,8 @@ button {
 }
 
 button:focus-visible,
-select:focus-visible {
+select:focus-visible,
+input:focus-visible {
   outline: var(--size-2) solid var(--red);
   outline-offset: var(--space-1);
 }
@@ -758,6 +760,236 @@ select:focus-visible {
 .detail-panel h3,
 .detail-panel p {
   margin: 0;
+}
+
+.detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-5);
+  border-top: var(--size-2) solid var(--line-2);
+}
+
+.mic-check {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+}
+
+.mic-check-header {
+  min-height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding: var(--space-3) var(--space-6);
+  border-bottom: var(--size-2) solid var(--line-2);
+  background: var(--paper-2);
+}
+
+.mic-check-header h2,
+.mic-check-header p,
+.mic-check-start h3,
+.mic-check-start p,
+.check-question h3,
+.check-question p {
+  margin: 0;
+}
+
+.mic-check-header h2,
+.mic-check-start h3,
+.check-question h3 {
+  font-family: var(--font-display);
+}
+
+.mic-check-header p,
+.mic-check-start p,
+.check-question p {
+  color: var(--muted);
+}
+
+.mic-check-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.mic-check-progress strong {
+  font-family: var(--font-mono);
+  font-size: var(--font-ui);
+}
+
+.mic-check-start {
+  width: min(100%, var(--dialog-width));
+  margin: auto;
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-6);
+}
+
+.mic-check-start label {
+  display: grid;
+  gap: var(--space-2);
+  font-weight: 700;
+}
+
+.mic-check-start input {
+  min-height: var(--target-primary);
+  padding: 0 var(--space-4);
+  border: var(--size-2) solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.check-primary,
+.check-pass,
+.check-fail,
+.check-wait {
+  min-height: var(--target-primary);
+  padding: 0 var(--space-5);
+  border: var(--size-2) solid currentColor;
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: var(--font-section);
+  font-weight: 700;
+}
+
+.check-primary,
+.check-pass {
+  background: var(--ok);
+  color: var(--card);
+}
+
+.check-fail {
+  background: var(--t-out);
+  color: var(--card);
+}
+
+.check-wait {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.check-primary:disabled,
+.check-pass:disabled,
+.check-navigation button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.mic-check-step {
+  flex: 1;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  gap: var(--space-5);
+  padding: var(--space-6);
+}
+
+.check-stepper {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.check-stepper button {
+  width: var(--target);
+  height: var(--target);
+  border: var(--size-2) solid var(--line-2);
+  border-radius: 50%;
+  background: var(--card);
+  font-family: var(--font-mono);
+}
+
+.check-stepper button[aria-current="step"] {
+  border-color: var(--ink);
+  box-shadow: var(--shadow-card);
+}
+
+.check-stepper button[data-verdict="pass"] {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.check-stepper button[data-verdict="fail"] {
+  border-color: var(--t-out);
+  background: var(--out-soft);
+  color: var(--t-out);
+}
+
+.check-stepper button[data-verdict="waiting"] {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.check-question {
+  place-self: center;
+  max-width: var(--dialog-width);
+  text-align: center;
+}
+
+.check-question h3 {
+  margin-top: var(--space-3);
+  font-size: var(--font-page);
+}
+
+.check-question > p {
+  margin-top: var(--space-3);
+}
+
+.saved-verdict {
+  font-family: var(--font-mono);
+  font-size: var(--font-caption);
+}
+
+.check-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.check-actions > :only-child,
+.check-actions > :first-child:nth-last-child(2) {
+  grid-column: span 1;
+}
+
+.check-navigation {
+  display: flex;
+  justify-content: space-between;
+}
+
+@media (max-width: 48rem) {
+  .mic-check-header {
+    align-items: flex-start;
+  }
+
+  .mic-check-progress {
+    align-items: flex-end;
+    flex-direction: column;
+  }
+
+  .mic-check-step {
+    padding: var(--space-4);
+  }
+
+  .check-stepper {
+    gap: var(--space-1);
+  }
+
+  .check-stepper button {
+    width: var(--space-8);
+    height: var(--space-8);
+  }
+
+  .check-actions {
+    gap: var(--space-2);
+  }
 }
 
 .detail-panel h2 {

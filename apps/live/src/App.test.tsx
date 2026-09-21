@@ -150,6 +150,38 @@ describe("Live channel grid", () => {
     expect(window.localStorage.getItem("a2-monitor-theme")).toBe("dark");
   });
 
+  it("runs and resumes a named eight-dimension mic check", async () => {
+    const user = userEvent.setup();
+    render(<App snapshotSource={snapshotSource} />);
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Open details for Vera Castellan",
+      }),
+    );
+    await user.click(screen.getByRole("button", { name: "Run a check" }));
+    await user.type(screen.getByLabelText("A2 operator"), "Jamie");
+    await user.type(screen.getByLabelText("A1 at console"), "Morgan");
+    await user.click(screen.getByRole("button", { name: "Continue check" }));
+
+    expect(screen.getByText("Step 1 · A2 verdict")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Pass" }));
+    expect(screen.getByText("Step 2 · A2 verdict")).toBeTruthy();
+    expect(screen.getByText("1 / 8 passed")).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "Save and close" }));
+    await user.click(
+      screen.getByRole("button", { name: "Open details for Vera Castellan" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Run a check" }));
+    await user.click(screen.getByRole("button", { name: "Continue check" }));
+
+    expect(screen.getByText("Step 2 · A2 verdict")).toBeTruthy();
+    expect(window.localStorage.getItem("a2-monitor-operator-name")).toBe(
+      "Jamie",
+    );
+  });
+
   it("names what it is waiting for without showing invented channel counts", () => {
     const pendingSource: SnapshotSource = {
       load: () => new Promise(() => undefined),
