@@ -19,6 +19,12 @@ externally tested release.
 - Manager channels: an optional mic type, an uploaded headshot photo
   (read locally and stored inline as the channel's `imageUrl`, capped at
   200 KB), and per-dimension battery/RF/audio monitoring toggles.
+- Manager Productions: download any production's showfile as a `.json`
+  file, and import a `.json` showfile to create and activate a new
+  production from it (backed by a new `GET /api/v1/productions/:id`).
+  An imported showfile's channel-to-input patches are dropped unless they
+  match this Mac's currently observed audio device, the same rule already
+  applied when Manager loads its own showfile.
 
 ### Changed
 

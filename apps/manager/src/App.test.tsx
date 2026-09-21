@@ -136,6 +136,12 @@ describe("Manager showfile editor", () => {
           ),
         });
       }
+      const byIdMatch = /^\/api\/v1\/productions\/([^/]+)$/.exec(path);
+      if (byIdMatch && method === "GET") {
+        const found = showfiles[byIdMatch[1]!];
+        if (!found) return new Response(null, { status: 404 });
+        return Response.json(found);
+      }
       if (path === "/api/v1/productions") {
         return Response.json({
           schemaVersion: "0",
@@ -157,6 +163,11 @@ describe("Manager showfile editor", () => {
     nextId = 2;
     vi.stubGlobal("fetch", fetchMock);
     fetchMock.mockClear();
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+      () => undefined,
+    );
+    URL.createObjectURL = vi.fn(() => "blob:mock");
+    URL.revokeObjectURL = vi.fn();
   });
 
   afterEach(() => {
@@ -288,5 +299,58 @@ describe("Manager showfile editor", () => {
     expect(springRow?.textContent).toContain("Active");
 
     expect(await screen.findByText("Revision 0")).toBeTruthy();
+  });
+
+  it("imports an uploaded showfile as a new production", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /productions/i }));
+    await screen.findAllByText("Q3 All-Hands");
+
+    const uploaded = {
+      schemaVersion: "0",
+      revision: 9,
+      updatedAtUtc: "2020-01-01T00:00:00Z",
+      show: { name: "Imported Gala" },
+      device: { name: "Some Other Interface", channelCount: 8 },
+      shureReceivers: [],
+      channels: [{ inputIndex: 3, name: "Guest mic" }],
+    };
+    const file = new File([JSON.stringify(uploaded)], "gala.json", {
+      type: "application/json",
+    });
+    await user.upload(screen.getByLabelText("Import showfile"), file);
+
+    await screen.findAllByText("Imported Gala");
+    expect(await screen.findByText("Revision 1")).toBeTruthy();
+
+    const putCall = fetchMock.mock.calls.find(
+      ([path, init]) =>
+        String(path) === "/api/v1/showfile" && init?.method === "PUT",
+    );
+    const body = JSON.parse(String(putCall?.[1]?.body));
+    expect(body.show.name).toBe("Imported Gala");
+    expect(body.revision).toBe(0);
+    // The uploaded device doesn't match this Mac's observed device, so the
+    // patch is dropped rather than silently pointing at the wrong input.
+    expect(body.channels[0].inputIndex).toBeNull();
+  });
+
+  it("downloads the active production's showfile as JSON", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /productions/i }));
+    await user.click(
+      await screen.findByRole("button", { name: "Download Q3 All-Hands" }),
+    );
+
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+    const mockCreateObjectURL = URL.createObjectURL as ReturnType<typeof vi.fn>;
+    const blob = mockCreateObjectURL.mock.calls[0]?.[0] as Blob;
+    const downloaded = JSON.parse(await blob.text());
+    expect(downloaded.show.name).toBe("Q3 All-Hands");
+    expect(HTMLAnchorElement.prototype.click).toHaveBeenCalledTimes(1);
   });
 });

@@ -161,6 +161,37 @@ export function App() {
     }
   }
 
+  async function importShowfile(uploaded: Showfile) {
+    setProductionsBusy(true);
+    try {
+      const list = await createProduction(
+        uploaded.show.name || "Imported show",
+      );
+      setProductions(list);
+      setProductionsError(null);
+      const projected = device
+        ? projectShowfileToDevice(uploaded, device)
+        : uploaded;
+      const saved = await saveShowfile({
+        ...projected,
+        revision: 0,
+        updatedAtUtc: null,
+      });
+      setShowfile(saved);
+      setSaveState("saved");
+      setMessage(`Imported "${saved.show.name}" from file.`);
+      setProductions(await loadProductions());
+    } catch (error) {
+      setProductionsError(
+        error instanceof Error
+          ? error.message
+          : "The showfile could not be imported.",
+      );
+    } finally {
+      setProductionsBusy(false);
+    }
+  }
+
   async function removeProduction(id: string) {
     setProductionsBusy(true);
     try {
@@ -306,6 +337,7 @@ export function App() {
               <TabsContent value="productions">
                 <ProductionsTab
                   productions={productions}
+                  activeShowfile={showfile}
                   busy={productionsBusy}
                   error={productionsError}
                   onCreate={(name) =>
@@ -315,6 +347,7 @@ export function App() {
                     void withProductions(() => activateProduction(id))
                   }
                   onRemove={(id) => void removeProduction(id)}
+                  onImport={(uploaded) => void importShowfile(uploaded)}
                 />
               </TabsContent>
               <TabsContent value="receivers">

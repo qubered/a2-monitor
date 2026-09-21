@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.d76d28f7110c1034",
-  "sourceSha256": "d76d28f7110c103453a62cd97151dfc89a744dd8f97ccedd0989c5e97fbbeca5",
+  "buildId": "a2-0.0.0+sha256.8926e5edc5564f6b",
+  "sourceSha256": "8926e5edc5564f6b39ed61aa87e4dd46db30094347fb5f31c23dd1fb8684a086",
   "inputCount": 314,
   "inputs": [
     {
@@ -53,7 +53,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "a80dc16356eb1bd8a051dfbbd8182826583915ed56fc451249bd85b0f82b6718"
+      "sha256": "79f76c254972dcb95d4b5f4be32dd81ba3ec85cd9b6e0960afbc9e660ba117ce"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -205,11 +205,11 @@
     },
     {
       "path": "apps/manager/src/App.test.tsx",
-      "sha256": "19ef0f37e1a1b9596c36245a37e4905f79dc3ea933513cdba3b5c4aa9c1f3b48"
+      "sha256": "da34124d07f39ec00a3e4b20b4c0eb9627acefd4f7d9ce3f92b157316e447336"
     },
     {
       "path": "apps/manager/src/App.tsx",
-      "sha256": "2ec1e6ab4c431adf334ce46b1a0f51b07f2e8b7ba175a170fc8e8d80845fcaff"
+      "sha256": "fc86300c2db2aa4614adda69e082e77cbc1586f7e21586b34946bdda0d6de7f6"
     },
     {
       "path": "apps/manager/src/components/ChannelsTab.tsx",
@@ -221,7 +221,7 @@
     },
     {
       "path": "apps/manager/src/components/ProductionsTab.tsx",
-      "sha256": "54d1e8fc8531070a08781e8848b4b9f7b2f3d83787d4a33f25fe25f4d3a5951e"
+      "sha256": "5a68d3b6d3e6d7c128847d0215381758545752e19004ac9b77ecd934422d9732"
     },
     {
       "path": "apps/manager/src/components/ReceiversTab.tsx",
@@ -273,7 +273,7 @@
     },
     {
       "path": "apps/manager/src/showfile.ts",
-      "sha256": "44bbf55923e223d10e3bd314849fb925380bc336bd85b00801951083230e253a"
+      "sha256": "d8465b4c2cbe8c10cd4ebfe1a8cf638942b7eac1919d73fab3c8b017af63a5ec"
     },
     {
       "path": "apps/manager/src/styles.css",
@@ -1145,15 +1145,15 @@
     },
     {
       "path": "services/backend/src/productions.ts",
-      "sha256": "2f6642e111fbcc7aef891f8215d95d8a3e546744d065fcbcd008ca20f1514676"
+      "sha256": "820fb10d3d41add7e247ac2e836e06305ffa43f65a520df75d1098a9d184024a"
     },
     {
       "path": "services/backend/src/server.test.ts",
-      "sha256": "0f77dc002ce83dfcd3c49e275a228e2514547136f9d0d9577256a2b3ab4e4d50"
+      "sha256": "f2ddf16e28eeee03e51d9d10069c3418394b533276e85b56bbac244b863f3ec8"
     },
     {
       "path": "services/backend/src/server.ts",
-      "sha256": "7882d53dd2d17d4baeab80baa8ffded843ec300007b168097beeff1ef96c0f86"
+      "sha256": "cb8d0709fe1d57d3009538ca7e98420930b00dc88f076f949f8a8e3405f2169f"
     },
     {
       "path": "services/backend/src/showfile.ts",

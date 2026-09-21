@@ -33,6 +33,7 @@ export class ActiveProductionError extends Error {
 export interface ProductionStore {
   loadActive(): Promise<Showfile>;
   saveActive(candidate: Showfile): Promise<Showfile>;
+  loadById(id: string): Promise<Showfile | null>;
   list(): Promise<ProductionList>;
   create(name: string): Promise<ProductionSummary>;
   activate(id: string): Promise<ProductionSummary>;
@@ -89,6 +90,11 @@ export class MemoryProductionStore implements ProductionStore {
     const saved = bumpRevision(candidate);
     this.productions.set(this.active, saved);
     return structuredClone(saved);
+  }
+
+  async loadById(id: string): Promise<Showfile | null> {
+    const showfile = this.productions.get(id);
+    return showfile ? structuredClone(showfile) : null;
   }
 
   async list(): Promise<ProductionList> {
@@ -205,6 +211,11 @@ export class FileProductionStore implements ProductionStore {
     });
     this.pending = operation.catch(() => undefined);
     return operation;
+  }
+
+  async loadById(id: string): Promise<Showfile | null> {
+    const state = await this.loadAll();
+    return state.productions[id] ?? null;
   }
 
   async list(): Promise<ProductionList> {

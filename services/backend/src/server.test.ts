@@ -328,6 +328,45 @@ describe("backend productions", () => {
     expect(showfile.json()).toMatchObject({ show: { name: "Spring Gala" } });
   });
 
+  it("fetches a production's full showfile by id without activating it, for download", async () => {
+    const server = trackedServer();
+    const initial = await server.inject({
+      method: "GET",
+      url: "/api/v1/productions",
+    });
+    const originalId = initial.json().activeId as string;
+
+    const created = await server.inject({
+      method: "POST",
+      url: "/api/v1/productions",
+      payload: { name: "Spring Gala" },
+    });
+    expect(created.json().activeId).not.toBe(originalId);
+
+    const fetched = await server.inject({
+      method: "GET",
+      url: `/api/v1/productions/${originalId}`,
+    });
+    expect(fetched.statusCode).toBe(200);
+    expect(fetched.json()).toMatchObject({ show: { name: "Untitled show" } });
+
+    const stillOnSpringGala = await server.inject({
+      method: "GET",
+      url: "/api/v1/productions",
+    });
+    expect(stillOnSpringGala.json().activeId).not.toBe(originalId);
+  });
+
+  it("404s fetching an unknown production by id", async () => {
+    const response = await trackedServer().inject({
+      method: "GET",
+      url: "/api/v1/productions/does-not-exist",
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({ error: "production-not-found" });
+  });
+
   it("switches the active production and back", async () => {
     const server = trackedServer();
     const initial = await server.inject({

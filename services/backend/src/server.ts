@@ -185,6 +185,25 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     async (): Promise<ProductionList> => productionStore.list(),
   );
 
+  server.get(
+    "/api/v1/productions/:id",
+    {
+      schema: {
+        params: productionIdParamsSchema,
+        response: { 200: showfileSchema, 404: errorResponseSchema },
+      },
+    },
+    async (request, reply): Promise<Showfile | undefined> => {
+      const { id } = request.params as { id: string };
+      const showfile = await productionStore.loadById(id);
+      if (!showfile) {
+        await reply.code(404).send({ error: "production-not-found" });
+        return undefined;
+      }
+      return showfile;
+    },
+  );
+
   server.post(
     "/api/v1/productions",
     {
