@@ -377,6 +377,35 @@ main {
   box-shadow: var(--shadow-card), var(--card-lit);
 }
 
+.receiver-editor {
+  padding: var(--space-6);
+  border: var(--size-1) solid var(--line-2);
+  background: var(--paper-2);
+}
+
+.receiver-list {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.receiver-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 7rem 1fr auto;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.receiver-status {
+  align-self: center;
+  font-size: var(--font-badge);
+}
+
+@media (max-width: 900px) {
+  .receiver-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .show-details {
   display: flex;
   flex-direction: column;

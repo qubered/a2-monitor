@@ -4,8 +4,11 @@
   "updatedAtUtc": "2026-09-21T08:00:00Z",
   "show": { "name": "The Winter Circus" },
   "device": { "name": "USB Interface", "channelCount": 2 },
+  "shureReceivers": [
+    { "id": "receiver-a", "name": "Stage left", "host": "192.0.2.10", "channelCount": 2 }
+  ],
   "channels": [
-    { "inputIndex": 0, "name": "Marguerite" },
+    { "inputIndex": 0, "name": "Marguerite", "shureReceiverId": "receiver-a", "shureChannelIndex": 0 },
     { "inputIndex": 1, "name": "Talkback" }
   ]
 }

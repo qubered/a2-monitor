@@ -9,7 +9,7 @@ import {
   type CaptureManagerOptions,
 } from "./capture.js";
 import { handleWebRequest, type WebHostOptions } from "./web-host.js";
-import { ShureMonitor, type ShureMonitorOptions } from "./shure.js";
+import { ShureFleetMonitor } from "./shure.js";
 
 const MAX_CLIENTS = 32;
 const MAX_BUFFERED_BYTES = 256 * 1024;
@@ -22,8 +22,7 @@ type Listener = {
 export type ListenGatewayOptions = CaptureManagerOptions &
   WebHostOptions & {
     captureManager?: CaptureManager;
-    shureMonitor?: ShureMonitor;
-    shure?: ShureMonitorOptions;
+    shureMonitor?: ShureFleetMonitor;
   };
 
 function rejectUpgrade(socket: Duplex, status: number, reason: string): void {
@@ -63,7 +62,7 @@ function extractMono(chunk: CaptureAudioChunk, channel: number): Buffer {
 
 export class ListenGateway {
   readonly capture: CaptureManager;
-  readonly shure: ShureMonitor;
+  readonly shure: ShureFleetMonitor;
   readonly server: Server;
   private readonly webSockets: WebSocketServer;
   private readonly listeners = new Set<Listener>();
@@ -76,7 +75,9 @@ export class ListenGateway {
         captureBinary: options.captureBinary,
         processFactory: options.processFactory,
       });
-    this.shure = options.shureMonitor ?? new ShureMonitor(options.shure);
+    this.shure =
+      options.shureMonitor ??
+      new ShureFleetMonitor({ backendOrigin: options.backendOrigin });
     this.webSockets = new WebSocketServer({
       noServer: true,
       perMessageDeflate: false,

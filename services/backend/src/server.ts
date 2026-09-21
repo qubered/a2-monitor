@@ -1,4 +1,5 @@
 import Fastify, { type FastifyInstance } from "fastify";
+import { isIP } from "node:net";
 import healthResponseSchema from "@a2-monitor/protocol/schema/health-response" with { type: "json" };
 import liveSnapshotResponseSchema from "@a2-monitor/protocol/schema/live-snapshot-response" with { type: "json" };
 import showfileSchema from "@a2-monitor/protocol/schema/showfile" with { type: "json" };
@@ -90,17 +91,37 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
       const patchedInputs = candidate.channels
         .map(({ inputIndex }) => inputIndex)
         .filter((inputIndex): inputIndex is number => inputIndex !== null);
-      const shureChannels = candidate.channels
-        .map(({ shureChannelIndex }) => shureChannelIndex)
+      const receiverIds = candidate.shureReceivers.map(({ id }) => id);
+      const shurePatches = candidate.channels
         .filter(
-          (channelIndex): channelIndex is number =>
-            channelIndex !== undefined && channelIndex !== null,
+          ({ shureReceiverId, shureChannelIndex }) =>
+            shureReceiverId != null || shureChannelIndex != null,
+        )
+        .map(
+          ({ shureReceiverId, shureChannelIndex }) =>
+            `${shureReceiverId}:${shureChannelIndex}`,
         );
       const invalid =
         candidate.show.name.trim().length === 0 ||
         candidate.channels.some(({ name }) => name.trim().length === 0) ||
         new Set(patchedInputs).size !== patchedInputs.length ||
-        new Set(shureChannels).size !== shureChannels.length ||
+        new Set(receiverIds).size !== receiverIds.length ||
+        new Set(shurePatches).size !== shurePatches.length ||
+        candidate.shureReceivers.some(
+          ({ id, name, host }) =>
+            id.trim().length === 0 ||
+            name.trim().length === 0 ||
+            isIP(host.trim()) === 0,
+        ) ||
+        candidate.channels.some(({ shureReceiverId, shureChannelIndex }) => {
+          if (shureReceiverId == null && shureChannelIndex == null)
+            return false;
+          if (shureReceiverId == null || shureChannelIndex == null) return true;
+          const receiver = candidate.shureReceivers.find(
+            ({ id }) => id === shureReceiverId,
+          );
+          return !receiver || shureChannelIndex >= receiver.channelCount;
+        }) ||
         (candidate.device === null && patchedInputs.length > 0) ||
         (candidate.device !== null &&
           candidate.channels.some(

@@ -2,6 +2,5 @@
   "schemaVersion": "0",
   "status": "unconfigured",
   "detail": "No Shure receiver is configured.",
-  "receiver": null,
-  "channels": []
+  "receivers": []
 }

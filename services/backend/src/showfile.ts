@@ -13,6 +13,7 @@ export function emptyShowfile(): Showfile {
     updatedAtUtc: null,
     show: { name: "Untitled show" },
     device: null,
+    shureReceivers: [],
     channels: [],
   };
 }
@@ -51,6 +52,11 @@ function nextRevision(candidate: Showfile): Showfile {
     revision: candidate.revision + 1,
     updatedAtUtc: new Date().toISOString(),
     show: { name: candidate.show.name.trim() },
+    shureReceivers: candidate.shureReceivers.map((receiver) => ({
+      ...receiver,
+      name: receiver.name.trim(),
+      host: receiver.host.trim(),
+    })),
     channels: candidate.channels.map((channel) => ({
       ...channel,
       name: channel.name.trim(),
@@ -68,7 +74,9 @@ export class FileShowfileStore implements ShowfileStore {
 
   async load(): Promise<Showfile> {
     try {
-      const value: unknown = JSON.parse(await readFile(this.path, "utf8"));
+      const value = migrateShowfile(
+        JSON.parse(await readFile(this.path, "utf8")) as unknown,
+      );
       if (!validateShowfile(value)) {
         throw new Error("Persisted showfile does not match its closed schema.");
       }
@@ -100,4 +108,27 @@ export class FileShowfileStore implements ShowfileStore {
     this.pending = operation.catch(() => undefined);
     return operation;
   }
+}
+
+function migrateShowfile(value: unknown): unknown {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return value;
+  }
+  const record = value as Record<string, unknown>;
+  if (record.shureReceivers !== undefined) return value;
+  return {
+    ...record,
+    shureReceivers: [],
+    channels: Array.isArray(record.channels)
+      ? record.channels.map((channel) =>
+          typeof channel === "object" && channel !== null
+            ? {
+                ...(channel as Record<string, unknown>),
+                shureReceiverId: null,
+                shureChannelIndex: null,
+              }
+            : channel,
+        )
+      : record.channels,
+  };
 }

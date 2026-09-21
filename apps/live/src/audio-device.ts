@@ -151,15 +151,22 @@ export function synthesizeDeviceChannels(
     : state.channels.map(({ index, label }) => ({
         inputIndex: index,
         name: label || `Input ${index + 1}`,
+        shureReceiverId: null,
         shureChannelIndex: null,
       }));
   return configured.map((configuredChannel, position) => {
     const inputIndex = configuredChannel.inputIndex;
+    const receiver =
+      configuredChannel.shureReceiverId == null
+        ? undefined
+        : shure?.receivers.find(
+            ({ id }) => id === configuredChannel.shureReceiverId,
+          );
     const receiverChannel =
       configuredChannel.shureChannelIndex === undefined ||
       configuredChannel.shureChannelIndex === null
         ? undefined
-        : shure?.channels.find(
+        : receiver?.channels.find(
             ({ index }) => index === configuredChannel.shureChannelIndex,
           );
     const batteryObserved = receiverChannel?.availability === "observed";
@@ -201,28 +208,28 @@ export function synthesizeDeviceChannels(
           ? "Audio not patched"
           : `Physical input ${inputIndex + 1}`
         : "Identity unknown",
-      kind: configuredChannel.shureChannelIndex == null ? "wired" : "wireless",
+      kind: configuredChannel.shureReceiverId == null ? "wired" : "wireless",
       zone: state.device?.name ?? "Audio device",
       levelDbfs: null,
       statuses: {
         rf:
-          configuredChannel.shureChannelIndex == null
+          configuredChannel.shureReceiverId == null
             ? "not-applicable"
             : "unknown",
         audio: "unknown",
         battery:
-          configuredChannel.shureChannelIndex == null
+          configuredChannel.shureReceiverId == null
             ? "not-applicable"
             : batteryStatus,
         check: "unknown",
       },
       details: {
         receiver:
-          configuredChannel.shureChannelIndex == null
+          configuredChannel.shureReceiverId == null
             ? "Not applicable · wired input"
-            : shure?.receiver
-              ? `Shure ${shure.receiver.model ?? "receiver"} · channel ${configuredChannel.shureChannelIndex + 1}`
-              : `Shure channel ${configuredChannel.shureChannelIndex + 1} · telemetry unavailable`,
+            : receiver
+              ? `${receiver.name} · ${receiver.model ?? "model unknown"} · channel ${(configuredChannel.shureChannelIndex ?? 0) + 1}`
+              : `Shure receiver unavailable · channel ${(configuredChannel.shureChannelIndex ?? 0) + 1}`,
         input:
           inputIndex === null
             ? "Audio input not patched"
@@ -232,9 +239,11 @@ export function synthesizeDeviceChannels(
         batteryRemaining,
         telemetryAge: batteryObserved
           ? `Battery observed ${receiverChannel?.observedAtUtc ?? "at unknown time"}`
-          : configuredChannel.shureChannelIndex == null
+          : configuredChannel.shureReceiverId == null
             ? "Identity and level not observed"
-            : (shure?.detail ?? "Shure telemetry unavailable"),
+            : (receiver?.detail ??
+              shure?.detail ??
+              "Shure telemetry unavailable"),
       },
     };
   });

@@ -29,8 +29,9 @@ set `A2_LIVE_DIR` to serve the compiled Live application and
 backend. These options keep the browser on one origin; they do not add transport
 authentication or encryption.
 
-When `A2_SHURE_HOST` is an explicit IP address, the MVP also opens a read-only
-Shure command-string connection on TCP 2202. `A2_SHURE_CHANNELS` selects the
-queried channel count. `GET /audio/v0/shure` returns the closed normalized
-battery contract. This temporary host is governed by ADR 0023 and is not a
-physical-hardware support claim.
+The gateway loads Manager's receiver inventory from the local showfile and
+opens an independent read-only Shure command-string connection to each unit on
+TCP 2202. Inventory changes are reconciled without restarting audio.
+`GET /audio/v0/shure` returns the closed normalized fleet battery contract.
+This temporary host is governed by ADR 0023 and is not a physical-hardware
+support claim.

@@ -4,5 +4,6 @@
   "updatedAtUtc": null,
   "show": { "name": "Untitled show" },
   "device": null,
+  "shureReceivers": [],
   "channels": []
 }
