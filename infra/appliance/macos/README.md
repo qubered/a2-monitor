@@ -26,3 +26,27 @@ Run the focused macOS test on a Darwin host:
 ```sh
 bash infra/appliance/macos/test-unsigned-pkg.sh
 ```
+
+## Double-clickable listening MVP
+
+`build-mvp-app.sh` produces an Apple-silicon `A2 Monitor.app` and a zip suitable
+for copying to another Mac. The app bundles its Node runtime, production web
+assets, backend, listen gateway and native CoreAudio capture executable. It does
+not require Node, npm or Rust on the destination Mac.
+
+```sh
+A2_NODE_BIN=/path/to/node-24-arm64 \
+  bash infra/appliance/macos/build-mvp-app.sh
+open "build/macos-mvp/A2 Monitor.app"
+```
+
+At launch, choose an observed 48 kHz input device and whether the page is
+available only on the host or on its local network. The app opens the local page
+and shows the LAN URLs when network access is selected. Keep the displayed
+dialog open; **Stop Server** shuts down capture, the gateway and the backend.
+Logs are written to `~/Library/Logs/A2 Monitor/mvp.log`.
+
+This is an ad-hoc-signed development bundle, not the signed, hardened, notarized
+installer described by ADR 0018. The LAN option exposes ADR 0021's unauthenticated
+raw PCM transport and is suitable only for a trusted local network. It must not
+be port-forwarded or exposed to the internet.

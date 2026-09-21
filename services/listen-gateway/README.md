@@ -22,4 +22,8 @@ A2_AUDIO_DEVICE="Exact device name" npm run dev
 ```
 
 The default bind is `127.0.0.1:3001`. `A2_CAPTURE_BIN`, `A2_LISTEN_HOST` and
-`A2_LISTEN_PORT` may override the development defaults.
+`A2_LISTEN_PORT` may override the development defaults. A packaged MVP may also
+set `A2_LIVE_DIR` to serve the compiled Live application and
+`A2_BACKEND_ORIGIN` to proxy same-origin `/api/` requests to the management
+backend. These options keep the browser on one origin; they do not add transport
+authentication or encryption.

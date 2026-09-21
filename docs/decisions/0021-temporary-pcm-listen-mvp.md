@@ -41,6 +41,10 @@ the capture boundary and user workflow may remain.
 - The gateway must bound client buffering and drop rather than grow memory.
 - No Phase 0B media, security, performance or browser-support gate can close
   from this path.
+- The ad-hoc-signed macOS MVP app may bundle this path for trusted-LAN trials.
+  Packaging changes neither its authority nor its security status: selecting a
+  LAN bind exposes an unauthenticated raw PCM endpoint and is never a production
+  or internet-facing configuration.
 
 ## Removal gate
 

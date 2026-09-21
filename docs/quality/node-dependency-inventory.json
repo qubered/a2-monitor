@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "generatedFrom": "package-lock.json",
   "regenerationCommand": "node scripts/generate-node-dependency-inventory.mjs",
-  "lockfileSha256": "7d200f8d49657c846e67fbb98c54b4f3a5073dda47c1b44a01fd8f13ba35fc65",
+  "lockfileSha256": "1a8c8f00e0d8474676d2ca12713e625165698c1f2b04c2873d1b505224b67109",
   "componentCount": 303,
   "licenseCounts": [
     {
@@ -3324,7 +3324,7 @@
     },
     {
       "name": "ws",
-      "version": "8.18.3",
+      "version": "8.21.3",
       "license": "MIT",
       "direct": true,
       "developmentOnly": false,
