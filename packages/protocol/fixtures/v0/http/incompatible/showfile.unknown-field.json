@@ -4,6 +4,7 @@
   "updatedAtUtc": "2026-09-21T08:00:00Z",
   "show": { "name": "The Winter Circus" },
   "device": null,
+  "shureReceivers": [],
   "channels": [],
   "unsupported": true
 }

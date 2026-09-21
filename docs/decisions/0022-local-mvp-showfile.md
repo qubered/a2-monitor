@@ -22,11 +22,16 @@ optional normalized receiver-channel patch. Manager is the only editing
 surface. Live reads the saved projection and falls back to observed device
 labels when the showfile is absent or belongs to another device.
 
+The showfile also owns a multi-unit Shure receiver inventory. Wireless patches
+use the stable receiver ID plus its zero-based channel index, so equal channel
+numbers on different receiver units remain distinct.
+
 The backend assigns a monotonically increasing revision and rejects a save whose
 base revision is stale. The macOS MVP stores the closed JSON contract at
 `~/Library/Application Support/A2 Monitor/showfile.json`, writes a sibling
-temporary file and atomically renames it into place. Invalid persisted bytes fail
-closed rather than being repaired or treated as an empty show.
+temporary file and atomically renames it into place. The pre-inventory MVP shape
+is migrated once by adding an empty receiver list and clearing ambiguous legacy
+receiver-channel patches; other invalid persisted bytes fail closed.
 
 ## Consequences
 

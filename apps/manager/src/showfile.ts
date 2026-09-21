@@ -51,7 +51,11 @@ export function parseObservedDevice(value: unknown): ObservedDevice {
 export async function loadShowfile(signal?: AbortSignal): Promise<Showfile> {
   const response = await fetch("/api/v1/showfile", { signal });
   if (!response.ok) throw new Error("The showfile could not be loaded.");
-  return parseShowfile(await response.json());
+  const value = (await response.json()) as Record<string, unknown>;
+  return parseShowfile({
+    ...value,
+    shureReceivers: value.shureReceivers ?? [],
+  });
 }
 
 export async function loadObservedDevice(
@@ -95,6 +99,7 @@ export function projectShowfileToDevice(
       ? device.channels.map(({ index, label }) => ({
           inputIndex: index,
           name: label || `Channel ${index + 1}`,
+          shureReceiverId: null,
           shureChannelIndex: null,
         }))
       : showfile.channels.map((channel) => ({
@@ -106,9 +111,11 @@ export function projectShowfileToDevice(
               ? channel.inputIndex
               : null,
           shureChannelIndex: channel.shureChannelIndex ?? null,
+          shureReceiverId: channel.shureReceiverId ?? null,
         }));
   return {
     ...showfile,
+    shureReceivers: showfile.shureReceivers ?? [],
     device: { name: device.name, channelCount: device.channelCount },
     channels,
   };

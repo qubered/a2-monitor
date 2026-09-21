@@ -17,6 +17,10 @@ function readTheme(): Theme {
   return saved === "light" || saved === "dark" ? saved : "system";
 }
 
+function receiverId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `receiver-${Date.now()}`;
+}
+
 export function App() {
   const [theme, setTheme] = useState<Theme>(readTheme);
   const [showfile, setShowfile] = useState<Showfile | null>(null);
@@ -190,6 +194,143 @@ export function App() {
             </section>
 
             <section
+              className="receiver-editor"
+              aria-labelledby="receiver-editor-title"
+            >
+              <div className="channel-editor-heading">
+                <div>
+                  <span className="overline">Wireless inventory</span>
+                  <h2 id="receiver-editor-title">Shure receivers</h2>
+                </div>
+                <button
+                  className="line-button"
+                  type="button"
+                  onClick={() =>
+                    update({
+                      ...showfile,
+                      shureReceivers: [
+                        ...showfile.shureReceivers,
+                        {
+                          id: receiverId(),
+                          name: `Receiver ${showfile.shureReceivers.length + 1}`,
+                          host: "192.168.1.100",
+                          channelCount: 4,
+                        },
+                      ],
+                    })
+                  }
+                >
+                  Add receiver
+                </button>
+              </div>
+              <p className="patch-summary">
+                Add every receiver unit here. Use an explicit control-network IP
+                address.
+              </p>
+              <div className="receiver-list">
+                {showfile.shureReceivers.map((receiver, position) => {
+                  const observed = shure?.receivers.find(
+                    ({ id }) => id === receiver.id,
+                  );
+                  return (
+                    <div className="receiver-row" key={receiver.id}>
+                      <label>
+                        <span>Unit name</span>
+                        <input
+                          aria-label={`Receiver ${position + 1} name`}
+                          value={receiver.name}
+                          maxLength={120}
+                          onChange={(event) => {
+                            const shureReceivers = [...showfile.shureReceivers];
+                            shureReceivers[position] = {
+                              ...receiver,
+                              name: event.target.value,
+                            };
+                            update({ ...showfile, shureReceivers });
+                          }}
+                        />
+                      </label>
+                      <label>
+                        <span>Control IP</span>
+                        <input
+                          aria-label={`Receiver ${position + 1} control IP`}
+                          value={receiver.host}
+                          maxLength={45}
+                          onChange={(event) => {
+                            const shureReceivers = [...showfile.shureReceivers];
+                            shureReceivers[position] = {
+                              ...receiver,
+                              host: event.target.value,
+                            };
+                            update({ ...showfile, shureReceivers });
+                          }}
+                        />
+                      </label>
+                      <label>
+                        <span>Channels</span>
+                        <input
+                          aria-label={`Receiver ${position + 1} channel count`}
+                          type="number"
+                          min={1}
+                          max={128}
+                          value={receiver.channelCount}
+                          onChange={(event) => {
+                            const shureReceivers = [...showfile.shureReceivers];
+                            shureReceivers[position] = {
+                              ...receiver,
+                              channelCount: Math.max(
+                                1,
+                                Math.min(128, Number(event.target.value)),
+                              ),
+                            };
+                            update({ ...showfile, shureReceivers });
+                          }}
+                        />
+                      </label>
+                      <span
+                        className={`receiver-status state-${observed?.status ?? "unconfigured"}`}
+                      >
+                        {observed
+                          ? `${observed.status} · ${observed.model ?? "model unknown"}`
+                          : "Save to connect"}
+                      </span>
+                      <button
+                        className="remove-channel"
+                        type="button"
+                        aria-label={`Remove receiver ${position + 1}`}
+                        onClick={() =>
+                          update({
+                            ...showfile,
+                            shureReceivers: showfile.shureReceivers.filter(
+                              ({ id }) => id !== receiver.id,
+                            ),
+                            channels: showfile.channels.map((channel) =>
+                              channel.shureReceiverId === receiver.id
+                                ? {
+                                    ...channel,
+                                    shureReceiverId: null,
+                                    shureChannelIndex: null,
+                                  }
+                                : channel,
+                            ),
+                          })
+                        }
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  );
+                })}
+                {showfile.shureReceivers.length === 0 ? (
+                  <div className="empty-state">
+                    <strong>No wireless receivers.</strong>
+                    <span>Add a unit to patch its channels.</span>
+                  </div>
+                ) : null}
+              </div>
+            </section>
+
+            <section
               className="channel-editor"
               aria-labelledby="channel-editor-title"
             >
@@ -209,6 +350,7 @@ export function App() {
                         {
                           inputIndex: null,
                           name: `Channel ${showfile.channels.length + 1}`,
+                          shureReceiverId: null,
                           shureChannelIndex: null,
                         },
                       ],
@@ -222,9 +364,9 @@ export function App() {
                 {device
                   ? `${device.name} · ${device.channelCount} inputs · ${device.sampleRateHz / 1000} kHz`
                   : "Audio input state unknown"}
-                {shure?.receiver
-                  ? ` · Shure ${shure.receiver.model ?? "receiver"} at ${shure.receiver.host}`
-                  : " · Shure receiver not configured"}
+                {showfile.shureReceivers.length
+                  ? ` · ${showfile.shureReceivers.length} Shure receiver unit${showfile.shureReceivers.length === 1 ? "" : "s"}`
+                  : " · Shure receivers not configured"}
               </p>
               <div className="channel-name-list">
                 {showfile.channels.map((channel, position) => (
@@ -283,36 +425,53 @@ export function App() {
                       <span>Shure channel</span>
                       <select
                         aria-label={`Channel ${position + 1} Shure channel`}
-                        value={channel.shureChannelIndex ?? ""}
+                        value={
+                          channel.shureReceiverId != null &&
+                          channel.shureChannelIndex != null
+                            ? `${channel.shureReceiverId}:${channel.shureChannelIndex}`
+                            : ""
+                        }
                         onChange={(event) => {
                           const channels = [...showfile.channels];
+                          const separator = event.target.value.lastIndexOf(":");
                           channels[position] = {
                             ...channel,
+                            shureReceiverId:
+                              event.target.value === ""
+                                ? null
+                                : event.target.value.slice(0, separator),
                             shureChannelIndex:
                               event.target.value === ""
                                 ? null
-                                : Number(event.target.value),
+                                : Number(
+                                    event.target.value.slice(separator + 1),
+                                  ),
                           };
                           update({ ...showfile, channels });
                         }}
                       >
                         <option value="">None</option>
-                        {shure?.receiver
-                          ? shure.channels.map((receiverChannel) => (
+                        {showfile.shureReceivers.flatMap((receiver) =>
+                          Array.from(
+                            { length: receiver.channelCount },
+                            (_, receiverChannelIndex) => (
                               <option
-                                key={receiverChannel.index}
-                                value={receiverChannel.index}
+                                key={`${receiver.id}:${receiverChannelIndex}`}
+                                value={`${receiver.id}:${receiverChannelIndex}`}
                                 disabled={showfile.channels.some(
                                   (other, index) =>
                                     index !== position &&
+                                    other.shureReceiverId === receiver.id &&
                                     other.shureChannelIndex ===
-                                      receiverChannel.index,
+                                      receiverChannelIndex,
                                 )}
                               >
-                                Receiver {receiverChannel.index + 1}
+                                {receiver.name} · channel{" "}
+                                {receiverChannelIndex + 1}
                               </option>
-                            ))
-                          : null}
+                            ),
+                          ),
+                        )}
                       </select>
                     </label>
                     <button

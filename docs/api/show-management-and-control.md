@@ -59,7 +59,7 @@ same strict, non-mutating Ajv 2020 registry used for route validation and uses
 ordinary JSON serialization after validation.
 
 The showfile holds one show name, exact device name/count and ordered logical
-channels with optional physical-input and normalized Shure receiver-channel
+channels with optional physical-input and normalized Shure receiver-ID/channel
 patches. PUT uses the submitted revision as an optimistic precondition and
 returns 409 on conflict. ADR 0022 limits this mutable file to the local MVP; it
 is not the immutable production aggregate described elsewhere in this document.

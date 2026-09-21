@@ -92,8 +92,21 @@ describe("audio device adapter", () => {
       updatedAtUtc: "2026-09-21T00:00:00Z",
       show: { name: "Test" },
       device: { name: "USB Interface", channelCount: 2 },
+      shureReceivers: [
+        {
+          id: "stage-left",
+          name: "Stage left",
+          host: "192.0.2.10",
+          channelCount: 2,
+        },
+      ],
       channels: [
-        { inputIndex: 1, name: "Lead", shureChannelIndex: 0 },
+        {
+          inputIndex: 1,
+          name: "Lead",
+          shureReceiverId: "stage-left",
+          shureChannelIndex: 0,
+        },
         { inputIndex: null, name: "Spare", shureChannelIndex: null },
       ],
     };
@@ -101,19 +114,25 @@ describe("audio device adapter", () => {
       schemaVersion: "0",
       status: "ready",
       detail: "Current.",
-      receiver: {
-        host: "192.0.2.10",
-        model: "ULXD4D",
-        firmware: "2.7.10",
-        compatibility: "compatible-read-only",
-      },
-      channels: [
+      receivers: [
         {
-          index: 0,
-          batteryBars: 1,
-          batteryChargePercent: 18,
-          observedAtUtc: "2026-09-21T00:00:00Z",
-          availability: "observed",
+          id: "stage-left",
+          name: "Stage left",
+          host: "192.0.2.10",
+          model: "ULXD4D",
+          firmware: "2.7.10",
+          compatibility: "compatible-read-only",
+          status: "ready",
+          detail: "Current.",
+          channels: [
+            {
+              index: 0,
+              batteryBars: 1,
+              batteryChargePercent: 18,
+              observedAtUtc: "2026-09-21T00:00:00Z",
+              availability: "observed",
+            },
+          ],
         },
       ],
     };

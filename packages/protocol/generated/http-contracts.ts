@@ -5,9 +5,9 @@
 //   - schema/v0/http/showfile.schema.json
 //   - schema/v0/http/shure-telemetry.schema.json
 // Regenerate: npm run generate --workspace @a2-monitor/protocol
-// Schema-SHA256: 4f70eabf3c0ebac59a27b04f5b2eecc06710cad06e6e1add18d203ba1f5b734e
+// Schema-SHA256: 70b372c9fd03f80b5088b840db6046f0c76e09c5be67d487827840f03bc462a7
 // Generator-SHA256: 7332ccaa39a3356f13cd579a0ec27fa08c2d30c34329709ecb964ba326edb8a9
-// Body-SHA256: fc2da356ecc5079abe5efadd82a5b99b57fa16b540285d38132b5a050d7aa516
+// Body-SHA256: 9b757405abd2dfb03ec72c216c21459c7a8909476012b748ace6f97de6bda68e
 
 export type HealthResponse = {
   status: "ok";
@@ -80,29 +80,41 @@ export type Showfile = {
     name: string;
     channelCount: number;
   } | null;
+  shureReceivers: Array<{
+    id: string;
+    name: string;
+    host: string;
+    channelCount: number;
+  }>;
   channels: Array<{
     inputIndex: number | null;
     name: string;
     shureChannelIndex?: number | null;
+    shureReceiverId?: string | null;
   }>;
 };
 
 export type ShureTelemetry = {
   schemaVersion: "0";
-  status: "unconfigured" | "connecting" | "ready" | "stale" | "error";
+  status:
+    "unconfigured" | "connecting" | "ready" | "degraded" | "stale" | "error";
   detail: string;
-  receiver: {
+  receivers: Array<{
+    id: string;
+    name: string;
     host: string;
     model: string | null;
     firmware: string | null;
     compatibility: "compatible-read-only";
-  } | null;
-  channels: Array<{
-    index: number;
-    batteryBars: number | null;
-    batteryChargePercent: number | null;
-    observedAtUtc: string | null;
-    availability: "observed" | "unavailable" | "stale";
+    status: "connecting" | "ready" | "stale" | "error";
+    detail: string;
+    channels: Array<{
+      index: number;
+      batteryBars: number | null;
+      batteryChargePercent: number | null;
+      observedAtUtc: string | null;
+      availability: "observed" | "unavailable" | "stale";
+    }>;
   }>;
 };
 
@@ -381,6 +393,7 @@ const showfileSchema = {
     "show",
     "device",
     "channels",
+    "shureReceivers",
   ],
   properties: {
     schemaVersion: {
@@ -424,6 +437,37 @@ const showfileSchema = {
         },
       },
     },
+    shureReceivers: {
+      type: "array",
+      maxItems: 64,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["id", "name", "host", "channelCount"],
+        properties: {
+          id: {
+            type: "string",
+            minLength: 1,
+            maxLength: 64,
+          },
+          name: {
+            type: "string",
+            minLength: 1,
+            maxLength: 120,
+          },
+          host: {
+            type: "string",
+            minLength: 1,
+            maxLength: 45,
+          },
+          channelCount: {
+            type: "integer",
+            minimum: 1,
+            maximum: 128,
+          },
+        },
+      },
+    },
     channels: {
       type: "array",
       maxItems: 128,
@@ -447,6 +491,11 @@ const showfileSchema = {
             minimum: 0,
             maximum: 127,
           },
+          shureReceiverId: {
+            type: ["string", "null"],
+            minLength: 1,
+            maxLength: 64,
+          },
         },
       },
     },
@@ -456,80 +505,119 @@ const showfileSchema = {
 const shureTelemetrySchema = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
   $id: "https://a2-monitor.local/schema/v0/http/shure-telemetry.schema.json",
-  title: "Shure receiver telemetry",
+  title: "Shure receiver fleet telemetry",
   type: "object",
   additionalProperties: false,
-  required: ["schemaVersion", "status", "detail", "receiver", "channels"],
+  required: ["schemaVersion", "status", "detail", "receivers"],
   properties: {
     schemaVersion: {
       const: "0",
     },
     status: {
-      enum: ["unconfigured", "connecting", "ready", "stale", "error"],
+      enum: [
+        "unconfigured",
+        "connecting",
+        "ready",
+        "degraded",
+        "stale",
+        "error",
+      ],
     },
     detail: {
       type: "string",
       minLength: 1,
       maxLength: 240,
     },
-    receiver: {
-      type: ["object", "null"],
-      additionalProperties: false,
-      required: ["host", "model", "firmware", "compatibility"],
-      properties: {
-        host: {
-          type: "string",
-          minLength: 1,
-          maxLength: 255,
-        },
-        model: {
-          type: ["string", "null"],
-          maxLength: 64,
-        },
-        firmware: {
-          type: ["string", "null"],
-          maxLength: 64,
-        },
-        compatibility: {
-          const: "compatible-read-only",
-        },
-      },
-    },
-    channels: {
+    receivers: {
       type: "array",
-      maxItems: 128,
+      maxItems: 64,
       items: {
         type: "object",
         additionalProperties: false,
         required: [
-          "index",
-          "batteryBars",
-          "batteryChargePercent",
-          "observedAtUtc",
-          "availability",
+          "id",
+          "name",
+          "host",
+          "model",
+          "firmware",
+          "compatibility",
+          "status",
+          "detail",
+          "channels",
         ],
         properties: {
-          index: {
-            type: "integer",
-            minimum: 0,
-            maximum: 127,
+          id: {
+            type: "string",
+            minLength: 1,
+            maxLength: 64,
           },
-          batteryBars: {
-            type: ["integer", "null"],
-            minimum: 0,
-            maximum: 5,
+          name: {
+            type: "string",
+            minLength: 1,
+            maxLength: 120,
           },
-          batteryChargePercent: {
-            type: ["integer", "null"],
-            minimum: 0,
-            maximum: 100,
+          host: {
+            type: "string",
+            minLength: 1,
+            maxLength: 255,
           },
-          observedAtUtc: {
+          model: {
             type: ["string", "null"],
-            format: "date-time",
+            maxLength: 64,
           },
-          availability: {
-            enum: ["observed", "unavailable", "stale"],
+          firmware: {
+            type: ["string", "null"],
+            maxLength: 64,
+          },
+          compatibility: {
+            const: "compatible-read-only",
+          },
+          status: {
+            enum: ["connecting", "ready", "stale", "error"],
+          },
+          detail: {
+            type: "string",
+            minLength: 1,
+            maxLength: 240,
+          },
+          channels: {
+            type: "array",
+            maxItems: 128,
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: [
+                "index",
+                "batteryBars",
+                "batteryChargePercent",
+                "observedAtUtc",
+                "availability",
+              ],
+              properties: {
+                index: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 127,
+                },
+                batteryBars: {
+                  type: ["integer", "null"],
+                  minimum: 0,
+                  maximum: 5,
+                },
+                batteryChargePercent: {
+                  type: ["integer", "null"],
+                  minimum: 0,
+                  maximum: 100,
+                },
+                observedAtUtc: {
+                  type: ["string", "null"],
+                  format: "date-time",
+                },
+                availability: {
+                  enum: ["observed", "unavailable", "stale"],
+                },
+              },
+            },
           },
         },
       },

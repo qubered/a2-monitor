@@ -1,57 +1,46 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://a2-monitor.local/schema/v0/http/shure-telemetry.schema.json",
-  "title": "Shure receiver telemetry",
+  "title": "Shure receiver fleet telemetry",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "status", "detail", "receiver", "channels"],
+  "required": ["schemaVersion", "status", "detail", "receivers"],
   "properties": {
     "schemaVersion": { "const": "0" },
-    "status": {
-      "enum": ["unconfigured", "connecting", "ready", "stale", "error"]
-    },
+    "status": { "enum": ["unconfigured", "connecting", "ready", "degraded", "stale", "error"] },
     "detail": { "type": "string", "minLength": 1, "maxLength": 240 },
-    "receiver": {
-      "type": ["object", "null"],
-      "additionalProperties": false,
-      "required": ["host", "model", "firmware", "compatibility"],
-      "properties": {
-        "host": { "type": "string", "minLength": 1, "maxLength": 255 },
-        "model": { "type": ["string", "null"], "maxLength": 64 },
-        "firmware": { "type": ["string", "null"], "maxLength": 64 },
-        "compatibility": { "const": "compatible-read-only" }
-      }
-    },
-    "channels": {
+    "receivers": {
       "type": "array",
-      "maxItems": 128,
+      "maxItems": 64,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "index",
-          "batteryBars",
-          "batteryChargePercent",
-          "observedAtUtc",
-          "availability"
-        ],
+        "required": ["id", "name", "host", "model", "firmware", "compatibility", "status", "detail", "channels"],
         "properties": {
-          "index": { "type": "integer", "minimum": 0, "maximum": 127 },
-          "batteryBars": {
-            "type": ["integer", "null"],
-            "minimum": 0,
-            "maximum": 5
-          },
-          "batteryChargePercent": {
-            "type": ["integer", "null"],
-            "minimum": 0,
-            "maximum": 100
-          },
-          "observedAtUtc": {
-            "type": ["string", "null"],
-            "format": "date-time"
-          },
-          "availability": { "enum": ["observed", "unavailable", "stale"] }
+          "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+          "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "host": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "model": { "type": ["string", "null"], "maxLength": 64 },
+          "firmware": { "type": ["string", "null"], "maxLength": 64 },
+          "compatibility": { "const": "compatible-read-only" },
+          "status": { "enum": ["connecting", "ready", "stale", "error"] },
+          "detail": { "type": "string", "minLength": 1, "maxLength": 240 },
+          "channels": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["index", "batteryBars", "batteryChargePercent", "observedAtUtc", "availability"],
+              "properties": {
+                "index": { "type": "integer", "minimum": 0, "maximum": 127 },
+                "batteryBars": { "type": ["integer", "null"], "minimum": 0, "maximum": 5 },
+                "batteryChargePercent": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+                "observedAtUtc": { "type": ["string", "null"], "format": "date-time" },
+                "availability": { "enum": ["observed", "unavailable", "stale"] }
+              }
+            }
+          }
         }
       }
     }

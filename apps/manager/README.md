@@ -39,7 +39,9 @@ Live, but not Live's show-time entry point or media session code.
 
 The local MVP implements one narrow management workflow: edit a show name, add
 or remove ordered logical channels, and patch each channel to one observed
-physical input and optional normalized Shure receiver channel. It loads and
+physical input and optional normalized Shure receiver unit/channel. Manager
+owns the multi-unit receiver inventory: name, explicit control IP and channel
+count. It loads and
 saves the versioned `/api/v1/showfile` contract and remains separate from Live
 and its media code. This mutable local showfile is not an activated production
 revision, hardware manifest, validation result or audit history.

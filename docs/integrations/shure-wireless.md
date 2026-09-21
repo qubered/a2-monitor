@@ -6,12 +6,12 @@
 
 ## Local MVP implementation
 
-The macOS MVP includes a bounded read-only command-string client for one
-explicitly configured receiver IP and channel count. It queries `MODEL`,
+The macOS MVP includes bounded read-only command-string clients for multiple
+Manager-configured receiver IPs and channel counts. Each unit independently queries `MODEL`,
 `FW_VER`, `BATT_BARS`, and `BATT_CHARGE`, accepts fragmented/coalesced
 unsolicited `REP` frames, and exposes normalized battery bars/percentage with
-freshness. The menu-bar app stores only the local IP and channel count in macOS
-user defaults.
+freshness. Manager stores the receiver inventory in the local showfile and the
+gateway reconciles additions, removals and edits without restarting audio.
 
 This client currently runs in the listen-gateway process under ADR 0023 because
 the dedicated adapter process/IPC is not built. It is parser/simulator evidence,

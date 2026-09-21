@@ -19,15 +19,6 @@ const gateway = new ListenGateway({
   webRoot: process.env.A2_LIVE_DIR,
   managerRoot: process.env.A2_MANAGER_DIR,
   backendOrigin: process.env.A2_BACKEND_ORIGIN,
-  shure: {
-    host: process.env.A2_SHURE_HOST,
-    port: process.env.A2_SHURE_PORT
-      ? Number(process.env.A2_SHURE_PORT)
-      : undefined,
-    channelCount: process.env.A2_SHURE_CHANNELS
-      ? Number(process.env.A2_SHURE_CHANNELS)
-      : undefined,
-  },
 });
 
 gateway.startCapture();
