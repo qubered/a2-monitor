@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.bd1d63dfc3a406ad",
-  "sourceSha256": "bd1d63dfc3a406adc4bb1f09eef9249d5d0b34cf73d530bbdb5993d3c79b43b7",
-  "inputCount": 306,
+  "buildId": "a2-0.0.0+sha256.c6e5397cdffcd7ed",
+  "sourceSha256": "c6e5397cdffcd7ed5332621a312ece38de78868daa52b0f5cd3aeac996076bfb",
+  "inputCount": 307,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -590,6 +590,10 @@
     {
       "path": "docs/decisions/0023-menu-bar-shell-and-shure-mvp-host.md",
       "sha256": "1b0f13e0e3d70923c09685952680cf2cef4a41c94a7e2bb0bea07b7ec0d2dada"
+    },
+    {
+      "path": "docs/decisions/0024-app-window-device-and-network-selection.md",
+      "sha256": "b718265584d4605811f696c80659b363e427f614a6777bd60c10b875ee2b16e3"
     },
     {
       "path": "docs/design/DESIGN.md",
