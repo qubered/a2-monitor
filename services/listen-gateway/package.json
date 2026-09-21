@@ -13,7 +13,7 @@
     "test": "vitest run src"
   },
   "dependencies": {
-    "ws": "8.18.3"
+    "ws": "^8.21.3"
   },
   "devDependencies": {
     "@types/ws": "8.18.1"

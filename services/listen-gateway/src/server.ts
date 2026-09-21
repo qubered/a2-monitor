@@ -8,6 +8,7 @@ import {
   type CaptureAudioChunk,
   type CaptureManagerOptions,
 } from "./capture.js";
+import { handleWebRequest, type WebHostOptions } from "./web-host.js";
 
 const MAX_CLIENTS = 32;
 const MAX_BUFFERED_BYTES = 256 * 1024;
@@ -17,9 +18,10 @@ type Listener = {
   channel: number;
 };
 
-export type ListenGatewayOptions = CaptureManagerOptions & {
-  captureManager?: CaptureManager;
-};
+export type ListenGatewayOptions = CaptureManagerOptions &
+  WebHostOptions & {
+    captureManager?: CaptureManager;
+  };
 
 function rejectUpgrade(socket: Duplex, status: number, reason: string): void {
   const body = `${reason}\n`;
@@ -76,19 +78,27 @@ export class ListenGateway {
       maxPayload: 1024,
     });
     this.server = createServer((request, response) => {
-      if (request.method !== "GET" || request.url !== "/audio/v0/device") {
-        response.writeHead(404, { "Content-Type": "application/json" });
-        response.end(JSON.stringify({ error: "not-found" }));
+      if (request.method === "GET" && request.url === "/audio/v0/device") {
+        const body = JSON.stringify(this.capture.getState());
+        response.writeHead(200, {
+          "Cache-Control": "no-store",
+          "Content-Type": "application/json; charset=utf-8",
+          "Content-Length": Buffer.byteLength(body),
+        });
+        response.end(body);
         return;
       }
 
-      const body = JSON.stringify(this.capture.getState());
-      response.writeHead(200, {
-        "Cache-Control": "no-store",
-        "Content-Type": "application/json; charset=utf-8",
-        "Content-Length": Buffer.byteLength(body),
-      });
-      response.end(body);
+      void handleWebRequest(request, response, options)
+        .then((handled) => {
+          if (handled) return;
+          response.writeHead(404, { "Content-Type": "application/json" });
+          response.end(JSON.stringify({ error: "not-found" }));
+        })
+        .catch(() => {
+          response.writeHead(500, { "Content-Type": "application/json" });
+          response.end(JSON.stringify({ error: "internal-error" }));
+        });
     });
 
     this.server.on("upgrade", (request, socket, head) => {

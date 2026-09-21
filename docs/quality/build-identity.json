@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.925cc8bd78b1f009",
-  "sourceSha256": "925cc8bd78b1f0093643c509f7262bce79248fa28a06393f8496ac14469647bd",
-  "inputCount": 271,
+  "buildId": "a2-0.0.0+sha256.54f280b2c3c12c73",
+  "sourceSha256": "54f280b2c3c12c73003d75a6d528935aaeda1b966f1d74bf285f76e58b790ab2",
+  "inputCount": 276,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -517,7 +517,7 @@
     },
     {
       "path": "docs/decisions/0021-temporary-pcm-listen-mvp.md",
-      "sha256": "ff194c613336e3e567a7794e0dbe39d013fb3dd6f0024ea0b18fa8d83eb5e85b"
+      "sha256": "3588795f7f21ee548f79382198d89a2d44ccf2ff84700579ace5b6751498ffff"
     },
     {
       "path": "docs/design/DESIGN.md",
@@ -653,7 +653,7 @@
     },
     {
       "path": "docs/quality/node-dependency-inventory.json",
-      "sha256": "f2eafcbd58c6d86ee054b900f12ac85d18b2ac1f11400bcbd33a4afd915afd19"
+      "sha256": "33ba126965bb3a80ba705ae1746986475549006b9551150e7e59254693a63e60"
     },
     {
       "path": "docs/quality/performance-baselines.md",
@@ -745,7 +745,11 @@
     },
     {
       "path": "infra/appliance/macos/README.md",
-      "sha256": "7702cf350a2e9eeefff3fc35ebb5359c4a76aa31cea5cd16560599f86e9312a6"
+      "sha256": "bd57b462e47b3f202e35996ef4694bed2abd91eb33f3fdfe3ed6ff31a2c1084e"
+    },
+    {
+      "path": "infra/appliance/macos/build-mvp-app.sh",
+      "sha256": "087a4b0ff658aa15f44933463cfc47e4d955aa777cf8a72370cddc52e153b376"
     },
     {
       "path": "infra/appliance/macos/build-unsigned-pkg.sh",
@@ -754,6 +758,18 @@
     {
       "path": "infra/appliance/macos/inspect-unsigned-pkg.sh",
       "sha256": "547807265d1db8015184a1b02bd55fc2f2e385ba295eba26da6d5c30fbad6a9b"
+    },
+    {
+      "path": "infra/appliance/macos/mvp-app/A2-Monitor",
+      "sha256": "25fe640383a2bc45e3a10db6ed38bd607f28904b8ae55416a47e478f93f58978"
+    },
+    {
+      "path": "infra/appliance/macos/mvp-app/Info.plist",
+      "sha256": "105032a34c437670d13fdbfa2c1bd09e14f2422b99acab9326dcaec2deaa64ea"
+    },
+    {
+      "path": "infra/appliance/macos/mvp-app/launcher.mjs",
+      "sha256": "6994aed4f47acd834d4951f4fcd146632faf733378815d3f65a2ec6cdd9e2578"
     },
     {
       "path": "infra/appliance/macos/test-unsigned-pkg.sh",
@@ -781,7 +797,7 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "7d200f8d49657c846e67fbb98c54b4f3a5073dda47c1b44a01fd8f13ba35fc65"
+      "sha256": "1a8c8f00e0d8474676d2ca12713e625165698c1f2b04c2873d1b505224b67109"
     },
     {
       "path": "package.json",
@@ -1009,11 +1025,11 @@
     },
     {
       "path": "services/listen-gateway/README.md",
-      "sha256": "c51eb7505c7a218922ac52875d2dc5701258e3ac432876d6f3ca6bf5394f69c1"
+      "sha256": "ad7086b5c427eac1430e01d938f8d0598c78ccad15c67aa41698cea80b286a93"
     },
     {
       "path": "services/listen-gateway/package.json",
-      "sha256": "1d4e21c0b7d40078ad7b15dc62fe71d6c45e89b73b5becca727253483642bfd3"
+      "sha256": "cbc6ba2e50a14f1fa4dc46c9372c3bd811429adcbc1f523b478f94dec5b95bd4"
     },
     {
       "path": "services/listen-gateway/src/capture.test.ts",
@@ -1029,11 +1045,15 @@
     },
     {
       "path": "services/listen-gateway/src/server.ts",
-      "sha256": "6c503c555018712bd6ad7a9eb77bb45e459a01bbebbc318ecba053b45de6b634"
+      "sha256": "906499d068c8b2a23d3ce3efb1983de11009c2725df538ccac8458d9e1b66c85"
     },
     {
       "path": "services/listen-gateway/src/start.ts",
-      "sha256": "efe753ead4736b061f873347543281e0ca0a2f2718cc2ee14c3f8ad7d886f58c"
+      "sha256": "b4a6e599b7e3335f25650ab365dcaa322ad32135fd8f732c73a3ec03d221ca2e"
+    },
+    {
+      "path": "services/listen-gateway/src/web-host.ts",
+      "sha256": "3f065ef0744a055c2292c414fa236e9f4f0332b326ddea8fff707ada379e018a"
     },
     {
       "path": "services/listen-gateway/tsconfig.json",

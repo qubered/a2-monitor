@@ -16,6 +16,8 @@ if (!Number.isInteger(port) || port < 1 || port > 65_535) {
 const gateway = new ListenGateway({
   device: process.env.A2_AUDIO_DEVICE,
   captureBinary: process.env.A2_CAPTURE_BIN ?? defaultCaptureBinary,
+  webRoot: process.env.A2_LIVE_DIR,
+  backendOrigin: process.env.A2_BACKEND_ORIGIN,
 });
 
 gateway.startCapture();
