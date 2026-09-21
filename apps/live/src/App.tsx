@@ -324,7 +324,7 @@ export function App({
       <header className="app-header">
         <div className="brand" aria-label="Pulse">
           <span aria-hidden="true">▲</span>
-          <strong>A2</strong> <b>Monitor</b>
+          <b>Pulse</b>
         </div>
         <div className="show-name">
           <strong>

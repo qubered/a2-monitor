@@ -118,7 +118,7 @@ export function App() {
           <span aria-hidden="true" className="text-red">
             ▲
           </span>
-          <strong>A2</strong> <b className="font-wordmark text-page">Monitor</b>
+          <b className="font-wordmark text-page">Pulse</b>
           <em className="font-body text-ui font-semibold not-italic text-muted-foreground">
             Manager
           </em>
