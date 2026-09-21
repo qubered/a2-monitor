@@ -20,8 +20,8 @@ const snapshot: LiveSnapshot = {
   generatedAtUtc: "2026-09-20T00:00:00Z",
   source: { kind: "fabricated", label: "Fabricated test data" },
   show: {
-    name: "The Winter Circus",
-    venue: "Northgate Playhouse",
+    name: "Q3 All-Hands",
+    venue: "Bay View Conference Center",
     performanceLabel: "Preview 3",
   },
   node: { status: "ready", channelCount: 10, sampleRateHz: 48000 },
@@ -45,12 +45,12 @@ describe("Live channel grid", () => {
     expect(await screen.findByText("Monitor output is muted")).toBeTruthy();
     await user.click(
       screen.getByRole("button", {
-        name: "Select Vera Castellan, channel 33",
+        name: "Select Panel 2 — Panelist, channel 33",
       }),
     );
 
     const selectedCard = screen
-      .getByRole("button", { name: "Select Vera Castellan, channel 33" })
+      .getByRole("button", { name: "Select Panel 2 — Panelist, channel 33" })
       .closest("article");
     expect(selectedCard?.classList.contains("is-selected")).toBe(true);
     expect(selectedCard?.classList.contains("is-listening")).toBe(false);
@@ -65,7 +65,9 @@ describe("Live channel grid", () => {
     ).toBeTruthy();
     expect(document.querySelector(".live-badge")).toBeNull();
     expect(
-      screen.getByText("Vera Castellan", { selector: ".player-source strong" }),
+      screen.getByText("Panel 2 — Panelist", {
+        selector: ".player-source strong",
+      }),
     ).toBeTruthy();
     expect(screen.getByText("Monitor output is muted")).toBeTruthy();
     expect(
@@ -78,31 +80,33 @@ describe("Live channel grid", () => {
     render(<App snapshotSource={snapshotSource} />);
 
     await screen.findByRole("button", {
-      name: "Select Vera Castellan, channel 33",
+      name: "Select Panel 2 — Panelist, channel 33",
     });
 
     await user.click(
       screen.getByRole("button", {
-        name: "Select Vera Castellan, channel 33",
+        name: "Select Panel 2 — Panelist, channel 33",
       }),
     );
     await user.click(
       screen.getByRole("button", {
-        name: "Low RF on Marguerite Hale, channel 27. Press to acknowledge.",
+        name: "Low RF on Podium — CEO, channel 27. Press to acknowledge.",
       }),
     );
 
     expect(
-      screen.getByText("Vera Castellan", { selector: ".player-source strong" }),
+      screen.getByText("Panel 2 — Panelist", {
+        selector: ".player-source strong",
+      }),
     ).toBeTruthy();
     expect(
       screen.getByRole("button", {
-        name: "Select Marguerite Hale, channel 27",
+        name: "Select Podium — CEO, channel 27",
       }),
     ).toBeTruthy();
     const acknowledgedCard = screen
       .getByRole("button", {
-        name: "Select Marguerite Hale, channel 27",
+        name: "Select Podium — CEO, channel 27",
       })
       .closest("article");
     expect(
@@ -114,7 +118,7 @@ describe("Live channel grid", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: "Select Marguerite Hale, channel 27",
+        name: "Select Podium — CEO, channel 27",
       }),
     );
     expect(
@@ -133,7 +137,7 @@ describe("Live channel grid", () => {
     const card = screen.getByRole("article");
     expect(
       within(card).getByRole("button", {
-        name: "Select Bandleader · keys vox, channel 8",
+        name: "Select Lectern — gooseneck, channel 8",
       }),
     ).toBeTruthy();
     expect(within(card).getByText("RF link: not applicable")).toBeTruthy();
@@ -158,7 +162,7 @@ describe("Live channel grid", () => {
 
     await user.click(
       await screen.findByRole("button", {
-        name: "Open details for Vera Castellan",
+        name: "Open details for Panel 2 — Panelist",
       }),
     );
     await user.click(screen.getByRole("button", { name: "Run a check" }));
@@ -173,7 +177,9 @@ describe("Live channel grid", () => {
 
     await user.click(screen.getByRole("button", { name: "Save and close" }));
     await user.click(
-      screen.getByRole("button", { name: "Open details for Vera Castellan" }),
+      screen.getByRole("button", {
+        name: "Open details for Panel 2 — Panelist",
+      }),
     );
     await user.click(screen.getByRole("button", { name: "Run a check" }));
     await user.click(screen.getByRole("button", { name: "Continue check" }));
@@ -221,7 +227,7 @@ describe("Live channel grid", () => {
     finishReconnect?.(snapshot);
     expect(
       await screen.findByRole("button", {
-        name: "Select Vera Castellan, channel 33",
+        name: "Select Panel 2 — Panelist, channel 33",
       }),
     ).toBeTruthy();
   });
@@ -315,7 +321,7 @@ describe("Live channel grid", () => {
       }),
     );
 
-    expect(screen.queryByText("Vera Castellan")).toBeNull();
+    expect(screen.queryByText("Panel 2 — Panelist")).toBeNull();
     expect(screen.getAllByText("Identity unknown").length).toBeGreaterThan(0);
     expect(playbackFactory).toHaveBeenCalledWith(
       expect.objectContaining({ channel: 1, sampleRateHz: 48000 }),

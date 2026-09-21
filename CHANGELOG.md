@@ -8,6 +8,20 @@ externally tested release.
 
 ## Unreleased
 
+### Changed
+
+- Rebuilt the Manager UI on Tailwind CSS and shadcn-style component
+  primitives (Button, Card, Input, Select, Table, Tabs, Badge) layered over
+  the existing `packages/ui` design tokens, so Paper/dark theming is
+  unchanged. Replaced the single scrolling form with a tabbed Show/
+  Receivers/Channels layout, fixed a broken two-column grid that clipped the
+  channel patch table, and turned the receiver list and channel patch into
+  proper cards and a data table.
+- Reworded the fabricated Live/Manager development data from a theatre cast
+  to a corporate all-hands scenario (podium, panel, Q&A handhelds) ahead of
+  the product's first deployment context. No schema or field names changed;
+  only the fabricated sample values.
+
 ### Removed
 
 - Withdrew the specification layer that ran ahead of evidence: five independent

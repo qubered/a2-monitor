@@ -2,12 +2,16 @@
   "schemaVersion": 1,
   "generatedFrom": "package-lock.json",
   "regenerationCommand": "node scripts/generate-node-dependency-inventory.mjs",
-  "lockfileSha256": "1ec77872b7f57110dde97c02e93aff88095cfd4bc8aadb738d908d42735b6f4e",
-  "componentCount": 303,
+  "lockfileSha256": "bb9630f7aa02cc7475652ef151a891803a146f4280927dbec3129f667a5c4783",
+  "componentCount": 383,
   "licenseCounts": [
     {
+      "license": "0BSD",
+      "count": 1
+    },
+    {
       "license": "Apache-2.0",
-      "count": 18
+      "count": 19
     },
     {
       "license": "BlueOak-1.0.0",
@@ -31,11 +35,11 @@
     },
     {
       "license": "ISC",
-      "count": 14
+      "count": 16
     },
     {
       "license": "MIT",
-      "count": 234
+      "count": 298
     },
     {
       "license": "MIT-0",
@@ -43,7 +47,7 @@
     },
     {
       "license": "MPL-2.0",
-      "count": 12
+      "count": 24
     },
     {
       "license": "OFL-1.1",
@@ -525,6 +529,50 @@
       ]
     },
     {
+      "name": "@floating-ui/core",
+      "version": "1.8.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@floating-ui/core"
+      ]
+    },
+    {
+      "name": "@floating-ui/dom",
+      "version": "1.8.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@floating-ui/dom"
+      ]
+    },
+    {
+      "name": "@floating-ui/react-dom",
+      "version": "2.1.9",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@floating-ui/react-dom"
+      ]
+    },
+    {
+      "name": "@floating-ui/utils",
+      "version": "0.2.12",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@floating-ui/utils"
+      ]
+    },
+    {
       "name": "@fontsource/archivo",
       "version": "5.3.0",
       "license": "OFL-1.1",
@@ -628,7 +676,7 @@
       "version": "0.3.13",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/@jridgewell/gen-mapping"
@@ -639,7 +687,7 @@
       "version": "2.3.5",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/@jridgewell/remapping"
@@ -650,7 +698,7 @@
       "version": "3.1.2",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/@jridgewell/resolve-uri"
@@ -661,7 +709,7 @@
       "version": "1.6.0",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/@jridgewell/sourcemap-codec"
@@ -672,7 +720,7 @@
       "version": "0.3.31",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/@jridgewell/trace-mapping"
@@ -705,7 +753,7 @@
       "version": "0.150.0",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/@oxc-project/types"
@@ -723,11 +771,341 @@
       ]
     },
     {
+      "name": "@radix-ui/number",
+      "version": "1.1.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/number"
+      ]
+    },
+    {
+      "name": "@radix-ui/primitive",
+      "version": "1.1.7",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/primitive"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-arrow",
+      "version": "1.1.15",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-arrow"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-collection",
+      "version": "1.1.15",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-collection"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-compose-refs",
+      "version": "1.1.5",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-compose-refs"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-context",
+      "version": "1.2.2",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-context"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-direction",
+      "version": "1.1.4",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-direction"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-dismissable-layer",
+      "version": "1.1.19",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-dismissable-layer"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-focus-guards",
+      "version": "1.1.6",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-focus-guards"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-focus-scope",
+      "version": "1.1.16",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-focus-scope"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-id",
+      "version": "1.1.4",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-id"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-label",
+      "version": "2.1.15",
+      "license": "MIT",
+      "direct": true,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-label"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-popper",
+      "version": "1.3.7",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-popper"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-portal",
+      "version": "1.1.17",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-portal"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-presence",
+      "version": "1.1.10",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-presence"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-primitive",
+      "version": "2.1.10",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-primitive"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-roving-focus",
+      "version": "1.1.19",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-roving-focus"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-select",
+      "version": "2.3.7",
+      "license": "MIT",
+      "direct": true,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-select"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-slot",
+      "version": "1.3.3",
+      "license": "MIT",
+      "direct": true,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-slot"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-tabs",
+      "version": "1.1.21",
+      "license": "MIT",
+      "direct": true,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-tabs"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-use-callback-ref",
+      "version": "1.1.4",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-use-callback-ref"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-use-controllable-state",
+      "version": "1.2.6",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-use-controllable-state"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-use-effect-event",
+      "version": "0.0.5",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-use-effect-event"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-use-is-hydrated",
+      "version": "0.1.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-use-is-hydrated"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-use-layout-effect",
+      "version": "1.1.4",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-use-layout-effect"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-use-previous",
+      "version": "1.1.4",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-use-previous"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-use-rect",
+      "version": "1.1.4",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-use-rect"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-use-size",
+      "version": "1.1.4",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-use-size"
+      ]
+    },
+    {
+      "name": "@radix-ui/react-visually-hidden",
+      "version": "1.2.11",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/react-visually-hidden"
+      ]
+    },
+    {
+      "name": "@radix-ui/rect",
+      "version": "1.1.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@radix-ui/rect"
+      ]
+    },
+    {
       "name": "@rolldown/binding-android-arm-eabi",
       "version": "1.2.9",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/@rolldown/binding-android-arm-eabi"
@@ -738,7 +1116,7 @@
       "version": "1.2.9",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/@rolldown/binding-android-arm64"
@@ -749,7 +1127,7 @@
       "version": "1.2.9",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/@rolldown/binding-darwin-arm64"
@@ -760,7 +1138,7 @@
       "version": "1.2.9",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/@rolldown/binding-darwin-x64"
@@ -771,7 +1149,7 @@
       "version": "1.2.9",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/@rolldown/binding-freebsd-x64"
@@ -782,7 +1160,7 @@
       "version": "1.2.9",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/@rolldown/binding-linux-arm-gnueabihf"
@@ -793,7 +1171,7 @@
       "version": "1.2.9",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/@rolldown/binding-linux-arm64-gnu"
@@ -804,7 +1182,7 @@
       "version": "1.2.9",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/@rolldown/binding-linux-arm64-musl"
@@ -815,7 +1193,7 @@
       "version": "1.2.9",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/@rolldown/binding-linux-ppc64-gnu"
@@ -826,7 +1204,7 @@
       "version": "1.2.9",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/@rolldown/binding-linux-s390x-gnu"
@@ -837,7 +1215,7 @@
       "version": "1.2.9",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/@rolldown/binding-linux-x64-gnu"
@@ -848,7 +1226,7 @@
       "version": "1.2.9",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/@rolldown/binding-linux-x64-musl"
@@ -859,7 +1237,7 @@
       "version": "1.2.9",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/@rolldown/binding-openharmony-arm64"
@@ -870,7 +1248,7 @@
       "version": "1.2.9",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/@rolldown/binding-win32-arm64-msvc"
@@ -881,7 +1259,7 @@
       "version": "1.2.9",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/@rolldown/binding-win32-x64-msvc"
@@ -892,10 +1270,175 @@
       "version": "1.0.1",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/@rolldown/pluginutils"
+      ]
+    },
+    {
+      "name": "@tailwindcss/node",
+      "version": "4.3.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@tailwindcss/node"
+      ]
+    },
+    {
+      "name": "@tailwindcss/oxide",
+      "version": "4.3.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@tailwindcss/oxide"
+      ]
+    },
+    {
+      "name": "@tailwindcss/oxide-android-arm64",
+      "version": "4.3.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/oxide-android-arm64"
+      ]
+    },
+    {
+      "name": "@tailwindcss/oxide-darwin-arm64",
+      "version": "4.3.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/oxide-darwin-arm64"
+      ]
+    },
+    {
+      "name": "@tailwindcss/oxide-darwin-x64",
+      "version": "4.3.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/oxide-darwin-x64"
+      ]
+    },
+    {
+      "name": "@tailwindcss/oxide-freebsd-x64",
+      "version": "4.3.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/oxide-freebsd-x64"
+      ]
+    },
+    {
+      "name": "@tailwindcss/oxide-linux-arm-gnueabihf",
+      "version": "4.3.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/oxide-linux-arm-gnueabihf"
+      ]
+    },
+    {
+      "name": "@tailwindcss/oxide-linux-arm64-gnu",
+      "version": "4.3.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/oxide-linux-arm64-gnu"
+      ]
+    },
+    {
+      "name": "@tailwindcss/oxide-linux-arm64-musl",
+      "version": "4.3.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/oxide-linux-arm64-musl"
+      ]
+    },
+    {
+      "name": "@tailwindcss/oxide-linux-x64-gnu",
+      "version": "4.3.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/oxide-linux-x64-gnu"
+      ]
+    },
+    {
+      "name": "@tailwindcss/oxide-linux-x64-musl",
+      "version": "4.3.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/oxide-linux-x64-musl"
+      ]
+    },
+    {
+      "name": "@tailwindcss/oxide-wasm32-wasi",
+      "version": "4.3.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/oxide-wasm32-wasi"
+      ]
+    },
+    {
+      "name": "@tailwindcss/oxide-win32-arm64-msvc",
+      "version": "4.3.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/oxide-win32-arm64-msvc"
+      ]
+    },
+    {
+      "name": "@tailwindcss/oxide-win32-x64-msvc",
+      "version": "4.3.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/oxide-win32-x64-msvc"
+      ]
+    },
+    {
+      "name": "@tailwindcss/vite",
+      "version": "4.3.3",
+      "license": "MIT",
+      "direct": true,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@tailwindcss/vite"
       ]
     },
     {
@@ -1002,7 +1545,7 @@
       "version": "24.10.0",
       "license": "MIT",
       "direct": true,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/@types/node"
@@ -1013,7 +1556,7 @@
       "version": "19.3.0",
       "license": "MIT",
       "direct": true,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/@types/react"
@@ -1024,7 +1567,7 @@
       "version": "19.3.0",
       "license": "MIT",
       "direct": true,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/@types/react-dom"
@@ -1277,6 +1820,17 @@
       ]
     },
     {
+      "name": "aria-hidden",
+      "version": "1.2.6",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/aria-hidden"
+      ]
+    },
+    {
       "name": "aria-query",
       "version": "5.3.0",
       "license": "Apache-2.0",
@@ -1409,6 +1963,28 @@
       ]
     },
     {
+      "name": "class-variance-authority",
+      "version": "0.7.1",
+      "license": "Apache-2.0",
+      "direct": true,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/class-variance-authority"
+      ]
+    },
+    {
+      "name": "clsx",
+      "version": "2.1.1",
+      "license": "MIT",
+      "direct": true,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/clsx"
+      ]
+    },
+    {
       "name": "convert-source-map",
       "version": "2.0.0",
       "license": "MIT",
@@ -1457,7 +2033,7 @@
       "version": "3.2.3",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/csstype"
@@ -1523,10 +2099,21 @@
       "version": "2.1.2",
       "license": "Apache-2.0",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/detect-libc"
+      ]
+    },
+    {
+      "name": "detect-node-es",
+      "version": "1.1.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/detect-node-es"
       ]
     },
     {
@@ -1549,6 +2136,17 @@
       "optional": false,
       "locations": [
         "node_modules/electron-to-chromium"
+      ]
+    },
+    {
+      "name": "enhanced-resolve",
+      "version": "5.25.1",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/enhanced-resolve"
       ]
     },
     {
@@ -1857,7 +2455,7 @@
       "version": "6.5.0",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/fdir"
@@ -1923,7 +2521,7 @@
       "version": "2.3.3",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/fsevents"
@@ -1938,6 +2536,17 @@
       "optional": false,
       "locations": [
         "node_modules/gensync"
+      ]
+    },
+    {
+      "name": "get-nonce",
+      "version": "1.0.1",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/get-nonce"
       ]
     },
     {
@@ -1960,6 +2569,17 @@
       "optional": false,
       "locations": [
         "node_modules/globals"
+      ]
+    },
+    {
+      "name": "graceful-fs",
+      "version": "4.2.11",
+      "license": "ISC",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/graceful-fs"
       ]
     },
     {
@@ -2117,6 +2737,17 @@
       ]
     },
     {
+      "name": "jiti",
+      "version": "2.7.0",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/jiti"
+      ]
+    },
+    {
       "name": "js-tokens",
       "version": "4.0.0",
       "license": "MIT",
@@ -2243,10 +2874,21 @@
     },
     {
       "name": "lightningcss",
+      "version": "1.32.0",
+      "license": "MPL-2.0",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@tailwindcss/node/node_modules/lightningcss"
+      ]
+    },
+    {
+      "name": "lightningcss",
       "version": "1.33.0",
       "license": "MPL-2.0",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/lightningcss"
@@ -2254,10 +2896,21 @@
     },
     {
       "name": "lightningcss-android-arm64",
+      "version": "1.32.0",
+      "license": "MPL-2.0",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/node/node_modules/lightningcss-android-arm64"
+      ]
+    },
+    {
+      "name": "lightningcss-android-arm64",
       "version": "1.33.0",
       "license": "MPL-2.0",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/lightningcss-android-arm64"
@@ -2265,10 +2918,21 @@
     },
     {
       "name": "lightningcss-darwin-arm64",
+      "version": "1.32.0",
+      "license": "MPL-2.0",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/node/node_modules/lightningcss-darwin-arm64"
+      ]
+    },
+    {
+      "name": "lightningcss-darwin-arm64",
       "version": "1.33.0",
       "license": "MPL-2.0",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/lightningcss-darwin-arm64"
@@ -2276,10 +2940,21 @@
     },
     {
       "name": "lightningcss-darwin-x64",
+      "version": "1.32.0",
+      "license": "MPL-2.0",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/node/node_modules/lightningcss-darwin-x64"
+      ]
+    },
+    {
+      "name": "lightningcss-darwin-x64",
       "version": "1.33.0",
       "license": "MPL-2.0",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/lightningcss-darwin-x64"
@@ -2287,10 +2962,21 @@
     },
     {
       "name": "lightningcss-freebsd-x64",
+      "version": "1.32.0",
+      "license": "MPL-2.0",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/node/node_modules/lightningcss-freebsd-x64"
+      ]
+    },
+    {
+      "name": "lightningcss-freebsd-x64",
       "version": "1.33.0",
       "license": "MPL-2.0",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/lightningcss-freebsd-x64"
@@ -2298,10 +2984,21 @@
     },
     {
       "name": "lightningcss-linux-arm-gnueabihf",
+      "version": "1.32.0",
+      "license": "MPL-2.0",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/node/node_modules/lightningcss-linux-arm-gnueabihf"
+      ]
+    },
+    {
+      "name": "lightningcss-linux-arm-gnueabihf",
       "version": "1.33.0",
       "license": "MPL-2.0",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/lightningcss-linux-arm-gnueabihf"
@@ -2309,10 +3006,21 @@
     },
     {
       "name": "lightningcss-linux-arm64-gnu",
+      "version": "1.32.0",
+      "license": "MPL-2.0",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/node/node_modules/lightningcss-linux-arm64-gnu"
+      ]
+    },
+    {
+      "name": "lightningcss-linux-arm64-gnu",
       "version": "1.33.0",
       "license": "MPL-2.0",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/lightningcss-linux-arm64-gnu"
@@ -2320,10 +3028,21 @@
     },
     {
       "name": "lightningcss-linux-arm64-musl",
+      "version": "1.32.0",
+      "license": "MPL-2.0",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/node/node_modules/lightningcss-linux-arm64-musl"
+      ]
+    },
+    {
+      "name": "lightningcss-linux-arm64-musl",
       "version": "1.33.0",
       "license": "MPL-2.0",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/lightningcss-linux-arm64-musl"
@@ -2331,10 +3050,21 @@
     },
     {
       "name": "lightningcss-linux-x64-gnu",
+      "version": "1.32.0",
+      "license": "MPL-2.0",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/node/node_modules/lightningcss-linux-x64-gnu"
+      ]
+    },
+    {
+      "name": "lightningcss-linux-x64-gnu",
       "version": "1.33.0",
       "license": "MPL-2.0",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/lightningcss-linux-x64-gnu"
@@ -2342,10 +3072,21 @@
     },
     {
       "name": "lightningcss-linux-x64-musl",
+      "version": "1.32.0",
+      "license": "MPL-2.0",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/node/node_modules/lightningcss-linux-x64-musl"
+      ]
+    },
+    {
+      "name": "lightningcss-linux-x64-musl",
       "version": "1.33.0",
       "license": "MPL-2.0",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/lightningcss-linux-x64-musl"
@@ -2353,10 +3094,21 @@
     },
     {
       "name": "lightningcss-win32-arm64-msvc",
+      "version": "1.32.0",
+      "license": "MPL-2.0",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/node/node_modules/lightningcss-win32-arm64-msvc"
+      ]
+    },
+    {
+      "name": "lightningcss-win32-arm64-msvc",
       "version": "1.33.0",
       "license": "MPL-2.0",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/lightningcss-win32-arm64-msvc"
@@ -2364,10 +3116,21 @@
     },
     {
       "name": "lightningcss-win32-x64-msvc",
+      "version": "1.32.0",
+      "license": "MPL-2.0",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": true,
+      "locations": [
+        "node_modules/@tailwindcss/node/node_modules/lightningcss-win32-x64-msvc"
+      ]
+    },
+    {
+      "name": "lightningcss-win32-x64-msvc",
       "version": "1.33.0",
       "license": "MPL-2.0",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": true,
       "locations": [
         "node_modules/lightningcss-win32-x64-msvc"
@@ -2409,6 +3172,17 @@
       ]
     },
     {
+      "name": "lucide-react",
+      "version": "1.47.0",
+      "license": "ISC",
+      "direct": true,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/lucide-react"
+      ]
+    },
+    {
       "name": "lz-string",
       "version": "1.5.0",
       "license": "MIT",
@@ -2417,6 +3191,17 @@
       "optional": false,
       "locations": [
         "node_modules/lz-string"
+      ]
+    },
+    {
+      "name": "magic-string",
+      "version": "0.30.21",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/@tailwindcss/node/node_modules/magic-string"
       ]
     },
     {
@@ -2468,7 +3253,7 @@
       "version": "3.3.19",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/nanoid"
@@ -2589,7 +3374,7 @@
       "version": "1.1.1",
       "license": "ISC",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/picocolors"
@@ -2600,7 +3385,7 @@
       "version": "4.0.7",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/picomatch"
@@ -2644,7 +3429,7 @@
       "version": "8.5.28",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/postcss"
@@ -2772,6 +3557,39 @@
       ]
     },
     {
+      "name": "react-remove-scroll",
+      "version": "2.7.2",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/react-remove-scroll"
+      ]
+    },
+    {
+      "name": "react-remove-scroll-bar",
+      "version": "2.3.8",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/react-remove-scroll-bar"
+      ]
+    },
+    {
+      "name": "react-style-singleton",
+      "version": "2.2.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/react-style-singleton"
+      ]
+    },
+    {
       "name": "real-require",
       "version": "0.2.0",
       "license": "MIT",
@@ -2842,7 +3660,7 @@
       "version": "1.2.9",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/rolldown"
@@ -2986,7 +3804,7 @@
       "version": "1.2.1",
       "license": "BSD-3-Clause",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/source-map-js"
@@ -3023,6 +3841,39 @@
       "optional": false,
       "locations": [
         "node_modules/std-env"
+      ]
+    },
+    {
+      "name": "tailwind-merge",
+      "version": "3.7.0",
+      "license": "MIT",
+      "direct": true,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/tailwind-merge"
+      ]
+    },
+    {
+      "name": "tailwindcss",
+      "version": "4.3.3",
+      "license": "MIT",
+      "direct": true,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/tailwindcss"
+      ]
+    },
+    {
+      "name": "tapable",
+      "version": "2.3.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/tapable"
       ]
     },
     {
@@ -3063,7 +3914,7 @@
       "version": "0.2.17",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/tinyglobby"
@@ -3136,6 +3987,17 @@
       ]
     },
     {
+      "name": "tslib",
+      "version": "2.8.1",
+      "license": "0BSD",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/tslib"
+      ]
+    },
+    {
       "name": "type-check",
       "version": "0.4.0",
       "license": "MIT",
@@ -3184,7 +4046,7 @@
       "version": "7.16.0",
       "license": "MIT",
       "direct": false,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/undici-types"
@@ -3213,11 +4075,33 @@
       ]
     },
     {
+      "name": "use-callback-ref",
+      "version": "1.3.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/use-callback-ref"
+      ]
+    },
+    {
+      "name": "use-sidecar",
+      "version": "1.1.3",
+      "license": "MIT",
+      "direct": false,
+      "developmentOnly": false,
+      "optional": false,
+      "locations": [
+        "node_modules/use-sidecar"
+      ]
+    },
+    {
       "name": "vite",
       "version": "8.3.0",
       "license": "MIT",
       "direct": true,
-      "developmentOnly": true,
+      "developmentOnly": false,
       "optional": false,
       "locations": [
         "node_modules/vite"

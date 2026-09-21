@@ -9,9 +9,9 @@ export const fabricatedLiveSnapshot: LiveSnapshot = {
     label: "Fabricated development data — not a real production",
   },
   show: {
-    name: "The Winter Circus",
-    venue: "Northgate Playhouse",
-    performanceLabel: "Preview 3",
+    name: "Q3 All-Hands",
+    venue: "Bay View Conference Center",
+    performanceLabel: "General session",
   },
   node: {
     status: "ready",
@@ -22,10 +22,10 @@ export const fabricatedLiveSnapshot: LiveSnapshot = {
     {
       id: "ch-27",
       number: 27,
-      character: "Marguerite Hale",
-      performer: "Eleanor Vance",
+      character: "Podium — CEO",
+      performer: "Elena Cho",
       kind: "wireless",
-      zone: "Stage left",
+      zone: "Main stage",
       levelDbfs: -18.2,
       statuses: {
         rf: "fault",
@@ -46,10 +46,10 @@ export const fabricatedLiveSnapshot: LiveSnapshot = {
     {
       id: "ch-12",
       number: 12,
-      character: "Auguste Renaud",
-      performer: "Dov Halpern",
+      character: "Panel 1 — Moderator",
+      performer: "Marcus Webb",
       kind: "wireless",
-      zone: "Stage right",
+      zone: "Panel table",
       levelDbfs: -12.4,
       statuses: {
         rf: "good",
@@ -74,10 +74,10 @@ export const fabricatedLiveSnapshot: LiveSnapshot = {
     {
       id: "ch-33",
       number: 33,
-      character: "Vera Castellan",
-      performer: "Ines Okonjo",
+      character: "Panel 2 — Panelist",
+      performer: "Priya Anand",
       kind: "wireless",
-      zone: "Stage left",
+      zone: "Panel table",
       levelDbfs: -24,
       statuses: {
         rf: "good",
@@ -97,10 +97,10 @@ export const fabricatedLiveSnapshot: LiveSnapshot = {
     {
       id: "ch-41",
       number: 41,
-      character: "Ensemble 4",
-      performer: "Tobias Renn",
+      character: "Handheld — Q&A mic 1",
+      performer: "Floor roaming",
       kind: "wireless",
-      zone: "Stage right",
+      zone: "Audience aisle",
       levelDbfs: null,
       statuses: {
         rf: "good",
@@ -120,10 +120,10 @@ export const fabricatedLiveSnapshot: LiveSnapshot = {
     {
       id: "ch-19",
       number: 19,
-      character: "Swing · covering Marguerite",
-      performer: "Priya Nandakumar",
+      character: "Spare — covering podium",
+      performer: "Dana Ruiz",
       kind: "wireless",
-      zone: "Stage left",
+      zone: "Backup pack",
       levelDbfs: -31.5,
       statuses: {
         rf: "good",
@@ -143,10 +143,10 @@ export const fabricatedLiveSnapshot: LiveSnapshot = {
     {
       id: "ch-51",
       number: 51,
-      character: "Ensemble 9",
-      performer: "Marcus Bell",
+      character: "Handheld — Q&A mic 2",
+      performer: "Floor roaming",
       kind: "wireless",
-      zone: "Stage right",
+      zone: "Audience aisle",
       levelDbfs: -20.1,
       statuses: {
         rf: "unknown",
@@ -166,10 +166,10 @@ export const fabricatedLiveSnapshot: LiveSnapshot = {
     {
       id: "ch-08",
       number: 8,
-      character: "Bandleader · keys vox",
-      performer: "Reed Kovac",
+      character: "Lectern — gooseneck",
+      performer: "Wired lectern feed",
       kind: "wired",
-      zone: "Band",
+      zone: "Main stage",
       levelDbfs: -9.8,
       statuses: {
         rf: "not-applicable",
@@ -189,10 +189,10 @@ export const fabricatedLiveSnapshot: LiveSnapshot = {
     {
       id: "ch-36",
       number: 36,
-      character: "Célestine",
-      performer: "Anneke Vos",
+      character: "Panel 3 — Panelist",
+      performer: "Owen Baptiste",
       kind: "wireless",
-      zone: "Stage left",
+      zone: "Panel table",
       levelDbfs: null,
       statuses: {
         rf: "good",
@@ -213,10 +213,10 @@ export const fabricatedLiveSnapshot: LiveSnapshot = {
     {
       id: "ch-22",
       number: 22,
-      character: "Ensemble 2",
-      performer: "Halim Ferrer",
+      character: "Handheld — Q&A mic 3",
+      performer: "Floor roaming",
       kind: "wireless",
-      zone: "Stage right",
+      zone: "Audience aisle",
       levelDbfs: -26.7,
       statuses: {
         rf: "good",
@@ -236,10 +236,10 @@ export const fabricatedLiveSnapshot: LiveSnapshot = {
     {
       id: "ch-14",
       number: 14,
-      character: "Le Directeur",
-      performer: "Solomon Adeyemi",
+      character: "Panel 4 — Panelist",
+      performer: "Grace Lindqvist",
       kind: "wireless",
-      zone: "Stage left",
+      zone: "Panel table",
       levelDbfs: -15.9,
       statuses: {
         rf: "caution",

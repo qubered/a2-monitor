@@ -5,11 +5,33 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 
+// jsdom has no pointer-capture/scroll implementation; Radix's Select uses
+// both while handling pointer events. Polyfill only what's missing so the
+// combobox interaction tests below can actually open and select.
+for (const method of [
+  "hasPointerCapture",
+  "setPointerCapture",
+  "releasePointerCapture",
+]) {
+  if (!(method in Element.prototype)) {
+    Object.defineProperty(Element.prototype, method, {
+      value: () => false,
+      configurable: true,
+    });
+  }
+}
+if (!("scrollIntoView" in Element.prototype)) {
+  Object.defineProperty(Element.prototype, "scrollIntoView", {
+    value: () => undefined,
+    configurable: true,
+  });
+}
+
 const storedShowfile = {
   schemaVersion: "0",
   revision: 2,
   updatedAtUtc: "2026-09-21T00:00:00Z",
-  show: { name: "Winter Circus" },
+  show: { name: "Q3 All-Hands" },
   device: { name: "USB Interface", channelCount: 2 },
   channels: [
     { inputIndex: 0, name: "Alice" },
@@ -65,6 +87,7 @@ describe("Manager showfile editor", () => {
     const user = userEvent.setup();
     render(<App />);
 
+    await user.click(await screen.findByRole("tab", { name: /channels/i }));
     const input = await screen.findByLabelText("Channel 2 name");
     expect((input as HTMLInputElement).value).toBe("Bob");
     await user.clear(input);
@@ -83,17 +106,27 @@ describe("Manager showfile editor", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await screen.findByLabelText("Channel 2 name");
+    await user.click(await screen.findByRole("tab", { name: /receivers/i }));
     await user.click(screen.getByRole("button", { name: "Add receiver" }));
 
-    const modelSelect = await screen.findByLabelText("Receiver 1 model");
-    expect((modelSelect as HTMLSelectElement).value).toBe("ULXD4D");
+    const modelSelect = await screen.findByRole("combobox", {
+      name: "Receiver 1 model",
+    });
+    expect(modelSelect.textContent).toContain("ULX-D ULXD4D");
     expect(screen.getByText("2 channels")).toBeTruthy();
 
-    await user.selectOptions(modelSelect, "QLXD4");
+    await user.click(modelSelect);
+    await user.click(
+      await screen.findByRole("option", { name: "QLX-D QLXD4" }),
+    );
     expect(screen.getByText("1 channel")).toBeTruthy();
 
-    await user.selectOptions(modelSelect, "ANX4");
+    await user.click(modelSelect);
+    await user.click(
+      await screen.findByRole("option", {
+        name: "Axient Digital / ULX-D ANX4",
+      }),
+    );
     expect(screen.getByLabelText("Receiver 1 channel count")).toBeTruthy();
 
     await user.click(screen.getByRole("button", { name: "Save showfile" }));
