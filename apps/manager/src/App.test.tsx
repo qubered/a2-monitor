@@ -9,7 +9,7 @@ const storedShowfile = {
   schemaVersion: "0",
   revision: 2,
   updatedAtUtc: "2026-09-21T00:00:00Z",
-  show: { name: "Winter Circus" },
+  show: { name: "Q3 All-Hands" },
   device: { name: "USB Interface", channelCount: 2 },
   channels: [
     { inputIndex: 0, name: "Alice" },
@@ -65,6 +65,7 @@ describe("Manager showfile editor", () => {
     const user = userEvent.setup();
     render(<App />);
 
+    await user.click(await screen.findByRole("tab", { name: /channels/i }));
     const input = await screen.findByLabelText("Channel 2 name");
     expect((input as HTMLInputElement).value).toBe("Bob");
     await user.clear(input);

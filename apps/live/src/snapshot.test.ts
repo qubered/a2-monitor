@@ -14,8 +14,8 @@ const snapshot: LiveSnapshot = {
   generatedAtUtc: "2026-09-20T00:00:00Z",
   source: { kind: "fabricated", label: "Fabricated test data" },
   show: {
-    name: "The Winter Circus",
-    venue: "Northgate Playhouse",
+    name: "Q3 All-Hands",
+    venue: "Bay View Conference Center",
     performanceLabel: "Preview 3",
   },
   node: { status: "ready", channelCount: 10, sampleRateHz: 48000 },

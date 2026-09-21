@@ -55,7 +55,7 @@ describe("backend health and Live snapshot", () => {
       url: "/api/v1/showfile",
       payload: {
         ...initial.json(),
-        show: { name: "Winter Circus" },
+        show: { name: "Q3 All-Hands" },
         device: { name: "USB Interface", channelCount: 2 },
         channels: [
           { inputIndex: 0, name: "Alice" },
@@ -67,7 +67,7 @@ describe("backend health and Live snapshot", () => {
     expect(saved.statusCode).toBe(200);
     expect(saved.json()).toMatchObject({
       revision: 1,
-      show: { name: "Winter Circus" },
+      show: { name: "Q3 All-Hands" },
       channels: [{ name: "Alice" }, { name: "Bob" }],
     });
     expect(saved.json().updatedAtUtc).toBeTruthy();
