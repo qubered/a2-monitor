@@ -1,24 +1,58 @@
 import AppKit
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+private let listenBase = "http://127.0.0.1:4173"
+private let deviceDefaultsKey = "A2AudioDevice"
+private let hostDefaultsKey = "A2BindHost"
+
+private struct HostOption {
+    let title: String
+    let value: String
+}
+
+private let hostOptions = [
+    HostOption(title: "This Mac only", value: "127.0.0.1"),
+    HostOption(title: "Local network", value: "0.0.0.0"),
+]
+
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var statusItem: NSStatusItem!
     private var launcher: Process?
-    private var statusMenuItem: NSMenuItem!
+
+    private var window: NSWindow!
+    private var deviceButton: NSPopUpButton!
+    private var hostButton: NSPopUpButton!
+    private var statusLabel: NSTextField!
+    private var startStopButton: NSButton!
+    private var refreshButton: NSButton!
+
+    private var showWindowMenuItem: NSMenuItem!
     private var startMenuItem: NSMenuItem!
     private var stopMenuItem: NSMenuItem!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        buildStatusItem()
+        buildWindow()
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        refreshDevices()
+    }
+
+    // MARK: - Status item
+
+    private func buildStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.title = "A2"
         statusItem.button?.toolTip = "A2 Monitor"
 
         let menu = NSMenu()
-        statusMenuItem = menu.addItem(withTitle: "Server stopped", action: nil, keyEquivalent: "")
-        statusMenuItem.isEnabled = false
+        showWindowMenuItem = menu.addItem(
+            withTitle: "Show A2 Monitor", action: #selector(showWindow), keyEquivalent: "")
+        showWindowMenuItem.target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "Open Live", action: #selector(openLive), keyEquivalent: "l").target = self
         menu.addItem(withTitle: "Open Manager", action: #selector(openManager), keyEquivalent: "m").target = self
-        menu.addItem(withTitle: "Show Log", action: #selector(showLog), keyEquivalent: "") .target = self
+        menu.addItem(withTitle: "Show Log", action: #selector(showLog), keyEquivalent: "").target = self
         menu.addItem(.separator())
         startMenuItem = menu.addItem(withTitle: "Start Server", action: #selector(startServer), keyEquivalent: "")
         startMenuItem.target = self
@@ -27,25 +61,187 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit A2 Monitor", action: #selector(quit), keyEquivalent: "q").target = self
         statusItem.menu = menu
-        updateMenu(running: false, status: "Server stopped")
-        startServer()
+    }
+
+    // MARK: - Window
+
+    private func buildWindow() {
+        window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 420, height: 260),
+            styleMask: [.titled, .closable, .miniaturizable],
+            backing: .buffered,
+            defer: false)
+        window.title = "A2 Monitor"
+        window.delegate = self
+        window.isReleasedWhenClosed = false
+
+        let deviceLabel = NSTextField(labelWithString: "Audio input device")
+        deviceButton = NSPopUpButton(frame: .zero, pullsDown: false)
+        refreshButton = NSButton(title: "Refresh", target: self, action: #selector(refreshDevices))
+
+        let deviceRow = NSStackView(views: [deviceButton, refreshButton])
+        deviceRow.orientation = .horizontal
+        deviceRow.spacing = 8
+        deviceButton.setContentHuggingPriority(.defaultLow, for: .horizontal)
+
+        let hostLabel = NSTextField(labelWithString: "Who can open the listening page")
+        hostButton = NSPopUpButton(frame: .zero, pullsDown: false)
+        hostButton.addItems(withTitles: hostOptions.map(\.title))
+
+        statusLabel = NSTextField(labelWithString: "Server stopped")
+        statusLabel.textColor = .secondaryLabelColor
+
+        startStopButton = NSButton(title: "Start Server", target: self, action: #selector(toggleServer))
+        startStopButton.bezelStyle = .rounded
+        startStopButton.keyEquivalent = "\r"
+
+        let openLiveButton = NSButton(title: "Open Live", target: self, action: #selector(openLive))
+        let openManagerButton = NSButton(title: "Open Manager", target: self, action: #selector(openManager))
+        let logButton = NSButton(title: "Show Log", target: self, action: #selector(showLog))
+        let actionRow = NSStackView(views: [openLiveButton, openManagerButton, logButton])
+        actionRow.orientation = .horizontal
+        actionRow.spacing = 8
+
+        let stack = NSStackView(views: [
+            deviceLabel, deviceRow,
+            hostLabel, hostButton,
+            statusLabel,
+            startStopButton,
+            actionRow,
+        ])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 10
+        stack.edgeInsets = NSEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+
+        let content = NSView(frame: window.contentLayoutRect)
+        content.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: content.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: content.trailingAnchor),
+            stack.topAnchor.constraint(equalTo: content.topAnchor),
+            stack.bottomAnchor.constraint(equalTo: content.bottomAnchor),
+        ])
+        window.contentView = content
+
+        let defaults = UserDefaults.standard
+        if let savedHost = defaults.string(forKey: hostDefaultsKey),
+            let index = hostOptions.firstIndex(where: { $0.value == savedHost })
+        {
+            hostButton.selectItem(at: index)
+        }
+    }
+
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        window.orderOut(nil)
+        return false
+    }
+
+    @objc private func showWindow() {
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    // MARK: - Devices
+
+    @objc private func refreshDevices() {
+        guard let resources = Bundle.main.resourceURL else { return }
+        let captureBinary = resources.appendingPathComponent("bin/a2-device-capture")
+        let savedDevice = UserDefaults.standard.string(forKey: deviceDefaultsKey)
+        deviceButton.isEnabled = false
+        refreshButton.isEnabled = false
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let devices = Self.listDevices(captureBinary: captureBinary)
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.deviceButton.removeAllItems()
+                self.deviceButton.addItems(withTitles: devices)
+                if let savedDevice, devices.contains(savedDevice) {
+                    self.deviceButton.selectItem(withTitle: savedDevice)
+                }
+                self.deviceButton.isEnabled = true
+                self.refreshButton.isEnabled = true
+                self.startStopButton.isEnabled = self.launcher != nil || !devices.isEmpty
+                if devices.isEmpty {
+                    self.statusLabel.stringValue = "No 48 kHz input devices found"
+                }
+            }
+        }
+    }
+
+    private static func listDevices(captureBinary: URL) -> [String] {
+        let process = Process()
+        process.executableURL = captureBinary
+        process.arguments = ["--list"]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = Pipe()
+        do {
+            try process.run()
+        } catch {
+            return []
+        }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0,
+            let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let devices = payload["devices"] as? [[String: Any]]
+        else { return [] }
+        return devices.compactMap { device -> String? in
+            guard let name = device["deviceName"] as? String,
+                let configs = device["configs"] as? [[String: Any]]
+            else { return nil }
+            let supports48k = configs.contains { config in
+                guard let min = config["minSampleRateHz"] as? Int,
+                    let max = config["maxSampleRateHz"] as? Int
+                else { return false }
+                return min <= 48_000 && max >= 48_000
+            }
+            return supports48k ? name : nil
+        }
+    }
+
+    // MARK: - Server lifecycle
+
+    @objc private func toggleServer() {
+        if launcher == nil {
+            startServer()
+        } else {
+            stopServer()
+        }
     }
 
     @objc private func startServer() {
+        let hostIndex = hostButton.indexOfSelectedItem
         guard launcher?.isRunning != true,
-              let resources = Bundle.main.resourceURL else { return }
+            let resources = Bundle.main.resourceURL,
+            let device = deviceButton.titleOfSelectedItem,
+            hostOptions.indices.contains(hostIndex)
+        else { return }
+        let host = hostOptions[hostIndex].value
+
+        let defaults = UserDefaults.standard
+        defaults.set(device, forKey: deviceDefaultsKey)
+        defaults.set(host, forKey: hostDefaultsKey)
+
         let process = Process()
         process.executableURL = resources.appendingPathComponent("bin/node")
         process.arguments = [resources.appendingPathComponent("launcher.mjs").path]
         process.currentDirectoryURL = resources.appendingPathComponent("app")
         var environment = ProcessInfo.processInfo.environment
-        environment["A2_APP_SHELL"] = "menu-bar"
+        environment["A2_APP_SHELL"] = "app"
+        environment["A2_AUDIO_DEVICE"] = device
+        environment["A2_BIND_HOST"] = host
         process.environment = environment
         process.terminationHandler = { [weak self] finished in
             DispatchQueue.main.async {
                 guard self?.launcher === finished else { return }
                 self?.launcher = nil
-                self?.updateMenu(running: false, status: finished.terminationStatus == 0 ? "Server stopped" : "Server exited — see log")
+                self?.updateMenu(
+                    running: false,
+                    status: finished.terminationStatus == 0 ? "Server stopped" : "Server exited — see log")
             }
         }
         do {
@@ -64,11 +260,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openLive() {
-        NSWorkspace.shared.open(URL(string: "http://127.0.0.1:4173/")!)
+        NSWorkspace.shared.open(URL(string: "\(listenBase)/")!)
     }
 
     @objc private func openManager() {
-        NSWorkspace.shared.open(URL(string: "http://127.0.0.1:4173/manager/")!)
+        NSWorkspace.shared.open(URL(string: "\(listenBase)/manager/")!)
     }
 
     @objc private func showLog() {
@@ -82,10 +278,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func updateMenu(running: Bool, status: String) {
-        statusMenuItem.title = status
+        statusLabel.stringValue = status
         startMenuItem.isEnabled = !running
         stopMenuItem.isEnabled = running
         statusItem.button?.title = running ? "A2 ●" : "A2"
+        startStopButton.title = running ? "Stop Server" : "Start Server"
+        deviceButton.isEnabled = !running
+        hostButton.isEnabled = !running
+        refreshButton.isEnabled = !running
     }
 }
 
