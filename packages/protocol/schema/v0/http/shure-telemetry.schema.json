@@ -15,7 +15,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "name", "host", "model", "firmware", "compatibility", "status", "detail", "channels"],
+        "required": ["id", "name", "host", "model", "firmware", "compatibility", "status", "detail", "capabilities", "channels"],
         "properties": {
           "id": { "type": "string", "minLength": 1, "maxLength": 64 },
           "name": { "type": "string", "minLength": 1, "maxLength": 120 },
@@ -25,17 +25,91 @@
           "compatibility": { "const": "compatible-read-only" },
           "status": { "enum": ["connecting", "ready", "stale", "error"] },
           "detail": { "type": "string", "minLength": 1, "maxLength": 240 },
+          "capabilities": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["antennaDiversity", "linkQuality", "interference", "audioMeter", "batteryHealth", "transmitterDetail"],
+            "properties": {
+              "antennaDiversity": { "type": "boolean" },
+              "linkQuality": { "type": "boolean" },
+              "interference": { "type": "boolean" },
+              "audioMeter": { "type": "boolean" },
+              "batteryHealth": { "type": "boolean" },
+              "transmitterDetail": { "type": "boolean" }
+            }
+          },
           "channels": {
             "type": "array",
             "maxItems": 128,
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["index", "batteryBars", "batteryChargePercent", "observedAtUtc", "availability"],
+              "required": [
+                "index",
+                "linkStatus",
+                "batteryBars",
+                "batteryChargePercent",
+                "batteryType",
+                "batteryCycleCount",
+                "batteryRunTimeMinutes",
+                "antennas",
+                "rfLevelDbm",
+                "rfLevelRaw",
+                "linkQualityRaw",
+                "interference",
+                "audioLevelDbfs",
+                "audioLevelRaw",
+                "frequencyRaw",
+                "groupChannelRaw",
+                "transmitter",
+                "warnings",
+                "observedAtUtc",
+                "availability"
+              ],
               "properties": {
                 "index": { "type": "integer", "minimum": 0, "maximum": 127 },
+                "linkStatus": { "enum": ["no-transmitter", "active", "unavailable"] },
                 "batteryBars": { "type": ["integer", "null"], "minimum": 0, "maximum": 5 },
                 "batteryChargePercent": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+                "batteryType": { "type": ["string", "null"], "maxLength": 32 },
+                "batteryCycleCount": { "type": ["integer", "null"], "minimum": 0, "maximum": 100000 },
+                "batteryRunTimeMinutes": { "type": ["integer", "null"], "minimum": 0, "maximum": 1440 },
+                "antennas": {
+                  "type": "array",
+                  "maxItems": 4,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["label", "active"],
+                    "properties": {
+                      "label": { "enum": ["A", "B", "C", "D"] },
+                      "active": { "type": ["boolean", "null"] }
+                    }
+                  }
+                },
+                "rfLevelDbm": { "type": ["integer", "null"], "minimum": -160, "maximum": 0 },
+                "rfLevelRaw": { "type": ["integer", "null"], "minimum": 0, "maximum": 1023 },
+                "linkQualityRaw": { "type": ["integer", "null"], "minimum": 0, "maximum": 1023 },
+                "interference": { "enum": ["none", "detected", "unavailable"] },
+                "audioLevelDbfs": { "type": ["integer", "null"], "minimum": -160, "maximum": 0 },
+                "audioLevelRaw": { "type": ["integer", "null"], "minimum": 0, "maximum": 1023 },
+                "frequencyRaw": { "type": ["string", "null"], "maxLength": 16 },
+                "groupChannelRaw": { "type": ["string", "null"], "maxLength": 16 },
+                "transmitter": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["type", "name", "muted"],
+                  "properties": {
+                    "type": { "type": ["string", "null"], "maxLength": 64 },
+                    "name": { "type": ["string", "null"], "maxLength": 64 },
+                    "muted": { "type": ["boolean", "null"] }
+                  }
+                },
+                "warnings": {
+                  "type": "array",
+                  "maxItems": 8,
+                  "items": { "type": "string", "minLength": 1, "maxLength": 120 }
+                },
                 "observedAtUtc": { "type": ["string", "null"], "format": "date-time" },
                 "availability": { "enum": ["observed", "unavailable", "stale"] }
               }

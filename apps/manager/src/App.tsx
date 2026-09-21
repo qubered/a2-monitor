@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import type { Showfile, ShureTelemetry } from "@a2-monitor/protocol/http";
 import {
+  SHURE_MODEL_INFO,
+  SHURE_RECEIVER_MODELS,
+  type ShureReceiverModel,
+} from "@a2-monitor/protocol/shure-models";
+import {
   loadObservedDevice,
   loadShowfile,
   loadShureTelemetry,
@@ -205,7 +210,8 @@ export function App() {
                 <button
                   className="line-button"
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
+                    const defaultModel: ShureReceiverModel = "ULXD4D";
                     update({
                       ...showfile,
                       shureReceivers: [
@@ -214,18 +220,20 @@ export function App() {
                           id: receiverId(),
                           name: `Receiver ${showfile.shureReceivers.length + 1}`,
                           host: "192.168.1.100",
-                          channelCount: 4,
+                          model: defaultModel,
+                          channelCount:
+                            SHURE_MODEL_INFO[defaultModel].defaultChannelCount,
                         },
                       ],
-                    })
-                  }
+                    });
+                  }}
                 >
                   Add receiver
                 </button>
               </div>
               <p className="patch-summary">
-                Add every receiver unit here. Use an explicit control-network IP
-                address.
+                Add every receiver unit here. Select its exact model, then use
+                an explicit control-network IP address.
               </p>
               <div className="receiver-list">
                 {showfile.shureReceivers.map((receiver, position) => {
@@ -251,6 +259,36 @@ export function App() {
                         />
                       </label>
                       <label>
+                        <span>Model</span>
+                        <select
+                          aria-label={`Receiver ${position + 1} model`}
+                          value={receiver.model}
+                          onChange={(event) => {
+                            const model = event.target
+                              .value as ShureReceiverModel;
+                            const info = SHURE_MODEL_INFO[model];
+                            const shureReceivers = [...showfile.shureReceivers];
+                            shureReceivers[position] = {
+                              ...receiver,
+                              model,
+                              channelCount: info.dynamicChannelCount
+                                ? Math.min(
+                                    Math.max(receiver.channelCount, 1),
+                                    info.maxChannelCount,
+                                  )
+                                : info.defaultChannelCount,
+                            };
+                            update({ ...showfile, shureReceivers });
+                          }}
+                        >
+                          {SHURE_RECEIVER_MODELS.map((model) => (
+                            <option key={model} value={model}>
+                              {SHURE_MODEL_INFO[model].label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
                         <span>Control IP</span>
                         <input
                           aria-label={`Receiver ${position + 1} control IP`}
@@ -266,27 +304,48 @@ export function App() {
                           }}
                         />
                       </label>
-                      <label>
-                        <span>Channels</span>
-                        <input
-                          aria-label={`Receiver ${position + 1} channel count`}
-                          type="number"
-                          min={1}
-                          max={128}
-                          value={receiver.channelCount}
-                          onChange={(event) => {
-                            const shureReceivers = [...showfile.shureReceivers];
-                            shureReceivers[position] = {
-                              ...receiver,
-                              channelCount: Math.max(
-                                1,
-                                Math.min(128, Number(event.target.value)),
-                              ),
-                            };
-                            update({ ...showfile, shureReceivers });
-                          }}
-                        />
-                      </label>
+                      {SHURE_MODEL_INFO[receiver.model as ShureReceiverModel]
+                        ?.dynamicChannelCount ? (
+                        <label>
+                          <span>Channels</span>
+                          <input
+                            aria-label={`Receiver ${position + 1} channel count`}
+                            type="number"
+                            min={1}
+                            max={
+                              SHURE_MODEL_INFO[
+                                receiver.model as ShureReceiverModel
+                              ].maxChannelCount
+                            }
+                            value={receiver.channelCount}
+                            onChange={(event) => {
+                              const info =
+                                SHURE_MODEL_INFO[
+                                  receiver.model as ShureReceiverModel
+                                ];
+                              const shureReceivers = [
+                                ...showfile.shureReceivers,
+                              ];
+                              shureReceivers[position] = {
+                                ...receiver,
+                                channelCount: Math.max(
+                                  1,
+                                  Math.min(
+                                    info.maxChannelCount,
+                                    Number(event.target.value),
+                                  ),
+                                ),
+                              };
+                              update({ ...showfile, shureReceivers });
+                            }}
+                          />
+                        </label>
+                      ) : (
+                        <span className="receiver-channel-count">
+                          {receiver.channelCount} channel
+                          {receiver.channelCount === 1 ? "" : "s"}
+                        </span>
+                      )}
                       <span
                         className={`receiver-status state-${observed?.status ?? "unconfigured"}`}
                       >

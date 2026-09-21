@@ -5,7 +5,7 @@
   "show": { "name": "The Winter Circus" },
   "device": { "name": "USB Interface", "channelCount": 2 },
   "shureReceivers": [
-    { "id": "receiver-a", "name": "Stage left", "host": "192.0.2.10", "channelCount": 2 }
+    { "id": "receiver-a", "name": "Stage left", "host": "192.0.2.10", "model": "ULXD4D", "channelCount": 2 }
   ],
   "channels": [
     { "inputIndex": 0, "name": "Marguerite", "shureReceiverId": "receiver-a", "shureChannelIndex": 0 },

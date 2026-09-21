@@ -169,10 +169,10 @@ export function synthesizeDeviceChannels(
         : receiver?.channels.find(
             ({ index }) => index === configuredChannel.shureChannelIndex,
           );
-    const batteryObserved = receiverChannel?.availability === "observed";
+    const observed = receiverChannel?.availability === "observed";
     const batteryValue =
       receiverChannel?.batteryChargePercent ?? receiverChannel?.batteryBars;
-    const batteryStatus = !batteryObserved
+    const batteryStatus = !observed
       ? "unknown"
       : batteryValue === null || batteryValue === undefined
         ? "unknown"
@@ -187,7 +187,7 @@ export function synthesizeDeviceChannels(
             : batteryValue === 1
               ? "caution"
               : "good";
-    const batteryRemaining = batteryObserved
+    const batteryRemaining = observed
       ? [
           receiverChannel?.batteryChargePercent === null
             ? null
@@ -195,10 +195,65 @@ export function synthesizeDeviceChannels(
           receiverChannel?.batteryBars === null
             ? null
             : `${receiverChannel?.batteryBars} / 5 bars`,
+          receiverChannel?.batteryRunTimeMinutes === null
+            ? null
+            : `${Math.floor((receiverChannel?.batteryRunTimeMinutes ?? 0) / 60)}h ${(receiverChannel?.batteryRunTimeMinutes ?? 0) % 60}m remaining`,
+          receiverChannel?.batteryType === null
+            ? null
+            : receiverChannel?.batteryType,
         ]
           .filter(Boolean)
           .join(" · ") || null
       : null;
+    const antennaCapable = receiver?.capabilities.antennaDiversity ?? false;
+    const rfStatus =
+      !receiver || !antennaCapable
+        ? "not-applicable"
+        : !observed
+          ? "unknown"
+          : receiverChannel?.interference === "detected"
+            ? "fault"
+            : receiverChannel?.rfLevelDbm !== null &&
+                receiverChannel?.rfLevelDbm !== undefined
+              ? receiverChannel.rfLevelDbm <= -75
+                ? "fault"
+                : receiverChannel.rfLevelDbm <= -65
+                  ? "caution"
+                  : "good"
+              : receiverChannel?.rfLevelRaw !== null &&
+                  receiverChannel?.rfLevelRaw !== undefined
+                ? receiverChannel.rfLevelRaw <= 20
+                  ? "fault"
+                  : receiverChannel.rfLevelRaw <= 40
+                    ? "caution"
+                    : "good"
+                : "unknown";
+    const linkQualityPercent =
+      receiver?.capabilities.linkQuality &&
+      receiverChannel?.linkQualityRaw !== null &&
+      receiverChannel?.linkQualityRaw !== undefined
+        ? Math.min(100, Math.round((receiverChannel.linkQualityRaw / 5) * 100))
+        : null;
+    const activeAntenna = receiverChannel?.antennas.find(
+      (antenna) => antenna.active === true,
+    )?.label;
+    const receiverExtras = [
+      antennaCapable
+        ? activeAntenna
+          ? `Antenna ${activeAntenna} active`
+          : "Antenna diversity unknown"
+        : null,
+      receiver?.capabilities.interference
+        ? receiverChannel?.interference === "detected"
+          ? "Interference detected"
+          : receiverChannel?.interference === "none"
+            ? "No interference"
+            : null
+        : null,
+      receiverChannel?.transmitter.muted === true ? "Transmitter muted" : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
     return {
       id: `device-channel-${position}`,
       number: position + 1,
@@ -215,7 +270,7 @@ export function synthesizeDeviceChannels(
         rf:
           configuredChannel.shureReceiverId == null
             ? "not-applicable"
-            : "unknown",
+            : rfStatus,
         audio: "unknown",
         battery:
           configuredChannel.shureReceiverId == null
@@ -228,17 +283,22 @@ export function synthesizeDeviceChannels(
           configuredChannel.shureReceiverId == null
             ? "Not applicable · wired input"
             : receiver
-              ? `${receiver.name} · ${receiver.model ?? "model unknown"} · channel ${(configuredChannel.shureChannelIndex ?? 0) + 1}`
+              ? [
+                  `${receiver.name} · ${receiver.model ?? "model unknown"} · channel ${(configuredChannel.shureChannelIndex ?? 0) + 1}`,
+                  receiverExtras,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
               : `Shure receiver unavailable · channel ${(configuredChannel.shureChannelIndex ?? 0) + 1}`,
         input:
           inputIndex === null
             ? "Audio input not patched"
             : `${state.device?.name ?? "Audio device"} · input ${inputIndex + 1}`,
-        rfLevelDbm: null,
-        linkQualityPercent: null,
+        rfLevelDbm: receiverChannel?.rfLevelDbm ?? null,
+        linkQualityPercent,
         batteryRemaining,
-        telemetryAge: batteryObserved
-          ? `Battery observed ${receiverChannel?.observedAtUtc ?? "at unknown time"}`
+        telemetryAge: observed
+          ? `Telemetry observed ${receiverChannel?.observedAtUtc ?? "at unknown time"}`
           : configuredChannel.shureReceiverId == null
             ? "Identity and level not observed"
             : (receiver?.detail ??

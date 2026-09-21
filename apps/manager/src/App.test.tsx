@@ -79,6 +79,31 @@ describe("Manager showfile editor", () => {
     expect(String(saveCall?.[1]?.body)).toContain('"name":"Talkback"');
   });
 
+  it("adds a Shure receiver, selects its model, and derives its channel count", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await screen.findByLabelText("Channel 2 name");
+    await user.click(screen.getByRole("button", { name: "Add receiver" }));
+
+    const modelSelect = await screen.findByLabelText("Receiver 1 model");
+    expect((modelSelect as HTMLSelectElement).value).toBe("ULXD4D");
+    expect(screen.getByText("2 channels")).toBeTruthy();
+
+    await user.selectOptions(modelSelect, "QLXD4");
+    expect(screen.getByText("1 channel")).toBeTruthy();
+
+    await user.selectOptions(modelSelect, "ANX4");
+    expect(screen.getByLabelText("Receiver 1 channel count")).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "Save showfile" }));
+    const saveCall = fetchMock.mock.calls.find(
+      ([path, init]) =>
+        String(path) === "/api/v1/showfile" && init?.method === "PUT",
+    );
+    expect(String(saveCall?.[1]?.body)).toContain('"model":"ANX4"');
+  });
+
   it("persists an explicit dark theme", async () => {
     const user = userEvent.setup();
     render(<App />);

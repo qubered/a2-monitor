@@ -7,16 +7,46 @@
 ## Local MVP implementation
 
 The macOS MVP includes bounded read-only command-string clients for multiple
-Manager-configured receiver IPs and channel counts. Each unit independently queries `MODEL`,
-`FW_VER`, `BATT_BARS`, and `BATT_CHARGE`, accepts fragmented/coalesced
-unsolicited `REP` frames, and exposes normalized battery bars/percentage with
-freshness. Manager stores the receiver inventory in the local showfile and the
-gateway reconciles additions, removals and edits without restarting audio.
+Manager-configured receivers. Manager now records an explicit model for each
+unit (from the coverage matrix below), an explicit control-network IP, and an
+optional name; channel count is derived from the model except for the
+dynamically-licensed ANX4. The adapter looks up a per-model capability
+profile (`packages/protocol/receivers/shure-models.ts`) and a per-family
+command-string table (`services/listen-gateway/src/shure.ts`) before it opens
+a connection, so it only issues `GET`/`SET` commands the selected model is
+expected to support.
+
+Each unit queries `MODEL` and `FW_VER`, then, gated by the model's capability
+profile: transmitter identity (`CHAN_NAME`, `FREQUENCY`, `TX_TYPE`/`TX_MODEL`),
+battery (`BATT_BARS`/`TX_BATT_BARS`, `BATT_CHARGE`/`TX_BATT_CHARGE_PERCENT`,
+and — where the family exposes it — battery type/cycle count/runtime), RF
+level and antenna diversity state, channel/link quality (Axient Digital's
+0–5 `CHAN_QUALITY`, expressed to the UI as a percentage of that scale),
+interference detection, a receiver audio meter, and transmitter mute state.
+Values are converted to dBm/dBFS only where the vendor's own documentation
+states a conversion formula; everywhere else the raw vendor scale is kept
+and labelled as such, never relabelled as a physical unit. Unsupported
+metrics stay `null`/`unavailable`, never a fabricated zero. The client
+accepts fragmented/coalesced unsolicited `REP` frames and exposes freshness
+per channel. Manager stores the receiver inventory in the local showfile and
+the gateway reconciles additions, removals and edits without restarting
+audio.
 
 This client currently runs in the listen-gateway process under ADR 0023 because
 the dedicated adapter process/IPC is not built. It is parser/simulator evidence,
 not physical receiver evidence; every tuple remains unverified and is labelled
-`compatible-read-only`.
+`compatible-read-only`. The exact command-string property names come from
+Shure's published network command-string references for Axient Digital,
+ULX-D, QLX-D and SLX-D; ANX4 and SLX-D+ have no published command-string
+reference and reuse the closest documented family (Axient Digital and SLX-D
+respectively) as a best-effort placeholder pending vendor documentation or a
+hardware-in-loop capture. QLX-D's RF level is only published as part of a
+packed `SAMPLE` meter message rather than a plain scalar property, so this
+client leaves it `unavailable` rather than guess at the packed layout; a
+future revision can add `SAMPLE` parsing once the exact per-family field
+grammar is confirmed. Every property name, offset and enum mapping here is a
+required or optional command probe for that model's hardware acceptance test,
+per the "Firmware support" section below.
 
 ## Decision
 

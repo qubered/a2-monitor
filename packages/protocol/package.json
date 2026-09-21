@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "check": "npm run generate:check && npm run validate:fixtures && npm run format && npm run test",
-    "format": "prettier --check \"generated/**/*.ts\" \"scripts/**/*.mjs\" \"tests/**/*.{mjs,ts}\" \"validation/*.{d.mts,mjs}\" \"*.json\"",
+    "format": "prettier --check \"generated/**/*.ts\" \"receivers/**/*.ts\" \"scripts/**/*.mjs\" \"tests/**/*.{mjs,ts}\" \"validation/*.{d.mts,mjs}\" \"*.json\"",
     "generate": "node scripts/generate-http-contracts.mjs",
     "generate:check": "node scripts/generate-http-contracts.mjs --check",
     "test": "node --test tests/generator.test.mjs tests/strict-ajv.test.mjs && vitest run tests/http-contracts.test.ts",
@@ -13,6 +13,7 @@
   },
   "exports": {
     "./http": "./generated/http-contracts.ts",
+    "./shure-models": "./receivers/shure-models.ts",
     "./schema/health-response": "./schema/v0/http/health-response.schema.json",
     "./schema/live-snapshot-response": "./schema/v0/http/live-snapshot-response.schema.json",
     "./schema/showfile": "./schema/v0/http/showfile.schema.json",
