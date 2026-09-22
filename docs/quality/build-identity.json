@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.21b32f77f9f4fdb7",
-  "sourceSha256": "21b32f77f9f4fdb779931f931172b38c8b9e8b3e98dbd62493e9284ae7b530db",
+  "buildId": "a2-0.0.0+sha256.19a98864c2ee70ff",
+  "sourceSha256": "19a98864c2ee70ffe59f67894c3d36b23906ddf09fd3a143ef778e1b84f0888a",
   "inputCount": 317,
   "inputs": [
     {
@@ -1109,7 +1109,7 @@
     },
     {
       "path": "services/audio-node/src/bin/device-capture.rs",
-      "sha256": "62319d0e2c23843313d9ab83c1848175d80814237b025afcc6a2b6ccabb69cf4"
+      "sha256": "bef1bd25d76378b57d0906c441bae2dd948219c3bc04589acf125ce659ec774a"
     },
     {
       "path": "services/audio-node/src/bin/media-worker-smoke.rs",

@@ -370,7 +370,10 @@ mod supported {
     use std::error::Error;
 
     pub fn run(_command: Command) -> Result<(), Box<dyn Error>> {
-        Err("pulse-device-capture is supported only on macOS (CoreAudio) and Windows (WASAPI)".into())
+        Err(
+            "pulse-device-capture is supported only on macOS (CoreAudio) and Windows (WASAPI)"
+                .into(),
+        )
     }
 }
 
