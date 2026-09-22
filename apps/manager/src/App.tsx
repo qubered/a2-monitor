@@ -110,7 +110,7 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-paper text-foreground">
-      <header className="flex min-h-17 flex-wrap items-center gap-5 border-b-2 border-line-2 bg-paper-2 px-6 py-3">
+      <header className="flex min-h-17 flex-wrap items-center gap-5 border-b border-line-2 bg-paper-2 px-6 py-3">
         <div
           className="flex items-center gap-2 font-display text-section font-bold"
           aria-label="Pulse Manager"
@@ -134,7 +134,7 @@ export function App() {
             Manager
           </em>
         </div>
-        <div className="flex flex-col border-l-2 border-line-2 pl-5 leading-tight">
+        <div className="flex flex-col border-l border-line-2 pl-5 leading-tight">
           <span className="font-mono text-badge text-faint">
             Local showfile
           </span>
@@ -148,7 +148,7 @@ export function App() {
         <label className="flex flex-col gap-1">
           <span className="font-mono text-badge text-faint">Theme</span>
           <select
-            className="min-h-11 rounded-full border-2 border-line-2 bg-card px-4 text-ui"
+            className="min-h-11 rounded-full border border-line-2 bg-card px-4 text-ui"
             value={theme}
             onChange={(event) => setTheme(event.target.value as Theme)}
           >
@@ -160,7 +160,7 @@ export function App() {
       </header>
 
       <section
-        className={`flex min-h-14 flex-wrap items-center justify-between gap-4 border-b-2 border-line-2 px-6 py-3 ${noticeStyles[saveState]}`}
+        className={`flex min-h-14 flex-wrap items-center justify-between gap-4 border-b border-line-2 px-6 py-3 ${noticeStyles[saveState]}`}
         role="status"
       >
         <div className="flex flex-col gap-1">

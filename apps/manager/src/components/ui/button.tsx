@@ -4,18 +4,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border-2 text-ui font-semibold transition-transform duration-[120ms] ease-[cubic-bezier(0.2,0.8,0.3,1)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-red disabled:pointer-events-none disabled:cursor-default [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border text-ui font-semibold transition-[filter,box-shadow,background-color] duration-[120ms] ease-[cubic-bezier(0.2,0.8,0.3,1)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-red disabled:pointer-events-none disabled:cursor-default [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "border-red bg-red text-primary-foreground shadow-button hover:-translate-y-px active:translate-y-0.5 active:shadow-[0_1px_0_var(--red-700)] disabled:border-line-2 disabled:bg-rep-soft disabled:text-rep disabled:shadow-none",
+          "border-red bg-red text-primary-foreground shadow-button hover:brightness-110 active:brightness-95 active:shadow-none disabled:border-line-2 disabled:bg-rep-soft disabled:text-rep disabled:shadow-none",
         outline:
-          "border-line-2 bg-card text-foreground hover:-translate-y-px active:translate-y-0.5 disabled:text-rep",
+          "border-line-2 bg-card text-foreground hover:brightness-95 active:brightness-90 disabled:text-rep",
         ghost:
-          "border-transparent bg-transparent text-foreground hover:bg-secondary active:translate-y-0.5",
+          "border-transparent bg-transparent text-foreground hover:bg-secondary active:bg-secondary/70",
         destructive:
-          "border-line-2 bg-transparent text-out hover:-translate-y-px active:translate-y-0.5",
+          "border-line-2 bg-transparent text-out hover:bg-out-soft active:bg-out-soft/70",
       },
       size: {
         default: "min-h-11 px-4",

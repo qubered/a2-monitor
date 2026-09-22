@@ -26,7 +26,7 @@ function TabsTrigger({
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        "inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full border-2 border-line-2 bg-card px-4 text-ui font-semibold text-foreground transition-transform duration-[120ms]",
+        "inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full border border-line-2 bg-card px-4 text-ui font-semibold text-foreground transition-transform duration-[120ms]",
         "data-[state=active]:border-ink data-[state=active]:bg-ink data-[state=active]:text-paper data-[state=active]:shadow-card",
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring",
         "active:translate-y-0.5",
