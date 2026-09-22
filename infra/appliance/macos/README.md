@@ -40,6 +40,34 @@ A2_NODE_BIN=/path/to/node-24-arm64 \
 open "build/macos-mvp/Pulse.app"
 ```
 
+Two known traps only show up on the *destination* Mac, never on the machine that
+built the app, which is what makes them easy to reintroduce:
+
+- **Non-portable `A2_NODE_BIN`.** It must point at the official self-contained
+  Node.js binary from [nodejs.org/dist](https://nodejs.org/dist/) (the
+  `node-vX.Y.Z-darwin-arm64.tar.gz` tarball's `bin/node`) — not `command -v node`,
+  Homebrew's `node`/`node@24`, or an nvm/volta shim. Those link against a shared
+  `libnode` dylib outside the tarball; the app copies only the `node` executable
+  into `Contents/Resources/bin/`, so a non-portable binary launches fine on the
+  machine that built it (its `@rpath` still resolves there) and then crashes with
+  `dyld: Library not loaded: @rpath/libnode.*.dylib` on any other Mac. The build
+  script now refuses to proceed if `A2_NODE_BIN` links against anything outside
+  `/usr/lib` and `/System/Library` (spot-check yourself with
+  `otool -L "$A2_NODE_BIN"`), but always download a fresh official tarball rather
+  than pointing at whatever `node` is already on `PATH`.
+- **A broken `node_modules/@rvlt/pulse-protocol` symlink.** npm workspace hoisting
+  makes that path a relative symlink into `packages/protocol` — and it has to stay
+  a symlink: `generated/http-contracts.ts` and `receivers/shure-models.ts` are
+  imported at runtime and Node 24 type-strips them on the fly, but Node refuses to
+  type-strip anything whose *real* path is under `node_modules`; the symlink's
+  target resolves outside it, which is what makes this work at all. Copying the
+  bundle via the provided zip (`ditto`/`unzip`/Finder's Compress-and-uncompress all
+  preserve it) is safe. Copying the raw `.app` through something that can't
+  represent Unix symlinks — an exFAT/FAT32 drive, a Dropbox/Google Drive/OneDrive
+  synced folder, some AirDrop paths — silently drops or breaks it, and the app then
+  crashes on launch with `ERR_MODULE_NOT_FOUND` for `generated/http-contracts.ts`.
+  Always hand off `Pulse-macos-arm64.zip`, not a copied `Pulse.app` folder.
+
 At launch, the app opens an Pulse window: pick an observed 48 kHz input
 device and whether the page is available only on the host or on its local
 network, then click Start Server. The app opens the local page in the default

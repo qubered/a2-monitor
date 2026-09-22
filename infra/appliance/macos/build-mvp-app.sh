@@ -19,6 +19,24 @@ if [ "$node_major" -lt 24 ]; then
   exit 1
 fi
 
+# A Node built against a shared libnode (Homebrew's node@24 formula, some nvm/volta
+# installs) passes the version check above and runs fine on this machine because its
+# @rpath entries resolve here, but it dyld-crashes the instant the bundled binary is
+# copied to a Mac without that same install. Only the self-contained nodejs.org
+# tarball build (a single Mach-O with no dependencies outside /usr/lib and
+# /System/Library) survives being copied into the app bundle and onto another Mac.
+non_system_deps="$(otool -L "$node_bin" | tail -n +2 | awk '{print $1}' | grep -Ev '^(/usr/lib/|/System/Library/)' || true)"
+if [ -n "$non_system_deps" ]; then
+  echo "A2_NODE_BIN ($node_bin) is not a portable Node binary." >&2
+  echo "It links against non-system libraries and will crash with a dyld error" >&2
+  echo "('Library not loaded: @rpath/...') once copied to another Mac:" >&2
+  echo "$non_system_deps" >&2
+  echo "Download the official arm64 tarball from https://nodejs.org/dist/ instead" >&2
+  echo "(e.g. node-v24.x.x-darwin-arm64.tar.gz) and set A2_NODE_BIN to its bin/node." >&2
+  echo "Do not rely on \`command -v node\`, Homebrew's node, or an nvm/volta shim." >&2
+  exit 1
+fi
+
 case "$output_dir" in
   "$repo_root"/*) ;;
   *) echo "Output directory must be inside the repository." >&2; exit 1 ;;
