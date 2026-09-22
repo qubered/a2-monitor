@@ -171,4 +171,267 @@ describe("backend health and Live snapshot", () => {
 
     expect(response.statusCode).toBe(500);
   });
+
+  it("saves a channel's monitored dimensions, mic type and image URL", async () => {
+    const server = trackedServer();
+    const initial = await server.inject({
+      method: "GET",
+      url: "/api/v1/showfile",
+    });
+
+    const saved = await server.inject({
+      method: "PUT",
+      url: "/api/v1/showfile",
+      payload: {
+        ...initial.json(),
+        show: { name: "Q3 All-Hands" },
+        device: { name: "USB Interface", channelCount: 2 },
+        channels: [
+          {
+            inputIndex: 0,
+            name: "Alice",
+            micType: "headset",
+            imageUrl: "https://example.com/alice.jpg",
+            monitor: { battery: true, rf: false, audio: true },
+          },
+        ],
+      },
+    });
+
+    expect(saved.statusCode).toBe(200);
+    expect(saved.json()).toMatchObject({
+      channels: [
+        {
+          name: "Alice",
+          micType: "headset",
+          imageUrl: "https://example.com/alice.jpg",
+          monitor: { battery: true, rf: false, audio: true },
+        },
+      ],
+    });
+  });
+
+  it("rejects a channel image URL without an http(s) scheme", async () => {
+    const server = trackedServer();
+    const initial = await server.inject({
+      method: "GET",
+      url: "/api/v1/showfile",
+    });
+
+    const response = await server.inject({
+      method: "PUT",
+      url: "/api/v1/showfile",
+      payload: {
+        ...initial.json(),
+        device: { name: "USB Interface", channelCount: 2 },
+        channels: [
+          {
+            inputIndex: 0,
+            name: "Alice",
+            imageUrl: "javascript:alert(1)",
+          },
+        ],
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual({ error: "invalid-showfile" });
+  });
+
+  it("accepts an uploaded base64 image data URL and rejects a malformed one", async () => {
+    const server = trackedServer();
+    const initial = await server.inject({
+      method: "GET",
+      url: "/api/v1/showfile",
+    });
+
+    const uploaded = await server.inject({
+      method: "PUT",
+      url: "/api/v1/showfile",
+      payload: {
+        ...initial.json(),
+        device: { name: "USB Interface", channelCount: 2 },
+        channels: [
+          {
+            inputIndex: 0,
+            name: "Alice",
+            imageUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAE=",
+          },
+        ],
+      },
+    });
+    expect(uploaded.statusCode).toBe(200);
+    expect(uploaded.json()).toMatchObject({
+      channels: [
+        { imageUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAE=" },
+      ],
+    });
+
+    const malformed = await server.inject({
+      method: "PUT",
+      url: "/api/v1/showfile",
+      payload: {
+        ...uploaded.json(),
+        channels: [
+          {
+            inputIndex: 0,
+            name: "Alice",
+            imageUrl: "data:text/html;base64,PHNjcmlwdD4=",
+          },
+        ],
+      },
+    });
+    expect(malformed.statusCode).toBe(400);
+    expect(malformed.json()).toEqual({ error: "invalid-showfile" });
+  });
+});
+
+describe("backend productions", () => {
+  it("lists the default production as active", async () => {
+    const response = await trackedServer().inject({
+      method: "GET",
+      url: "/api/v1/productions",
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body.productions).toHaveLength(1);
+    expect(body.activeId).toBe(body.productions[0].id);
+    expect(body.productions[0]).toMatchObject({
+      name: "Untitled show",
+      revision: 0,
+      channelCount: 0,
+      receiverCount: 0,
+    });
+  });
+
+  it("creates a production, activates it, and exposes it through the showfile route", async () => {
+    const server = trackedServer();
+
+    const created = await server.inject({
+      method: "POST",
+      url: "/api/v1/productions",
+      payload: { name: "Spring Gala" },
+    });
+    expect(created.statusCode).toBe(201);
+    const createdBody = created.json();
+    expect(createdBody.productions).toHaveLength(2);
+    const newProduction = createdBody.productions.find(
+      (production: { name: string }) => production.name === "Spring Gala",
+    );
+    expect(createdBody.activeId).toBe(newProduction.id);
+
+    const showfile = await server.inject({
+      method: "GET",
+      url: "/api/v1/showfile",
+    });
+    expect(showfile.json()).toMatchObject({ show: { name: "Spring Gala" } });
+  });
+
+  it("fetches a production's full showfile by id without activating it, for download", async () => {
+    const server = trackedServer();
+    const initial = await server.inject({
+      method: "GET",
+      url: "/api/v1/productions",
+    });
+    const originalId = initial.json().activeId as string;
+
+    const created = await server.inject({
+      method: "POST",
+      url: "/api/v1/productions",
+      payload: { name: "Spring Gala" },
+    });
+    expect(created.json().activeId).not.toBe(originalId);
+
+    const fetched = await server.inject({
+      method: "GET",
+      url: `/api/v1/productions/${originalId}`,
+    });
+    expect(fetched.statusCode).toBe(200);
+    expect(fetched.json()).toMatchObject({ show: { name: "Untitled show" } });
+
+    const stillOnSpringGala = await server.inject({
+      method: "GET",
+      url: "/api/v1/productions",
+    });
+    expect(stillOnSpringGala.json().activeId).not.toBe(originalId);
+  });
+
+  it("404s fetching an unknown production by id", async () => {
+    const response = await trackedServer().inject({
+      method: "GET",
+      url: "/api/v1/productions/does-not-exist",
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({ error: "production-not-found" });
+  });
+
+  it("switches the active production and back", async () => {
+    const server = trackedServer();
+    const initial = await server.inject({
+      method: "GET",
+      url: "/api/v1/productions",
+    });
+    const originalId = initial.json().activeId as string;
+
+    await server.inject({
+      method: "POST",
+      url: "/api/v1/productions",
+      payload: { name: "Spring Gala" },
+    });
+
+    const reactivated = await server.inject({
+      method: "POST",
+      url: `/api/v1/productions/${originalId}/activate`,
+    });
+    expect(reactivated.statusCode).toBe(200);
+    expect(reactivated.json().activeId).toBe(originalId);
+  });
+
+  it("404s activating an unknown production", async () => {
+    const response = await trackedServer().inject({
+      method: "POST",
+      url: "/api/v1/productions/does-not-exist/activate",
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({ error: "production-not-found" });
+  });
+
+  it("removes an inactive production but refuses to remove the active one", async () => {
+    const server = trackedServer();
+    const initial = await server.inject({
+      method: "GET",
+      url: "/api/v1/productions",
+    });
+    const originalId = initial.json().activeId as string;
+
+    const created = await server.inject({
+      method: "POST",
+      url: "/api/v1/productions",
+      payload: { name: "Spring Gala" },
+    });
+    const activeId = created.json().activeId as string;
+
+    const refusedActive = await server.inject({
+      method: "DELETE",
+      url: `/api/v1/productions/${activeId}`,
+    });
+    expect(refusedActive.statusCode).toBe(400);
+    expect(refusedActive.json()).toEqual({ error: "active-production" });
+
+    const removed = await server.inject({
+      method: "DELETE",
+      url: `/api/v1/productions/${originalId}`,
+    });
+    expect(removed.statusCode).toBe(200);
+    expect(
+      removed
+        .json()
+        .productions.some(
+          (production: { id: string }) => production.id === originalId,
+        ),
+    ).toBe(false);
+  });
 });

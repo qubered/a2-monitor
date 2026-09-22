@@ -1,6 +1,8 @@
 import {
+  parseProductionList,
   parseShowfile,
   parseShureTelemetry,
+  type ProductionList,
   type Showfile,
   type ShureTelemetry,
 } from "@rvlt/pulse-protocol/http";
@@ -85,6 +87,93 @@ export async function saveShowfile(showfile: Showfile): Promise<Showfile> {
   }
   if (!response.ok) throw new Error("The showfile could not be saved.");
   return parseShowfile(await response.json());
+}
+
+export async function loadProductions(
+  signal?: AbortSignal,
+): Promise<ProductionList> {
+  const response = await fetch("/api/v1/productions", { signal });
+  if (!response.ok) throw new Error("The production list could not be loaded.");
+  return parseProductionList(await response.json());
+}
+
+export async function createProduction(name: string): Promise<ProductionList> {
+  const response = await fetch("/api/v1/productions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!response.ok) throw new Error("The production could not be created.");
+  return parseProductionList(await response.json());
+}
+
+export async function activateProduction(id: string): Promise<ProductionList> {
+  const response = await fetch(
+    `/api/v1/productions/${encodeURIComponent(id)}/activate`,
+    { method: "POST" },
+  );
+  if (!response.ok) throw new Error("The production could not be activated.");
+  return parseProductionList(await response.json());
+}
+
+export async function deleteProduction(id: string): Promise<ProductionList> {
+  const response = await fetch(
+    `/api/v1/productions/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+  );
+  if (!response.ok) throw new Error("The production could not be removed.");
+  return parseProductionList(await response.json());
+}
+
+export async function loadProductionShowfile(
+  id: string,
+  signal?: AbortSignal,
+): Promise<Showfile> {
+  const response = await fetch(
+    `/api/v1/productions/${encodeURIComponent(id)}`,
+    { signal },
+  );
+  if (!response.ok) throw new Error("The showfile could not be loaded.");
+  return parseShowfile(await response.json());
+}
+
+function showfileDownloadFilename(name: string): string {
+  const slug =
+    name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "showfile";
+  return `${slug}.a2-showfile.json`;
+}
+
+export function downloadShowfile(showfile: Showfile): void {
+  const blob = new Blob([JSON.stringify(showfile, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = showfileDownloadFilename(showfile.show.name);
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function readUploadedShowfile(file: File): Promise<Showfile> {
+  const text = await file.text();
+  let value: unknown;
+  try {
+    value = JSON.parse(text);
+  } catch {
+    throw new Error("That file is not valid JSON.");
+  }
+  if (!isRecord(value)) {
+    throw new Error("That file is not a showfile.");
+  }
+  return parseShowfile({
+    ...value,
+    shureReceivers: value.shureReceivers ?? [],
+  });
 }
 
 export function projectShowfileToDevice(

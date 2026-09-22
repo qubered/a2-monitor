@@ -27,7 +27,17 @@ if (!("scrollIntoView" in Element.prototype)) {
   });
 }
 
-const storedShowfile = {
+type StoredShowfile = {
+  schemaVersion: string;
+  revision: number;
+  updatedAtUtc: string | null;
+  show: { name: string };
+  device: { name: string; channelCount: number } | null;
+  channels: Array<Record<string, unknown>>;
+  shureReceivers?: unknown[];
+};
+
+const storedShowfile: StoredShowfile = {
   schemaVersion: "0",
   revision: 2,
   updatedAtUtc: "2026-09-21T00:00:00Z",
@@ -39,10 +49,27 @@ const storedShowfile = {
   ],
 };
 
+function summarizeProduction(id: string, showfile: StoredShowfile) {
+  return {
+    id,
+    name: showfile.show.name,
+    revision: showfile.revision,
+    updatedAtUtc: showfile.updatedAtUtc,
+    channelCount: showfile.channels.length,
+    receiverCount: showfile.shureReceivers?.length ?? 0,
+  };
+}
+
 describe("Manager showfile editor", () => {
+  let showfiles: Record<string, StoredShowfile>;
+  let activeId: string;
+  let nextId: number;
+
   const fetchMock = vi.fn(
     async (input: RequestInfo | URL, init?: RequestInit) => {
       const path = String(input);
+      const method = init?.method ?? "GET";
+
       if (path === "/audio/v0/device") {
         return Response.json({
           schemaVersion: 0,
@@ -59,22 +86,87 @@ describe("Manager showfile editor", () => {
           ],
         });
       }
-      if (path === "/api/v1/showfile" && init?.method === "PUT") {
-        const body = JSON.parse(String(init.body)) as typeof storedShowfile;
-        return Response.json({
+      if (path === "/api/v1/showfile" && method === "PUT") {
+        const body = JSON.parse(String(init?.body)) as StoredShowfile;
+        const saved: StoredShowfile = {
           ...body,
           revision: body.revision + 1,
           updatedAtUtc: "2026-09-21T00:01:00Z",
+        };
+        showfiles[activeId] = saved;
+        return Response.json(saved);
+      }
+      if (path === "/api/v1/showfile") {
+        return Response.json(showfiles[activeId]);
+      }
+      if (path === "/api/v1/productions" && method === "POST") {
+        const { name } = JSON.parse(String(init?.body)) as { name: string };
+        const id = `p${nextId++}`;
+        showfiles[id] = {
+          schemaVersion: "0",
+          revision: 0,
+          updatedAtUtc: null,
+          show: { name },
+          device: null,
+          shureReceivers: [],
+          channels: [],
+        };
+        activeId = id;
+        return new Response(
+          JSON.stringify({
+            schemaVersion: "0",
+            activeId,
+            productions: Object.entries(showfiles).map(([entryId, sf]) =>
+              summarizeProduction(entryId, sf),
+            ),
+          }),
+          { status: 201, headers: { "content-type": "application/json" } },
+        );
+      }
+      const activateMatch = /^\/api\/v1\/productions\/([^/]+)\/activate$/.exec(
+        path,
+      );
+      if (activateMatch && method === "POST") {
+        activeId = activateMatch[1]!;
+        return Response.json({
+          schemaVersion: "0",
+          activeId,
+          productions: Object.entries(showfiles).map(([entryId, sf]) =>
+            summarizeProduction(entryId, sf),
+          ),
         });
       }
-      return Response.json(storedShowfile);
+      const byIdMatch = /^\/api\/v1\/productions\/([^/]+)$/.exec(path);
+      if (byIdMatch && method === "GET") {
+        const found = showfiles[byIdMatch[1]!];
+        if (!found) return new Response(null, { status: 404 });
+        return Response.json(found);
+      }
+      if (path === "/api/v1/productions") {
+        return Response.json({
+          schemaVersion: "0",
+          activeId,
+          productions: Object.entries(showfiles).map(([entryId, sf]) =>
+            summarizeProduction(entryId, sf),
+          ),
+        });
+      }
+      return Response.json(showfiles[activeId]);
     },
   );
 
   beforeEach(() => {
     window.localStorage.clear();
+    showfiles = { p1: { ...storedShowfile, shureReceivers: [] } };
+    activeId = "p1";
+    nextId = 2;
     vi.stubGlobal("fetch", fetchMock);
     fetchMock.mockClear();
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+      () => undefined,
+    );
+    URL.createObjectURL = vi.fn(() => "blob:mock");
+    URL.revokeObjectURL = vi.fn();
   });
 
   afterEach(() => {
@@ -134,5 +226,120 @@ describe("Manager showfile editor", () => {
         String(path) === "/api/v1/showfile" && init?.method === "PUT",
     );
     expect(String(saveCall?.[1]?.body)).toContain('"model":"ANX4"');
+  });
+
+  it("sets a channel's mic type, uploads a photo, and turns off RF monitoring", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /channels/i }));
+
+    const micTypeSelect = await screen.findByRole("combobox", {
+      name: "Channel 1 mic type",
+    });
+    await user.click(micTypeSelect);
+    await user.click(await screen.findByRole("option", { name: "Headset" }));
+
+    const rfToggle = screen.getByRole("button", {
+      name: "Channel 1 rf monitoring",
+    });
+    expect(rfToggle.getAttribute("aria-pressed")).toBe("true");
+    await user.click(rfToggle);
+    expect(rfToggle.getAttribute("aria-pressed")).toBe("false");
+
+    const photoFile = new File(["hello"], "alice.png", {
+      type: "image/png",
+    });
+    await user.upload(
+      screen.getByLabelText("Channel 1 photo upload"),
+      photoFile,
+    );
+    await screen.findByRole("button", { name: "Channel 1 remove photo" });
+
+    await user.click(screen.getByRole("button", { name: "Save showfile" }));
+
+    const saveCall = fetchMock.mock.calls.find(
+      ([path, init]) =>
+        String(path) === "/api/v1/showfile" && init?.method === "PUT",
+    );
+    const body = String(saveCall?.[1]?.body);
+    expect(body).toContain('"micType":"headset"');
+    expect(body).toContain('"imageUrl":"data:image/png;base64,aGVsbG8="');
+    expect(body).toContain(
+      '"monitor":{"battery":true,"rf":false,"audio":true}',
+    );
+  });
+
+  it("creates a production and switches the active showfile to it", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /productions/i }));
+    await screen.findAllByText("Q3 All-Hands");
+
+    await user.type(screen.getByLabelText("New production"), "Spring Gala");
+    await user.click(screen.getByRole("button", { name: "Create" }));
+
+    await screen.findAllByText("Spring Gala");
+    const rows = await screen.findAllByRole("row");
+    const springRow = rows.find((row) =>
+      row.textContent?.includes("Spring Gala"),
+    );
+    expect(springRow?.textContent).toContain("Active");
+
+    expect(await screen.findByText("Revision 0")).toBeTruthy();
+  });
+
+  it("imports an uploaded showfile as a new production", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /productions/i }));
+    await screen.findAllByText("Q3 All-Hands");
+
+    const uploaded = {
+      schemaVersion: "0",
+      revision: 9,
+      updatedAtUtc: "2020-01-01T00:00:00Z",
+      show: { name: "Imported Gala" },
+      device: { name: "Some Other Interface", channelCount: 8 },
+      shureReceivers: [],
+      channels: [{ inputIndex: 3, name: "Guest mic" }],
+    };
+    const file = new File([JSON.stringify(uploaded)], "gala.json", {
+      type: "application/json",
+    });
+    await user.upload(screen.getByLabelText("Import showfile"), file);
+
+    await screen.findAllByText("Imported Gala");
+    expect(await screen.findByText("Revision 1")).toBeTruthy();
+
+    const putCall = fetchMock.mock.calls.find(
+      ([path, init]) =>
+        String(path) === "/api/v1/showfile" && init?.method === "PUT",
+    );
+    const body = JSON.parse(String(putCall?.[1]?.body));
+    expect(body.show.name).toBe("Imported Gala");
+    expect(body.revision).toBe(0);
+    // The uploaded device doesn't match this Mac's observed device, so the
+    // patch is dropped rather than silently pointing at the wrong input.
+    expect(body.channels[0].inputIndex).toBeNull();
+  });
+
+  it("downloads the active production's showfile as JSON", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /productions/i }));
+    await user.click(
+      await screen.findByRole("button", { name: "Download Q3 All-Hands" }),
+    );
+
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+    const mockCreateObjectURL = URL.createObjectURL as ReturnType<typeof vi.fn>;
+    const blob = mockCreateObjectURL.mock.calls[0]?.[0] as Blob;
+    const downloaded = JSON.parse(await blob.text());
+    expect(downloaded.show.name).toBe("Q3 All-Hands");
+    expect(HTMLAnchorElement.prototype.click).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,13 +1,7 @@
 import type { Showfile } from "@rvlt/pulse-protocol/http";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardOverline,
-  CardTitle,
-} from "./ui/card";
+import { CardOverline } from "./ui/card";
 import { Input } from "./ui/input";
-import { Label } from "./ui/label";
+import { Table, TableBody, TableCell, TableRow } from "./ui/table";
 
 export function ShowTab({
   showfile,
@@ -17,24 +11,63 @@ export function ShowTab({
   onChange: (next: Showfile) => void;
 }) {
   return (
-    <Card className="max-w-md">
-      <CardHeader className="flex-col items-start gap-1">
+    <div className="flex flex-col gap-4">
+      <div>
         <CardOverline>Identity</CardOverline>
-        <CardTitle>Show</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="show-name">Show name</Label>
-          <Input
-            id="show-name"
-            value={showfile.show.name}
-            maxLength={120}
-            onChange={(event) =>
-              onChange({ ...showfile, show: { name: event.target.value } })
-            }
-          />
-        </div>
-      </CardContent>
-    </Card>
+        <h2 className="mt-1 font-display text-section leading-tight text-foreground">
+          Show
+        </h2>
+        <p className="mt-1 max-w-xl text-caption text-muted-foreground">
+          The name saved with this production's showfile.
+        </p>
+      </div>
+      <Table className="max-w-xl">
+        <TableBody>
+          <TableRow>
+            <TableCell className="w-40 font-semibold text-foreground">
+              Show name
+            </TableCell>
+            <TableCell>
+              <Input
+                id="show-name"
+                aria-label="Show name"
+                value={showfile.show.name}
+                maxLength={120}
+                onChange={(event) =>
+                  onChange({
+                    ...showfile,
+                    show: { name: event.target.value },
+                  })
+                }
+              />
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell className="font-semibold text-foreground">
+              Revision
+            </TableCell>
+            <TableCell className="font-mono text-table tabular-nums text-muted-foreground">
+              {showfile.revision}
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell className="font-semibold text-foreground">
+              Channels
+            </TableCell>
+            <TableCell className="font-mono text-table tabular-nums text-muted-foreground">
+              {showfile.channels.length}
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell className="font-semibold text-foreground">
+              Shure receivers
+            </TableCell>
+            <TableCell className="font-mono text-table tabular-nums text-muted-foreground">
+              {showfile.shureReceivers.length}
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
   );
 }

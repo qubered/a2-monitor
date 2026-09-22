@@ -55,6 +55,17 @@ const contracts = [
       "fixtures/v0/http/incompatible/shure-telemetry.unknown-field.json",
     ],
   },
+  {
+    name: "production-list",
+    schema: "schema/v0/http/production-list.schema.json",
+    accepted: [
+      "fixtures/v0/http/current/production-list.valid.json",
+      "fixtures/v0/http/previous/production-list.valid.json",
+    ],
+    rejected: [
+      "fixtures/v0/http/incompatible/production-list.unknown-field.json",
+    ],
+  },
 ];
 
 async function readJson(relativePath) {

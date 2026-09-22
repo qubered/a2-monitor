@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react";
-import type { Showfile, ShureTelemetry } from "@rvlt/pulse-protocol/http";
+import { FolderKanban, Radio, SlidersHorizontal, Theater } from "lucide-react";
+import type {
+  ProductionList,
+  Showfile,
+  ShureTelemetry,
+} from "@rvlt/pulse-protocol/http";
 import {
+  activateProduction,
+  createProduction,
+  deleteProduction,
   loadObservedDevice,
+  loadProductions,
   loadShowfile,
   loadShureTelemetry,
   projectShowfileToDevice,
@@ -10,10 +19,17 @@ import {
 } from "./showfile";
 import { ChannelsTab } from "./components/ChannelsTab";
 import { EmptyState } from "./components/EmptyState";
+import { ProductionsTab } from "./components/ProductionsTab";
 import { ReceiversTab } from "./components/ReceiversTab";
 import { ShowTab } from "./components/ShowTab";
 import { Button } from "./components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsGroupLabel,
+  TabsList,
+  TabsTrigger,
+} from "./components/ui/tabs";
 
 type SaveState = "loading" | "saved" | "dirty" | "saving" | "error";
 
@@ -31,6 +47,9 @@ export function App() {
   const [shure, setShure] = useState<ShureTelemetry | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("loading");
   const [message, setMessage] = useState("Loading showfile and audio inputs.");
+  const [productions, setProductions] = useState<ProductionList | null>(null);
+  const [productionsBusy, setProductionsBusy] = useState(false);
+  const [productionsError, setProductionsError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -38,8 +57,9 @@ export function App() {
       loadShowfile(controller.signal),
       loadObservedDevice(controller.signal),
       loadShureTelemetry(controller.signal).catch(() => null),
+      loadProductions(controller.signal).catch(() => null),
     ])
-      .then(([loaded, observed, receiver]) => {
+      .then(([loaded, observed, receiver, productionList]) => {
         const projected = projectShowfileToDevice(loaded, observed);
         const changed =
           loaded.device?.name !== projected.device?.name ||
@@ -49,6 +69,7 @@ export function App() {
         setDevice(observed);
         setShure(receiver);
         setShowfile(projected);
+        setProductions(productionList);
         setSaveState(changed ? "dirty" : "saved");
         setMessage(
           changed
@@ -81,6 +102,7 @@ export function App() {
       setShowfile(saved);
       setSaveState("saved");
       setMessage("Showfile saved. Live now uses these channel names.");
+      setProductions(await loadProductions());
     } catch (error) {
       setSaveState("error");
       setMessage(
@@ -88,6 +110,84 @@ export function App() {
           ? error.message
           : "The showfile could not be saved.",
       );
+    }
+  }
+
+  async function reloadActiveShowfile() {
+    try {
+      const loaded = await loadShowfile();
+      setShowfile(device ? projectShowfileToDevice(loaded, device) : loaded);
+      setSaveState("saved");
+      setMessage("Showfile loaded from this Mac.");
+    } catch (error) {
+      setSaveState("error");
+      setMessage(
+        error instanceof Error ? error.message : "Manager could not start.",
+      );
+    }
+  }
+
+  async function withProductions(action: () => Promise<ProductionList>) {
+    setProductionsBusy(true);
+    try {
+      setProductions(await action());
+      setProductionsError(null);
+      await reloadActiveShowfile();
+    } catch (error) {
+      setProductionsError(
+        error instanceof Error
+          ? error.message
+          : "The production request failed.",
+      );
+    } finally {
+      setProductionsBusy(false);
+    }
+  }
+
+  async function importShowfile(uploaded: Showfile) {
+    setProductionsBusy(true);
+    try {
+      const list = await createProduction(
+        uploaded.show.name || "Imported show",
+      );
+      setProductions(list);
+      setProductionsError(null);
+      const projected = device
+        ? projectShowfileToDevice(uploaded, device)
+        : uploaded;
+      const saved = await saveShowfile({
+        ...projected,
+        revision: 0,
+        updatedAtUtc: null,
+      });
+      setShowfile(saved);
+      setSaveState("saved");
+      setMessage(`Imported "${saved.show.name}" from file.`);
+      setProductions(await loadProductions());
+    } catch (error) {
+      setProductionsError(
+        error instanceof Error
+          ? error.message
+          : "The showfile could not be imported.",
+      );
+    } finally {
+      setProductionsBusy(false);
+    }
+  }
+
+  async function removeProduction(id: string) {
+    setProductionsBusy(true);
+    try {
+      setProductions(await deleteProduction(id));
+      setProductionsError(null);
+    } catch (error) {
+      setProductionsError(
+        error instanceof Error
+          ? error.message
+          : "The production could not be removed.",
+      );
+    } finally {
+      setProductionsBusy(false);
     }
   }
 
@@ -157,7 +257,7 @@ export function App() {
         ) : null}
       </section>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-6">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div>
             <span className="font-mono text-badge text-faint">Show setup</span>
@@ -181,39 +281,74 @@ export function App() {
         </div>
 
         {showfile ? (
-          <Tabs defaultValue="show">
-            <TabsList>
-              <TabsTrigger value="show">Show</TabsTrigger>
+          <Tabs
+            defaultValue="show"
+            orientation="vertical"
+            className="flex flex-col gap-6 md:flex-row md:items-start"
+          >
+            <TabsList className="w-full md:w-64 md:shrink-0 md:border-r-2 md:border-line-2 md:pr-4">
+              <TabsGroupLabel>Show setup</TabsGroupLabel>
+              <TabsTrigger value="show">
+                <Theater aria-hidden="true" />
+                Show
+              </TabsTrigger>
+              <TabsTrigger value="productions">
+                <FolderKanban aria-hidden="true" />
+                Productions
+                {productions?.productions.length
+                  ? ` · ${productions.productions.length}`
+                  : ""}
+              </TabsTrigger>
               <TabsTrigger value="receivers">
+                <Radio aria-hidden="true" />
                 Receivers
                 {showfile.shureReceivers.length
                   ? ` · ${showfile.shureReceivers.length}`
                   : ""}
               </TabsTrigger>
               <TabsTrigger value="channels">
+                <SlidersHorizontal aria-hidden="true" />
                 Channels
                 {showfile.channels.length
                   ? ` · ${showfile.channels.length}`
                   : ""}
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="show">
-              <ShowTab showfile={showfile} onChange={update} />
-            </TabsContent>
-            <TabsContent value="receivers">
-              <ReceiversTab
-                showfile={showfile}
-                shure={shure}
-                onChange={update}
-              />
-            </TabsContent>
-            <TabsContent value="channels">
-              <ChannelsTab
-                showfile={showfile}
-                device={device}
-                onChange={update}
-              />
-            </TabsContent>
+            <div className="min-w-0 flex-1">
+              <TabsContent value="show">
+                <ShowTab showfile={showfile} onChange={update} />
+              </TabsContent>
+              <TabsContent value="productions">
+                <ProductionsTab
+                  productions={productions}
+                  activeShowfile={showfile}
+                  busy={productionsBusy}
+                  error={productionsError}
+                  onCreate={(name) =>
+                    void withProductions(() => createProduction(name))
+                  }
+                  onActivate={(id) =>
+                    void withProductions(() => activateProduction(id))
+                  }
+                  onRemove={(id) => void removeProduction(id)}
+                  onImport={(uploaded) => void importShowfile(uploaded)}
+                />
+              </TabsContent>
+              <TabsContent value="receivers">
+                <ReceiversTab
+                  showfile={showfile}
+                  shure={shure}
+                  onChange={update}
+                />
+              </TabsContent>
+              <TabsContent value="channels">
+                <ChannelsTab
+                  showfile={showfile}
+                  device={device}
+                  onChange={update}
+                />
+              </TabsContent>
+            </div>
           </Tabs>
         ) : (
           <EmptyState title="No editable showfile." detail={message} />

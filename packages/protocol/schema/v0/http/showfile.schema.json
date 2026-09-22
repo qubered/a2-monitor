@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://a2-monitor.local/schema/v0/http/showfile.schema.json",
+  "$id": "https://pulse.local/schema/v0/http/showfile.schema.json",
   "title": "Local showfile",
   "type": "object",
   "additionalProperties": false,
@@ -94,6 +94,32 @@
             "type": ["string", "null"],
             "minLength": 1,
             "maxLength": 64
+          },
+          "micType": {
+            "enum": [
+              "lavalier",
+              "headset",
+              "handheld",
+              "boundary",
+              "instrument",
+              "other",
+              null
+            ]
+          },
+          "imageUrl": {
+            "type": ["string", "null"],
+            "minLength": 1,
+            "maxLength": 300000
+          },
+          "monitor": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["battery", "rf", "audio"],
+            "properties": {
+              "battery": { "type": "boolean" },
+              "rf": { "type": "boolean" },
+              "audio": { "type": "boolean" }
+            }
           }
         }
       }
