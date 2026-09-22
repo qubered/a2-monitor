@@ -17,9 +17,10 @@ requirements below.
   issue as the current execution ledger. When they disagree, stop, reconcile
   the repository documentation in the same change, and explain the resolution
   on the issue; do not silently follow stale issue text.
-- For UI or UX work, read `docs/design/DESIGN.md` in full, inspect the relevant
-  rendered states in `docs/design/mockups`, and use the reference build in
-  `docs/design/prototype/index.html` before proposing or implementing a design.
+- For UI or UX work, read `docs/design/DESIGN.md` in full and look at the
+  shipped Live and Manager apps directly before proposing or implementing a
+  design. The old `docs/design/mockups` and `docs/design/prototype/index.html`
+  are archived (`docs/design/archive/`) and no longer a current reference.
 - Inspect the working tree and preserve unrelated user changes.
 - If a change introduces a framework, persistent service, wire protocol,
   database, or deployment dependency, add or update an ADR.
@@ -31,14 +32,11 @@ requirements below.
   standalone design language, not a domain mapping over RVLT's; do not
   reintroduce an RVLT dependency or treat RVLT's tokens/components as
   authoritative for this product.
-- `docs/design/mockups` and `docs/design/prototype/index.html` predate the
-  2.0.0 rewrite (RVLT-derived tokens, Archivo/Baloo 2/Hanken Grotesk/Kalam,
-  a Paper/dark toggle) and are stale against the current design language and
-  the shipped apps. Do not treat them as the visual target until they are
-  rebuilt against the current tokens; flag the gap rather than deriving new
-  UI from them. Rebuilding the prototype and regenerating the mockups
-  (`node scripts/render-mockups.mjs`) against the current design language is
-  open follow-up work.
+- `docs/design/mockups` and `docs/design/prototype/index.html` are archived
+  (`docs/design/archive/`, RVLT-derived tokens, Archivo/Baloo 2/Hanken
+  Grotesk/Kalam, a Paper/dark toggle) and retired as a design reference, not
+  rebuilt against the current tokens. Never derive new UI from them. The
+  shipped Live and Manager apps are the visual target.
 - Treat mockup data as illustrative. Preserve the domain model, permissions,
   versioned contracts, and architectural boundaries defined elsewhere in this
   repository. If an architectural or safety requirement conflicts with the
@@ -71,12 +69,12 @@ requirements below.
 - Implement the specific empty, loading, stale, degraded, offline, error, and
   permission states defined by the design language. Name what the product is
   waiting for or no longer knows; never imply unavailable work was completed.
-- Verify UI changes against the canonical mockup at representative target
-  viewports. Include screenshots or equivalent visual-regression evidence and
-  run accessibility, touch, keyboard, and interaction checks before handoff.
-- When changing the design reference itself, regenerate `docs/design/mockups`
-  with `node scripts/render-mockups.mjs`; do not edit the generated PNGs by
-  hand. Verify that the script used the real fonts before committing output.
+- Verify UI changes against DESIGN.md by running the actual app at
+  representative target viewports. Include screenshots of the running app or
+  equivalent visual-regression evidence, and run accessibility, touch,
+  keyboard, and interaction checks before handoff. There is no maintained
+  mockup or prototype build to check against — the running app is the
+  check.
 - The current design language is proposed rather than field-validated. Record
   conformance separately from operator validation and do not claim that a UI is
   validated without named A1/A2 testing and evidence.

@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.5e3c327f02c5177b",
-  "sourceSha256": "5e3c327f02c5177bc78b51f3bc7f7ac3b9a3323407e73d03bdbbbab0591ce5e3",
+  "buildId": "a2-0.0.0+sha256.0036f8b8073df7e2",
+  "sourceSha256": "0036f8b8073df7e22652485cba5f345e9ab1e9788efcc10e5c7b9ecdc84fd824",
   "inputCount": 309,
   "inputs": [
     {
@@ -49,7 +49,7 @@
     },
     {
       "path": "AGENTS.md",
-      "sha256": "1c6eb50e767dc39e7224e5f7b544b157ed1957b275c5f7538a6fe9c398c7f730"
+      "sha256": "5f28c8f3e7594613210acc2b420ef52d9a098ef9bd0de89985e0a551c7a6ad0b"
     },
     {
       "path": "CHANGELOG.md",
@@ -605,66 +605,66 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "56151e0775bbc06cecc4e271691db73a66759e6cab98bf6f1617fdc2e44ea19d"
+      "sha256": "71242a6959e13f2d867a651ee1d89daef829777a0c68e801538cd3a25b06839d"
     },
     {
       "path": "docs/design/README.md",
-      "sha256": "0ad82f693919d7dbb42e0a53428d953b321adaeaa2c56c443ea10f052c2b9f69"
+      "sha256": "0e7b640f2276dc1502703b3dadc5ead6995fe82e087b12c1435e8a053ab26f33"
     },
     {
-      "path": "docs/design/mockups/01-a2-grid-paper.png",
+      "path": "docs/design/archive/mockups/01-a2-grid-paper.png",
       "sha256": "fa457b967024f61cb4f40ad1900df1312ca6a871c2222f319ac6fce73cfc7f71"
     },
     {
-      "path": "docs/design/mockups/02-a2-grid-dark.png",
+      "path": "docs/design/archive/mockups/02-a2-grid-dark.png",
       "sha256": "daaafdee1862540aaf4c2fc68fe5443704be0fcdf29715bc924b0cdbf9a02709"
     },
     {
-      "path": "docs/design/mockups/03-a2-alerts.png",
+      "path": "docs/design/archive/mockups/03-a2-alerts.png",
       "sha256": "d7409f0cfedcac1bb0400e1db262e401075c255f17552147685f8f386c67551a"
     },
     {
-      "path": "docs/design/mockups/04-a2-acknowledged.png",
+      "path": "docs/design/archive/mockups/04-a2-acknowledged.png",
       "sha256": "3ca3bb3930b021c85989baac7ad66a16e5b4cf7b134fe0e076d52706c3bcf4a8"
     },
     {
-      "path": "docs/design/mockups/05-a2-player.png",
+      "path": "docs/design/archive/mockups/05-a2-player.png",
       "sha256": "031ed1b022a3490b582ca5b8a60ca89ebdb78aa34c0db9f158ec946616298bd0"
     },
     {
-      "path": "docs/design/mockups/06-a2-replay.png",
+      "path": "docs/design/archive/mockups/06-a2-replay.png",
       "sha256": "7d131122329a9ac22326bd37700fbb99d658cd7ee7aa9084ae2314aa8eb5a2d5"
     },
     {
-      "path": "docs/design/mockups/07-a2-detail.png",
+      "path": "docs/design/archive/mockups/07-a2-detail.png",
       "sha256": "4b6fdfb206e9185f520c82b08a4993c189e6b8db52f2073c7fc597e30116891f"
     },
     {
-      "path": "docs/design/mockups/08-a1-grid.png",
+      "path": "docs/design/archive/mockups/08-a1-grid.png",
       "sha256": "d36c85b4cbd2abd94f0e19de8ba67c565d1a8d29b12e9e91f7da67f5d7861174"
     },
     {
-      "path": "docs/design/mockups/09-a1-report.png",
+      "path": "docs/design/archive/mockups/09-a1-report.png",
       "sha256": "64c42a9bada88a265428b8a1256163977dd72917509f628b77232826c81bc395"
     },
     {
-      "path": "docs/design/mockups/10-a1-sent.png",
+      "path": "docs/design/archive/mockups/10-a1-sent.png",
       "sha256": "715f6a46f55750f8f84789a09f153757e4a4f2a3677232d4f20f6335f8baabdc"
     },
     {
-      "path": "docs/design/mockups/11-mic-check.png",
+      "path": "docs/design/archive/mockups/11-mic-check.png",
       "sha256": "52cb1e213567ddc2463dabc2aadc3d4787c5d2fe796ba4b29d2f799a6493aed7"
     },
     {
-      "path": "docs/design/mockups/12-replay-incident.png",
+      "path": "docs/design/archive/mockups/12-replay-incident.png",
       "sha256": "018a246ebe865e001839ee7115c188d60bf1083c8a16a44999a8ea3003cb213d"
     },
     {
-      "path": "docs/design/mockups/README.md",
-      "sha256": "840d49066e31fdf8cdfc2e6053bfb3875a3bbea1135de81a28d086bb1b655071"
+      "path": "docs/design/archive/mockups/README.md",
+      "sha256": "9ebdc14f650b52fbd16065c261b706eb5c3b3fad592b2b071f0e1a347c34d736"
     },
     {
-      "path": "docs/design/prototype/index.html",
+      "path": "docs/design/archive/prototype/index.html",
       "sha256": "b856ec943682e6a1daddc2619dee4fa29ddb382de2a89a38e868cd3bafe67acc"
     },
     {
@@ -1069,7 +1069,7 @@
     },
     {
       "path": "scripts/render-mockups.mjs",
-      "sha256": "98528796797aa26e2e8636e41d1209b1f0c76f56957500a92d2a9aaa13d7a024"
+      "sha256": "a81b09b8c371b718867c885503b14053c41bace182f992111595f17ad922114d"
     },
     {
       "path": "services/audio-node/Cargo.toml",

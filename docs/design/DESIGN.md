@@ -10,9 +10,10 @@ anything else disagree, this document is the intent, and the implementation is
 wrong. The reasoning, the sources and the rounds that were rejected on the way
 here live in [research notes](research-notes.md) — that file predates this
 version and still describes the earlier, RVLT-inherited system; treat it as
-history, not as a source of current truth. The clickable reference build is
-[`prototype/index.html`](prototype/index.html), which is also pending an update
-to match this version.
+history, not as a source of current truth. The interactive prototype that used
+to serve as the clickable reference build is [archived](archive/README.md),
+not updated to match this version — the shipped Live and Manager apps are the
+current reference build.
 
 **Contents**
 
