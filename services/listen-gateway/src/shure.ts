@@ -12,9 +12,23 @@ import {
 } from "@rvlt/pulse-protocol/shure-models";
 
 const MAX_BUFFER_BYTES = 64 * 1024;
-const STALE_AFTER_MS = 15_000;
+const STALE_AFTER_MS = 3_000;
 const CONFIG_REFRESH_MS = 2_000;
 const METER_RATE_MS = "00100";
+// Active liveness probe: a quiet-but-healthy receiver (no channel changes)
+// must not be torn down just because nothing happened to arrive on its own.
+// We ping on this cadence and only declare the control connection dead if a
+// probe goes unanswered for HEARTBEAT_TIMEOUT_MS, per the "detect stalled
+// metering separately from a dead control connection" requirement in
+// docs/integrations/shure-wireless.md.
+const HEARTBEAT_INTERVAL_MS = 8_000;
+const HEARTBEAT_TIMEOUT_MS = 20_000;
+// RF level, antenna diversity, battery, link quality and interference have
+// no vendor-side auto-metering channel the way audio does (METER_RATE) — the
+// receiver only pushes a REP for them when it decides the value changed.
+// To get a live, WWB-like continuously-updating readout we actively re-GET
+// these on a fast cadence instead of waiting on unsolicited reports alone.
+const FAST_POLL_MS = 500;
 
 type ReceiverConfig = Showfile["shureReceivers"][number];
 type ReceiverState = ShureTelemetry["receivers"][number];
@@ -423,6 +437,9 @@ class ReceiverMonitor {
   private socket?: Socket;
   private reconnectTimer?: NodeJS.Timeout;
   private staleTimer?: NodeJS.Timeout;
+  private heartbeatTimer?: NodeJS.Timeout;
+  private fastPollTimer?: NodeJS.Timeout;
+  private lastDataAtMs = 0;
   private closed = false;
   private reconnectDelayMs = 500;
   private state: ReceiverState;
@@ -469,6 +486,8 @@ class ReceiverMonitor {
     this.closed = true;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     if (this.staleTimer) clearTimeout(this.staleTimer);
+    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    if (this.fastPollTimer) clearInterval(this.fastPollTimer);
     this.socket?.destroy();
   }
 
@@ -483,19 +502,31 @@ class ReceiverMonitor {
     const socket = createConnection({ host: this.config.host, port: 2202 });
     this.socket = socket;
     socket.setKeepAlive(true, 5_000);
-    socket.setTimeout(20_000, () =>
-      socket.destroy(new Error("Shure receiver timed out.")),
-    );
     socket.on("connect", () => {
       this.reconnectDelayMs = 500;
+      this.lastDataAtMs = Date.now();
       socket.write(this.buildInitialCommands());
       this.state = {
         ...this.state,
         status: "ready",
         detail: "Read-only connection is active; waiting for receiver reports.",
       };
+      this.heartbeatTimer = setInterval(() => {
+        if (Date.now() - this.lastDataAtMs > HEARTBEAT_TIMEOUT_MS) {
+          socket.destroy(new Error("Shure receiver stopped responding."));
+          return;
+        }
+        socket.write("< GET MODEL >\r\n");
+      }, HEARTBEAT_INTERVAL_MS);
+      this.heartbeatTimer.unref();
+      this.fastPollTimer = setInterval(() => {
+        const commands = this.buildFastPollCommands();
+        if (commands) socket.write(commands);
+      }, FAST_POLL_MS);
+      this.fastPollTimer.unref();
     });
     socket.on("data", (chunk) => {
+      this.lastDataAtMs = Date.now();
       try {
         for (const frame of parser.push(chunk)) this.apply(frame);
       } catch (error) {
@@ -504,6 +535,8 @@ class ReceiverMonitor {
     });
     socket.on("error", () => undefined);
     socket.on("close", () => {
+      if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+      if (this.fastPollTimer) clearInterval(this.fastPollTimer);
       if (this.closed) return;
       this.state = {
         ...this.state,
@@ -515,9 +548,12 @@ class ReceiverMonitor {
             channel.observedAtUtc === null ? "unavailable" : "stale",
         })),
       };
+      // Jittered so a single network blip that drops several receivers at
+      // once doesn't send them all back in to reconnect in lockstep.
+      const jitterMs = Math.floor(Math.random() * this.reconnectDelayMs * 0.3);
       this.reconnectTimer = setTimeout(
         () => this.connect(),
-        this.reconnectDelayMs,
+        this.reconnectDelayMs + jitterMs,
       );
       this.reconnectTimer.unref();
       this.reconnectDelayMs = Math.min(this.reconnectDelayMs * 2, 30_000);
@@ -577,6 +613,41 @@ class ReceiverMonitor {
       }
     }
     return `${commands.join("\r\n")}\r\n`;
+  }
+
+  /**
+   * Re-GETs the properties that don't have their own vendor auto-metering
+   * channel (unlike audio, which streams via METER_RATE): RF/antenna,
+   * battery, link quality, interference and mute. Identity fields
+   * (name/frequency/tx type/battery health detail) change rarely and are
+   * left to the initial fetch plus unsolicited REP frames.
+   */
+  private buildFastPollCommands(): string {
+    const table = this.commands;
+    if (!table) return "";
+    const commands: string[] = [];
+    for (let channel = 1; channel <= this.config.channelCount; channel += 1) {
+      commands.push(
+        `< GET ${channel} ${table.batteryBarsProperty} >`,
+        `< GET ${channel} ${table.batteryChargeProperty} >`,
+      );
+      if (this.capabilities.antennaDiversity) {
+        if (table.antennaProperty)
+          commands.push(`< GET ${channel} ${table.antennaProperty} >`);
+        if (table.rfLevelProperty)
+          commands.push(`< GET ${channel} ${table.rfLevelProperty} >`);
+      }
+      if (this.capabilities.linkQuality && table.qualityProperty) {
+        commands.push(`< GET ${channel} ${table.qualityProperty} >`);
+      }
+      if (this.capabilities.interference && table.interferenceProperty) {
+        commands.push(`< GET ${channel} ${table.interferenceProperty} >`);
+      }
+      if (this.capabilities.transmitterDetail && table.muteProperty) {
+        commands.push(`< GET ${channel} ${table.muteProperty} >`);
+      }
+    }
+    return commands.length ? `${commands.join("\r\n")}\r\n` : "";
   }
 
   private apply(frame: ShureFrame): void {
