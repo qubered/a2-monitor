@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.733e26e2d9b65023",
-  "sourceSha256": "733e26e2d9b65023a409ce85b88411ab1f48a1e26b64f6546b06ff7d9be06f3b",
+  "buildId": "a2-0.0.0+sha256.7704d16b4da1a431",
+  "sourceSha256": "7704d16b4da1a431c87f0ef889abb51f18e8e73e69ab390ec00bc750c33f4635",
   "inputCount": 309,
   "inputs": [
     {
@@ -85,7 +85,7 @@
     },
     {
       "path": "apps/live/package.json",
-      "sha256": "84e5661c6467abe604928e561b000d42432b0cee2b3ca69ef6edbf72edb1b8d1"
+      "sha256": "e27cca69a84b6ccbf5452987571df9591f3117b81e067ff3b1468627bf00a3a3"
     },
     {
       "path": "apps/live/public/favicon.svg",
@@ -141,7 +141,7 @@
     },
     {
       "path": "apps/live/src/main.tsx",
-      "sha256": "c76f1a44f0df2fbfef9433417ff613e94426d6ae220e1de80759508a3fb4906a"
+      "sha256": "387c550148fbf8ccc26939ebc4fb726ef358fe0c6204e17a9ddd5229fc353a29"
     },
     {
       "path": "apps/live/src/mic-check.ts",
@@ -157,7 +157,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "375795bf1864eba5db910cf7a580b232f76c547d65a7dbf26284eb5a36f1cb31"
+      "sha256": "c77498b98a23bd8d1cb53b1e15ecf03303ee0c0da103fdd93cebc7841bd2f6d1"
     },
     {
       "path": "apps/live/src/useAudioDevice.ts",
@@ -205,7 +205,7 @@
     },
     {
       "path": "apps/manager/package.json",
-      "sha256": "ff9657d6cedf59ee996b2f123dd951ec8f7b07959f4bcc2968f1f74e507ed79e"
+      "sha256": "d21d1b7270bbd6c57ee63368a3f75ce3a8098ac267702b3aaf6965b269a4d6e2"
     },
     {
       "path": "apps/manager/public/favicon.svg",
@@ -217,7 +217,7 @@
     },
     {
       "path": "apps/manager/src/App.tsx",
-      "sha256": "7a703d443753eaeae3ed0ce2661a728081b88acd82947c9bc6ec56cdd97ca84b"
+      "sha256": "93f78ba0cf243851e29c9a612071eef2b3a23c0dbaea1b38bd93682ab23f9e2c"
     },
     {
       "path": "apps/manager/src/components/ChannelsTab.tsx",
@@ -273,7 +273,7 @@
     },
     {
       "path": "apps/manager/src/main.tsx",
-      "sha256": "08bf150ba8381dd0fe1f75794036b2a4d3269737d564c77986e33bee424bb83b"
+      "sha256": "6e275534d2f63aaad468c184eb851f8e4ffdfcc5565cf2616d6107dfa1d92757"
     },
     {
       "path": "apps/manager/src/showfile.ts",
@@ -605,7 +605,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "5bb7261e9ca484fe612a8fb2ad1a6ac738118e8f4324fb52cedf8378c994d970"
+      "sha256": "56151e0775bbc06cecc4e271691db73a66759e6cab98bf6f1617fdc2e44ea19d"
     },
     {
       "path": "docs/design/README.md",
@@ -881,7 +881,7 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "276e18c9d44ae01a7f3343d6cc58af2b41cb2f702d763d12993d5354d9c23004"
+      "sha256": "56b7bd7301d3b7317f1f06c9a759425c3bf6b06fb7b8abcd565f3f4ea7bbcccc"
     },
     {
       "path": "package.json",
@@ -1021,7 +1021,7 @@
     },
     {
       "path": "packages/ui/tokens.css",
-      "sha256": "6387d9898fb7e4989781b710b0afa029dbb1911e373297608ae965d04a2f9c92"
+      "sha256": "128378cf99d4e28715fd6624ffd84b2625a230ba48f1f56f46cb7a3386954667"
     },
     {
       "path": "rust-toolchain.toml",

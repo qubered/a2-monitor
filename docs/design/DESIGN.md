@@ -1,6 +1,6 @@
 # Pulse — design language
 
-- **Version:** 2.1.0
+- **Version:** 2.1.1
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
 - **Last updated:** 2026-09-22
@@ -223,18 +223,22 @@ meter, a badge or a border.
 
 ## 4. Typography
 
-Three families. **Space Grotesk carries both display and body** — a single
-grotesk, read at different weights and sizes, rather than pairing two
-typefaces that have to be kept in tension. **Fredoka is the wordmark only** —
-rounded, friendly, and never used for anything a person has to read quickly.
-**IBM Plex Mono is every machine measurement.**
+Two families, not four. **IBM Plex Sans carries display, body and the
+wordmark** — one typeface, read at different weights, sizes and tracking,
+rather than reaching for a separate "brand" typeface to make the logotype feel
+distinct. **IBM Plex Mono is every machine measurement.** Plex was chosen
+because it is a real technical typeface with its own history (IBM's own,
+built for print and code and screens together), not because it was trending
+in a font picker — an earlier draft of this system used Space Grotesk and
+Fredoka, both of which had drifted into being the default look of any
+AI-assisted mockup, and neither said anything specific about this product.
 
 | Role      | Family                            | Weights         | Job here                                                                              |
 | --------- | --------------------------------- | --------------- | ------------------------------------------------------------------------------------- |
-| Display   | **Space Grotesk**                 | 600 / 700       | Page titles, panel headers, the one bright figure                                     |
-| Body      | **Space Grotesk**                 | 400 / 500       | Everything read as language; all UI text, labels, controls                            |
+| Display   | **IBM Plex Sans**                 | 600 / 700       | Page titles, panel headers, the one bright figure                                     |
+| Body      | **IBM Plex Sans**                 | 400 / 500       | Everything read as language; all UI text, labels, controls                            |
 | Data mono | **IBM Plex Mono**, `tabular-nums` | 400 / 500 / 600 | Anything a machine measured — levels, frequencies, times, asset IDs. Data cells only. |
-| Wordmark  | **Fredoka**                       | 600             | The product lockup only. Never a headline, never UI.                                  |
+| Wordmark  | **IBM Plex Sans**                 | 700             | The product lockup only, at −.02em tracking. Never a separate typeface.               |
 
 ### 4.1 App type ramp (LOCKED — do not invent UI sizes)
 
@@ -253,7 +257,8 @@ rounded, friendly, and never used for anything a person has to read quickly.
   status-strip labels and axis ticks.
 - Buttons are UI text, 14px, weight 600. Mono matches the cell it sits in.
 - Weights: display 600–700 for titles; body 400 read / 500 UI / 600 emphasis /
-  700 badge. No others — Space Grotesk's 300 and its heavier cuts are unused.
+  700 badge. No others — Plex Sans's lighter (100–300) and heavier cuts are
+  unused.
 - Keep the high-contrast jump: a 24px display title over 13.5px quiet rows. Do
   not flatten everything to one size.
 
@@ -335,10 +340,10 @@ accent depends on context: `--red` for the channel in your ears and for
 keyboard focus generally, `--ink-2` for "this is the one I have open."
 
 **Controls stay pills.** Buttons, filter chips and badges keep the fully
-rounded `999px` shape — it pairs with Fredoka's own rounded terminals in the
-wordmark, and it is the one geometric echo of the brand mark allowed to leak
-into UI chrome. Cards and panels use the smaller `12`/`18px` radii; nothing in
-the product uses a sharp corner.
+rounded `999px` shape — a soft, closed form that reads as "press me" without a
+hard edge, and the one place a rounded geometry is allowed to leak into UI
+chrome. Cards and panels use the smaller `12`/`18px` radii; nothing in the
+product uses a sharp corner.
 
 All of this replaces the old `0 3px 0` hard-offset shadow and the 2px ink
 outline on every card, control and photo frame outright. Nothing in the
@@ -897,6 +902,16 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.1.1 — 2026-09-22.** Space Grotesk and Fredoka are retired. Both had
+become the default look of an AI-generated mockup rather than a considered
+choice for this product — real fonts, just badly overused ones. Replaced
+with IBM Plex Sans across display, body and the wordmark
+([§4](#4-typography)), pairing with the IBM Plex Mono already in use rather
+than adding a third family. The wordmark no longer gets its own typeface; it
+is Plex Sans 700 at tight tracking, distinguished by weight and size, not by
+switching fonts. Implemented in `tokens.css` and both apps alongside this
+entry.
 
 **2.1.0 — 2026-09-22.** Light mode is gone. Pulse was dark-by-default with
 Paper as an opt-in alternate ([§1.2](#12-dark-only), [§3.1](#31-surfaces));

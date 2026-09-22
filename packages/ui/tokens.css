@@ -34,9 +34,9 @@
   --card-outline: var(--line);
   --card-lit: inset 0 var(--size-1) 0 rgb(255 253 248 / 12%);
 
-  --font-display: "Space Grotesk", sans-serif;
-  --font-wordmark: "Fredoka", sans-serif;
-  --font-body: "Space Grotesk", system-ui, sans-serif;
+  --font-display: "IBM Plex Sans", sans-serif;
+  --font-wordmark: "IBM Plex Sans", sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
   --font-page: 1.5rem;

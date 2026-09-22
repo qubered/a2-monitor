@@ -112,7 +112,9 @@ export function App() {
               <rect x="84" y="38" width="12" height="24" rx="6" />
             </svg>
           </span>
-          <b className="font-wordmark text-page font-semibold">Pulse</b>
+          <b className="font-wordmark text-page font-bold tracking-tight">
+            Pulse
+          </b>
           <em className="font-body text-ui font-semibold not-italic text-muted-foreground">
             Manager
           </em>
