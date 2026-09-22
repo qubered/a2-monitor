@@ -27,14 +27,18 @@ requirements below.
 ## UI and UX design
 
 - Treat `docs/design/DESIGN.md` as normative for visual language, interaction,
-  components, and product surfaces. Follow its referenced RVLT design language
-  where required; do not create a parallel design system.
-- Use the rendered states in `docs/design/mockups` as the visual targets and
-  `docs/design/prototype/index.html` as the canonical interactive reference.
-  When they disagree, the prototype wins and the rendered image is stale.
-  Reproduce their information hierarchy, component behavior, terminology, and
-  interaction flow. Do not derive production UI from earlier or experimental
-  prototypes unless `docs/design/DESIGN.md` explicitly points to them.
+  components, and product surfaces. As of DESIGN.md 2.0.0 it is Pulse's own
+  standalone design language, not a domain mapping over RVLT's; do not
+  reintroduce an RVLT dependency or treat RVLT's tokens/components as
+  authoritative for this product.
+- `docs/design/mockups` and `docs/design/prototype/index.html` predate the
+  2.0.0 rewrite (RVLT-derived tokens, Archivo/Baloo 2/Hanken Grotesk/Kalam,
+  a Paper/dark toggle) and are stale against the current design language and
+  the shipped apps. Do not treat them as the visual target until they are
+  rebuilt against the current tokens; flag the gap rather than deriving new
+  UI from them. Rebuilding the prototype and regenerating the mockups
+  (`node scripts/render-mockups.mjs`) against the current design language is
+  open follow-up work.
 - Treat mockup data as illustrative. Preserve the domain model, permissions,
   versioned contracts, and architectural boundaries defined elsewhere in this
   repository. If an architectural or safety requirement conflicts with the
@@ -48,8 +52,8 @@ requirements below.
   machine measurements, and keep RF level separate from link quality.
 - Use design tokens and the locked type, colour, spacing, shape, elevation,
   icon, and motion rules from `docs/design/DESIGN.md`. Components must not
-  introduce raw visual values. Paper is the default surface, dark mode is a
-  first-class theme, and both must be tested.
+  introduce raw visual values. Pulse is dark-mode only (DESIGN.md 2.1.0) —
+  there is no light/Paper theme and no theme switch to test.
 - Keep the documented refusals: no gradients, glow, glass effects, decorative
   motion, emoji status icons, stock portraits, animated loading shimmer, or
   enthusiastic filler copy. Use short, specific, present-tense language with
@@ -68,9 +72,8 @@ requirements below.
   permission states defined by the design language. Name what the product is
   waiting for or no longer knows; never imply unavailable work was completed.
 - Verify UI changes against the canonical mockup at representative target
-  viewports in both Paper and dark themes. Include screenshots or equivalent
-  visual-regression evidence and run accessibility, touch, keyboard, and
-  interaction checks before handoff.
+  viewports. Include screenshots or equivalent visual-regression evidence and
+  run accessibility, touch, keyboard, and interaction checks before handoff.
 - When changing the design reference itself, regenerate `docs/design/mockups`
   with `node scripts/render-mockups.mjs`; do not edit the generated PNGs by
   hand. Verify that the script used the real fonts before committing output.

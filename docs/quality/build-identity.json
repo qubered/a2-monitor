@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.7704d16b4da1a431",
-  "sourceSha256": "7704d16b4da1a431c87f0ef889abb51f18e8e73e69ab390ec00bc750c33f4635",
+  "buildId": "a2-0.0.0+sha256.5e3c327f02c5177b",
+  "sourceSha256": "5e3c327f02c5177bc78b51f3bc7f7ac3b9a3323407e73d03bdbbbab0591ce5e3",
   "inputCount": 309,
   "inputs": [
     {
@@ -49,7 +49,7 @@
     },
     {
       "path": "AGENTS.md",
-      "sha256": "a17c03b35132117842468817b9838af70f7e28eab5119e0ec99e1a89b39579cb"
+      "sha256": "1c6eb50e767dc39e7224e5f7b544b157ed1957b275c5f7538a6fe9c398c7f730"
     },
     {
       "path": "CHANGELOG.md",
@@ -737,7 +737,7 @@
     },
     {
       "path": "docs/quality/node-dependency-inventory.json",
-      "sha256": "a60004afdbca7691fb4f4424b1083e14679152fea20c3c80f52a2c4cda69c7d4"
+      "sha256": "96b81d680e77d374c50e016dcb3b065291ea1bb71c23aea33479d14d3d918133"
     },
     {
       "path": "docs/quality/performance-baselines.md",
