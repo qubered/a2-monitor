@@ -25,7 +25,6 @@ import { useShowfile } from "./useShowfile";
 import { useShureTelemetry } from "./useShureTelemetry";
 
 type Filter = "all" | "needs-someone" | "wireless" | "wired";
-type Theme = "system" | "light" | "dark";
 
 const filterLabels: Record<Filter, string> = {
   all: "All channels",
@@ -35,11 +34,6 @@ const filterLabels: Record<Filter, string> = {
 };
 
 const emptyChannels: LiveChannel[] = [];
-
-function readTheme(): Theme {
-  const saved = window.localStorage.getItem("pulse-theme");
-  return saved === "light" || saved === "dark" ? saved : "system";
-}
 
 function readStringSet(key: string): Set<string> {
   try {
@@ -127,7 +121,6 @@ export function App({
   playbackFactory?: PlaybackFactory;
 }) {
   const [filter, setFilter] = useState<Filter>("all");
-  const [theme, setTheme] = useState<Theme>(readTheme);
   const [acknowledged, setAcknowledged] = useState<Set<string>>(() =>
     readStringSet("pulse-acknowledged"),
   );
@@ -171,16 +164,6 @@ export function App({
   const channels = usingDeviceChannels
     ? deviceChannels
     : (snapshot?.channels ?? emptyChannels);
-
-  useEffect(() => {
-    if (theme === "system") {
-      document.documentElement.removeAttribute("data-theme");
-      window.localStorage.removeItem("pulse-theme");
-    } else {
-      document.documentElement.dataset.theme = theme;
-      window.localStorage.setItem("pulse-theme", theme);
-    }
-  }, [theme]);
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -389,17 +372,6 @@ export function App({
             {alertCount} to acknowledge
           </button>
         ) : null}
-        <label className="theme-picker">
-          <span>Theme</span>
-          <select
-            value={theme}
-            onChange={(event) => setTheme(event.target.value as Theme)}
-          >
-            <option value="system">System</option>
-            <option value="light">Paper</option>
-            <option value="dark">Dark</option>
-          </select>
-        </label>
         <a className="manager-link" href="/manager/">
           Manager
         </a>

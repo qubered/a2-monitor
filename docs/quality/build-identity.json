@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.efe75f58bfe08c51",
-  "sourceSha256": "efe75f58bfe08c5170235fb9588c9916f66a3ac2959bac10618e96be0805e6ea",
-  "inputCount": 307,
+  "buildId": "a2-0.0.0+sha256.733e26e2d9b65023",
+  "sourceSha256": "733e26e2d9b65023a409ce85b88411ab1f48a1e26b64f6546b06ff7d9be06f3b",
+  "inputCount": 309,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -81,19 +81,23 @@
     },
     {
       "path": "apps/live/index.html",
-      "sha256": "7470d66d2beb3384b4b5137a2bd3e0866bcf0bd168c88ceeffb77d79b090a8f9"
+      "sha256": "7a257fa978b819621d387f13457cef432823cb490eadc6fcda2b5d1de9443f18"
     },
     {
       "path": "apps/live/package.json",
-      "sha256": "a4a31151c0ce3094dc2c8347f77cdc1b1dd6afce33573da939e6dc7551b13286"
+      "sha256": "84e5661c6467abe604928e561b000d42432b0cee2b3ca69ef6edbf72edb1b8d1"
+    },
+    {
+      "path": "apps/live/public/favicon.svg",
+      "sha256": "b7ae37b5b125ec07dcc07125ea4ea7030f20c33ace384c9dcbecc29f36f90be1"
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "33a7d31b99dd2572d193e33137e3c7d355d164a4734637ac5c24fd0b7ebe965c"
+      "sha256": "6bd0ff0e1a6a0292901dc6556340bf14ccd4b989770215d8355f3940391c8045"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "e51f24758b0db589766ae1a18f2614797321580cc761f45beec435247c9f8dba"
+      "sha256": "2f0bf3bdcb6c24bbc2967d60bd4b4ba6cf24a1ae0a8a96a27f86f6fef82293ca"
     },
     {
       "path": "apps/live/src/audio-device.test.ts",
@@ -121,7 +125,7 @@
     },
     {
       "path": "apps/live/src/components/MicCheck.tsx",
-      "sha256": "ee0b21d8800e463960f2ca6a5d0b6c72984e46aa66ca906ae99134d3b0905a6c"
+      "sha256": "7d280ba5f88219ddb0f6c26e41a5683c2c65f3c9bce42fc07f6650ba375f7c5e"
     },
     {
       "path": "apps/live/src/components/Player.tsx",
@@ -137,11 +141,11 @@
     },
     {
       "path": "apps/live/src/main.tsx",
-      "sha256": "19965360d966f440d93cbd37e866813f5eae51f954496a2ec4848bf3968982df"
+      "sha256": "c76f1a44f0df2fbfef9433417ff613e94426d6ae220e1de80759508a3fb4906a"
     },
     {
       "path": "apps/live/src/mic-check.ts",
-      "sha256": "f0d9a3c549882f964deb65b0012e874873d5ffadec3a5ed8dec9e638bb51bae6"
+      "sha256": "0a51e533eeaa2e6b0f1f466460eb9fbb8f57ab937d9e1c133da1e072eda42e0b"
     },
     {
       "path": "apps/live/src/snapshot.test.ts",
@@ -153,7 +157,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "2fa22707fbd63815966e5f2c50b34bd668a8a10cfe175a4d59d9a4aad19ecbe4"
+      "sha256": "375795bf1864eba5db910cf7a580b232f76c547d65a7dbf26284eb5a36f1cb31"
     },
     {
       "path": "apps/live/src/useAudioDevice.ts",
@@ -197,19 +201,23 @@
     },
     {
       "path": "apps/manager/index.html",
-      "sha256": "ff6a78194e1a9f78d80fb2f39f52aac1717d1781d5722b595510115179e02c8c"
+      "sha256": "a13de7e285904e38f736a468ba7f2273fe010f9bd65dc0af840703c88391500a"
     },
     {
       "path": "apps/manager/package.json",
-      "sha256": "71760a762f8c0c44f105d6bce018734e1a546fb26987d871ced642ae0e4bfc03"
+      "sha256": "ff9657d6cedf59ee996b2f123dd951ec8f7b07959f4bcc2968f1f74e507ed79e"
+    },
+    {
+      "path": "apps/manager/public/favicon.svg",
+      "sha256": "b7ae37b5b125ec07dcc07125ea4ea7030f20c33ace384c9dcbecc29f36f90be1"
     },
     {
       "path": "apps/manager/src/App.test.tsx",
-      "sha256": "d3cad5a3bd974e873a7d8fcc69079d3ca69f6a175bf568689ac61d9f3da38be1"
+      "sha256": "6ce5681adc5b2c84dcb1c8df5a89c9d9e37d3090103b33e65737c84d06b7bdb1"
     },
     {
       "path": "apps/manager/src/App.tsx",
-      "sha256": "babd0873ca554c61346c1ee46faee5e8425aecd628724e6321ea18f089d2fe0d"
+      "sha256": "7a703d443753eaeae3ed0ce2661a728081b88acd82947c9bc6ec56cdd97ca84b"
     },
     {
       "path": "apps/manager/src/components/ChannelsTab.tsx",
@@ -217,7 +225,7 @@
     },
     {
       "path": "apps/manager/src/components/EmptyState.tsx",
-      "sha256": "6c8e832a127ba2e95a28a434f1410321af2acc5c2c18b36e14a7f659c2f0eee7"
+      "sha256": "7424cad9193275477d79286375c8f1c342e66c8b1d54b8d990dce3afc1897677"
     },
     {
       "path": "apps/manager/src/components/ReceiversTab.tsx",
@@ -233,15 +241,15 @@
     },
     {
       "path": "apps/manager/src/components/ui/button.tsx",
-      "sha256": "6c7b1e6664bb39e852d551fed82d423d4f37bd28b22d70479b64d1925f95a29e"
+      "sha256": "efac429237891c7a2bc3f3e9a833eb947715f2dc7381d134b8c435690a463e4d"
     },
     {
       "path": "apps/manager/src/components/ui/card.tsx",
-      "sha256": "026f1dbeb6ba366e4175df1914a2c0eb37b969e90b6edffd552a596d32e99502"
+      "sha256": "5e9e21eb1a894dc93e4ce263becb9902eafbf040fd5d4198105e2d9b127670bd"
     },
     {
       "path": "apps/manager/src/components/ui/input.tsx",
-      "sha256": "d84ad9515909ae1ec03d3ace67493172cf634300b832b543337a9584aa44e546"
+      "sha256": "ae3bdd9b7de6cbc589cc078e561b8b3792f16752550457133544d1df733133ec"
     },
     {
       "path": "apps/manager/src/components/ui/label.tsx",
@@ -249,15 +257,15 @@
     },
     {
       "path": "apps/manager/src/components/ui/select.tsx",
-      "sha256": "ff476556d17170c6331fd073d628a6bff6e2d7867436c0eb71c71e816f11a710"
+      "sha256": "c74470c781ea7d240416e0bb0812ac06b285a8756c629de05d1ad4468614ec21"
     },
     {
       "path": "apps/manager/src/components/ui/table.tsx",
-      "sha256": "48726d9c2da1c61bcd08690e0c7cbd087f2f522220aba9719c0b716b96d1f63d"
+      "sha256": "d78524d1918a42069e43403e8b928b80ddf628ee176eb2e44831087a56cea609"
     },
     {
       "path": "apps/manager/src/components/ui/tabs.tsx",
-      "sha256": "732a997a48b1024129bcede36db45f62c78793e6a22502d86c1d8417765a4ea0"
+      "sha256": "965dd9210c4cba9dd0306a1e7239a2a4515f1e143f91b75d30a501d5a582ba85"
     },
     {
       "path": "apps/manager/src/lib/utils.ts",
@@ -265,7 +273,7 @@
     },
     {
       "path": "apps/manager/src/main.tsx",
-      "sha256": "f0c78f5528f45233e4fdb2cf65d12dfda9508617642d27626edad89f521db152"
+      "sha256": "08bf150ba8381dd0fe1f75794036b2a4d3269737d564c77986e33bee424bb83b"
     },
     {
       "path": "apps/manager/src/showfile.ts",
@@ -273,7 +281,7 @@
     },
     {
       "path": "apps/manager/src/styles.css",
-      "sha256": "0504e640c516f24782f2da77e21a33b72a701e4fc8f4224916621c7281c8e8c1"
+      "sha256": "533849683dfa11c3567fe2fff067227353e5c40e7bbef19ef420e228fe702162"
     },
     {
       "path": "apps/manager/src/vite-env.d.ts",
@@ -597,7 +605,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "1a80f11c753a8b605f7f95a985aea334daee08b6c1e38751b142b31f016f9ba1"
+      "sha256": "5bb7261e9ca484fe612a8fb2ad1a6ac738118e8f4324fb52cedf8378c994d970"
     },
     {
       "path": "docs/design/README.md",
@@ -873,7 +881,7 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "ec928a836d31d40dd5d7d0d97ae3818ea8359963a7658a29575d2fe3d55f3bd9"
+      "sha256": "276e18c9d44ae01a7f3343d6cc58af2b41cb2f702d763d12993d5354d9c23004"
     },
     {
       "path": "package.json",
@@ -885,7 +893,7 @@
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/health-response.valid.json",
-      "sha256": "6ec1f4f3dcc668793f2a703b76c4d777404096540aa78cc83343fca174f52353"
+      "sha256": "e3f4b1c891bd258652ef36ca085c09013214234bb22f6cd959d7d7e611d357ac"
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/live-snapshot-response.valid.json",
@@ -901,7 +909,7 @@
     },
     {
       "path": "packages/protocol/fixtures/v0/http/incompatible/health-response.unknown-field.json",
-      "sha256": "620e95e7ea8d39fa669d1f7edaf2b5285a85a2ad92d5f1d3b364c79cb3d6dea1"
+      "sha256": "7ee92b55bb2f02143e9e8169523635dcc0a6a5c716bb8b592bbfbd177065ea07"
     },
     {
       "path": "packages/protocol/fixtures/v0/http/incompatible/live-snapshot-response.major-version.json",
@@ -925,7 +933,7 @@
     },
     {
       "path": "packages/protocol/fixtures/v0/http/previous/health-response.valid.json",
-      "sha256": "41ae53ee033296f9de2336cf793d2ee65c2578e4984a8ebd676cbc7bf674d940"
+      "sha256": "dcc826acd30fd715318de98245ef6f3f806cd0818463e0d74eb23068a42f212e"
     },
     {
       "path": "packages/protocol/fixtures/v0/http/previous/live-snapshot-response.valid.json",
@@ -941,7 +949,7 @@
     },
     {
       "path": "packages/protocol/generated/http-contracts.ts",
-      "sha256": "5daa8ab92f5b08b7c8fd82a409037dd5d2adcb2c4bd66c0ca792c13d3a88c58a"
+      "sha256": "74bc8a0340263a8148be179f9054985ca85b9168a291a5b81ddab8ceca2d0e9d"
     },
     {
       "path": "packages/protocol/model/aggregate-transitions.v0.json",
@@ -957,7 +965,7 @@
     },
     {
       "path": "packages/protocol/schema/v0/http/health-response.schema.json",
-      "sha256": "f65d11ebc25e806c8c61e38cde53ae7189cc60ad7992c9611af12c3a7af89d7a"
+      "sha256": "b9bc3da791dc5174b321344fdf48de2909401cba840c06d8c16ccd51a27d04cc"
     },
     {
       "path": "packages/protocol/schema/v0/http/live-snapshot-response.schema.json",
@@ -989,7 +997,7 @@
     },
     {
       "path": "packages/protocol/tests/http-contracts.test.ts",
-      "sha256": "4271d42d18c3d75b4e1305856e20735036ea3bbb82c6ed3e866766993767aef9"
+      "sha256": "318e0ad0b26245a0ec3079d18fc4f1adeb1d4829a887eb809af5c8c05ce8de7a"
     },
     {
       "path": "packages/protocol/tests/strict-ajv.test.mjs",
@@ -1013,7 +1021,7 @@
     },
     {
       "path": "packages/ui/tokens.css",
-      "sha256": "d03ed95e95bda96f58628fef6bc0ebfbcfd2417192b77fc474f298a0cd0561ae"
+      "sha256": "6387d9898fb7e4989781b710b0afa029dbb1911e373297608ae965d04a2f9c92"
     },
     {
       "path": "rust-toolchain.toml",
@@ -1121,11 +1129,11 @@
     },
     {
       "path": "services/backend/src/server.test.ts",
-      "sha256": "edfee680778e6bbde2deacd88e1e8fa7d1e209997f8ba790091c0cbea8d710d6"
+      "sha256": "8e442d69d10f133522384bcb2025c17de11212064fad860674bd4ee4c09dd921"
     },
     {
       "path": "services/backend/src/server.ts",
-      "sha256": "edaf478f039f8a29996722ba4e1782ae34e96e7af641a2df1090145c08249120"
+      "sha256": "31c493e232ee3ca04a8c71e41e2f3e629ec4ec28abe6c223ce89db69af562817"
     },
     {
       "path": "services/backend/src/showfile.ts",

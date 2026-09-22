@@ -33,7 +33,6 @@ const snapshotSource = createStaticSnapshotSource(snapshot);
 describe("Live channel grid", () => {
   beforeEach(() => {
     window.localStorage.clear();
-    document.documentElement.removeAttribute("data-theme");
   });
 
   afterEach(cleanup);
@@ -142,18 +141,6 @@ describe("Live channel grid", () => {
     ).toBeTruthy();
     expect(within(card).getByText("RF link: not applicable")).toBeTruthy();
     expect(within(card).getByText("Audio: good")).toBeTruthy();
-  });
-
-  it("persists an explicit dark theme", async () => {
-    const user = userEvent.setup();
-    render(<App snapshotSource={snapshotSource} />);
-
-    await screen.findByLabelText("Theme");
-
-    await user.selectOptions(screen.getByLabelText("Theme"), "dark");
-
-    expect(document.documentElement.dataset.theme).toBe("dark");
-    expect(window.localStorage.getItem("pulse-theme")).toBe("dark");
   });
 
   it("runs and resumes a named eight-dimension mic check", async () => {

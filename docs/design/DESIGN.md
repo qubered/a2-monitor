@@ -1,6 +1,6 @@
 # Pulse — design language
 
-- **Version:** 2.0.0
+- **Version:** 2.1.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
 - **Last updated:** 2026-09-22
@@ -16,14 +16,14 @@ to match this version.
 
 **Contents**
 
-1. [Foundations](#1-foundations) · 2. [Principles](#2-principles) ·
-2. [Colour](#3-colour) · 4. [Typography](#4-typography) ·
-3. [Shape and elevation](#5-shape-and-elevation) · 6. [Motion](#6-motion) ·
-4. [Iconography](#7-iconography) · 8. [Touch and input](#8-touch-and-input) ·
-5. [The honesty grammar](#9-the-honesty-grammar) ·
-6. [Components](#10-components) · 11. [Surfaces](#11-surfaces) ·
-7. [Empty, loading and degraded](#12-empty-loading-and-degraded) ·
-8. [Accessibility](#13-accessibility) · 14. [Changelog](#14-changelog)
+**1.** [Foundations](#1-foundations) · **2.** [Principles](#2-principles) ·
+**3.** [Colour](#3-colour) · **4.** [Typography](#4-typography) ·
+**5.** [Shape and elevation](#5-shape-and-elevation) · **6.** [Motion](#6-motion) ·
+**7.** [Iconography](#7-iconography) · **8.** [Touch and input](#8-touch-and-input) ·
+**9.** [The honesty grammar](#9-the-honesty-grammar) ·
+**10.** [Components](#10-components) · **11.** [Surfaces](#11-surfaces) ·
+**12.** [Empty, loading and degraded](#12-empty-loading-and-degraded) ·
+**13.** [Accessibility](#13-accessibility) · **14.** [Changelog](#14-changelog)
 
 ---
 
@@ -41,13 +41,17 @@ looking at a screen for a living. Where an earlier version of this document
 inherited a design language from elsewhere, it has been replaced wholesale.
 Nothing below should be read as "the same as before, but green."
 
-### 1.2 Dark is the default
+### 1.2 Dark. Only.
 
-Pulse defaults to a dark surface, because that is where it is actually used —
-a wing, a booth, a tech table, lights down. Paper, a warm light theme, is the
-explicit alternate for daytime rehearsal and desk use, not an afterthought:
-both are first-class, both carry the full token set, and switching between
-them is one setting, never a rebuild. See [§3.2](#32-theme-resolution).
+Pulse is a dark-mode app, full stop. It is read in a wing, a booth, a tech
+table, lights down, and a light surface has no job there. There is no light
+or "Paper" theme, no `data-theme` switch, no theme picker in the UI, and no
+`prefers-color-scheme` branching in the tokens — one surface, declared once,
+with nothing to resolve. An earlier draft of this system shipped a light
+alternate and defaulted to it; both the default and the alternate are gone.
+If daytime desk use ever turns out to need something different, that is a
+second, explicitly-scoped product decision, not a theme toggle bolted onto
+this one.
 
 ### 1.3 One rule for who wrote a number
 
@@ -157,62 +161,38 @@ words, not implied by a pale colour.
 
 ### 3.1 Surfaces
 
-Pulse defaults to a dark surface. Paper, a warm off-white, is the explicit
-opt-in alternate — a straight theme switch, not a separate design, and both are
-first class.
+There is one surface: dark. No opt-in alternate, no theme resolution.
 
 ```
-Dark    --paper #141210  --paper-2 #1a1613  --card #211c17  --elev #2a241d
-        --ink   #f5efe2  --ink-2   #cdc4b2  --muted #9e9483 --faint #6e665a
-        --line  #332c24  --line-2  #473e32
-
-Paper   --paper #f4eee1  --paper-2 #ede4d2  --card #fffdf8  --elev #fffdf8
-        --ink   #1d1a15  --ink-2   #4b4539  --muted #7d7565 --faint #a89e89
-        --line  #e4dac3  --line-2  #d8ccb0
+--paper #141210  --paper-2 #1a1613  --card #211c17  --elev #2a241d
+--ink   #f5efe2  --ink-2   #cdc4b2  --muted #9e9483 --faint #6e665a
+--line  #332c24  --line-2  #473e32
 ```
 
 Cards are a hairline `--line` rule plus a soft neutral shadow, never a thick
 outline and never a hard pixel-offset shadow — see
-[§5](#5-shape-and-elevation) for why, and for how dark and Paper each carry
-depth differently.
+[§5](#5-shape-and-elevation) for why.
 
-### 3.2 Theme resolution
-
-Themes resolve in **three** states, not two: an explicit choice stamps
-`data-theme` on the root, and the default "system" setting stamps nothing,
-leaving only `prefers-color-scheme`.
-
-- The dark set is declared on bare `:root` — it is the default whenever no
-  signal says otherwise (an unset system preference, or a browser that does
-  not report one).
-- The Paper set is declared **twice** — once behind
-  `@media (prefers-color-scheme: light)` guarded as
-  `:root:not([data-theme="dark"])`, and once behind `:root[data-theme="light"]`
-  so an in-app toggle wins in either direction.
-- No component may define a colour that only resolves in one theme. The
-  translucent alert veil and its text shadows are where this bites: they need
-  `--veil` and `--veil-ink` tokens per theme, or the alert renders unreadable
-  in one of the two.
-
-### 3.2.1 Never inline a value
+### 3.2 Never inline a value
 
 A MUST: **a component never names a raw hex, px or radius — it references a
-token.** Raw values appear only in the theme blocks, which are theme-mapped, so
-`var(--ok)` resolves correctly on both surfaces and a hardcoded value cannot
-leak from one theme into the other. A surface this system needs that has no
-token yet — a pressed control, a recessed well behind a trace — gets a token
-per theme (`--elev-2`, `--well`, `--veil`, `--veil-ink`) rather than an inlined
+token.** This still matters with exactly one theme: it is what lets the whole
+product be retuned from one file, keeps a component from silently drifting off
+the palette, and is the only reason `--veil`/`--veil-ink` exist as their own
+tokens rather than a value typed straight into the alert overlay. A surface
+this system needs that has no token yet — a pressed control, a recessed well
+behind a trace — gets a token (`--elev-2`, `--well`) rather than an inlined
 colour at the component.
 
 ### 3.3 Accent roles
 
 Three accents, each doing one job, none of them decorative:
 
-| Role                     | Token      | Dark      | Paper     | Job                                                     |
-| ------------------------ | ---------- | --------- | --------- | ------------------------------------------------------- |
-| Signal (brand + healthy) | `--ok`     | `#4fd888` | `#2ea65c` | The product's own colour. Verified, healthy, listening. |
-| Warn                     | `--warn`   | `#eba53a` | `#c98a14` | Needs someone, not failing yet.                         |
-| Replay                   | `--purple` | `#9b82e6` | `#7a5cd0` | You are hearing the past, not the present.              |
+| Role                     | Token      | Value     | Job                                                     |
+| ------------------------ | ---------- | --------- | ------------------------------------------------------- |
+| Signal (brand + healthy) | `--ok`     | `#4fd888` | The product's own colour. Verified, healthy, listening. |
+| Warn                     | `--warn`   | `#eba53a` | Needs someone, not failing yet.                         |
+| Replay                   | `--purple` | `#9b82e6` | You are hearing the past, not the present.              |
 
 Signal green is not a fourth, separate "brand colour" layered on top of the
 semantic system — it _is_ the semantic system's healthy state
@@ -221,14 +201,14 @@ construction, on-brand.
 
 ### 3.4 Domain mapping
 
-| Meaning                     | Role                          | Dark      | Paper     |
-| --------------------------- | ----------------------------- | --------- | --------- |
-| Live — what you are hearing | `--red`                       | `#e0363d` | `#c12229` |
-| Critical fault              | `--t-out` on `--out-soft`     | `#f26f73` | `#9c1b21` |
-| Needs intervention          | `--warn` on `--warn-soft`     | `#eba53a` | `#c98a14` |
-| Verified, healthy           | `--ok` on `--ok-soft`         | `#4fd888` | `#2ea65c` |
-| Stale, unknown, disarmed    | `--rep` on `--rep-soft`       | `#b6ac9a` | `#8a8270` |
-| Replay                      | `--purple` on `--purple-soft` | `#9b82e6` | `#7a5cd0` |
+| Meaning                     | Role                          | Value     |
+| --------------------------- | ----------------------------- | --------- |
+| Live — what you are hearing | `--red`                       | `#e0363d` |
+| Critical fault              | `--t-out` on `--out-soft`     | `#f26f73` |
+| Needs intervention          | `--warn` on `--warn-soft`     | `#eba53a` |
+| Verified, healthy           | `--ok` on `--ok-soft`         | `#4fd888` |
+| Stale, unknown, disarmed    | `--rep` on `--rep-soft`       | `#b6ac9a` |
+| Replay                      | `--purple` on `--purple-soft` | `#9b82e6` |
 
 Red is reserved, strictly: active, live, alerts, and here that means **the
 channel you are hearing**, and nothing else. It never appears in the wordmark,
@@ -332,18 +312,15 @@ in one pass.
 
 Shadow alone reads poorly on a near-black page — a dark shadow is nearly
 invisible against dark, and a light glow reads as a bug, not depth
-([§2.10](#210-refusals) bans coloured glow outright). So on dark, elevation is
-carried by **two signals together**: the shadow above, _and_ a one-step-lighter
-surface colour (`--paper` → `--card` → `--elev`) with a faint inset top
-highlight —
+([§2.10](#210-refusals) bans coloured glow outright). So elevation is carried
+by **two signals together**: the shadow above, _and_ a one-step-lighter surface
+colour (`--paper` → `--card` → `--elev`) with a faint inset top highlight —
 
 ```
 --card-lit: inset 0 1px 0 rgb(255 253 248 / 12%)
 ```
 
 — which reads as a sliver of light catching the top edge of a raised surface.
-On Paper, the surface step is subtler and the shadow alone does the work, so
-`--card-lit` resolves to `none` there.
 
 **Hover and press.** A card lifts from `--shadow-2` to `--shadow-3` and rises
 1px on hover; it settles back on press, shadow included — a soft compression,
@@ -921,6 +898,16 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 
 ## 14. Changelog
 
+**2.1.0 — 2026-09-22.** Light mode is gone. Pulse was dark-by-default with
+Paper as an opt-in alternate ([§1.2](#12-dark-only), [§3.1](#31-surfaces));
+now there is exactly one theme. Removed: the Paper token block, the
+`prefers-color-scheme`/`data-theme` resolution logic, the in-app theme picker,
+and the `pulse-theme` persisted setting. The accent-roles and domain-mapping
+tables ([§3.3](#33-accent-roles), [§3.4](#34-domain-mapping)) drop their Paper
+column — every value in this document is now simply the value, not "the dark
+one of a pair." This is implemented in `tokens.css` and both apps, not just
+documented here.
+
 **2.0.0 — 2026-09-22.** Pulse becomes a standalone design language: this
 document no longer inherits from or documents deviations against RVLT's
 design language. Everything visual changed —
@@ -939,10 +926,9 @@ design language. Everything visual changed —
 - **Shape and elevation.** The printed, hard-outlined, hard-offset-shadow
   material language is retired in favour of soft neutral shadows, hairline
   borders, and a lighter-surface-plus-inset-highlight technique for depth on
-  dark surfaces ([§5](#5-shape-and-elevation)). This is the biggest structural
-  change in this version and is not yet implemented in `tokens.css` or the
-  component CSS — this document is ahead of the code, per this document's own
-  stated authority, and the implementation is due to follow.
+  dark surfaces ([§5](#5-shape-and-elevation)). This was the biggest
+  structural change in this version; it shipped in `tokens.css` and both
+  apps' component CSS in a follow-up pass the same day.
 - **Iconography.** The product gets its own brand mark (five-bar signal
   meter) distinct from the Lucide interface icon set it already used
   ([§7](#7-iconography)).

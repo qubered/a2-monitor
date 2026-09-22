@@ -116,8 +116,7 @@ a:focus-visible {
 
 .node-state span,
 .filter-label,
-.detail-overline,
-.theme-picker > span {
+.detail-overline {
   color: var(--faint);
   font-family: var(--font-mono);
   font-size: var(--font-badge);
@@ -174,21 +173,6 @@ a:focus-visible {
   color: var(--t-out);
   font-size: var(--font-table);
   font-weight: 700;
-}
-
-.theme-picker {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.theme-picker select {
-  min-height: var(--target);
-  padding: 0 var(--space-4);
-  border: var(--size-1) solid var(--line-2);
-  border-radius: var(--radius-pill);
-  background: var(--card);
-  font-size: var(--font-ui);
 }
 
 .manager-link {
@@ -1123,10 +1107,6 @@ a:focus-visible {
 
   .alert-count {
     margin-left: 0;
-  }
-
-  .theme-picker {
-    margin-left: auto;
   }
 
   .player {

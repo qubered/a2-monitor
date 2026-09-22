@@ -15,13 +15,7 @@ import { ShowTab } from "./components/ShowTab";
 import { Button } from "./components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 
-type Theme = "system" | "light" | "dark";
 type SaveState = "loading" | "saved" | "dirty" | "saving" | "error";
-
-function readTheme(): Theme {
-  const saved = window.localStorage.getItem("pulse-theme");
-  return saved === "light" || saved === "dark" ? saved : "system";
-}
 
 const noticeStyles: Record<SaveState, string> = {
   loading: "bg-rep-soft",
@@ -32,22 +26,11 @@ const noticeStyles: Record<SaveState, string> = {
 };
 
 export function App() {
-  const [theme, setTheme] = useState<Theme>(readTheme);
   const [showfile, setShowfile] = useState<Showfile | null>(null);
   const [device, setDevice] = useState<ObservedDevice | null>(null);
   const [shure, setShure] = useState<ShureTelemetry | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("loading");
   const [message, setMessage] = useState("Loading showfile and audio inputs.");
-
-  useEffect(() => {
-    if (theme === "system") {
-      document.documentElement.removeAttribute("data-theme");
-      window.localStorage.removeItem("pulse-theme");
-    } else {
-      document.documentElement.dataset.theme = theme;
-      window.localStorage.setItem("pulse-theme", theme);
-    }
-  }, [theme]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -145,18 +128,6 @@ export function App() {
         <Button variant="outline" asChild className="ml-auto">
           <a href="/">Open Live</a>
         </Button>
-        <label className="flex flex-col gap-1">
-          <span className="font-mono text-badge text-faint">Theme</span>
-          <select
-            className="min-h-11 rounded-full border border-line-2 bg-card px-4 text-ui"
-            value={theme}
-            onChange={(event) => setTheme(event.target.value as Theme)}
-          >
-            <option value="system">System</option>
-            <option value="light">Paper</option>
-            <option value="dark">Dark</option>
-          </select>
-        </label>
       </header>
 
       <section
