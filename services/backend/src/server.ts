@@ -4,7 +4,9 @@ import healthResponseSchema from "@rvlt/pulse-protocol/schema/health-response" w
 import liveSnapshotResponseSchema from "@rvlt/pulse-protocol/schema/live-snapshot-response" with { type: "json" };
 import showfileSchema from "@rvlt/pulse-protocol/schema/showfile" with { type: "json" };
 import productionListSchema from "@rvlt/pulse-protocol/schema/production-list" with { type: "json" };
+import channelLevelHistorySchema from "@rvlt/pulse-protocol/schema/channel-level-history" with { type: "json" };
 import type {
+  ChannelLevelHistory,
   HealthResponse,
   LiveSnapshot,
   ProductionList,
@@ -15,6 +17,7 @@ import {
   stringifyValidatedJson,
 } from "@rvlt/pulse-protocol/validation/strict-ajv";
 import { fabricatedLiveSnapshot } from "./fixtures/live-snapshot.js";
+import { LevelHistoryStore } from "./level-history.js";
 import {
   ActiveProductionError,
   MemoryProductionStore,
@@ -46,6 +49,24 @@ const productionIdParamsSchema = {
   properties: { id: { type: "string", minLength: 1, maxLength: 64 } },
 } as const;
 
+const channelHistoryQuerySchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["channelId"],
+  properties: {
+    channelId: { type: "string", minLength: 1, maxLength: 64 },
+    // Fastify querystrings arrive as raw strings under strict Ajv (no
+    // coercion), so the bound is validated as a numeric-looking string and
+    // parsed by hand in the handler rather than declared as an integer.
+    windowMs: { type: "string", pattern: "^[0-9]{4,7}$" },
+  },
+} as const;
+
+const DEFAULT_HISTORY_WINDOW_MS = 30 * 60 * 1000;
+const MIN_HISTORY_WINDOW_MS = 1000;
+const MAX_HISTORY_WINDOW_MS = 60 * 60 * 1000;
+const HISTORY_INTERVAL_MS = 1000;
+
 const IMAGE_URL_SCHEMES = ["http://", "https://"];
 const DATA_IMAGE_URL =
   /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/]+=*$/;
@@ -60,6 +81,7 @@ function isValidImageUrl(imageUrl: string): boolean {
 type BuildServerOptions = {
   snapshotProvider?: SnapshotProvider;
   productionStore?: ProductionStore;
+  historyStore?: LevelHistoryStore;
   logger?: boolean;
 };
 
@@ -71,6 +93,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
   ajv.addSchema(liveSnapshotResponseSchema);
   ajv.addSchema(showfileSchema);
   ajv.addSchema(productionListSchema);
+  ajv.addSchema(channelLevelHistorySchema);
 
   server.setValidatorCompiler(({ schema }) => ajv.compile(schema as object));
   server.setSerializerCompiler(({ schema }) => {
@@ -97,6 +120,49 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     "/api/v1/live/snapshot",
     { schema: { response: { 200: liveSnapshotResponseSchema } } },
     async (): Promise<LiveSnapshot> => snapshotProvider(),
+  );
+
+  const historyStore =
+    options.historyStore ??
+    new LevelHistoryStore(snapshotProvider, {
+      intervalMs: HISTORY_INTERVAL_MS,
+    });
+  historyStore.start();
+  server.addHook("onClose", async () => historyStore.stop());
+
+  server.get(
+    "/api/v1/live/history",
+    {
+      schema: {
+        querystring: channelHistoryQuerySchema,
+        response: { 200: channelLevelHistorySchema, 404: errorResponseSchema },
+      },
+    },
+    async (request, reply): Promise<ChannelLevelHistory | undefined> => {
+      const { channelId, windowMs: rawWindowMs } = request.query as {
+        channelId: string;
+        windowMs?: string;
+      };
+      const snapshot = await snapshotProvider();
+      if (!snapshot.channels.some(({ id }) => id === channelId)) {
+        await reply.code(404).send({ error: "channel-not-found" });
+        return undefined;
+      }
+      const windowMs = rawWindowMs
+        ? Math.min(
+            MAX_HISTORY_WINDOW_MS,
+            Math.max(MIN_HISTORY_WINDOW_MS, Number(rawWindowMs)),
+          )
+        : DEFAULT_HISTORY_WINDOW_MS;
+      return {
+        schemaVersion: "0",
+        channelId,
+        generatedAtUtc: new Date().toISOString(),
+        windowMs,
+        intervalMs: HISTORY_INTERVAL_MS,
+        samples: historyStore.getWindow(channelId, windowMs),
+      };
+    },
   );
 
   server.get(

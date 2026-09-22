@@ -1,0 +1,9 @@
+/* Layout-only CSS for the shared visualization primitives. Colour and
+   pattern are drawn on the canvas itself, read live from tokens.css, so
+   nothing here duplicates a token value (design system §3.2). */
+
+.pulse-level-trace {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

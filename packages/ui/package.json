@@ -4,10 +4,22 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./tokens.css": "./tokens.css"
+    "./tokens.css": "./tokens.css",
+    "./visualization": "./visualization/index.ts",
+    "./visualization.css": "./visualization/visualization.css"
   },
   "scripts": {
-    "check": "npm run format",
-    "format": "prettier --check tokens.css"
+    "check": "npm run format && npm run lint && npm run test && npm run build",
+    "build": "tsc -p tsconfig.json",
+    "format": "prettier --check tokens.css \"visualization/**/*.{ts,tsx}\"",
+    "lint": "eslint .",
+    "test": "vitest run visualization"
+  },
+  "peerDependencies": {
+    "react": ">=19"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "react": "19.3.0"
   }
 }

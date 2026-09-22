@@ -1,6 +1,17 @@
 import type { CSSProperties } from "react";
-import type { LiveChannel as Channel } from "@rvlt/pulse-protocol/http";
+import type {
+  ChannelLevelSample,
+  LiveChannel as Channel,
+} from "@rvlt/pulse-protocol/http";
+import { deriveAudioVerdict } from "../audio-check";
+import { useChannelHistory } from "../useChannelHistory";
 import { StatusStrip } from "./StatusStrip";
+
+const CARD_TRACE_WINDOW_MS = 10_000;
+const CARD_TRACE_REFRESH_MS = 2_000;
+const CARD_TRACE_BAR_COUNT = 10;
+const AUDIO_METER_FLOOR_DBFS = -60;
+const AUDIO_METER_CEILING_DBFS = -6;
 
 type ChannelCardProps = {
   channel: Channel;
@@ -43,24 +54,58 @@ function AlertIcon({ dimension }: { dimension: "RF" | "Audio" | "Battery" }) {
   );
 }
 
-function MeterTrace({ channel }: { channel: Channel }) {
-  const silent = channel.levelDbfs === null;
-  const values = Array.from({ length: 32 }, (_, index) => {
-    if (silent) return 6;
-    return 18 + ((channel.number * 13 + index * 17) % 70);
-  });
+function audioMeterHeightPercent(dbfs: number): number {
+  const ratio =
+    (dbfs - AUDIO_METER_FLOOR_DBFS) /
+    (AUDIO_METER_CEILING_DBFS - AUDIO_METER_FLOOR_DBFS);
+  return Math.round(Math.max(6, Math.min(100, ratio * 100)));
+}
+
+/**
+ * The card's 10-second rolling trace (design system §10.1): real per-second
+ * samples from the backend's level-history store, not a decorative
+ * placeholder. Each bar carries its own honesty-grammar state — a channel
+ * can be present for eight seconds and silent for two within the same
+ * window.
+ */
+function MeterTrace({ samples }: { samples: readonly ChannelLevelSample[] }) {
+  const bars: Array<ChannelLevelSample | null> =
+    samples.length > 0
+      ? samples.slice(-CARD_TRACE_BAR_COUNT)
+      : Array.from({ length: CARD_TRACE_BAR_COUNT }, () => null);
 
   return (
-    <div
-      className={`meter-trace ${silent ? "meter-unknown" : ""}`}
-      aria-hidden="true"
-    >
-      {values.map((height, index) => (
-        <i
-          key={index}
-          style={{ "--meter-value": `${height}%` } as CSSProperties}
-        />
-      ))}
+    <div className="meter-trace" aria-hidden="true">
+      {bars.map((sample, index) => {
+        if (!sample) {
+          return (
+            <i
+              key={index}
+              data-state="unknown"
+              style={{ "--meter-value": "4%" } as CSSProperties}
+            />
+          );
+        }
+        const state =
+          sample.availability === "stale"
+            ? "stale"
+            : sample.availability === "unknown"
+              ? "unknown"
+              : sample.audioDbfs === null
+                ? "silent"
+                : "observed";
+        const height =
+          sample.audioDbfs === null
+            ? 4
+            : audioMeterHeightPercent(sample.audioDbfs);
+        return (
+          <i
+            key={index}
+            data-state={state}
+            style={{ "--meter-value": `${height}%` } as CSSProperties}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -77,6 +122,17 @@ export function ChannelCard({
   const observedDeviceInput = channel.id.startsWith("device-channel-");
   const handlePrimaryAction = alerting ? onAcknowledge : onSelect;
   const primaryAction = alerting ? "Acknowledge" : "Select";
+  const history = useChannelHistory(
+    channel.id,
+    CARD_TRACE_WINDOW_MS,
+    CARD_TRACE_REFRESH_MS,
+  );
+  const historySamples =
+    history.status === "ready" ? history.history.samples : [];
+  const statuses = {
+    ...channel.statuses,
+    audio: deriveAudioVerdict(channel.statuses.audio, historySamples),
+  };
 
   return (
     <article
@@ -118,7 +174,7 @@ export function ChannelCard({
           >
             <ExpandIcon />
           </button>
-          <MeterTrace channel={channel} />
+          <MeterTrace samples={historySamples} />
         </div>
 
         <div className="channel-identity">
@@ -127,7 +183,7 @@ export function ChannelCard({
         </div>
       </div>
 
-      <StatusStrip statuses={channel.statuses} />
+      <StatusStrip statuses={statuses} />
 
       {alerting && channel.alert ? (
         <button

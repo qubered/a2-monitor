@@ -66,6 +66,17 @@ const contracts = [
       "fixtures/v0/http/incompatible/production-list.unknown-field.json",
     ],
   },
+  {
+    name: "channel-level-history",
+    schema: "schema/v0/http/channel-level-history.schema.json",
+    accepted: [
+      "fixtures/v0/http/current/channel-level-history.valid.json",
+      "fixtures/v0/http/previous/channel-level-history.valid.json",
+    ],
+    rejected: [
+      "fixtures/v0/http/incompatible/channel-level-history.unknown-field.json",
+    ],
+  },
 ];
 
 async function readJson(relativePath) {

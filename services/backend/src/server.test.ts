@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { LiveSnapshot } from "@rvlt/pulse-protocol/http";
 import { fabricatedLiveSnapshot } from "./fixtures/live-snapshot.js";
+import { LevelHistoryStore } from "./level-history.js";
 import { buildServer } from "./server.js";
 
 const servers = new Set<ReturnType<typeof buildServer>>();
@@ -433,5 +434,54 @@ describe("backend productions", () => {
           (production: { id: string }) => production.id === originalId,
         ),
     ).toBe(false);
+  });
+});
+
+describe("channel level history", () => {
+  it("404s for a channel id absent from the current snapshot", async () => {
+    const response = await trackedServer().inject({
+      method: "GET",
+      url: "/api/v1/live/history?channelId=not-a-real-channel",
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({ error: "channel-not-found" });
+  });
+
+  it("serves a validated, growing window of samples for a known channel", async () => {
+    const historyStore = new LevelHistoryStore(() => fabricatedLiveSnapshot, {
+      intervalMs: 5,
+      capacityMs: 500,
+    });
+    const server = trackedServer({
+      snapshotProvider: () => fabricatedLiveSnapshot,
+      historyStore,
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/live/history?channelId=ch-27&windowMs=5000",
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body.channelId).toBe("ch-27");
+    expect(body.windowMs).toBe(5000);
+    expect(body.samples.length).toBeGreaterThan(0);
+    for (const sample of body.samples) {
+      expect(["observed", "stale", "unknown"]).toContain(sample.availability);
+    }
+  });
+
+  it("clamps an out-of-range window to the supported bounds", async () => {
+    const response = await trackedServer().inject({
+      method: "GET",
+      url: "/api/v1/live/history?channelId=ch-27&windowMs=9999999",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().windowMs).toBe(60 * 60 * 1000);
   });
 });

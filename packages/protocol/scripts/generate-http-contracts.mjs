@@ -36,6 +36,12 @@ const contracts = [
     parserName: "parseProductionList",
     definitionNames: { production: "ProductionSummary" },
   },
+  {
+    schemaPath: "schema/v0/http/channel-level-history.schema.json",
+    typeName: "ChannelLevelHistory",
+    parserName: "parseChannelLevelHistory",
+    definitionNames: { sample: "ChannelLevelSample" },
+  },
 ];
 
 const outputPath = path.join(packageRoot, "generated/http-contracts.ts");
