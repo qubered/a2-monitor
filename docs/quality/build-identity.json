@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.19a98864c2ee70ff",
-  "sourceSha256": "19a98864c2ee70ffe59f67894c3d36b23906ddf09fd3a143ef778e1b84f0888a",
-  "inputCount": 317,
+  "buildId": "a2-0.0.0+sha256.5f27727bc239573b",
+  "sourceSha256": "5f27727bc239573bc88cdeee52edd182dd8fc3be32b60ed0ed5f91af5b6dd790",
+  "inputCount": 319,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -841,11 +841,11 @@
     },
     {
       "path": "infra/appliance/macos/README.md",
-      "sha256": "040a707904231fecc1478f85474713972f9ec085f3decb94b04b06386bf29b5d"
+      "sha256": "4c4c5ab28c2b519b0c733e0deaf51b0e9f05e4106ac86aca29d3e1eb4a808fd8"
     },
     {
       "path": "infra/appliance/macos/build-mvp-app.sh",
-      "sha256": "7b7d4b0acf76787a2abaf33b303c910c79e1fbb62f8502caa2f26dad31499ddd"
+      "sha256": "62ea669239070d94637e6de160d303f884ef16b2dfc3d6f52fc4c5bd1ffddbcb"
     },
     {
       "path": "infra/appliance/macos/build-unsigned-pkg.sh",
@@ -857,15 +857,23 @@
     },
     {
       "path": "infra/appliance/macos/mvp-app/Info.plist",
-      "sha256": "6a665f33321ed1bdbb005f75ca50129ea8455111a0a625c085ddc2aac9dc8ef2"
+      "sha256": "90fad136530d41ddea2dd616cb34552939abffecedc4279fb4c8f177436f7fed"
     },
     {
       "path": "infra/appliance/macos/mvp-app/PulseApp.swift",
-      "sha256": "e5b2e1f2464a68ef7424b3dfd9359b69c39338edf170c7c571c5d61ebc5bbf8d"
+      "sha256": "d87ed5f1615020a6fd8ef33c49118181d69813cf5d27a5d184655a4f615519e9"
     },
     {
       "path": "infra/appliance/macos/mvp-app/launcher.mjs",
       "sha256": "15945ab4cf79fc5a2689f216f74a66aeb4a647fb7efabd52f16be46ecf435ce8"
+    },
+    {
+      "path": "infra/appliance/macos/mvp-app/menu-bar-icon.svg",
+      "sha256": "3fba801ac6c3a92c211d167c212b34da1d93b83a73ae3a355725d2e6ee008113"
+    },
+    {
+      "path": "infra/appliance/macos/mvp-app/svg-to-png.swift",
+      "sha256": "5209cee9a93acf5aa6a1dca2e2d6b029d354b8323b3486ddad5474c609458149"
     },
     {
       "path": "infra/appliance/macos/test-unsigned-pkg.sh",
@@ -1205,11 +1213,11 @@
     },
     {
       "path": "services/listen-gateway/src/shure.test.ts",
-      "sha256": "957ad19e5a1116870c26442aab7b0f186d8e74799ac4d970a2f607d244ca73f0"
+      "sha256": "1097578ad57bb319f27456b799fc065f85a4e993d97a0aea4052b3fc5f594578"
     },
     {
       "path": "services/listen-gateway/src/shure.ts",
-      "sha256": "81e3d9f7a0fa552866153ed3da8126f6402f91f429c89d40827b95a97029e0ef"
+      "sha256": "125379dc02dd1fb17413c03d361fc4d2df0b8f00d553f49990cb41adaa608f62"
     },
     {
       "path": "services/listen-gateway/src/start.ts",

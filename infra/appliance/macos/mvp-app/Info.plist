@@ -4,7 +4,8 @@
 <dict>
   <key>CFBundleDisplayName</key><string>Pulse</string>
   <key>CFBundleExecutable</key><string>Pulse</string>
-  <key>CFBundleIdentifier</key><string>audio.qubered.a2-monitor.mvp</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
+  <key>CFBundleIdentifier</key><string>audio.qubered.pulse.mvp</string>
   <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
   <key>CFBundleName</key><string>Pulse</string>
   <key>CFBundlePackageType</key><string>APPL</string>

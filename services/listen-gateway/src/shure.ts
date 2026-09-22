@@ -15,6 +15,15 @@ const MAX_BUFFER_BYTES = 64 * 1024;
 const STALE_AFTER_MS = 15_000;
 const CONFIG_REFRESH_MS = 2_000;
 const METER_RATE_MS = "00100";
+// Shure receivers only push unsolicited REP updates for a property while its
+// value is actively changing, and a METER_RATE subscription lapses if it
+// isn't periodically re-armed. A quiet channel (steady RF/battery, no audio)
+// can otherwise go quiet on the wire entirely and hit STALE_AFTER_MS even
+// though the control connection and receiver are healthy. Re-issue the full
+// per-channel poll on an interval well inside STALE_AFTER_MS, the same way
+// Wireless Workbench keeps its live view current, instead of relying on the
+// receiver to keep talking on its own after the initial connect burst.
+export const TELEMETRY_REFRESH_MS = 5_000;
 
 type ReceiverConfig = Showfile["shureReceivers"][number];
 type ReceiverState = ShureTelemetry["receivers"][number];
@@ -423,6 +432,7 @@ class ReceiverMonitor {
   private socket?: Socket;
   private reconnectTimer?: NodeJS.Timeout;
   private staleTimer?: NodeJS.Timeout;
+  private telemetryRefreshTimer?: NodeJS.Timeout;
   private closed = false;
   private reconnectDelayMs = 500;
   private state: ReceiverState;
@@ -469,6 +479,7 @@ class ReceiverMonitor {
     this.closed = true;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     if (this.staleTimer) clearTimeout(this.staleTimer);
+    this.stopTelemetryRefresh();
     this.socket?.destroy();
   }
 
@@ -489,6 +500,7 @@ class ReceiverMonitor {
     socket.on("connect", () => {
       this.reconnectDelayMs = 500;
       socket.write(this.buildInitialCommands());
+      this.startTelemetryRefresh(socket);
       this.state = {
         ...this.state,
         status: "ready",
@@ -504,6 +516,7 @@ class ReceiverMonitor {
     });
     socket.on("error", () => undefined);
     socket.on("close", () => {
+      this.stopTelemetryRefresh();
       if (this.closed) return;
       this.state = {
         ...this.state,
@@ -524,8 +537,30 @@ class ReceiverMonitor {
     });
   }
 
+  /** Re-issues the per-channel poll on an interval so telemetry keeps streaming in like a live Wireless Workbench view, instead of going quiet (and stale) between the initial connect burst and the next time a value happens to change. */
+  private startTelemetryRefresh(socket: Socket): void {
+    const payload = this.buildChannelPollCommands();
+    if (!payload) return;
+    this.telemetryRefreshTimer = setInterval(() => {
+      if (!socket.destroyed) socket.write(payload);
+    }, TELEMETRY_REFRESH_MS);
+    this.telemetryRefreshTimer.unref();
+  }
+
+  private stopTelemetryRefresh(): void {
+    if (this.telemetryRefreshTimer) {
+      clearInterval(this.telemetryRefreshTimer);
+      this.telemetryRefreshTimer = undefined;
+    }
+  }
+
   private buildInitialCommands(): string {
-    const commands = ["< GET MODEL >", "< GET FW_VER >"];
+    return `< GET MODEL >\r\n< GET FW_VER >\r\n${this.buildChannelPollCommands()}`;
+  }
+
+  /** Every per-channel GET (plus the METER_RATE re-subscription) issued both on initial connect and on every telemetry-refresh tick. Excludes MODEL/FW_VER, which identify the receiver once and never change. */
+  private buildChannelPollCommands(): string {
+    const commands: string[] = [];
     const table = this.commands;
     for (let channel = 1; channel <= this.config.channelCount; channel += 1) {
       commands.push(
@@ -576,7 +611,7 @@ class ReceiverMonitor {
           commands.push(`< GET ${channel} ${table.muteProperty} >`);
       }
     }
-    return `${commands.join("\r\n")}\r\n`;
+    return commands.length ? `${commands.join("\r\n")}\r\n` : "";
   }
 
   private apply(frame: ShureFrame): void {
