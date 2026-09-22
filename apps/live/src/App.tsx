@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { LiveChannel } from "@a2-monitor/protocol/http";
+import type { LiveChannel } from "@rvlt/pulse-protocol/http";
 import { ChannelCard } from "./components/ChannelCard";
 import { ChannelDetail } from "./components/ChannelDetail";
 import { MicCheck } from "./components/MicCheck";
@@ -25,7 +25,6 @@ import { useShowfile } from "./useShowfile";
 import { useShureTelemetry } from "./useShureTelemetry";
 
 type Filter = "all" | "needs-someone" | "wireless" | "wired";
-type Theme = "system" | "light" | "dark";
 
 const filterLabels: Record<Filter, string> = {
   all: "All channels",
@@ -35,11 +34,6 @@ const filterLabels: Record<Filter, string> = {
 };
 
 const emptyChannels: LiveChannel[] = [];
-
-function readTheme(): Theme {
-  const saved = window.localStorage.getItem("a2-monitor-theme");
-  return saved === "light" || saved === "dark" ? saved : "system";
-}
 
 function readStringSet(key: string): Set<string> {
   try {
@@ -57,7 +51,7 @@ function readStringSet(key: string): Set<string> {
 }
 
 function readMonitorGainDb(): number {
-  const stored = window.localStorage.getItem("a2-monitor-gain-db");
+  const stored = window.localStorage.getItem("pulse-gain-db");
   if (stored === null) return DEFAULT_MONITOR_GAIN_DB;
   const saved = Number(stored);
   return Number.isFinite(saved)
@@ -127,12 +121,11 @@ export function App({
   playbackFactory?: PlaybackFactory;
 }) {
   const [filter, setFilter] = useState<Filter>("all");
-  const [theme, setTheme] = useState<Theme>(readTheme);
   const [acknowledged, setAcknowledged] = useState<Set<string>>(() =>
-    readStringSet("a2-monitor-acknowledged"),
+    readStringSet("pulse-acknowledged"),
   );
   const [selectedId, setSelectedId] = useState<string | null>(() =>
-    window.localStorage.getItem("a2-monitor-selected-channel"),
+    window.localStorage.getItem("pulse-selected-channel"),
   );
   const [detailId, setDetailId] = useState<string | null>(null);
   const [micCheckId, setMicCheckId] = useState<string | null>(null);
@@ -173,27 +166,17 @@ export function App({
     : (snapshot?.channels ?? emptyChannels);
 
   useEffect(() => {
-    if (theme === "system") {
-      document.documentElement.removeAttribute("data-theme");
-      window.localStorage.removeItem("a2-monitor-theme");
-    } else {
-      document.documentElement.dataset.theme = theme;
-      window.localStorage.setItem("a2-monitor-theme", theme);
-    }
-  }, [theme]);
-
-  useEffect(() => {
     window.localStorage.setItem(
-      "a2-monitor-acknowledged",
+      "pulse-acknowledged",
       JSON.stringify([...acknowledged]),
     );
   }, [acknowledged]);
 
   useEffect(() => {
     if (selectedId) {
-      window.localStorage.setItem("a2-monitor-selected-channel", selectedId);
+      window.localStorage.setItem("pulse-selected-channel", selectedId);
     } else {
-      window.localStorage.removeItem("a2-monitor-selected-channel");
+      window.localStorage.removeItem("pulse-selected-channel");
     }
   }, [selectedId]);
 
@@ -227,7 +210,7 @@ export function App({
 
   useEffect(() => {
     outputState.current = { muted, dimmed, gainDb };
-    window.localStorage.setItem("a2-monitor-gain-db", String(gainDb));
+    window.localStorage.setItem("pulse-gain-db", String(gainDb));
     playbackSession.current?.setGainDb(gainDb);
     playbackSession.current?.setDimmed(dimmed);
     void playbackSession.current?.setMuted(muted);
@@ -322,9 +305,22 @@ export function App({
   return (
     <div className="live-app">
       <header className="app-header">
-        <div className="brand" aria-label="A2 Monitor">
-          <span aria-hidden="true">▲</span>
-          <strong>A2</strong> <b>Monitor</b>
+        <div className="brand" aria-label="Pulse">
+          <span aria-hidden="true">
+            <svg
+              viewBox="0 0 100 100"
+              width="20"
+              height="20"
+              fill="currentColor"
+            >
+              <rect x="8" y="38" width="12" height="24" rx="6" />
+              <rect x="27" y="24" width="12" height="52" rx="6" />
+              <rect x="46" y="8" width="12" height="84" rx="6" />
+              <rect x="65" y="24" width="12" height="52" rx="6" />
+              <rect x="84" y="38" width="12" height="24" rx="6" />
+            </svg>
+          </span>
+          <b>Pulse</b>
         </div>
         <div className="show-name">
           <strong>
@@ -376,17 +372,6 @@ export function App({
             {alertCount} to acknowledge
           </button>
         ) : null}
-        <label className="theme-picker">
-          <span>Theme</span>
-          <select
-            value={theme}
-            onChange={(event) => setTheme(event.target.value as Theme)}
-          >
-            <option value="system">System</option>
-            <option value="light">Paper</option>
-            <option value="dark">Dark</option>
-          </select>
-        </label>
         <a className="manager-link" href="/manager/">
           Manager
         </a>

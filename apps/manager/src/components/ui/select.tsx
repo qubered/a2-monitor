@@ -14,7 +14,7 @@ function SelectTrigger({
   return (
     <SelectPrimitive.Trigger
       className={cn(
-        "flex min-h-11 w-full items-center justify-between gap-2 rounded-md border-2 border-input bg-background px-3 text-base text-foreground",
+        "flex min-h-11 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 text-base text-foreground",
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring",
         "disabled:cursor-not-allowed disabled:opacity-60",
         "data-[placeholder]:text-muted-foreground",
@@ -42,7 +42,7 @@ function SelectContent({
         position={position}
         sideOffset={4}
         className={cn(
-          "z-50 max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) overflow-y-auto rounded-md border-2 border-card-outline bg-popover text-popover-foreground shadow-card",
+          "z-50 max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) overflow-y-auto rounded-md border border-card-outline bg-popover text-popover-foreground shadow-card",
           className,
         )}
         {...props}

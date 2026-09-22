@@ -16,7 +16,7 @@ arithmetic and UI do not yet form that user-visible path.
 
 Add a temporary local-development path with three boundaries:
 
-1. `a2-device-capture` opens one exact, named 48 kHz Core Audio or WASAPI input.
+1. `pulse-device-capture` opens one exact, named 48 kHz Core Audio or WASAPI input.
    Its real-time callback writes only to a preallocated bounded lock-free queue.
 2. A separate listen gateway reads capture bytes outside the callback, selects
    one mono input per client and sends bounded Float32 PCM frames over a direct

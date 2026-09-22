@@ -7,10 +7,10 @@ import { fileURLToPath } from "node:url";
 
 const resources = resolve(dirname(fileURLToPath(import.meta.url)));
 const appRoot = resolve(resources, "app");
-const captureBinary = resolve(resources, "bin/a2-device-capture");
+const captureBinary = resolve(resources, "bin/pulse-device-capture");
 const logPath = resolve(
   process.env.HOME ?? "/tmp",
-  "Library/Logs/A2 Monitor/mvp.log",
+  "Library/Logs/Pulse/mvp.log",
 );
 
 function runAppleScript(script, args = []) {
@@ -22,7 +22,7 @@ function runAppleScript(script, args = []) {
 function showError(message) {
   try {
     runAppleScript(
-      'on run argv\ndisplay alert "A2 Monitor could not start" message (item 1 of argv) as critical\nend run',
+      'on run argv\ndisplay alert "Pulse could not start" message (item 1 of argv) as critical\nend run',
       [message],
     );
   } catch {
@@ -54,7 +54,7 @@ function chooseDevice(devices) {
   if (devices.length === 0)
     throw new Error("No 48 kHz input devices were found.");
   return runAppleScript(
-    'on run argv\nset picked to choose from list argv with title "A2 Monitor" with prompt "Choose the 48 kHz audio input device to share." without multiple selections allowed and empty selection allowed\nif picked is false then return ""\nreturn item 1 of picked\nend run',
+    'on run argv\nset picked to choose from list argv with title "Pulse" with prompt "Choose the 48 kHz audio input device to share." without multiple selections allowed and empty selection allowed\nif picked is false then return ""\nreturn item 1 of picked\nend run',
     devices,
   );
 }
@@ -68,7 +68,7 @@ function chooseHost() {
     return configured;
   }
   const choice = runAppleScript(
-    'set picked to choose from list {"This Mac only", "Local network"} with title "A2 Monitor" with prompt "Who can open the listening page? Local network has no authentication in this MVP." default items {"This Mac only"} without multiple selections allowed and empty selection allowed\nif picked is false then return ""\nreturn item 1 of picked',
+    'set picked to choose from list {"This Mac only", "Local network"} with title "Pulse" with prompt "Who can open the listening page? Local network has no authentication in this MVP." default items {"This Mac only"} without multiple selections allowed and empty selection allowed\nif picked is false then return ""\nreturn item 1 of picked',
   );
   return choice === "Local network" ? "0.0.0.0" : choice ? "127.0.0.1" : "";
 }
@@ -86,7 +86,7 @@ function waitForStop(message) {
       "/usr/bin/osascript",
       [
         "-e",
-        'on run argv\ndisplay dialog (item 1 of argv) with title "A2 Monitor" buttons {"Stop Server"} default button "Stop Server" with icon caution\nend run',
+        'on run argv\ndisplay dialog (item 1 of argv) with title "Pulse" buttons {"Stop Server"} default button "Stop Server" with icon caution\nend run',
         message,
       ],
       () => {
@@ -154,7 +154,7 @@ async function main() {
       ...process.env,
       A2_DATA_DIR: resolve(
         process.env.HOME ?? "/tmp",
-        "Library/Application Support/A2 Monitor",
+        "Library/Application Support/Pulse",
       ),
     },
   });

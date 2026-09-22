@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "generatedFrom": "package-lock.json",
   "regenerationCommand": "node scripts/generate-node-dependency-inventory.mjs",
-  "lockfileSha256": "bb9630f7aa02cc7475652ef151a891803a146f4280927dbec3129f667a5c4783",
-  "componentCount": 383,
+  "lockfileSha256": "56b7bd7301d3b7317f1f06c9a759425c3bf6b06fb7b8abcd565f3f4ea7bbcccc",
+  "componentCount": 381,
   "licenseCounts": [
     {
       "license": "0BSD",
@@ -51,7 +51,7 @@
     },
     {
       "license": "OFL-1.1",
-      "count": 4
+      "count": 2
     }
   ],
   "components": [
@@ -573,47 +573,25 @@
       ]
     },
     {
-      "name": "@fontsource/archivo",
+      "name": "@fontsource/ibm-plex-mono",
       "version": "5.3.0",
       "license": "OFL-1.1",
       "direct": true,
       "developmentOnly": false,
       "optional": false,
       "locations": [
-        "node_modules/@fontsource/archivo"
+        "node_modules/@fontsource/ibm-plex-mono"
       ]
     },
     {
-      "name": "@fontsource/baloo-2",
+      "name": "@fontsource/ibm-plex-sans",
       "version": "5.3.0",
       "license": "OFL-1.1",
       "direct": true,
       "developmentOnly": false,
       "optional": false,
       "locations": [
-        "node_modules/@fontsource/baloo-2"
-      ]
-    },
-    {
-      "name": "@fontsource/hanken-grotesk",
-      "version": "5.3.0",
-      "license": "OFL-1.1",
-      "direct": true,
-      "developmentOnly": false,
-      "optional": false,
-      "locations": [
-        "node_modules/@fontsource/hanken-grotesk"
-      ]
-    },
-    {
-      "name": "@fontsource/jetbrains-mono",
-      "version": "5.3.0",
-      "license": "OFL-1.1",
-      "direct": true,
-      "developmentOnly": false,
-      "optional": false,
-      "locations": [
-        "node_modules/@fontsource/jetbrains-mono"
+        "node_modules/@fontsource/ibm-plex-sans"
       ]
     },
     {

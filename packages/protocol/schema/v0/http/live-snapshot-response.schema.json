@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://a2-monitor.local/schema/v0/http/live-snapshot-response.schema.json",
+  "$id": "https://pulse.local/schema/v0/http/live-snapshot-response.schema.json",
   "title": "Live snapshot response",
   "type": "object",
   "additionalProperties": false,

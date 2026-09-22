@@ -29,7 +29,7 @@ bash infra/appliance/macos/test-unsigned-pkg.sh
 
 ## Double-clickable listening MVP
 
-`build-mvp-app.sh` produces an Apple-silicon `A2 Monitor.app` and a zip suitable
+`build-mvp-app.sh` produces an Apple-silicon `Pulse.app` and a zip suitable
 for copying to another Mac. The app bundles its Node runtime, production web
 assets, backend, listen gateway and native CoreAudio capture executable. It does
 not require Node, npm or Rust on the destination Mac.
@@ -37,23 +37,23 @@ not require Node, npm or Rust on the destination Mac.
 ```sh
 A2_NODE_BIN=/path/to/node-24-arm64 \
   bash infra/appliance/macos/build-mvp-app.sh
-open "build/macos-mvp/A2 Monitor.app"
+open "build/macos-mvp/Pulse.app"
 ```
 
-At launch, the app opens an A2 Monitor window: pick an observed 48 kHz input
+At launch, the app opens an Pulse window: pick an observed 48 kHz input
 device and whether the page is available only on the host or on its local
 network, then click Start Server. The app opens the local page in the default
 browser and lives in the menu bar; its icon and the window's own buttons open
 Live or Manager, start or stop the server, open the log, and quit. Closing the
-window only hides it — reopen it from the menu bar's "Show A2 Monitor" item.
+window only hides it — reopen it from the menu bar's "Show Pulse" item.
 The last chosen device and network scope are remembered for next launch.
 Receiver configuration lives in Manager. Logs are written to
-`~/Library/Logs/A2 Monitor/mvp.log`.
+`~/Library/Logs/Pulse/mvp.log`.
 
 Open **Manager** from Live to add/remove show channels and patch them to physical
 inputs, multiple Shure receiver units, and optional receiver-channel patches.
 The app stores that local MVP showfile at
-`~/Library/Application Support/A2 Monitor/showfile.json`; it survives app
+`~/Library/Application Support/Pulse/showfile.json`; it survives app
 restart and is read by every Live client connected to the Mac.
 
 This is an ad-hoc-signed development bundle, not the signed, hardened, notarized

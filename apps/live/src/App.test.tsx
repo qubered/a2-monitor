@@ -3,7 +3,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { LiveSnapshot } from "@a2-monitor/protocol/http";
+import type { LiveSnapshot } from "@rvlt/pulse-protocol/http";
 import { App } from "./App";
 import { initialChannels } from "./dev-data/channels";
 import type { AudioDeviceSource } from "./audio-device";
@@ -33,7 +33,6 @@ const snapshotSource = createStaticSnapshotSource(snapshot);
 describe("Live channel grid", () => {
   beforeEach(() => {
     window.localStorage.clear();
-    document.documentElement.removeAttribute("data-theme");
   });
 
   afterEach(cleanup);
@@ -144,18 +143,6 @@ describe("Live channel grid", () => {
     expect(within(card).getByText("Audio: good")).toBeTruthy();
   });
 
-  it("persists an explicit dark theme", async () => {
-    const user = userEvent.setup();
-    render(<App snapshotSource={snapshotSource} />);
-
-    await screen.findByLabelText("Theme");
-
-    await user.selectOptions(screen.getByLabelText("Theme"), "dark");
-
-    expect(document.documentElement.dataset.theme).toBe("dark");
-    expect(window.localStorage.getItem("a2-monitor-theme")).toBe("dark");
-  });
-
   it("runs and resumes a named eight-dimension mic check", async () => {
     const user = userEvent.setup();
     render(<App snapshotSource={snapshotSource} />);
@@ -185,9 +172,7 @@ describe("Live channel grid", () => {
     await user.click(screen.getByRole("button", { name: "Continue check" }));
 
     expect(screen.getByText("Step 2 · A2 verdict")).toBeTruthy();
-    expect(window.localStorage.getItem("a2-monitor-operator-name")).toBe(
-      "Jamie",
-    );
+    expect(window.localStorage.getItem("pulse-operator-name")).toBe("Jamie");
   });
 
   it("names what it is waiting for without showing invented channel counts", () => {

@@ -157,7 +157,6 @@ describe("Manager showfile editor", () => {
 
   beforeEach(() => {
     window.localStorage.clear();
-    document.documentElement.removeAttribute("data-theme");
     showfiles = { p1: { ...storedShowfile, shureReceivers: [] } };
     activeId = "p1";
     nextId = 2;
@@ -227,16 +226,6 @@ describe("Manager showfile editor", () => {
         String(path) === "/api/v1/showfile" && init?.method === "PUT",
     );
     expect(String(saveCall?.[1]?.body)).toContain('"model":"ANX4"');
-  });
-
-  it("persists an explicit dark theme", async () => {
-    const user = userEvent.setup();
-    render(<App />);
-
-    await user.selectOptions(screen.getByLabelText("Theme"), "dark");
-
-    expect(document.documentElement.dataset.theme).toBe("dark");
-    expect(window.localStorage.getItem("a2-monitor-theme")).toBe("dark");
   });
 
   it("sets a channel's mic type, uploads a photo, and turns off RF monitoring", async () => {

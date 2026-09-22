@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { LiveChannel as Channel } from "@a2-monitor/protocol/http";
+import type { LiveChannel as Channel } from "@rvlt/pulse-protocol/http";
 import {
   loadMicCheck,
   micCheckDimensions,
@@ -16,10 +16,10 @@ type MicCheckProps = {
 
 export function MicCheck({ channel, showName, onClose }: MicCheckProps) {
   const [operatorName, setOperatorName] = useState(
-    () => window.localStorage.getItem("a2-monitor-operator-name") ?? "",
+    () => window.localStorage.getItem("pulse-operator-name") ?? "",
   );
   const [a1Name, setA1Name] = useState(
-    () => window.localStorage.getItem("a2-monitor-a1-name") ?? "",
+    () => window.localStorage.getItem("pulse-a1-name") ?? "",
   );
   const [started, setStarted] = useState(false);
   const [progress, setProgress] = useState<MicCheckProgress>(() =>
@@ -43,9 +43,9 @@ export function MicCheck({ channel, showName, onClose }: MicCheckProps) {
     const trimmedOperator = operatorName.trim();
     if (!trimmedOperator) return;
     setOperatorName(trimmedOperator);
-    window.localStorage.setItem("a2-monitor-operator-name", trimmedOperator);
+    window.localStorage.setItem("pulse-operator-name", trimmedOperator);
     if (a1Name.trim()) {
-      window.localStorage.setItem("a2-monitor-a1-name", a1Name.trim());
+      window.localStorage.setItem("pulse-a1-name", a1Name.trim());
     }
     setStarted(true);
   }

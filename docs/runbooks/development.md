@@ -39,8 +39,8 @@ Schemas. Regenerate after changing either schema and verify freshness before
 handoff:
 
 ```sh
-npm run generate --workspace @a2-monitor/protocol
-npm run generate:check --workspace @a2-monitor/protocol
+npm run generate --workspace @rvlt/pulse-protocol
+npm run generate:check --workspace @rvlt/pulse-protocol
 ```
 
 The generated file is committed for frontend/backend consumers and must retain
@@ -82,9 +82,9 @@ open an audio device, verify confinement, or support a release claim.
 Start the web development servers with:
 
 ```sh
-npm run dev --workspace @a2-monitor/backend
-npm run dev --workspace @a2-monitor/live
-npm run dev --workspace @a2-monitor/manager
+npm run dev --workspace @rvlt/pulse-backend
+npm run dev --workspace @rvlt/pulse-live
+npm run dev --workspace @rvlt/pulse-manager
 ```
 
 The backend binds to `127.0.0.1:3000`; Vite proxies `/api` from

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://a2-monitor.local/schema/v0/http/shure-telemetry.schema.json",
+  "$id": "https://pulse.local/schema/v0/http/shure-telemetry.schema.json",
   "title": "Shure receiver fleet telemetry",
   "type": "object",
   "additionalProperties": false,

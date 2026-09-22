@@ -5,7 +5,7 @@ import type {
   ProductionList,
   ProductionSummary,
   Showfile,
-} from "@a2-monitor/protocol/http";
+} from "@rvlt/pulse-protocol/http";
 import {
   emptyShowfile,
   migrateShowfile,

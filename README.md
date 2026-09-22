@@ -1,9 +1,9 @@
-# A2 Monitor
+# Pulse
 
-> Working title for an on-premises, browser-operated audio and wireless
+> Pulse by RVLT — an on-premises, browser-operated audio and wireless
 > monitoring platform for A2s and live audio engineers.
 
-A2 Monitor combines multichannel Dante audio, wireless receiver telemetry,
+Pulse combines multichannel Dante audio, wireless receiver telemetry,
 low-latency personal listening, synchronized replay, and explainable alerts.
 The browser is the operator surface; a native service on the appliance owns
 all real-time audio work.
@@ -113,7 +113,7 @@ Node.js version. Its first local slice can be started with:
 
 ```sh
 npm ci
-npm run dev --workspace @a2-monitor/live
+npm run dev --workspace @rvlt/pulse-live
 ```
 
 The proposed stack, its alternatives and its falsification gates are recorded

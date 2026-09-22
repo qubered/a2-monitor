@@ -4,8 +4,8 @@ set -eu
 script_dir="$(CDPATH= cd -- "$(dirname "$0")" && pwd)"
 repo_root="$(CDPATH= cd -- "$script_dir/../../.." && pwd)"
 output_dir="${1:-$repo_root/build/macos-mvp}"
-app="$output_dir/A2 Monitor.app"
-archive="$output_dir/A2-Monitor-macos-arm64.zip"
+app="$output_dir/Pulse.app"
+archive="$output_dir/Pulse-macos-arm64.zip"
 node_bin="${A2_NODE_BIN:-$(command -v node)}"
 
 if [ "$(uname -s)" != "Darwin" ] || [ "$(uname -m)" != "arm64" ]; then
@@ -34,11 +34,11 @@ mkdir -p "$app/Contents/Resources/app/apps/live" \
   "$app/Contents/Resources/app/services/listen-gateway"
 
 cd "$repo_root"
-npm run build --workspace @a2-monitor/backend
-npm run build --workspace @a2-monitor/listen-gateway
-npm run build --workspace @a2-monitor/live
-npm run build --workspace @a2-monitor/manager
-cargo build --locked --release --bin a2-device-capture
+npm run build --workspace @rvlt/pulse-backend
+npm run build --workspace @rvlt/pulse-listen-gateway
+npm run build --workspace @rvlt/pulse-live
+npm run build --workspace @rvlt/pulse-manager
+cargo build --locked --release --bin pulse-device-capture
 
 runtime_root="$(mktemp -d)"
 trap 'rm -rf "$runtime_root"' EXIT INT TERM
@@ -52,7 +52,7 @@ done
 (cd "$runtime_root" && npm ci --omit=dev --ignore-scripts)
 
 cp -R "$runtime_root/node_modules" "$app/Contents/Resources/app/node_modules"
-rm "$app/Contents/Resources/app/node_modules/@a2-monitor/ui"
+rm "$app/Contents/Resources/app/node_modules/@rvlt/pulse-ui"
 cp -R services/backend/dist "$app/Contents/Resources/app/services/backend/dist"
 cp services/backend/package.json "$app/Contents/Resources/app/services/backend/package.json"
 cp -R "$runtime_root/services/backend/node_modules" \
@@ -68,16 +68,16 @@ cp packages/protocol/package.json "$app/Contents/Resources/app/packages/protocol
 cp -R "$runtime_root/packages/protocol/node_modules" \
   "$app/Contents/Resources/app/packages/protocol/node_modules"
 
-cp target/release/a2-device-capture "$app/Contents/Resources/bin/a2-device-capture"
+cp target/release/pulse-device-capture "$app/Contents/Resources/bin/pulse-device-capture"
 cp "$node_bin" "$app/Contents/Resources/bin/node"
 cp infra/appliance/macos/mvp-app/launcher.mjs "$app/Contents/Resources/launcher.mjs"
 xcrun swiftc \
   -O \
   -target arm64-apple-macos14.0 \
   -framework AppKit \
-  infra/appliance/macos/mvp-app/A2MonitorApp.swift \
-  -o "$app/Contents/MacOS/A2 Monitor"
-chmod 755 "$app/Contents/MacOS/A2 Monitor" "$app/Contents/Resources/bin/"*
+  infra/appliance/macos/mvp-app/PulseApp.swift \
+  -o "$app/Contents/MacOS/Pulse"
+chmod 755 "$app/Contents/MacOS/Pulse" "$app/Contents/Resources/bin/"*
 
 cp infra/appliance/macos/mvp-app/Info.plist "$app/Contents/Info.plist"
 

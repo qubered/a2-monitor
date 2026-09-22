@@ -4,7 +4,7 @@ import type {
   ProductionList,
   Showfile,
   ShureTelemetry,
-} from "@a2-monitor/protocol/http";
+} from "@rvlt/pulse-protocol/http";
 import {
   activateProduction,
   createProduction,
@@ -31,13 +31,7 @@ import {
   TabsTrigger,
 } from "./components/ui/tabs";
 
-type Theme = "system" | "light" | "dark";
 type SaveState = "loading" | "saved" | "dirty" | "saving" | "error";
-
-function readTheme(): Theme {
-  const saved = window.localStorage.getItem("a2-monitor-theme");
-  return saved === "light" || saved === "dark" ? saved : "system";
-}
 
 const noticeStyles: Record<SaveState, string> = {
   loading: "bg-rep-soft",
@@ -48,7 +42,6 @@ const noticeStyles: Record<SaveState, string> = {
 };
 
 export function App() {
-  const [theme, setTheme] = useState<Theme>(readTheme);
   const [showfile, setShowfile] = useState<Showfile | null>(null);
   const [device, setDevice] = useState<ObservedDevice | null>(null);
   const [shure, setShure] = useState<ShureTelemetry | null>(null);
@@ -57,16 +50,6 @@ export function App() {
   const [productions, setProductions] = useState<ProductionList | null>(null);
   const [productionsBusy, setProductionsBusy] = useState(false);
   const [productionsError, setProductionsError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (theme === "system") {
-      document.documentElement.removeAttribute("data-theme");
-      window.localStorage.removeItem("a2-monitor-theme");
-    } else {
-      document.documentElement.dataset.theme = theme;
-      window.localStorage.setItem("a2-monitor-theme", theme);
-    }
-  }, [theme]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -210,20 +193,33 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-paper text-foreground">
-      <header className="flex min-h-17 flex-wrap items-center gap-5 border-b-2 border-line-2 bg-paper-2 px-6 py-3">
+      <header className="flex min-h-17 flex-wrap items-center gap-5 border-b border-line-2 bg-paper-2 px-6 py-3">
         <div
-          className="flex items-baseline gap-2 font-display text-section font-extrabold"
-          aria-label="A2 Monitor Manager"
+          className="flex items-center gap-2 font-display text-section font-bold"
+          aria-label="Pulse Manager"
         >
-          <span aria-hidden="true" className="text-red">
-            ▲
+          <span aria-hidden="true" className="inline-flex text-ok">
+            <svg
+              viewBox="0 0 100 100"
+              width="20"
+              height="20"
+              fill="currentColor"
+            >
+              <rect x="8" y="38" width="12" height="24" rx="6" />
+              <rect x="27" y="24" width="12" height="52" rx="6" />
+              <rect x="46" y="8" width="12" height="84" rx="6" />
+              <rect x="65" y="24" width="12" height="52" rx="6" />
+              <rect x="84" y="38" width="12" height="24" rx="6" />
+            </svg>
           </span>
-          <strong>A2</strong> <b className="font-wordmark text-page">Monitor</b>
+          <b className="font-wordmark text-page font-bold tracking-tight">
+            Pulse
+          </b>
           <em className="font-body text-ui font-semibold not-italic text-muted-foreground">
             Manager
           </em>
         </div>
-        <div className="flex flex-col border-l-2 border-line-2 pl-5 leading-tight">
+        <div className="flex flex-col border-l border-line-2 pl-5 leading-tight">
           <span className="font-mono text-badge text-faint">
             Local showfile
           </span>
@@ -234,22 +230,10 @@ export function App() {
         <Button variant="outline" asChild className="ml-auto">
           <a href="/">Open Live</a>
         </Button>
-        <label className="flex flex-col gap-1">
-          <span className="font-mono text-badge text-faint">Theme</span>
-          <select
-            className="min-h-11 rounded-full border-2 border-line-2 bg-card px-4 text-ui"
-            value={theme}
-            onChange={(event) => setTheme(event.target.value as Theme)}
-          >
-            <option value="system">System</option>
-            <option value="light">Paper</option>
-            <option value="dark">Dark</option>
-          </select>
-        </label>
       </header>
 
       <section
-        className={`flex min-h-14 flex-wrap items-center justify-between gap-4 border-b-2 border-line-2 px-6 py-3 ${noticeStyles[saveState]}`}
+        className={`flex min-h-14 flex-wrap items-center justify-between gap-4 border-b border-line-2 px-6 py-3 ${noticeStyles[saveState]}`}
         role="status"
       >
         <div className="flex flex-col gap-1">

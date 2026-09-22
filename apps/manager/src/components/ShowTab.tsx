@@ -1,4 +1,4 @@
-import type { Showfile } from "@a2-monitor/protocol/http";
+import type { Showfile } from "@rvlt/pulse-protocol/http";
 import { CardOverline } from "./ui/card";
 import { Input } from "./ui/input";
 import { Table, TableBody, TableCell, TableRow } from "./ui/table";

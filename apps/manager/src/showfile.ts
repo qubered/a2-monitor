@@ -5,7 +5,7 @@ import {
   type ProductionList,
   type Showfile,
   type ShureTelemetry,
-} from "@a2-monitor/protocol/http";
+} from "@rvlt/pulse-protocol/http";
 
 export type ObservedDevice = {
   name: string;

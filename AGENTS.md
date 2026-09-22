@@ -17,9 +17,10 @@ requirements below.
   issue as the current execution ledger. When they disagree, stop, reconcile
   the repository documentation in the same change, and explain the resolution
   on the issue; do not silently follow stale issue text.
-- For UI or UX work, read `docs/design/DESIGN.md` in full, inspect the relevant
-  rendered states in `docs/design/mockups`, and use the reference build in
-  `docs/design/prototype/index.html` before proposing or implementing a design.
+- For UI or UX work, read `docs/design/DESIGN.md` in full and look at the
+  shipped Live and Manager apps directly before proposing or implementing a
+  design. The old `docs/design/mockups` and `docs/design/prototype/index.html`
+  are archived (`docs/design/archive/`) and no longer a current reference.
 - Inspect the working tree and preserve unrelated user changes.
 - If a change introduces a framework, persistent service, wire protocol,
   database, or deployment dependency, add or update an ADR.
@@ -27,14 +28,15 @@ requirements below.
 ## UI and UX design
 
 - Treat `docs/design/DESIGN.md` as normative for visual language, interaction,
-  components, and product surfaces. Follow its referenced RVLT design language
-  where required; do not create a parallel design system.
-- Use the rendered states in `docs/design/mockups` as the visual targets and
-  `docs/design/prototype/index.html` as the canonical interactive reference.
-  When they disagree, the prototype wins and the rendered image is stale.
-  Reproduce their information hierarchy, component behavior, terminology, and
-  interaction flow. Do not derive production UI from earlier or experimental
-  prototypes unless `docs/design/DESIGN.md` explicitly points to them.
+  components, and product surfaces. As of DESIGN.md 2.0.0 it is Pulse's own
+  standalone design language, not a domain mapping over RVLT's; do not
+  reintroduce an RVLT dependency or treat RVLT's tokens/components as
+  authoritative for this product.
+- `docs/design/mockups` and `docs/design/prototype/index.html` are archived
+  (`docs/design/archive/`, RVLT-derived tokens, Archivo/Baloo 2/Hanken
+  Grotesk/Kalam, a Paper/dark toggle) and retired as a design reference, not
+  rebuilt against the current tokens. Never derive new UI from them. The
+  shipped Live and Manager apps are the visual target.
 - Treat mockup data as illustrative. Preserve the domain model, permissions,
   versioned contracts, and architectural boundaries defined elsewhere in this
   repository. If an architectural or safety requirement conflicts with the
@@ -48,8 +50,8 @@ requirements below.
   machine measurements, and keep RF level separate from link quality.
 - Use design tokens and the locked type, colour, spacing, shape, elevation,
   icon, and motion rules from `docs/design/DESIGN.md`. Components must not
-  introduce raw visual values. Paper is the default surface, dark mode is a
-  first-class theme, and both must be tested.
+  introduce raw visual values. Pulse is dark-mode only (DESIGN.md 2.1.0) —
+  there is no light/Paper theme and no theme switch to test.
 - Keep the documented refusals: no gradients, glow, glass effects, decorative
   motion, emoji status icons, stock portraits, animated loading shimmer, or
   enthusiastic filler copy. Use short, specific, present-tense language with
@@ -67,13 +69,12 @@ requirements below.
 - Implement the specific empty, loading, stale, degraded, offline, error, and
   permission states defined by the design language. Name what the product is
   waiting for or no longer knows; never imply unavailable work was completed.
-- Verify UI changes against the canonical mockup at representative target
-  viewports in both Paper and dark themes. Include screenshots or equivalent
-  visual-regression evidence and run accessibility, touch, keyboard, and
-  interaction checks before handoff.
-- When changing the design reference itself, regenerate `docs/design/mockups`
-  with `node scripts/render-mockups.mjs`; do not edit the generated PNGs by
-  hand. Verify that the script used the real fonts before committing output.
+- Verify UI changes against DESIGN.md by running the actual app at
+  representative target viewports. Include screenshots of the running app or
+  equivalent visual-regression evidence, and run accessibility, touch,
+  keyboard, and interaction checks before handoff. There is no maintained
+  mockup or prototype build to check against — the running app is the
+  check.
 - The current design language is proposed rather than field-validated. Record
   conformance separately from operator validation and do not claim that a UI is
   validated without named A1/A2 testing and evidence.

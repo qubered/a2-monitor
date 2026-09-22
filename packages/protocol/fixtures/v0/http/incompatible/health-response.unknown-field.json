@@ -1,6 +1,6 @@
 {
   "status": "ok",
-  "service": "a2-backend",
+  "service": "pulse-backend",
   "version": "0.0.0",
   "inventedHealth": "good"
 }

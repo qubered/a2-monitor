@@ -1,5 +1,11 @@
 #!/usr/bin/env node
-// Renders docs/design/mockups/*.png from docs/design/prototype/index.html.
+// Renders docs/design/archive/mockups/*.png from
+// docs/design/archive/prototype/index.html.
+//
+// That prototype is archived (see docs/design/archive/README.md): it
+// predates DESIGN.md 2.0.0+ and does not reflect the current Pulse design
+// language. This script still works, for anyone who wants a picture of the
+// pre-rebrand product, but it is not part of any current workflow.
 //
 //   node scripts/render-mockups.mjs
 //
@@ -20,8 +26,8 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { chromium } from "playwright-core";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
-const PAGE = `file://${ROOT}/docs/design/prototype/index.html`;
-const OUT = `${ROOT}/docs/design/mockups`;
+const PAGE = `file://${ROOT}/docs/design/archive/prototype/index.html`;
+const OUT = `${ROOT}/docs/design/archive/mockups`;
 // Google Fonts serves woff2 only to a user agent it believes supports it.
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +

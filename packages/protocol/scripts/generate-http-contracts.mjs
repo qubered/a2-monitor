@@ -418,7 +418,7 @@ export function createHttpContractClient(fetchResponse: ProtocolFetch = fetch): 
   return `// Generated file. Do not edit by hand.
 // Sources:
 ${sources}
-// Regenerate: npm run generate --workspace @a2-monitor/protocol
+// Regenerate: npm run generate --workspace @rvlt/pulse-protocol
 // Schema-SHA256: ${schemaDigest}
 // Generator-SHA256: ${generatorDigest}
 // Body-SHA256: ${sha256(body)}
@@ -471,7 +471,7 @@ export async function generate({ check = false } = {}) {
     }
     if (!current) {
       throw new Error(
-        "Generated HTTP contracts are stale. Run: npm run generate --workspace @a2-monitor/protocol",
+        "Generated HTTP contracts are stale. Run: npm run generate --workspace @rvlt/pulse-protocol",
       );
     }
     return;

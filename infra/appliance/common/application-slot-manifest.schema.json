@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://a2-monitor.invalid/schema/application-slot-manifest.v1.json",
-  "title": "A2 Monitor immutable application slot manifest",
+  "title": "Pulse immutable application slot manifest",
   "type": "object",
   "additionalProperties": false,
   "required": [

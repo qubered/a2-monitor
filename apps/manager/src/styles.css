@@ -1,11 +1,10 @@
 @import "tailwindcss";
-@import "@a2-monitor/ui/tokens.css";
+@import "@rvlt/pulse-ui/tokens.css";
 
-/* Tailwind utility generation over the locked A2 Monitor / RVLT design
-   tokens from packages/ui/tokens.css. "inline" resolves each utility
-   straight to the existing runtime variable instead of re-declaring it,
-   so Paper/dark theme switching (driven by [data-theme] on :root) keeps
-   working without Tailwind duplicating the variable. */
+/* Tailwind utility generation over the Pulse design tokens from
+   packages/ui/tokens.css. "inline" resolves each utility straight to
+   the existing runtime variable instead of re-declaring it, so a
+   token change in tokens.css doesn't need a matching change here. */
 @theme inline {
   --font-sans: var(--font-body);
   --font-display: var(--font-display);

@@ -18,7 +18,7 @@ see or change those choices without quitting and relaunching.
 
 The bundled AppKit executable now opens an ordinary app window at launch
 instead of running the AppleScript pickers. The window lists the observed 48
-kHz input devices (queried directly from the bundled `a2-device-capture
+kHz input devices (queried directly from the bundled `pulse-device-capture
 --list`) and the network-scope options in native controls, shows server
 status, and has Start/Stop, Open Live, Open Manager and Show Log actions. The
 menu-bar item remains for quick access and can reopen the window; closing the

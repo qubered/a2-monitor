@@ -1,10 +1,10 @@
 import { Trash2 } from "lucide-react";
-import type { Showfile, ShureTelemetry } from "@a2-monitor/protocol/http";
+import type { Showfile, ShureTelemetry } from "@rvlt/pulse-protocol/http";
 import {
   SHURE_MODEL_INFO,
   SHURE_RECEIVER_MODELS,
   type ShureReceiverModel,
-} from "@a2-monitor/protocol/shure-models";
+} from "@rvlt/pulse-protocol/shure-models";
 import { EmptyState } from "./EmptyState";
 import { Badge, type BadgeProps } from "./ui/badge";
 import { Button } from "./ui/button";

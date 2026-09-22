@@ -43,11 +43,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func buildStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.title = "A2"
-        statusItem.button?.toolTip = "A2 Monitor"
+        statusItem.button?.toolTip = "Pulse"
 
         let menu = NSMenu()
         showWindowMenuItem = menu.addItem(
-            withTitle: "Show A2 Monitor", action: #selector(showWindow), keyEquivalent: "")
+            withTitle: "Show Pulse", action: #selector(showWindow), keyEquivalent: "")
         showWindowMenuItem.target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "Open Live", action: #selector(openLive), keyEquivalent: "l").target = self
@@ -59,7 +59,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         stopMenuItem = menu.addItem(withTitle: "Stop Server", action: #selector(stopServer), keyEquivalent: "")
         stopMenuItem.target = self
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit A2 Monitor", action: #selector(quit), keyEquivalent: "q").target = self
+        menu.addItem(withTitle: "Quit Pulse", action: #selector(quit), keyEquivalent: "q").target = self
         statusItem.menu = menu
     }
 
@@ -71,7 +71,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false)
-        window.title = "A2 Monitor"
+        window.title = "Pulse"
         window.delegate = self
         window.isReleasedWhenClosed = false
 
@@ -148,7 +148,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc private func refreshDevices() {
         guard let resources = Bundle.main.resourceURL else { return }
-        let captureBinary = resources.appendingPathComponent("bin/a2-device-capture")
+        let captureBinary = resources.appendingPathComponent("bin/pulse-device-capture")
         let savedDevice = UserDefaults.standard.string(forKey: deviceDefaultsKey)
         deviceButton.isEnabled = false
         refreshButton.isEnabled = false
@@ -268,7 +268,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     @objc private func showLog() {
-        let path = NSString(string: "~/Library/Logs/A2 Monitor/mvp.log").expandingTildeInPath
+        let path = NSString(string: "~/Library/Logs/Pulse/mvp.log").expandingTildeInPath
         NSWorkspace.shared.open(URL(fileURLWithPath: path))
     }
 

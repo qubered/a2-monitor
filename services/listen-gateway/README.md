@@ -1,7 +1,7 @@
 # Listen gateway
 
 Development-only direct audio-node transport for the local MVP. It launches
-`a2-device-capture` with one exact device name, exposes the observed inputs at
+`pulse-device-capture` with one exact device name, exposes the observed inputs at
 `GET /audio/v0/device`, and streams one selected mono Float32LE input at
 `/audio/v0/listen?channel=N` over WebSocket.
 

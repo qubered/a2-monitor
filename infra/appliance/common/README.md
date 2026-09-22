@@ -86,7 +86,7 @@ slots/BUILD_ID/
 ├── runtime/node[.exe]
 ├── backend/{package.json,dist/}
 ├── backend/node_modules/
-│   └── @a2-monitor/protocol/{package.json,validation/,schema/}
+│   └── @rvlt/pulse-protocol/{package.json,validation/,schema/}
 ├── config/process-boundaries.v0.json
 ├── web/{manager,live}/
 ├── licenses/node/LICENSE

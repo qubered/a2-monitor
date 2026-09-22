@@ -1,19 +1,19 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import { isIP } from "node:net";
-import healthResponseSchema from "@a2-monitor/protocol/schema/health-response" with { type: "json" };
-import liveSnapshotResponseSchema from "@a2-monitor/protocol/schema/live-snapshot-response" with { type: "json" };
-import showfileSchema from "@a2-monitor/protocol/schema/showfile" with { type: "json" };
-import productionListSchema from "@a2-monitor/protocol/schema/production-list" with { type: "json" };
+import healthResponseSchema from "@rvlt/pulse-protocol/schema/health-response" with { type: "json" };
+import liveSnapshotResponseSchema from "@rvlt/pulse-protocol/schema/live-snapshot-response" with { type: "json" };
+import showfileSchema from "@rvlt/pulse-protocol/schema/showfile" with { type: "json" };
+import productionListSchema from "@rvlt/pulse-protocol/schema/production-list" with { type: "json" };
 import type {
   HealthResponse,
   LiveSnapshot,
   ProductionList,
   Showfile,
-} from "@a2-monitor/protocol/http";
+} from "@rvlt/pulse-protocol/http";
 import {
   createStrictAjv2020,
   stringifyValidatedJson,
-} from "@a2-monitor/protocol/validation/strict-ajv";
+} from "@rvlt/pulse-protocol/validation/strict-ajv";
 import { fabricatedLiveSnapshot } from "./fixtures/live-snapshot.js";
 import {
   ActiveProductionError,
@@ -83,7 +83,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     { schema: { response: { 200: healthResponseSchema } } },
     async (): Promise<HealthResponse> => ({
       status: "ok",
-      service: "a2-backend",
+      service: "pulse-backend",
       version: "0.0.0",
     }),
   );

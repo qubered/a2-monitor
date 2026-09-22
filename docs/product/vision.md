@@ -2,7 +2,7 @@
 
 **Status:** Proposed
 
-**Working title:** A2 Monitor
+**Working title:** Pulse
 
 ## Vision
 
@@ -101,7 +101,7 @@ incident records, and support for mixed receiver fleets.
 
 ## Relationship to Wireless Workbench and Wireless Systems Manager
 
-A2 Monitor is a **soft replacement** for the vendor wireless tools, and the line
+Pulse is a **soft replacement** for the vendor wireless tools, and the line
 is time, not capability: **during a performance, the work happens here.** An
 operator running a show should not be hopping between programs to find out what
 a receiver is doing, and every value those tools would show them during a show

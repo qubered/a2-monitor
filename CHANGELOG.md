@@ -76,7 +76,7 @@ externally tested release.
   full read-only suite the coverage matrix scopes: an explicit per-receiver
   model picker in Manager (with channel count derived from the model, except
   the dynamically-licensed ANX4), a shared model/capability registry
-  (`@a2-monitor/protocol/shure-models`), and a per-family command-string
+  (`@rvlt/pulse-protocol/shure-models`), and a per-family command-string
   adapter in listen-gateway covering RF level, antenna diversity, channel/link
   quality, interference detection, a receiver audio meter, transmitter
   identity/mute, and transmitter battery health (type, cycle count, runtime).

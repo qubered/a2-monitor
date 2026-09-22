@@ -5,14 +5,14 @@
 //   - schema/v0/http/showfile.schema.json
 //   - schema/v0/http/shure-telemetry.schema.json
 //   - schema/v0/http/production-list.schema.json
-// Regenerate: npm run generate --workspace @a2-monitor/protocol
-// Schema-SHA256: 8d85960fd98b3b85fa6722138d496b60d4ca7d334f93b501fedddb57faac9f77
-// Generator-SHA256: 0958ee82e61352afdeb2f1a4ccd424817cd21b98d7ccea02a8b1e082d75d5d83
-// Body-SHA256: 731bc371c56c4a4781c6f1045d33c10a3054cf9a7de3f099e09834558bf5a926
+// Regenerate: npm run generate --workspace @rvlt/pulse-protocol
+// Schema-SHA256: e1c14cc1aebbf0e09fe868824ed0345e62f11830a25e1b6729e0f4589bf85a5d
+// Generator-SHA256: 0772726d827dd804c51fded3bbc488ab549cfb2a3acc8c1ac0d5fa8da897fd7a
+// Body-SHA256: b561ae7ddf3922576d12632ee14dd885947473b11fbbf753b27c681291680003
 
 export type HealthResponse = {
   status: "ok";
-  service: "a2-backend";
+  service: "pulse-backend";
   version: string;
 };
 
@@ -216,7 +216,7 @@ export class ProtocolHttpError extends Error {
 
 const healthResponseSchema = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
-  $id: "https://a2-monitor.local/schema/v0/http/health-response.schema.json",
+  $id: "https://pulse.local/schema/v0/http/health-response.schema.json",
   title: "Backend health response",
   type: "object",
   additionalProperties: false,
@@ -226,7 +226,7 @@ const healthResponseSchema = {
       const: "ok",
     },
     service: {
-      const: "a2-backend",
+      const: "pulse-backend",
     },
     version: {
       type: "string",
@@ -238,7 +238,7 @@ const healthResponseSchema = {
 
 const liveSnapshotSchema = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
-  $id: "https://a2-monitor.local/schema/v0/http/live-snapshot-response.schema.json",
+  $id: "https://pulse.local/schema/v0/http/live-snapshot-response.schema.json",
   title: "Live snapshot response",
   type: "object",
   additionalProperties: false,
@@ -461,7 +461,7 @@ const liveSnapshotSchema = {
 
 const showfileSchema = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
-  $id: "https://a2-monitor.local/schema/v0/http/showfile.schema.json",
+  $id: "https://pulse.local/schema/v0/http/showfile.schema.json",
   title: "Local showfile",
   type: "object",
   additionalProperties: false,
@@ -637,7 +637,7 @@ const showfileSchema = {
 
 const shureTelemetrySchema = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
-  $id: "https://a2-monitor.local/schema/v0/http/shure-telemetry.schema.json",
+  $id: "https://pulse.local/schema/v0/http/shure-telemetry.schema.json",
   title: "Shure receiver fleet telemetry",
   type: "object",
   additionalProperties: false,
@@ -905,7 +905,7 @@ const shureTelemetrySchema = {
 
 const productionListSchema = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
-  $id: "https://a2-monitor.local/schema/v0/http/production-list.schema.json",
+  $id: "https://pulse.local/schema/v0/http/production-list.schema.json",
   title: "Production list",
   type: "object",
   additionalProperties: false,

@@ -6,7 +6,7 @@ export function EmptyState({
   detail: string;
 }) {
   return (
-    <div className="rounded-md border-2 border-dashed border-line-2 bg-paper-2 p-6">
+    <div className="rounded-md border border-dashed border-line-2 bg-paper-2 p-6">
       <strong className="font-display text-cardhead text-foreground">
         {title}
       </strong>

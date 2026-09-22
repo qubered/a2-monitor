@@ -3,13 +3,13 @@ import {
   parseShowfile,
   type Showfile,
   type ShureTelemetry,
-} from "@a2-monitor/protocol/http";
+} from "@rvlt/pulse-protocol/http";
 import {
   isShureReceiverModel,
   SHURE_MODEL_INFO,
   type ShureCapabilityProfile,
   type ShureReceiverFamily,
-} from "@a2-monitor/protocol/shure-models";
+} from "@rvlt/pulse-protocol/shure-models";
 
 const MAX_BUFFER_BYTES = 64 * 1024;
 const STALE_AFTER_MS = 15_000;

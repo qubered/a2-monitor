@@ -298,7 +298,7 @@ the vendor tools.
 ## Product findings from round 6
 
 **The tool replaces the reason to open WWB and WSM.** Stated by the product
-owner: A2 Monitor should carry the same data a show may need, and the channel
+owner: Pulse should carry the same data a show may need, and the channel
 detail is the right place for it. That makes the detail view a genuine
 single-source screen rather than a summary, and it is why the grid can stay as
 sparse as it is — the depth has somewhere to go.

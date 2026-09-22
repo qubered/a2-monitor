@@ -65,33 +65,36 @@ a:focus-visible {
   gap: var(--space-5);
   padding: var(--space-3) var(--space-6);
   background: var(--paper-2);
-  border-bottom: var(--size-2) solid var(--line-2);
+  border-bottom: var(--size-1) solid var(--line-2);
 }
 
 .brand {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-2);
   flex: none;
   font-family: var(--font-display);
   font-size: var(--font-section);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .brand > span {
-  color: var(--red);
+  display: inline-flex;
+  color: var(--ok);
 }
 
 .brand > b {
   font-family: var(--font-wordmark);
   font-size: var(--font-page);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .show-name {
   display: flex;
   flex-direction: column;
   padding-left: var(--space-5);
-  border-left: var(--size-2) solid var(--line-2);
+  border-left: var(--size-1) solid var(--line-2);
   line-height: 1.25;
 }
 
@@ -114,8 +117,7 @@ a:focus-visible {
 
 .node-state span,
 .filter-label,
-.detail-overline,
-.theme-picker > span {
+.detail-overline {
   color: var(--faint);
   font-family: var(--font-mono);
   font-size: var(--font-badge);
@@ -166,7 +168,7 @@ a:focus-visible {
   min-height: var(--target);
   margin-left: auto;
   padding: 0 var(--space-4);
-  border: var(--size-2) solid var(--t-out);
+  border: var(--size-1) solid var(--t-out);
   border-radius: var(--radius-pill);
   background: var(--card);
   color: var(--t-out);
@@ -174,27 +176,12 @@ a:focus-visible {
   font-weight: 700;
 }
 
-.theme-picker {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.theme-picker select {
-  min-height: var(--target);
-  padding: 0 var(--space-4);
-  border: var(--size-2) solid var(--line-2);
-  border-radius: var(--radius-pill);
-  background: var(--card);
-  font-size: var(--font-ui);
-}
-
 .manager-link {
   min-height: var(--target);
   display: inline-flex;
   align-items: center;
   padding: 0 var(--space-4);
-  border: var(--size-2) solid var(--line-2);
+  border: var(--size-1) solid var(--line-2);
   border-radius: var(--radius-pill);
   background: var(--card);
   color: var(--ink);
@@ -210,7 +197,7 @@ a:focus-visible {
   gap: var(--space-2);
   padding: var(--space-2) var(--space-6);
   overflow-x: auto;
-  border-bottom: var(--size-2) solid var(--line-2);
+  border-bottom: var(--size-1) solid var(--line-2);
   background: var(--paper);
 }
 
@@ -221,7 +208,7 @@ a:focus-visible {
   justify-content: space-between;
   gap: var(--space-4);
   padding: var(--space-3) var(--space-6);
-  border-bottom: var(--size-2) solid var(--line-2);
+  border-bottom: var(--size-1) solid var(--line-2);
   background: var(--rep-soft);
   color: var(--rep);
 }
@@ -261,14 +248,15 @@ a:focus-visible {
   min-height: var(--target);
   flex: none;
   padding: 0 var(--space-4);
-  border: var(--size-2) solid var(--line-2);
+  border: var(--size-1) solid var(--line-2);
   border-radius: var(--radius-pill);
   background: var(--card);
   color: var(--ink-2);
   font-size: var(--font-ui);
   font-weight: 600;
   transition:
-    transform var(--transition-control),
+    filter var(--transition-control),
+    box-shadow var(--transition-control),
     background var(--transition-control);
 }
 
@@ -294,7 +282,8 @@ a:focus-visible {
 .filter-button:active,
 .control-button:active,
 .line-button:active {
-  transform: translateY(var(--size-2));
+  filter: brightness(0.92);
+  box-shadow: none;
 }
 
 .channel-main {
@@ -340,7 +329,7 @@ a:focus-visible {
   gap: var(--space-3);
   padding: var(--space-3);
   overflow: hidden;
-  border: var(--size-2) solid var(--card-outline);
+  border: var(--size-1) solid var(--card-outline);
   border-radius: var(--radius-large);
   background: var(--card);
   box-shadow: var(--shadow-card), var(--card-lit);
@@ -380,7 +369,7 @@ a:focus-visible {
   display: grid;
   place-items: center;
   overflow: hidden;
-  border: var(--size-2) solid var(--card-outline);
+  border: var(--size-1) solid var(--card-outline);
   border-radius: var(--radius);
   background: var(--paper-2);
 }
@@ -389,7 +378,7 @@ a:focus-visible {
   content: "";
   position: absolute;
   inset: var(--space-6);
-  border: var(--size-2) dashed var(--line-2);
+  border: var(--size-1) dashed var(--line-2);
   border-radius: var(--radius);
 }
 
@@ -406,7 +395,7 @@ a:focus-visible {
   left: var(--space-2);
   z-index: 2;
   padding: var(--space-1) var(--space-2);
-  border: var(--size-2) solid var(--card-outline);
+  border: var(--size-1) solid var(--card-outline);
   border-radius: calc(var(--radius) / 2);
   background: var(--card);
   font-family: var(--font-mono);
@@ -435,7 +424,7 @@ a:focus-visible {
   position: absolute;
   width: calc(var(--target) - var(--space-3));
   height: calc(var(--target) - var(--space-3));
-  border: var(--size-2) solid var(--card-outline);
+  border: var(--size-1) solid var(--card-outline);
   border-radius: 50%;
   background: var(--card);
 }
@@ -523,7 +512,7 @@ a:focus-visible {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   overflow: hidden;
-  border: var(--size-2) solid var(--card-outline);
+  border: var(--size-1) solid var(--card-outline);
   border-radius: calc(var(--radius) / 2);
 }
 
@@ -636,7 +625,7 @@ a:focus-visible {
   align-items: center;
   gap: var(--space-5);
   padding: var(--space-5) var(--space-6) var(--space-3);
-  border-top: var(--size-2) solid var(--line-2);
+  border-top: var(--size-1) solid var(--line-2);
   background: var(--paper-2);
 }
 
@@ -656,7 +645,7 @@ a:focus-visible {
   right: 0;
   width: var(--space-5);
   height: var(--space-5);
-  border: var(--size-2) solid var(--rep);
+  border: var(--size-1) solid var(--rep);
   border-radius: 50%;
   background: var(--card);
   transform: translateY(-50%);
@@ -685,7 +674,7 @@ a:focus-visible {
   width: var(--target-primary);
   height: var(--target-primary);
   flex: none;
-  border: var(--size-2) solid var(--card-outline);
+  border: var(--size-1) solid var(--card-outline);
   border-radius: var(--radius);
   background: var(--card);
 }
@@ -745,13 +734,14 @@ a:focus-visible {
   min-width: var(--target-primary);
   min-height: var(--target);
   padding: 0 var(--space-4);
-  border: var(--size-2) solid var(--ink);
+  border: var(--size-1) solid var(--ink);
   border-radius: var(--radius-pill);
   background: transparent;
   font-size: var(--font-ui);
   font-weight: 600;
   transition:
-    transform var(--transition-control),
+    filter var(--transition-control),
+    box-shadow var(--transition-control),
     background var(--transition-control),
     color var(--transition-control);
 }
@@ -808,7 +798,7 @@ a:focus-visible {
   width: min(100%, var(--dialog-width));
   max-height: calc(100vh - var(--space-8));
   overflow: auto;
-  border: var(--size-2) solid var(--card-outline);
+  border: var(--size-1) solid var(--card-outline);
   border-radius: var(--radius-large);
   background: var(--elev);
   box-shadow: var(--shadow-card);
@@ -820,7 +810,7 @@ a:focus-visible {
   justify-content: space-between;
   gap: var(--space-4);
   padding: var(--space-5);
-  border-bottom: var(--size-2) solid var(--line-2);
+  border-bottom: var(--size-1) solid var(--line-2);
 }
 
 .detail-panel h2,
@@ -833,7 +823,7 @@ a:focus-visible {
   display: flex;
   justify-content: flex-end;
   padding: var(--space-5);
-  border-top: var(--size-2) solid var(--line-2);
+  border-top: var(--size-1) solid var(--line-2);
 }
 
 .mic-check {
@@ -852,7 +842,7 @@ a:focus-visible {
   justify-content: space-between;
   gap: var(--space-5);
   padding: var(--space-3) var(--space-6);
-  border-bottom: var(--size-2) solid var(--line-2);
+  border-bottom: var(--size-1) solid var(--line-2);
   background: var(--paper-2);
 }
 
@@ -905,7 +895,7 @@ a:focus-visible {
 .mic-check-start input {
   min-height: var(--target-primary);
   padding: 0 var(--space-4);
-  border: var(--size-2) solid var(--line-2);
+  border: var(--size-1) solid var(--line-2);
   border-radius: var(--radius);
   background: var(--card);
 }
@@ -916,7 +906,7 @@ a:focus-visible {
 .check-wait {
   min-height: var(--target-primary);
   padding: 0 var(--space-5);
-  border: var(--size-2) solid currentColor;
+  border: var(--size-1) solid currentColor;
   border-radius: var(--radius);
   font-family: var(--font-display);
   font-size: var(--font-section);
@@ -966,7 +956,7 @@ a:focus-visible {
 .check-stepper button {
   width: var(--target);
   height: var(--target);
-  border: var(--size-2) solid var(--line-2);
+  border: var(--size-1) solid var(--line-2);
   border-radius: 50%;
   background: var(--card);
   font-family: var(--font-mono);
@@ -1078,7 +1068,7 @@ a:focus-visible {
 
 .detail-grid section {
   padding: var(--space-4);
-  border: var(--size-2) solid var(--line-2);
+  border: var(--size-1) solid var(--line-2);
   border-radius: var(--radius);
   background: var(--card);
 }
@@ -1118,10 +1108,6 @@ a:focus-visible {
 
   .alert-count {
     margin-left: 0;
-  }
-
-  .theme-picker {
-    margin-left: auto;
   }
 
   .player {

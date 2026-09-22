@@ -160,7 +160,7 @@ hand.
 ## Workspace and naming rules
 
 - Rust crates use `a2-` package names and snake-case Rust module names.
-- npm workspaces use private `@a2-monitor/*` names.
+- npm workspaces use private `@rvlt/pulse-*` names.
 - executable names include their boundary (`a2-audio-engine`,
   `a2-media-worker`, `a2-node-supervisor`, `a2-backend`).
 - one root `Cargo.lock` and one root `package-lock.json` are committed.

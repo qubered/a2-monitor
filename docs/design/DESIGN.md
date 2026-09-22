@@ -1,65 +1,68 @@
-# A2 Monitor — design language
+# Pulse — design language
 
-- **Version:** 1.0.0
+- **Version:** 2.1.1
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
-- **Last updated:** 2026-09-19
+- **Last updated:** 2026-09-22
 
 This is the whole design language in one document. It is normative: where it and
 anything else disagree, this document is the intent, and the implementation is
 wrong. The reasoning, the sources and the rounds that were rejected on the way
-here live in [research notes](research-notes.md); the clickable reference build
-is [`prototype/index.html`](prototype/index.html).
+here live in [research notes](research-notes.md) — that file predates this
+version and still describes the earlier, RVLT-inherited system; treat it as
+history, not as a source of current truth. The interactive prototype that used
+to serve as the clickable reference build is [archived](archive/README.md),
+not updated to match this version — the shipped Live and Manager apps are the
+current reference build.
 
 **Contents**
 
-1. [Foundations](#1-foundations) · 2. [Principles](#2-principles) ·
-3. [Colour](#3-colour) · 4. [Typography](#4-typography) ·
-5. [Shape and elevation](#5-shape-and-elevation) · 6. [Motion](#6-motion) ·
-7. [Iconography](#7-iconography) · 8. [Touch and input](#8-touch-and-input) ·
-9. [The honesty grammar](#9-the-honesty-grammar) ·
-10. [Components](#10-components) · 11. [Surfaces](#11-surfaces) ·
-12. [Empty, loading and degraded](#12-empty-loading-and-degraded) ·
-13. [Accessibility](#13-accessibility) · 14. [Changelog](#14-changelog)
+**1.** [Foundations](#1-foundations) · **2.** [Principles](#2-principles) ·
+**3.** [Colour](#3-colour) · **4.** [Typography](#4-typography) ·
+**5.** [Shape and elevation](#5-shape-and-elevation) · **6.** [Motion](#6-motion) ·
+**7.** [Iconography](#7-iconography) · **8.** [Touch and input](#8-touch-and-input) ·
+**9.** [The honesty grammar](#9-the-honesty-grammar) ·
+**10.** [Components](#10-components) · **11.** [Surfaces](#11-surfaces) ·
+**12.** [Empty, loading and degraded](#12-empty-loading-and-degraded) ·
+**13.** [Accessibility](#13-accessibility) · **14.** [Changelog](#14-changelog)
 
 ---
 
 ## 1. Foundations
 
-### 1.1 Built on RVLT
+### 1.1 A system of its own
 
-A2 Monitor is built on the **RVLT design language**, not on a separate system
-that resembles it. Tokens, type roles, shapes, shadows and component behaviour
-come from `rvlt-designlanguage` DESIGN.md §15.1 / Appendix A (v1.1.0) as
-published. This document records the domain mapping on top of it and nothing
-else. Where RVLT and this document disagree, RVLT wins and this document is
-wrong.
+Pulse ships as part of the RVLT product family, alongside RVLT Flow and Beacon
+by RVLT, and shares their instinct for plain, unpretentious software. But it is
+not built on a shared token system with them, and this document is not a list
+of deviations from someone else's design language. Pulse's tokens, type,
+shape and motion exist because of what this product is: an instrument panel
+read in the dark, backstage, for a few seconds at a time, by someone who is not
+looking at a screen for a living. Where an earlier version of this document
+inherited a design language from elsewhere, it has been replaced wholesale.
+Nothing below should be read as "the same as before, but green."
 
-Source of record:
-[RVLT-Labs/rvlt-designlanguage `DESIGN.md`](https://github.com/RVLT-Labs/rvlt-designlanguage/blob/main/DESIGN.md).
-The sibling product [gearflow `DESIGN.md`](https://github.com/TwoToned/gearflow/blob/main/DESIGN.md)
-is the precedent for how a second product adopts the language, and this document
-follows it where it diverges from the marketing site. Both accessed 2026-09-19.
+### 1.2 Dark. Only.
 
-### 1.1.1 Where A2 Monitor deliberately diverges
+Pulse is a dark-mode app, full stop. It is read in a wing, a booth, a tech
+table, lights down, and a light surface has no job there. There is no light
+or "Paper" theme, no `data-theme` switch, no theme picker in the UI, and no
+`prefers-color-scheme` branching in the tokens — one surface, declared once,
+with nothing to resolve. An earlier draft of this system shipped a light
+alternate and defaulted to it; both the default and the alternate are gone.
+If daytime desk use ever turns out to need something different, that is a
+second, explicitly-scoped product decision, not a theme toggle bolted onto
+this one.
 
-Two, and only two. Both are recorded here so they read as decisions rather than
-drift.
+### 1.3 One rule for who wrote a number
 
-- **Paper is the default surface.** RVLT's primary is the dark "Espresso" theme
-  with Paper as the opt-in alternate. This product inverts that: it is an
-  operational tool read in short glances, the light surface tested better for
-  that, and dark remains a straight theme switch. RVLT's `.lightui` treatment —
-  the product UI as a self-lit light island on a dark page — is the same instinct
-  and is what the marketing site would use to show this product.
-- **The hand carries a semantic, not only a flourish.** RVLT restricts Kalam to
-  eyebrows, doodles and empty states, and **bans it in alert, compliance,
-  overdue and conflict contexts**. This product keeps that ban, and additionally
-  uses the hand for one thing RVLT does not: an operator's own written note, as
-  the counterpart to mono for a machine measurement ([§2.3](#2-principles)). A
-  note never appears inside an alert overlay or a critical notice.
+If a machine measured it, it is monospaced. If a person typed it, it reads like
+a sentence, not like a receipt. That is the entire distinction this product
+needs between an RF reading and an operator's note, and it is carried by
+weight and slope, not by importing a handwriting font that has to be banned
+from half the surfaces it would obviously ruin. See [§4.3](#43-machine-and-human-type).
 
-### 1.2 The operator
+### 1.4 The operator
 
 An A2 in a wing, in the dark, half-dressed in blacks, one ear on comms, holding
 an iPad in one hand and a spare pack in the other, ninety seconds before the
@@ -71,7 +74,7 @@ back at the console.
 
 Everything below follows from those two people.
 
-### 1.3 Two product decisions this rests on
+### 1.5 Two product decisions this rests on
 
 Recorded as [ADR 0019](../decisions/0019-cue-optional-and-show-time-scope.md).
 
@@ -88,8 +91,8 @@ Recorded as [ADR 0019](../decisions/0019-cue-optional-and-show-time-scope.md).
 ## 2. Principles
 
 **2.1 Glanceable before complete.** A surface is designed for the one-second
-glance first and the two-minute investigation second. The card answers *is
-anything wrong, and is it mine*. The detail answers *why*. A card that tries to
+glance first and the two-minute investigation second. The card answers _is
+anything wrong, and is it mine_. The detail answers _why_. A card that tries to
 answer both fails at the first.
 
 **2.2 Honest about what is known.** The product's credibility is the difference
@@ -97,7 +100,8 @@ between a measurement and a guess, and the interface must never let them look
 alike. See [§9](#9-the-honesty-grammar).
 
 **2.3 Machine type and human type are different type.** If a machine measured
-it, it is mono. If a person wrote it, it is the hand. Hard rule.
+it, it is mono. If a person wrote it, it reads like the rest of the interface,
+just angled. Hard rule. See [§4.3](#43-machine-and-human-type).
 
 **2.4 Never colour alone.** Every state carries a glyph and a word as well as a
 colour. Remove all colour from any screen and it must still be operable.
@@ -117,14 +121,22 @@ always visible and one touch away, never in a menu.
 **2.8 The tool is advisory.** Alerts say what happened, not what it means. No
 diagnosis is claimed before a labelled evidence base exists.
 
-### 2.9 Refusals
+**2.9 The brand is the good state.** Pulse's signal green is not a decoration
+borrowed for the logo — it is the same colour the product uses for _verified,
+healthy_ everywhere else ([§3.3](#33-accent-roles)). The mark on the icon and
+the tick on a channel card are the same claim: this is working.
 
-This list exists because the default output of any design process is the same
-dark dashboard, and that dashboard is indistinguishable from software nobody
-chose to make.
+### 2.10 Refusals
+
+This list exists because it is easy to make an operational tool that looks like
+every other ops dashboard — a gradient-lit hero header, a glassy card, a status
+dot that only means something if you already know the palette. These refusals
+keep Pulse looking like an instrument built for this job, not a generic admin
+console that happens to be dark.
 
 - No gradients, anywhere, for any purpose.
-- No glow, halo, bloom or coloured drop shadow.
+- No glow, halo, bloom or coloured drop shadow. Elevation comes from a soft
+  neutral shadow and a lighter surface, never a colour-tinted one.
 - No glassmorphism or backdrop blur.
 - No emoji as a status icon.
 - No sparkle, wand or brain iconography.
@@ -134,7 +146,7 @@ chose to make.
 - No microcopy that performs enthusiasm. "Oops!", "Let's get started!" and
   "You're all set!" are banned strings.
 
-### 2.10 Voice
+### 2.11 Voice
 
 Short. Specific. Present tense. Never enthusiastic, never apologetic.
 
@@ -150,158 +162,203 @@ words, not implied by a pale colour.
 
 ### 3.1 Surfaces
 
-RVLT ships a dark default and an opt-in light "Paper" theme. **A2 Monitor
-defaults to Paper.** Dark is a straight theme switch, not a separate design, and
-both are first class.
+There is one surface: dark. No opt-in alternate, no theme resolution.
 
 ```
-Paper   --paper #F4EEE1  --paper-2 #EDE4D2  --card #FFFDF8  --elev #FFFDF8
-        --ink   #1D1A15  --ink-2   #4B4539  --muted #7D7565 --faint #A89E89
-        --line  #E4DAC3  --line-2  #D8CCB0  --card-outline: var(--ink)
-
-Dark    --paper #141210  --paper-2 #1A1613  --card #211C17  --elev #2A241D
-        --ink   #F5EFE2  --ink-2   #CDC4B2  --muted #9E9483 --faint #6E665A
-        --line  #332C24  --line-2  #473E32  --card-outline: var(--line-2)
+--paper #141210  --paper-2 #1a1613  --card #211c17  --elev #2a241d
+--ink   #f5efe2  --ink-2   #cdc4b2  --muted #9e9483 --faint #6e665a
+--line  #332c24  --line-2  #473e32
 ```
 
-On Paper the card outline is a 2px near-black rule and the shadow is a hard
-`0 3px 0 var(--line-2)` with no blur, rising to `0 7px 0` on hover. That
-outline-plus-offset is the whole material language: printed, tactile, pressable.
-In dark, cards additionally take RVLT's `--lit` inner highlight, because the
-outline is quieter there.
+Cards are a hairline `--line` rule plus a soft neutral shadow, never a thick
+outline and never a hard pixel-offset shadow — see
+[§5](#5-shape-and-elevation) for why.
 
-### 3.2 Theme resolution
+### 3.2 Never inline a value
 
-Themes resolve in **three** states, not two: an explicit choice stamps
-`data-theme` on the root, and the default "system" setting stamps nothing,
-leaving only `prefers-color-scheme`.
+A MUST: **a component never names a raw hex, px or radius — it references a
+token.** This still matters with exactly one theme: it is what lets the whole
+product be retuned from one file, keeps a component from silently drifting off
+the palette, and is the only reason `--veil`/`--veil-ink` exist as their own
+tokens rather than a value typed straight into the alert overlay. A surface
+this system needs that has no token yet — a pressed control, a recessed well
+behind a trace — gets a token (`--elev-2`, `--well`) rather than an inlined
+colour at the component.
 
-- The Paper set is declared on bare `:root`.
-- The dark set is declared **twice** — once behind
-  `@media (prefers-color-scheme: dark)` guarded as
-  `:root:not([data-theme="light"])`, and once behind `:root[data-theme="dark"]`
-  so an in-app toggle wins in either direction.
-- No component may define a colour that only resolves in one theme. The
-  translucent alert veil and its text shadows are where this bites: they need
-  `--veil` and `--veil-ink` tokens per theme, or the alert renders white on white
-  in dark.
+### 3.3 Accent roles
 
-### 3.2.1 Never inline a value
+Three accents, each doing one job, none of them decorative:
 
-RVLT §3.6, and a MUST: **a component never names a raw hex, px or radius — it
-references a token.** Raw values appear only in the theme blocks, which are
-theme-mapped, so `var(--red)` resolves correctly on both surfaces and a hardcoded
-value cannot leak from one theme into the other. Where this product needed a
-surface RVLT does not name — a pressed control, a recessed well behind a trace —
-it adds a token per theme (`--elev-2`, `--elev-3`, `--elev-4`, `--well`,
-`--veil`, `--veil-ink`) rather than inlining a colour at the component.
+| Role                     | Token      | Value     | Job                                                     |
+| ------------------------ | ---------- | --------- | ------------------------------------------------------- |
+| Signal (brand + healthy) | `--ok`     | `#4fd888` | The product's own colour. Verified, healthy, listening. |
+| Warn                     | `--warn`   | `#eba53a` | Needs someone, not failing yet.                         |
+| Replay                   | `--purple` | `#9b82e6` | You are hearing the past, not the present.              |
 
-### 3.3 Domain mapping
+Signal green is not a fourth, separate "brand colour" layered on top of the
+semantic system — it _is_ the semantic system's healthy state
+([§2.9](#2-principles)). A card with every tick green is, by
+construction, on-brand.
 
-The audio domain gets no new palette. It gets RVLT's existing roles.
+### 3.4 Domain mapping
 
-| Meaning | Role | Paper | Dark |
-| --- | --- | --- | --- |
-| Live — what you are hearing | `--red` | `#C12229` | `#E0363D` |
-| Critical fault | `--t-out` on `--out-soft` | `#9C1B21` | `#F26F73` |
-| Needs intervention | `--warn` on `--warn-soft` | `#C98A14` | `#EBA53A` |
-| Verified, healthy | `--ok` on `--ok-soft` | `#2EA65C` | `#4FD888` |
-| Stale, unknown, disarmed | `--rep` on `--rep-soft` | `#8A8270` | `#B6AC9A` |
-| Replay | `--purple` on `--purple-soft` | `#7A5CD0` | `#9B82E6` |
+| Meaning                     | Role                          | Value     |
+| --------------------------- | ----------------------------- | --------- |
+| Live — what you are hearing | `--red`                       | `#e0363d` |
+| Critical fault              | `--t-out` on `--out-soft`     | `#f26f73` |
+| Needs intervention          | `--warn` on `--warn-soft`     | `#eba53a` |
+| Verified, healthy           | `--ok` on `--ok-soft`         | `#4fd888` |
+| Stale, unknown, disarmed    | `--rep` on `--rep-soft`       | `#b6ac9a` |
+| Replay                      | `--purple` on `--purple-soft` | `#9b82e6` |
 
-Red is reserved exactly as RVLT reserves it — active, live, alerts — and here
-that means **the channel you are hearing**, and nothing else. A card with a red
-outline is the one in your ears.
+Red is reserved, strictly: active, live, alerts, and here that means **the
+channel you are hearing**, and nothing else. It never appears in the wordmark,
+the icon, a chart, or any chrome that is not saying one of those two things. A
+card with a red outline is the one in your ears.
 
-Groups use RVLT's eight-colour avatar ramp. Group colour is identity; it never
-carries a state and never appears on a meter, a badge or a border.
+Groups use an eight-colour avatar ramp, carried over unchanged from before.
+Group colour is identity; it never carries a state and never appears on a
+meter, a badge or a border.
 
 ---
 
 ## 4. Typography
 
-Four families, from RVLT §5. **Display = personality. Body = quiet. Handwriting
-= the human touch. Baloo 2 = the wordmark only.**
+Two families, not four. **IBM Plex Sans carries display, body and the
+wordmark** — one typeface, read at different weights, sizes and tracking,
+rather than reaching for a separate "brand" typeface to make the logotype feel
+distinct. **IBM Plex Mono is every machine measurement.** Plex was chosen
+because it is a real technical typeface with its own history (IBM's own,
+built for print and code and screens together), not because it was trending
+in a font picker — an earlier draft of this system used Space Grotesk and
+Fredoka, both of which had drifted into being the default look of any
+AI-assisted mockup, and neither said anything specific about this product.
 
-| Role | Family | Weights | Job here |
-| --- | --- | --- | --- |
-| Display | **Archivo** | 700 / 800 / 900 | Page titles, panel headers, names, the one bright figure |
-| Body | **Hanken Grotesk** | 400 / 500 / 600 / 700 | Everything read as language; all UI text, labels, controls |
-| Data mono | **JetBrains Mono**, `tabular-nums` | 400 / 500 / 600 | Anything a machine measured — levels, frequencies, times, asset IDs. Data cells only. |
-| Handwriting | **Kalam** | 700 | An operator's own note, and empty-state captions. Nothing else. |
-| Wordmark | **Baloo 2** | 700 | The product lockup only. Never a headline, never UI. |
+| Role      | Family                            | Weights         | Job here                                                                              |
+| --------- | --------------------------------- | --------------- | ------------------------------------------------------------------------------------- |
+| Display   | **IBM Plex Sans**                 | 600 / 700       | Page titles, panel headers, the one bright figure                                     |
+| Body      | **IBM Plex Sans**                 | 400 / 500       | Everything read as language; all UI text, labels, controls                            |
+| Data mono | **IBM Plex Mono**, `tabular-nums` | 400 / 500 / 600 | Anything a machine measured — levels, frequencies, times, asset IDs. Data cells only. |
+| Wordmark  | **IBM Plex Sans**                 | 700             | The product lockup only, at −.02em tracking. Never a separate typeface.               |
 
 ### 4.1 App type ramp (LOCKED — do not invent UI sizes)
 
-RVLT §5.5, used verbatim. The marketing scale in RVLT §5.1 does not apply to this
-product; every surface here is dense app UI.
-
-| Role | Size / line / tracking | Family · weight | Use |
-| --- | --- | --- | --- |
-| App page title | 24 / 1.2 / −.02em | display 800 | the one `h1` on a screen |
-| Section / panel header | 18 / 1.25 / −.01em | display 700 | card and section headers |
-| Card / widget title | 15 / 1.3 | display 700 *or* body 600 | channel name on a card |
-| Reading body | 16 / 1.5 | body 400 | descriptions, help, long text |
-| UI text / label | 14 / 1.4 | body 500 | controls, nav, form labels, buttons |
-| Table cell | 13.5 / 1.4 | body 400, mono for figures | rows, detail values |
-| Caption / meta | 12 / 1.35 | body 500 | secondary meta, timestamps |
-| Badge / micro | 11 (floor) | body 700 | status pills, counts, tags |
+| Role                   | Size / line / tracking | Family · weight            | Use                                 |
+| ---------------------- | ---------------------- | -------------------------- | ----------------------------------- |
+| App page title         | 24 / 1.2 / −.02em      | display 700                | the one `h1` on a screen            |
+| Section / panel header | 18 / 1.25 / −.01em     | display 600                | card and section headers            |
+| Card / widget title    | 15 / 1.3               | display 600 _or_ body 600  | channel name on a card              |
+| Reading body           | 16 / 1.5               | body 400                   | descriptions, help, long text       |
+| UI text / label        | 14 / 1.4               | body 500                   | controls, nav, form labels, buttons |
+| Table cell             | 13.5 / 1.4             | body 400, mono for figures | rows, detail values                 |
+| Caption / meta         | 12 / 1.35              | body 500                   | secondary meta, timestamps          |
+| Badge / micro          | 11 (floor)             | body 700                   | status pills, counts, tags          |
 
 - **11px is an absolute floor.** Nothing in this product is smaller, including
   status-strip labels and axis ticks.
 - Buttons are UI text, 14px, weight 600. Mono matches the cell it sits in.
-- Weights: display 700–800 for titles; body 400 read / 500 UI / 600 emphasis /
-  700 badge. No others.
+- Weights: display 600–700 for titles; body 400 read / 500 UI / 600 emphasis /
+  700 badge. No others — Plex Sans's lighter (100–300) and heavier cuts are
+  unused.
 - Keep the high-contrast jump: a 24px display title over 13.5px quiet rows. Do
   not flatten everything to one size.
 
 ### 4.2 Casing
 
-**Sentence case everywhere. `text-transform: uppercase` is banned** (RVLT §5.2 —
-uppercase is the rejected industrial misfire). That includes the places an
-operational tool reaches for it by reflex: status-strip labels, badges, section
-overlines, filter-band labels, the alert overlay, transport labels and column
-headers. An overline is 11px / 600, sentence case, `--muted` — never 10px,
-never uppercase.
+**Sentence case everywhere. `text-transform: uppercase` is banned.** Shouting a
+label in caps doesn't make it more legible under stage light — it just adds a
+second visual weight to fight with the display type. That includes the places
+an operational tool reaches for it by reflex: status-strip labels, badges,
+section overlines, filter-band labels, the alert overlay, transport labels and
+column headers. An overline is 11px / 600, sentence case, `--muted` — never
+10px, never uppercase.
 
-### 4.3 The mono and hand split
+### 4.3 Machine and human type
 
-If a machine measured it, it is mono. If a person wrote it, it is the hand. This
-is load-bearing and is the one place this product leans on type harder than RVLT
-needs to: an operator must be able to tell at a glance whether `−18.2 dBFS` came
-from a meter or `tape lifting again` came from a colleague.
+If a machine measured it, it is mono. If a person wrote it, it is body type,
+italic. This is load-bearing: an operator must be able to tell at a glance
+whether `−18.2 dBFS` came from a meter or `tape lifting again` came from a
+colleague, without a legend.
 
-The hand is never used for a value, a unit, a time, or anything that must be read
-precisely — and never inside an alert, a critical notice or a destructive
-confirmation ([§1.1.1](#111-where-a2-monitor-deliberately-diverges)).
+An operator's own note is `--font-body` italic, 400, `--ink-2` — quieter than
+a measurement, but still comfortably readable at a glance, never a display
+typeface standing in for handwriting. It is never used for a value, a unit, a
+time, or anything that must be read precisely — and never inside an alert, a
+critical notice or a destructive confirmation, where an italic aside would
+read as hedging on something that isn't optional.
 
-Figures are tabular everywhere. A readout that shifts horizontally as it changes
-is unreadable in motion. Reading body stays ≥16px; functional UI text steps down
-per the ramp, which is allowed and is not a violation of the body-size rule.
+Figures are tabular everywhere. A readout that shifts horizontally as it
+changes is unreadable in motion. Reading body stays ≥16px; functional UI text
+steps down per the ramp, which is allowed and is not a violation of the
+body-size rule.
 
 ## 5. Shape and elevation
 
+Pulse's material is soft, not pressable. A card sits slightly above the page
+because of light and shadow, not because it looks like a button waiting to be
+pushed down 2px. This is the one place this version breaks hardest from what
+came before, which borrowed a printed, outlined, hard-shadow language that
+answered to a different product's brand, not to a screen read at arm's length
+in the dark.
+
 ```
---r 14px   --r-lg 20px   pill 99px
---sh-card 0 3px 0 var(--line-2)     --sh-hover 0 7px 0 var(--line-2)
+--r 12px   --r-lg 18px   pill 999px
 ```
 
-Buttons are pills that travel: `translateY(-1px)` on hover,`translateY(2px)`
-with the shadow collapsing to `0 1px 0` on press. Cards lift 3px on hover and
-press 2px down. Inputs are 44px tall, 16px text, 2px `--line-2`, red focus ring.
-All of this is RVLT §15.2 verbatim.
+**Cards.** A 1px hairline `--line` border, plus a two-layer soft shadow: a
+tight, low-opacity contact shadow and a broader, softer ambient one. Nothing
+sharp, nothing offset, nothing that reads as a drop-shadow filter slapped on
+in one pass.
 
-There are no blurred shadows and no gradients in this product.
+```
+--shadow-1: 0 1px 2px rgb(0 0 0 / 28%)                            /* resting */
+--shadow-2: 0 2px 6px rgb(0 0 0 / 22%), 0 8px 24px rgb(0 0 0 / 24%)  /* card, hover */
+--shadow-3: 0 8px 16px rgb(0 0 0 / 26%), 0 24px 48px rgb(0 0 0 / 30%) /* dialog, sheet */
+```
+
+Shadow alone reads poorly on a near-black page — a dark shadow is nearly
+invisible against dark, and a light glow reads as a bug, not depth
+([§2.10](#210-refusals) bans coloured glow outright). So elevation is carried
+by **two signals together**: the shadow above, _and_ a one-step-lighter surface
+colour (`--paper` → `--card` → `--elev`) with a faint inset top highlight —
+
+```
+--card-lit: inset 0 1px 0 rgb(255 253 248 / 12%)
+```
+
+— which reads as a sliver of light catching the top edge of a raised surface.
+
+**Hover and press.** A card lifts from `--shadow-2` to `--shadow-3` and rises
+1px on hover; it settles back on press, shadow included — a soft compression,
+not a hard pixel-snap. Buttons darken or lighten their fill by one step and
+lose their shadow on press; they never translate.
+
+**Borders carry state, not weight.** A resting card's border is `--line`, 1px,
+quiet. Selection and focus are a **2px accent ring, offset 2px from the edge**
+— never a thicker version of the same neutral border, because a thicker
+neutral border and a normal one are too easy to confuse at a glance. Which
+accent depends on context: `--red` for the channel in your ears and for
+keyboard focus generally, `--ink-2` for "this is the one I have open."
+
+**Controls stay pills.** Buttons, filter chips and badges keep the fully
+rounded `999px` shape — a soft, closed form that reads as "press me" without a
+hard edge, and the one place a rounded geometry is allowed to leak into UI
+chrome. Cards and panels use the smaller `12`/`18px` radii; nothing in the
+product uses a sharp corner.
+
+All of this replaces the old `0 3px 0` hard-offset shadow and the 2px ink
+outline on every card, control and photo frame outright. Nothing in the
+product should still read as "printed and pressable" once this ships.
 
 ---
 
 ## 6. Motion
 
-| Use | Duration | Curve |
-| --- | --- | --- |
-| Control press | 120ms | `cubic-bezier(.2,.8,.3,1)` |
-| State change | 160ms | `cubic-bezier(.2,.8,.3,1)` |
-| Panel, sheet, player | 220ms | `cubic-bezier(.16,1,.3,1)` |
+| Use                  | Duration | Curve                      |
+| -------------------- | -------- | -------------------------- |
+| Control press        | 120ms    | `cubic-bezier(.2,.8,.3,1)` |
+| State change         | 160ms    | `cubic-bezier(.2,.8,.3,1)` |
+| Panel, sheet, player | 220ms    | `cubic-bezier(.16,1,.3,1)` |
 
 Meters and traces are **not** animated. They redraw at their data rate;
 transitioning a live value makes it lie about when it changed.
@@ -309,8 +366,9 @@ transitioning a live value makes it lie about when it changed.
 `prefers-reduced-motion: reduce` removes every transition and animation. State
 remains legible because it is carried by colour, glyph and word, not by movement.
 
-RVLT §8 allows **at most two signature loops**. This product spends both: the
-live dot's `pulse 1.7s`, and the report pulse on an unclaimed fault report
+Pulse allows itself **at most two signature loops** — restraint here is a
+choice, not a limitation. This product spends both: the live dot's
+`pulse 1.7s`, and the report pulse on an unclaimed fault report
 ([§10.7](#107-reported-state)). There is no third, and adding one means removing
 one.
 
@@ -318,10 +376,18 @@ one.
 
 ## 7. Iconography
 
-Lucide, 2px stroke, at 16 / 20 / 24px. Verdict glyphs are drawn, not typed, so
-they hold their weight at 12px. No icon appears without a label on a first-use
-surface; icon-only controls are permitted only in the transport, where they are
-learned within one performance, and each carries an accessible name.
+Interface icons are Lucide, 2px stroke, at 16 / 20 / 24px. Verdict glyphs are
+drawn, not typed, so they hold their weight at 12px. No icon appears without a
+label on a first-use surface; icon-only controls are permitted only in the
+transport, where they are learned within one performance, and each carries an
+accessible name.
+
+The **brand mark** is a separate thing from interface iconography: five
+vertical bars in a mountain profile — a level meter and an RF signal-strength
+indicator at once, which is what this product actually watches. It appears at
+full size (icon, favicon, the header lockup) and is never repurposed as an
+interface glyph; a channel's own meter trace ([§10.1](#101-channel-card)) is
+drawn fresh per component, not a scaled copy of the logo.
 
 ---
 
@@ -350,8 +416,8 @@ device in one hand, in the dark, possibly gloved, with a spare pack in the other
 
 A card has exactly two targets:
 
-- **The card itself** performs that surface's action: *listen* on the A2 grid,
-  *report a fault* on the A1 view. The whole card, including the photograph.
+- **The card itself** performs that surface's action: _listen_ on the A2 grid,
+  _report a fault_ on the A1 view. The whole card, including the photograph.
 - **The `⤢` button inside the photograph** opens the detail. It is the only thing
   on a card that does, and it carries a 44px hit area around a 32px visual.
 
@@ -365,8 +431,8 @@ itself** — forgetting this makes acknowledgement unpressable.
 
 Everything reachable by touch is reachable by key. Arrow keys move channel focus;
 `Space` listens, `Enter` latches, `Esc` clears; `1`–`8` press-to-listen groups;
-`M` mute, `D` dim, `R` return to live, `/` search. Focus rings are 2px `--red`
-offset 2px and are never suppressed.
+`M` mute, `D` dim, `R` return to live, `/` search. Focus rings are the 2px accent
+ring from [§5](#5-shape-and-elevation) and are never suppressed.
 
 ---
 
@@ -374,12 +440,12 @@ offset 2px and are never suppressed.
 
 Four states, kept visually distinct everywhere they appear.
 
-| State | Treatment |
-| --- | --- |
-| **Observed** | Measured now. Solid fill, solid rule, mono numerals. |
-| **Inferred** | Derived or suspected. Dashed rule, and the word *likely*. |
-| **Stale** | Last known, too old. `--rep`, hatched, with a visible age. |
-| **Unknown** | Never a zero, never green, never an empty bar. A dash, and the word. |
+| State        | Treatment                                                            |
+| ------------ | -------------------------------------------------------------------- |
+| **Observed** | Measured now. Solid fill, solid rule, mono numerals.                 |
+| **Inferred** | Derived or suspected. Dashed rule, and the word _likely_.            |
+| **Stale**    | Last known, too old. `--rep`, hatched, with a visible age.           |
+| **Unknown**  | Never a zero, never green, never an empty bar. A dash, and the word. |
 
 Cue-derived state that has lost authority becomes unknown, not last-known. The
 interface shows that it stopped knowing rather than quietly continuing.
@@ -398,7 +464,7 @@ The centrepiece, and it is a photograph. An A2 thinks in people: they are lookin
 for Eleanor, not for input 27, and a face is recognised faster than any label.
 
 ```
-┌────────────────────────────────┐  2px outline · 0 3px 0 shadow
+┌────────────────────────────────┐  1px hairline · soft shadow, no outline
 │ ┌────────────────────────────┐ │
 │ │ 27                     ⤢   │ │ ← number; expand button
 │ │        headshot 16:10      │ │
@@ -420,9 +486,9 @@ for Eleanor, not for input 27, and a face is recognised faster than any label.
 - **Channel number**, quiet mono over the photograph, top left.
 - **Fault flags**, top right: a category that is clear says nothing; one in fault
   says its name.
-- **Trace**, 10-second rolling window over a `--scrim`, following WaveTool's
-  convention. `--ok` when present, `--ink-2` when silent, hatched when stale.
-- **Caption**: character name in display 800, then performer in `--muted`.
+- **Trace**, 10-second rolling window over a `--scrim`, in `--ok` when present,
+  `--ink-2` when silent, hatched when stale.
+- **Caption**: character name in display 600, then performer in `--muted`.
   Character first — the A1 calls the role and the cue sheet says the role.
 
 The card carries **no sentence** and no acknowledged-alert row. The status strip
@@ -435,17 +501,17 @@ The thing an operator reads first after the face. One cell per dimension that ca
 independently fail, **always in the same order and position**, so the row is read
 as a shape rather than parsed as text.
 
-| Verdict | Glyph | Colour | Meaning |
-| --- | --- | --- | --- |
-| Good | `✓` tick | `--ok` on `--ok-soft` | Measured, within tolerance |
-| Fault | `✕` cross | `--t-out` on `--out-soft` | Measured, wrong now |
-| Caution | `⚠` triangle | `--warn` on `--warn-soft` | Needs someone, not failing yet |
-| Unknown | `–` dash | `--rep` on `--rep-soft` | Stale, disarmed, or never measured |
-| Not applicable | `∕` slash | `--rep` 50% | Dimension does not exist here |
+| Verdict        | Glyph        | Colour                    | Meaning                            |
+| -------------- | ------------ | ------------------------- | ---------------------------------- |
+| Good           | `✓` tick     | `--ok` on `--ok-soft`     | Measured, within tolerance         |
+| Fault          | `✕` cross    | `--t-out` on `--out-soft` | Measured, wrong now                |
+| Caution        | `⚠` triangle | `--warn` on `--warn-soft` | Needs someone, not failing yet     |
+| Unknown        | `–` dash     | `--rep` on `--rep-soft`   | Stale, disarmed, or never measured |
+| Not applicable | `∕` slash    | `--rep` 50%               | Dimension does not exist here      |
 
 Default dimensions: **RF · Audio · Battery · Check**. The set is per-deployment,
 not hard-coded: an in-ears rig adds a cell, a wired-only rig drops RF and battery
-to *not applicable* rather than showing false greens.
+to _not applicable_ rather than showing false greens.
 
 - Never colour alone: every cell carries a glyph, a label, and an accessible
   description of the form "RF link: fault".
@@ -459,8 +525,7 @@ to *not applicable* rather than showing false greens.
 
 ### 10.3 Alert overlay
 
-An alert nobody has acknowledged **veils the whole card**, the way WaveTool draws
-its fault overlay on a channel strip.
+An alert nobody has acknowledged **veils the whole card**.
 
 **A veil, not a replacement.** The tint covers the card, but the face, the number,
 the meter, the name and the status strip all still read underneath — that is what
@@ -468,8 +533,8 @@ an operator needs to start troubleshooting. The mark is pinned to the
 photograph's box rather than centred on the card, where it would be written
 across the performer's name.
 
-**It names the problem and nothing else.** One icon, two words — *Low RF*, *No
-audio*, *Low battery* — and `PRESS TO ACKNOWLEDGE`. No explanation, no timestamp,
+**It names the problem and nothing else.** One icon, two words — _Low RF_, _No
+audio_, _Low battery_ — and `Press to acknowledge`. No explanation, no timestamp,
 no diagnosis, no action list. The operator troubleshoots; the product's job is to
 say which channel and which kind, fast, from across a wing.
 
@@ -509,9 +574,9 @@ knows how to use it before anyone explains it.
 │ RF LEVEL ───────────────────────────────╲_____┃░░░░░░░░   −62 dBm    │
 │ QUALITY  ▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▁▁▁▁▁▁▁▁▁┃░░░░░░░░   31 %       │
 │ BATTERY  ╲____________________________________┃░░░░░░░░   2:14       │
-│ −30:00            −20:00      10m[30m]60m     ┃  −10:00      LIVE    │
+│ −30:00            −20:00      10m[30m]60m     ┃  −10:00      Live    │
 ├──────────────────────────────────────────────────────────────────────┤
-│ −10:51 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━●─────┃──────────  BACK TO LIVE │
+│ −10:51 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━●─────┃──────────  Back to live │
 ├──────────────────────────────────────────────────────────────────────┤
 │ [art] Eleanor Vance   ⏮ ↺ ⏸ ↻ ⏭   [↓ Save from here]  M −18 ▮▮▮  ⌄   │
 └──────────────────────────────────────────────────────────────────────┘
@@ -528,8 +593,8 @@ relabels with it.
 **Scrubbing is how you listen back.** Dragging the scrub back is the replay
 feature. There is no separate mode to enter: the channel you are hearing stays
 the channel, and you move it in time. At the right edge you are live; anything
-left is replay, the bar tints `--purple`, and the right time code becomes **BACK
-TO LIVE** — one press, from anywhere. Event marks sit on the rail at the time
+left is replay, the bar tints `--purple`, and the right time code becomes **Back
+to live** — one press, from anywhere. Event marks sit on the rail at the time
 they happened, so an operator can aim rather than hunt.
 
 **Save replay** is a permissioned action with its own button, never automatic and
@@ -553,7 +618,7 @@ permissioned from listening and from marking.
 ### 10.5 Detail
 
 Opened by the `⤢` button. This is where the depth lives, which is what lets the
-grid stay sparse, and it is the surface that makes [§1.3](#13-two-product-decisions-this-rests-on)'s
+grid stay sparse, and it is the surface that makes [§1.5](#15-two-product-decisions-this-rests-on)'s
 show-time claim true.
 
 - **Antennas and diversity** — level per antenna with the squelch threshold
@@ -568,7 +633,7 @@ show-time claim true.
 **Capability-driven.** A field a receiver does not report renders as unknown, not
 as a plausible default. A wired input drops the RF, transmitter and battery
 groups rather than showing false values. This needs a per-model capability map
-for *display*, not only for control.
+for _display_, not only for control.
 
 ### 10.6 Report sheet
 
@@ -578,8 +643,8 @@ The A1's whole job, in one thumb. Specified with its surface in
 ### 10.7 Reported state
 
 A channel with an unclaimed fault report **pulses its outline**, on the A1 grid
-and on the A2 grid, and shows a `REPORTED` badge with a count when more than one
-issue went. It stops on claim, when the card reads `BEING WORKED` with the
+and on the A2 grid, and shows a `Reported` badge with a count when more than one
+issue went. It stops on claim, when the card reads `Being worked` with the
 claimant.
 
 This is the only ambient motion in the product and it earns the exception: it
@@ -589,9 +654,9 @@ removes the motion; the amber outline stays.
 
 ### 10.8 Smaller parts
 
-- **Badges** — RVLT §3.3: pill, 700 weight, 11px, soft-tinted, with a dot.
-- **Buttons** — RVLT §15.2. `--red` primary is reserved for the one live or
-  destructive action in view.
+- **Badges** — pill, 700 weight, 11px, soft-tinted, with a dot.
+- **Buttons** — `--red` primary is reserved for the one live or destructive
+  action in view; see [§5](#5-shape-and-elevation) for shape and press behaviour.
 - **Groups** — the transport's press-to-listen buttons come from two places.
   **Show groups** are authored in Manager with the show file: principals,
   ensemble, band, radio mics. They are stable across a run and identical for
@@ -606,8 +671,9 @@ removes the motion; the amber outline stays.
 - **Exceptions sheet** — a sheet, not a standing rail, opened from the header
   counters. Lists critical exceptions across the whole show including sources not
   in the current filter.
-- **Operator notes** — Kalam on a `--warn` left rule. Anything a person wrote is
-  the hand; anything a machine measured is mono ([§2.3](#2-principles)).
+- **Operator notes** — italic body type on a `--warn` left rule
+  ([§4.3](#43-machine-and-human-type)). Anything a person wrote reads like a
+  sentence; anything a machine measured is mono.
 
 There is **no sidebar** in this product. A standing left rail spends permanent
 width on navigation used in bursts; a standing right rail spends it on a list
@@ -635,7 +701,7 @@ audio in one press and to a diagnosis in two.
 └────────────────────────────────────────────────────────────────┘
 ```
 
-Default is **all channels** ([§1.3](#13-two-product-decisions-this-rests-on)).
+Default is **all channels** ([§1.5](#15-two-product-decisions-this-rests-on)).
 Sources with a critical exception pin to the top of the grid regardless of
 filter, and also appear in the exceptions sheet: the sheet is show-wide truth,
 the grid is current-context truth, and a critical fault belongs in both.
@@ -647,8 +713,8 @@ distrust the tap.
 
 Emergency remap and swap are initiated from the detail, never from the card,
 because they must never be one gesture away from a listen. The transaction shows
-the replacement, the complete identity and external-action diff, a *physical
-change in progress* state, RF and audio verification, the A1 confirmation
+the replacement, the complete identity and external-action diff, a _physical
+change in progress_ state, RF and audio verification, the A1 confirmation
 request, and the audited inverse. The old mapping stays historically correct.
 
 ### 11.2 A1 mix confidence
@@ -666,16 +732,16 @@ output level. Pressing a channel reports a fault.
 The report flow:
 
 1. **Press the channel.** A sheet rises with the performer, the console number,
-   and one question: *What are you hearing?*
+   and one question: _What are you hearing?_
 2. **Press what is wrong — as many as apply.** Eight faults in the A1's own
    words (dropping out, crackling, distorted, too quiet, clothing noise, popping,
-   hum or buzz, nothing at all) plus *something else, dictate a note*. Each a
+   hum or buzz, nothing at all) plus _something else, dictate a note_. Each a
    72px target with a tick when selected. Multi-select because faults arrive
-   together: clothing noise *and* crackling is a different diagnosis from either
+   together: clothing noise _and_ crackling is a different diagnosis from either
    alone, and forcing one choice throws away what tells an A2 where to start.
-3. **Press Send.** The button counts what is going — *Send 2 issues*. The sheet
+3. **Press Send.** The button counts what is going — _Send 2 issues_. The sheet
    then shows everything that went, who has it, and an **Undo** live for a few
-   seconds, with *Mark urgent — it is on air now* as a follow-up rather than a
+   seconds, with _Mark urgent — it is on air now_ as a follow-up rather than a
    prerequisite.
 
 Two presses and no typing. The report carries the channel, the performer, the
@@ -773,9 +839,9 @@ hearing the past while a show happens in the present.
 - The viewport gains a `--purple` chrome edge. Every meter, trace and value
   renders in `--purple`. If it is violet, it already happened.
 - A persistent bar states the offset and the epoch in mono.
-- **BACK TO LIVE** is one press, always visible, never behind a confirm.
+- **Back to live** is one press, always visible, never behind a confirm.
 - Current critical alerts stay visible in a pinned live strip in their live
-  colours, explicitly labelled `LIVE` — the one place the two time bases appear
+  colours, explicitly labelled `Live` — the one place the two time bases appear
   together, marked in both directions.
 
 The timeline stacks audio, RF level, link quality and events on one x-axis, with
@@ -788,7 +854,7 @@ The incident view filters the same timeline to one incident, merging system
 observations, operator reports, cue changes, assignment and swap events, replay
 markers, ownership and selected messages — not the whole conversation.
 Resolution requires action, evidence and **confidence**, and confidence is three
-explicit words — *observed*, *likely*, *unconfirmed* — not a slider.
+explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 
 ---
 
@@ -803,7 +869,7 @@ explicit words — *observed*, *likely*, *unconfirmed* — not a slider.
   Reporting is the A1's entire job on this product, and an outage is exactly when
   something is most likely to be going wrong, so a report reaches the A2
   immediately over the node path rather than queueing. What does wait for the
-  backend is the *lifecycle* around it — claiming, assignment, ownership and
+  backend is the _lifecycle_ around it — claiming, assignment, ownership and
   promotion to an incident — which reconciles when the backend returns. The A1
   sees that the report arrived and that ownership is pending, which is the honest
   description of what has happened. Chat and ordinary task assignment still grey
@@ -815,6 +881,7 @@ explicit words — *observed*, *likely*, *unconfirmed* — not a slider.
   carries check results and local evidence markers needed for immediate show
   safety. It does not make the node a collaboration server: a fault report is a
   bounded, safety-relevant event of the same kind, not a message thread.
+
 - **Receiver telemetry stale** — per-lane hatch and age. Audio stays live; only
   the affected lanes degrade.
 - **Show lock** — identity, binding, alert-policy and scene edits disappear
@@ -837,7 +904,56 @@ explicit words — *observed*, *likely*, *unconfirmed* — not a slider.
 
 ## 14. Changelog
 
-**1.0.0 — 2026-09-19.** First consolidated document. Supersedes the separate
-principles, visual-language, touch-and-input, components and per-surface files,
-which are removed; the rounds that were rejected on the way here are recorded in
-[research notes](research-notes.md).
+**2.1.1 — 2026-09-22.** Space Grotesk and Fredoka are retired. Both had
+become the default look of an AI-generated mockup rather than a considered
+choice for this product — real fonts, just badly overused ones. Replaced
+with IBM Plex Sans across display, body and the wordmark
+([§4](#4-typography)), pairing with the IBM Plex Mono already in use rather
+than adding a third family. The wordmark no longer gets its own typeface; it
+is Plex Sans 700 at tight tracking, distinguished by weight and size, not by
+switching fonts. Implemented in `tokens.css` and both apps alongside this
+entry.
+
+**2.1.0 — 2026-09-22.** Light mode is gone. Pulse was dark-by-default with
+Paper as an opt-in alternate ([§1.2](#12-dark-only), [§3.1](#31-surfaces));
+now there is exactly one theme. Removed: the Paper token block, the
+`prefers-color-scheme`/`data-theme` resolution logic, the in-app theme picker,
+and the `pulse-theme` persisted setting. The accent-roles and domain-mapping
+tables ([§3.3](#33-accent-roles), [§3.4](#34-domain-mapping)) drop their Paper
+column — every value in this document is now simply the value, not "the dark
+one of a pair." This is implemented in `tokens.css` and both apps, not just
+documented here.
+
+**2.0.0 — 2026-09-22.** Pulse becomes a standalone design language: this
+document no longer inherits from or documents deviations against RVLT's
+design language. Everything visual changed —
+
+- **Colour.** Dark is now the default surface, Paper the opt-in alternate
+  (previously the reverse). New hex values throughout, pulled from and now
+  feeding back into the app's shipped tokens. Signal green becomes the
+  brand's own accent, explicitly identical to the "verified, healthy"
+  semantic ([§2.9](#2-principles), [§3.3](#33-accent-roles)).
+- **Typography.** Archivo, Hanken Grotesk and Baloo 2 are replaced by Space
+  Grotesk (display and body) and Fredoka (wordmark only); JetBrains Mono is
+  replaced by IBM Plex Mono. Kalam and the dedicated handwriting treatment are
+  retired — the machine/human type distinction is now carried by italics on
+  the existing body face ([§4.3](#43-machine-and-human-type)), not a second
+  imported font.
+- **Shape and elevation.** The printed, hard-outlined, hard-offset-shadow
+  material language is retired in favour of soft neutral shadows, hairline
+  borders, and a lighter-surface-plus-inset-highlight technique for depth on
+  dark surfaces ([§5](#5-shape-and-elevation)). This was the biggest
+  structural change in this version; it shipped in `tokens.css` and both
+  apps' component CSS in a follow-up pass the same day.
+- **Iconography.** The product gets its own brand mark (five-bar signal
+  meter) distinct from the Lucide interface icon set it already used
+  ([§7](#7-iconography)).
+
+Everything not called out above — principles, the honesty grammar, component
+behaviour, surfaces, touch/input and accessibility — is carried over
+unchanged: none of that was RVLT's, and none of it needed to change.
+
+**1.0.0 — 2026-09-19.** First consolidated document, built on the RVLT design
+language. Superseded the separate principles, visual-language, touch-and-input,
+components and per-surface files, which were removed; the rounds that were
+rejected on the way there are recorded in [research notes](research-notes.md).

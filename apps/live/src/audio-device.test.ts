@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
-import type { Showfile, ShureTelemetry } from "@a2-monitor/protocol/http";
+import type { Showfile, ShureTelemetry } from "@rvlt/pulse-protocol/http";
 import {
   createHttpAudioDeviceSource,
   parseAudioDeviceState,
