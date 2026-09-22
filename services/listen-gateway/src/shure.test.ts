@@ -1,10 +1,14 @@
+import { createServer, type Socket } from "node:net";
+import type { Showfile } from "@rvlt/pulse-protocol/http";
 import { describe, expect, it } from "vitest";
 import {
   applyChannelProperty,
   AXIENT_COMMANDS,
   QLXD_COMMANDS,
+  ShureFleetMonitor,
   ShureFrameParser,
   SLXD_COMMANDS,
+  TELEMETRY_REFRESH_MS,
   ULXD_COMMANDS,
 } from "./shure.js";
 
@@ -156,4 +160,70 @@ describe("applyChannelProperty", () => {
     );
     expect(updated).toMatchObject({ rfLevelRaw: null, rfLevelDbm: null });
   });
+});
+
+describe("ShureFleetMonitor telemetry refresh", () => {
+  it(
+    "keeps re-polling a ULX-D channel after the initial connect burst, instead of going quiet until it hits STALE_AFTER_MS",
+    async () => {
+      // ReceiverMonitor connects to the fixed Shure Control port (2202); a
+      // fake receiver has to listen there to exercise the real TCP path.
+      let received = "";
+      const server = createServer((socket: Socket) => {
+        socket.on("data", (chunk) => {
+          received += chunk.toString();
+        });
+      });
+      await new Promise<void>((resolve, reject) => {
+        server.once("error", reject);
+        server.listen(2202, "127.0.0.1", resolve);
+      });
+
+      const showfile: Showfile = {
+        schemaVersion: "0",
+        revision: 0,
+        updatedAtUtc: null,
+        show: { name: "Test" },
+        device: null,
+        shureReceivers: [
+          {
+            id: "r1",
+            name: "ULXD",
+            host: "127.0.0.1",
+            model: "ULXD4",
+            channelCount: 1,
+          },
+        ],
+        channels: [],
+      };
+
+      const monitor = new ShureFleetMonitor({
+        backendOrigin: "http://showfile.invalid/",
+        fetch: (async () =>
+          new Response(JSON.stringify(showfile), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          })) as typeof fetch,
+      });
+
+      try {
+        monitor.start();
+        // Let the initial connect burst land, then count how many times the
+        // meter subscription has been (re-)issued across one refresh tick.
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        const afterConnect = received.split("METER_RATE").length - 1;
+        expect(afterConnect).toBeGreaterThan(0);
+
+        await new Promise((resolve) =>
+          setTimeout(resolve, TELEMETRY_REFRESH_MS + 500),
+        );
+        const afterRefresh = received.split("METER_RATE").length - 1;
+        expect(afterRefresh).toBeGreaterThan(afterConnect);
+      } finally {
+        monitor.close();
+        await new Promise<void>((resolve) => server.close(() => resolve()));
+      }
+    },
+    TELEMETRY_REFRESH_MS + 5_000,
+  );
 });
