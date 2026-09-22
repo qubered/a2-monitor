@@ -41,7 +41,8 @@ npm run build --workspace @rvlt/pulse-manager
 cargo build --locked --release --bin pulse-device-capture
 
 runtime_root="$(mktemp -d)"
-trap 'rm -rf "$runtime_root"' EXIT INT TERM
+icon_root="$(mktemp -d)"
+trap 'rm -rf "$runtime_root" "$icon_root"' EXIT INT TERM
 mkdir -p "$runtime_root/apps/live" "$runtime_root/apps/manager" \
   "$runtime_root/packages/protocol" "$runtime_root/packages/ui" \
   "$runtime_root/services/backend" "$runtime_root/services/listen-gateway"
@@ -63,10 +64,28 @@ cp -R apps/live/dist "$app/Contents/Resources/app/apps/live/dist"
 cp apps/live/package.json "$app/Contents/Resources/app/apps/live/package.json"
 cp -R apps/manager/dist "$app/Contents/Resources/app/apps/manager/dist"
 cp apps/manager/package.json "$app/Contents/Resources/app/apps/manager/package.json"
-cp -R packages/protocol/schema packages/protocol/validation "$app/Contents/Resources/app/packages/protocol/"
+cp -R packages/protocol/schema packages/protocol/validation packages/protocol/generated packages/protocol/receivers \
+  "$app/Contents/Resources/app/packages/protocol/"
 cp packages/protocol/package.json "$app/Contents/Resources/app/packages/protocol/package.json"
 cp -R "$runtime_root/packages/protocol/node_modules" \
   "$app/Contents/Resources/app/packages/protocol/node_modules"
+
+mkdir "$icon_root/AppIcon.iconset"
+swift infra/appliance/macos/mvp-app/svg-to-png.swift apps/live/public/favicon.svg \
+  "16:$icon_root/AppIcon.iconset/icon_16x16.png" \
+  "32:$icon_root/AppIcon.iconset/icon_16x16@2x.png" \
+  "32:$icon_root/AppIcon.iconset/icon_32x32.png" \
+  "64:$icon_root/AppIcon.iconset/icon_32x32@2x.png" \
+  "128:$icon_root/AppIcon.iconset/icon_128x128.png" \
+  "256:$icon_root/AppIcon.iconset/icon_128x128@2x.png" \
+  "256:$icon_root/AppIcon.iconset/icon_256x256.png" \
+  "512:$icon_root/AppIcon.iconset/icon_256x256@2x.png" \
+  "512:$icon_root/AppIcon.iconset/icon_512x512.png" \
+  "1024:$icon_root/AppIcon.iconset/icon_512x512@2x.png"
+iconutil -c icns "$icon_root/AppIcon.iconset" -o "$app/Contents/Resources/AppIcon.icns"
+
+swift infra/appliance/macos/mvp-app/svg-to-png.swift infra/appliance/macos/mvp-app/menu-bar-icon.svg \
+  "44:$app/Contents/Resources/MenuBarIcon.png"
 
 cp target/release/pulse-device-capture "$app/Contents/Resources/bin/pulse-device-capture"
 cp "$node_bin" "$app/Contents/Resources/bin/node"

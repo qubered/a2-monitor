@@ -1,8 +1,8 @@
 import AppKit
 
 private let listenBase = "http://127.0.0.1:4173"
-private let deviceDefaultsKey = "A2AudioDevice"
-private let hostDefaultsKey = "A2BindHost"
+private let deviceDefaultsKey = "PulseAudioDevice"
+private let hostDefaultsKey = "PulseBindHost"
 
 private struct HostOption {
     let title: String
@@ -42,7 +42,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private func buildStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem.button?.title = "A2"
+        if let iconURL = Bundle.main.resourceURL?.appendingPathComponent("MenuBarIcon.png"),
+            let icon = NSImage(contentsOf: iconURL)
+        {
+            icon.size = NSSize(width: 18, height: 18)
+            icon.isTemplate = true
+            statusItem.button?.image = icon
+            statusItem.button?.imagePosition = .imageLeft
+        }
         statusItem.button?.toolTip = "Pulse"
 
         let menu = NSMenu()
@@ -281,7 +288,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         statusLabel.stringValue = status
         startMenuItem.isEnabled = !running
         stopMenuItem.isEnabled = running
-        statusItem.button?.title = running ? "A2 ●" : "A2"
+        statusItem.button?.title = running ? " ●" : ""
         startStopButton.title = running ? "Stop Server" : "Start Server"
         deviceButton.isEnabled = !running
         hostButton.isEnabled = !running

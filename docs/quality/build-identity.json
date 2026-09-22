@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.19a98864c2ee70ff",
-  "sourceSha256": "19a98864c2ee70ffe59f67894c3d36b23906ddf09fd3a143ef778e1b84f0888a",
+  "buildId": "a2-0.0.0+sha256.dd5043ee2e49fb43",
+  "sourceSha256": "dd5043ee2e49fb437f60a59262514ade21fb60e351d60f96fdc1a92cee9f447b",
   "inputCount": 317,
   "inputs": [
     {
@@ -845,7 +845,7 @@
     },
     {
       "path": "infra/appliance/macos/build-mvp-app.sh",
-      "sha256": "7b7d4b0acf76787a2abaf33b303c910c79e1fbb62f8502caa2f26dad31499ddd"
+      "sha256": "6c55b0336ff5b0da19a2762331c7a07aa951e662f5ee1881e48c8370a398e06d"
     },
     {
       "path": "infra/appliance/macos/build-unsigned-pkg.sh",
@@ -857,11 +857,11 @@
     },
     {
       "path": "infra/appliance/macos/mvp-app/Info.plist",
-      "sha256": "6a665f33321ed1bdbb005f75ca50129ea8455111a0a625c085ddc2aac9dc8ef2"
+      "sha256": "90fad136530d41ddea2dd616cb34552939abffecedc4279fb4c8f177436f7fed"
     },
     {
       "path": "infra/appliance/macos/mvp-app/PulseApp.swift",
-      "sha256": "e5b2e1f2464a68ef7424b3dfd9359b69c39338edf170c7c571c5d61ebc5bbf8d"
+      "sha256": "d87ed5f1615020a6fd8ef33c49118181d69813cf5d27a5d184655a4f615519e9"
     },
     {
       "path": "infra/appliance/macos/mvp-app/launcher.mjs",
