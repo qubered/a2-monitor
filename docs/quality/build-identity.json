@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.906063890d92f7a9",
-  "sourceSha256": "906063890d92f7a98fc172a26800d0105ef0b4750dd8ded205b70e261b1c85ac",
+  "buildId": "a2-0.0.0+sha256.5f27727bc239573b",
+  "sourceSha256": "5f27727bc239573bc88cdeee52edd182dd8fc3be32b60ed0ed5f91af5b6dd790",
   "inputCount": 319,
   "inputs": [
     {
@@ -841,11 +841,11 @@
     },
     {
       "path": "infra/appliance/macos/README.md",
-      "sha256": "040a707904231fecc1478f85474713972f9ec085f3decb94b04b06386bf29b5d"
+      "sha256": "4c4c5ab28c2b519b0c733e0deaf51b0e9f05e4106ac86aca29d3e1eb4a808fd8"
     },
     {
       "path": "infra/appliance/macos/build-mvp-app.sh",
-      "sha256": "6c55b0336ff5b0da19a2762331c7a07aa951e662f5ee1881e48c8370a398e06d"
+      "sha256": "62ea669239070d94637e6de160d303f884ef16b2dfc3d6f52fc4c5bd1ffddbcb"
     },
     {
       "path": "infra/appliance/macos/build-unsigned-pkg.sh",
