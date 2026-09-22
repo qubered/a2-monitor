@@ -460,9 +460,25 @@ a:focus-visible {
   background: var(--ok);
 }
 
-.meter-trace.meter-unknown i {
-  height: var(--size-2);
+/* Honesty grammar (design system §9), per bar: a 10-second window can be
+   present for part of it and silent, stale or unknown for the rest. */
+.meter-trace i[data-state="silent"] {
+  background: var(--ink-2);
+}
+
+.meter-trace i[data-state="stale"] {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--rep) 0,
+    var(--rep) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+}
+
+.meter-trace i[data-state="unknown"] {
   background: var(--rep);
+  opacity: 0.5;
 }
 
 .selected-badge {
@@ -622,11 +638,123 @@ a:focus-visible {
   z-index: 10;
   min-height: var(--player-height);
   display: flex;
+  flex-direction: column;
+  border-top: var(--size-1) solid var(--line-2);
+  background: var(--paper-2);
+}
+
+.player-transport {
+  display: flex;
   align-items: center;
   gap: var(--space-5);
   padding: var(--space-5) var(--space-6) var(--space-3);
-  border-top: var(--size-1) solid var(--line-2);
-  background: var(--paper-2);
+}
+
+/* The player's timeline (design system §10.4): shared window, shared
+   playhead, tinted --purple the moment the shared scrub sits behind live. */
+.pulse-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-6) 0;
+  border-bottom: var(--size-1) solid var(--line);
+}
+
+.pulse-timeline-lanes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.pulse-timeline-lane {
+  display: grid;
+  grid-template-columns: 6rem 1fr 6.5rem;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.pulse-timeline-lane-label {
+  color: var(--muted);
+  font-size: var(--font-caption);
+  font-weight: 600;
+}
+
+.pulse-timeline-trace {
+  height: 2.25rem;
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.pulse-timeline-lane-readout {
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-table);
+  text-align: right;
+}
+
+.pulse-timeline-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding-bottom: var(--space-2);
+}
+
+.pulse-timeline-window {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.pulse-timeline-window-button {
+  min-height: var(--target);
+  padding: 0 var(--space-3);
+  border: var(--size-1) solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: var(--font-ui);
+  font-weight: 600;
+}
+
+.pulse-timeline-window-button[aria-pressed="true"] {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--elev);
+}
+
+.pulse-timeline-scrub {
+  flex: 1;
+  min-height: var(--target);
+}
+
+.pulse-timeline-timecode {
+  min-width: 4rem;
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-table);
+  text-align: right;
+}
+
+.pulse-timeline.is-replay {
+  border-bottom-color: var(--purple);
+}
+
+.pulse-timeline.is-replay .pulse-timeline-timecode {
+  color: var(--purple);
+}
+
+.pulse-timeline-back-to-live {
+  min-height: var(--target);
+  padding: 0 var(--space-4);
+  border: var(--size-1) solid var(--purple);
+  border-radius: var(--radius-pill);
+  background: var(--purple-soft);
+  color: var(--purple);
+  font-family: var(--font-ui);
+  font-size: var(--font-ui);
+  font-weight: 600;
 }
 
 .player-selection-rail {

@@ -19,6 +19,7 @@
     "./schema/showfile": "./schema/v0/http/showfile.schema.json",
     "./schema/shure-telemetry": "./schema/v0/http/shure-telemetry.schema.json",
     "./schema/production-list": "./schema/v0/http/production-list.schema.json",
+    "./schema/channel-level-history": "./schema/v0/http/channel-level-history.schema.json",
     "./validation/strict-ajv": {
       "types": "./validation/strict-ajv.d.mts",
       "default": "./validation/strict-ajv.mjs"

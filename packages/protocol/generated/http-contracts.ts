@@ -5,10 +5,11 @@
 //   - schema/v0/http/showfile.schema.json
 //   - schema/v0/http/shure-telemetry.schema.json
 //   - schema/v0/http/production-list.schema.json
+//   - schema/v0/http/channel-level-history.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: e1c14cc1aebbf0e09fe868824ed0345e62f11830a25e1b6729e0f4589bf85a5d
-// Generator-SHA256: 0772726d827dd804c51fded3bbc488ab549cfb2a3acc8c1ac0d5fa8da897fd7a
-// Body-SHA256: b561ae7ddf3922576d12632ee14dd885947473b11fbbf753b27c681291680003
+// Schema-SHA256: 304d93cb8ffb7c872ae4f1f740b92c7a97fdfa682cedf2df33c1a9a9c20a7d91
+// Generator-SHA256: 8f6d50bf68722def8565b5a1c595bc298ce2146b449dfed3e83846b799791c7d
+// Body-SHA256: eeb07c4eff54023e1c7dea5b564ea4fc9cc68d1709dd635f45ec1a673e1d8ab9
 
 export type HealthResponse = {
   status: "ok";
@@ -195,6 +196,26 @@ export type ProductionList = {
   schemaVersion: "0";
   activeId: string | null;
   productions: Array<ProductionSummary>;
+};
+
+export type LevelValue = number | null;
+
+export type ChannelLevelSample = {
+  atUtc: string;
+  audioDbfs: LevelValue;
+  rfLevelDbm: LevelValue;
+  linkQualityPercent: number | null;
+  batteryPercent: number | null;
+  availability: "observed" | "stale" | "unknown";
+};
+
+export type ChannelLevelHistory = {
+  schemaVersion: "0";
+  channelId: string;
+  generatedAtUtc: string;
+  windowMs: number;
+  intervalMs: number;
+  samples: Array<ChannelLevelSample>;
 };
 
 export class ProtocolContractError extends Error {
@@ -974,6 +995,95 @@ const productionListSchema = {
   },
 } as const;
 
+const channelLevelHistorySchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://pulse.local/schema/v0/http/channel-level-history.schema.json",
+  title: "Channel level history",
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "schemaVersion",
+    "channelId",
+    "generatedAtUtc",
+    "windowMs",
+    "intervalMs",
+    "samples",
+  ],
+  properties: {
+    schemaVersion: {
+      const: "0",
+    },
+    channelId: {
+      type: "string",
+      minLength: 1,
+      maxLength: 64,
+    },
+    generatedAtUtc: {
+      type: "string",
+      format: "date-time",
+    },
+    windowMs: {
+      type: "integer",
+      minimum: 1000,
+      maximum: 3600000,
+    },
+    intervalMs: {
+      type: "integer",
+      minimum: 100,
+      maximum: 60000,
+    },
+    samples: {
+      type: "array",
+      maxItems: 3600,
+      items: {
+        $ref: "#/$defs/sample",
+      },
+    },
+  },
+  $defs: {
+    levelValue: {
+      type: ["number", "null"],
+    },
+    sample: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "atUtc",
+        "audioDbfs",
+        "rfLevelDbm",
+        "linkQualityPercent",
+        "batteryPercent",
+        "availability",
+      ],
+      properties: {
+        atUtc: {
+          type: "string",
+          format: "date-time",
+        },
+        audioDbfs: {
+          $ref: "#/$defs/levelValue",
+        },
+        rfLevelDbm: {
+          $ref: "#/$defs/levelValue",
+        },
+        linkQualityPercent: {
+          type: ["number", "null"],
+          minimum: 0,
+          maximum: 100,
+        },
+        batteryPercent: {
+          type: ["number", "null"],
+          minimum: 0,
+          maximum: 100,
+        },
+        availability: {
+          enum: ["observed", "stale", "unknown"],
+        },
+      },
+    },
+  },
+} as const;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -1189,6 +1299,14 @@ export function parseProductionList(value: unknown): ProductionList {
     value,
     productionListSchema,
     "ProductionList",
+  );
+}
+
+export function parseChannelLevelHistory(value: unknown): ChannelLevelHistory {
+  return parseWithSchema<ChannelLevelHistory>(
+    value,
+    channelLevelHistorySchema,
+    "ChannelLevelHistory",
   );
 }
 

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "0",
+  "channelId": "ch-27",
+  "generatedAtUtc": "2026-09-22T00:00:03Z",
+  "windowMs": 3000,
+  "intervalMs": 1000,
+  "samples": [
+    {
+      "atUtc": "2026-09-22T00:00:01Z",
+      "audioDbfs": -18.2,
+      "rfLevelDbm": -62,
+      "linkQualityPercent": 31,
+      "batteryPercent": 64,
+      "availability": "observed"
+    },
+    {
+      "atUtc": "2026-09-22T00:00:02Z",
+      "audioDbfs": null,
+      "rfLevelDbm": -63,
+      "linkQualityPercent": 29,
+      "batteryPercent": 64,
+      "availability": "observed"
+    },
+    {
+      "atUtc": "2026-09-22T00:00:03Z",
+      "audioDbfs": null,
+      "rfLevelDbm": null,
+      "linkQualityPercent": null,
+      "batteryPercent": null,
+      "availability": "stale"
+    }
+  ]
+}

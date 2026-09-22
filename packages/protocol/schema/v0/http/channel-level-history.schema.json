@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pulse.local/schema/v0/http/channel-level-history.schema.json",
+  "title": "Channel level history",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "channelId",
+    "generatedAtUtc",
+    "windowMs",
+    "intervalMs",
+    "samples"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "0" },
+    "channelId": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "generatedAtUtc": { "type": "string", "format": "date-time" },
+    "windowMs": { "type": "integer", "minimum": 1000, "maximum": 3600000 },
+    "intervalMs": { "type": "integer", "minimum": 100, "maximum": 60000 },
+    "samples": {
+      "type": "array",
+      "maxItems": 3600,
+      "items": { "$ref": "#/$defs/sample" }
+    }
+  },
+  "$defs": {
+    "levelValue": {
+      "type": ["number", "null"]
+    },
+    "sample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "atUtc",
+        "audioDbfs",
+        "rfLevelDbm",
+        "linkQualityPercent",
+        "batteryPercent",
+        "availability"
+      ],
+      "properties": {
+        "atUtc": { "type": "string", "format": "date-time" },
+        "audioDbfs": { "$ref": "#/$defs/levelValue" },
+        "rfLevelDbm": { "$ref": "#/$defs/levelValue" },
+        "linkQualityPercent": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "batteryPercent": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "availability": { "enum": ["observed", "stale", "unknown"] }
+      }
+    }
+  }
+}
