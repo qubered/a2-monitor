@@ -10,7 +10,8 @@
     "format": "prettier --check \"src/**/*.ts\" \"*.json\"",
     "lint": "eslint src",
     "start": "node dist/start.js",
-    "test": "vitest run src"
+    "test": "vitest run src",
+    "simulate:shure": "npm run build && node dist/dev/shure-simulator.js"
   },
   "dependencies": {
     "@rvlt/pulse-protocol": "0.0.0"

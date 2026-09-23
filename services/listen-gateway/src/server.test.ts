@@ -1,8 +1,14 @@
 import { once } from "node:events";
+import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { PassThrough } from "node:stream";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MediaWorkerManager, type WorkerProcess } from "./media-worker.js";
+import { parseMeterFrame, parseNodeLevels } from "@rvlt/pulse-protocol/http";
+import {
+  MediaWorkerManager,
+  SIMULATED_DEVICE_NAME,
+  type WorkerProcess,
+} from "./media-worker.js";
 import { ListenGateway, candidateAddressFor } from "./server.js";
 
 class ScriptedWorker implements WorkerProcess {
@@ -44,10 +50,10 @@ afterEach(async () => {
   gateways.clear();
 });
 
-async function startGateway() {
+async function startGateway(device = "Test Device") {
   const worker = new ScriptedWorker();
   const media = new MediaWorkerManager({
-    device: "Test Device",
+    device,
     processFactory: () => worker,
   });
   const gateway = new ListenGateway({
@@ -69,7 +75,7 @@ async function startGateway() {
   gateway.startCapture();
   worker.emit({
     type: "ready",
-    deviceName: "Test",
+    deviceName: device,
     sampleRateHz: 48_000,
     channelCount: 2,
   });
@@ -153,6 +159,112 @@ describe("ListenGateway WebRTC signaling", () => {
     });
     expect(extra.status).toBe(400);
     expect(worker.commands).toEqual([]);
+  });
+});
+
+describe("ListenGateway metering", () => {
+  it("reports capture state and no levels before a device is configured", async () => {
+    const gateway = new ListenGateway({});
+    gateways.add(gateway);
+    gateway.server.listen(0, "127.0.0.1");
+    await once(gateway.server, "listening");
+    const { port } = gateway.server.address() as AddressInfo;
+
+    const response = await fetch(`http://127.0.0.1:${port}/audio/v0/levels`);
+    expect(parseNodeLevels(await response.json())).toMatchObject({
+      capture: { status: "configuration-required", device: null },
+      windowMs: 1_000,
+      inputs: [],
+    });
+  });
+
+  it("streams worker meter readings as SSE and summarises them for the backend", async () => {
+    const { worker, base } = await startGateway(SIMULATED_DEVICE_NAME);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    const before = parseNodeLevels(
+      await (await fetch(`${base}/audio/v0/levels`)).json(),
+    );
+    // Ready but nothing measured yet: unknown, never silent.
+    expect(before.inputs.map((input) => input.peakDbfs)).toEqual([null, null]);
+
+    const stream = await fetch(`${base}/audio/v0/meters`);
+    expect(stream.headers.get("content-type")).toMatch(/^text\/event-stream/);
+    const reader = stream.body!.getReader();
+    worker.emit({
+      type: "meters",
+      sequence: 0,
+      intervalMs: 50,
+      peakDbfs: [-18, -120],
+      rmsDbfs: [-21, -120],
+      clippedSamples: [0, 0],
+    });
+
+    let text = "";
+    while (!text.includes("\n\n")) {
+      const { value } = await reader.read();
+      text += new TextDecoder().decode(value);
+    }
+    await reader.cancel();
+    const [eventLine, dataLine] = text.split("\n");
+    expect(eventLine).toBe("event: meters");
+    expect(
+      parseMeterFrame(JSON.parse(dataLine!.slice("data: ".length))),
+    ).toEqual({
+      schemaVersion: "0",
+      sequence: 0,
+      intervalMs: 50,
+      peakDbfs: [-18, -120],
+      rmsDbfs: [-21, -120],
+      clipped: [false, false],
+    });
+
+    const levels = parseNodeLevels(
+      await (await fetch(`${base}/audio/v0/levels`)).json(),
+    );
+    expect(levels.capture).toEqual({
+      status: "ready",
+      detail: "Capture is ready.",
+      device: {
+        name: SIMULATED_DEVICE_NAME,
+        sampleRateHz: 48_000,
+        channelCount: 2,
+        simulated: true,
+      },
+    });
+    expect(levels.inputs).toEqual([
+      { index: 0, peakDbfs: -18, rmsDbfs: -21, clippedSamples: 0 },
+      { index: 1, peakDbfs: -120, rmsDbfs: -120, clippedSamples: 0 },
+    ]);
+  });
+});
+
+describe("ListenGateway shutdown", () => {
+  it("closes while a browser holds a proxied live-state stream open", async () => {
+    // A backend that opens an event stream and never ends it.
+    const backend = createServer((_request, response) => {
+      response.writeHead(200, { "Content-Type": "text/event-stream" });
+      response.write(": open\n\n");
+    });
+    backend.listen(0, "127.0.0.1");
+    await once(backend, "listening");
+    const backendPort = (backend.address() as AddressInfo).port;
+
+    const gateway = new ListenGateway({
+      backendOrigin: `http://127.0.0.1:${backendPort}`,
+    });
+    gateway.server.listen(0, "127.0.0.1");
+    await once(gateway.server, "listening");
+    const { port } = gateway.server.address() as AddressInfo;
+
+    const stream = await fetch(`http://127.0.0.1:${port}/api/v1/live/events`);
+    const reader = stream.body!.getReader();
+    await reader.read();
+
+    await gateway.close();
+    await expect(reader.read()).rejects.toThrow();
+    backend.closeAllConnections();
+    backend.close();
   });
 });
 

@@ -88,7 +88,8 @@ cp -R apps/live/dist "$app/Contents/Resources/app/apps/live/dist"
 cp apps/live/package.json "$app/Contents/Resources/app/apps/live/package.json"
 cp -R apps/manager/dist "$app/Contents/Resources/app/apps/manager/dist"
 cp apps/manager/package.json "$app/Contents/Resources/app/apps/manager/package.json"
-cp -R packages/protocol/schema packages/protocol/validation packages/protocol/generated packages/protocol/receivers \
+cp -R packages/protocol/schema packages/protocol/validation packages/protocol/generated \
+  packages/protocol/receivers packages/protocol/policy \
   "$app/Contents/Resources/app/packages/protocol/"
 cp packages/protocol/package.json "$app/Contents/Resources/app/packages/protocol/package.json"
 cp -R "$runtime_root/packages/protocol/node_modules" \

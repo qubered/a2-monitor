@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "0",
+  "sequence": 42,
+  "intervalMs": 50,
+  "peakDbfs": [-12.5, -120],
+  "rmsDbfs": [-30.1, -120],
+  "clipped": [false, false]
+}

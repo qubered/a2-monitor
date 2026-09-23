@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pulse.local/schema/v0/http/mic-checks.schema.json",
+  "title": "Guided mic checks",
+  "description": "Served at GET /api/v1/checks and returned by check mutations. Each check belongs to one show channel and records the subject it was made against (patch and performer); a check whose subject has since changed is stale and no longer counts. Every verdict records who gave it and when.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "generatedAtUtc", "checks"],
+  "properties": {
+    "schemaVersion": { "const": "0" },
+    "generatedAtUtc": { "type": "string", "format": "date-time" },
+    "checks": {
+      "type": "array",
+      "maxItems": 128,
+      "items": { "$ref": "#/$defs/channelCheck" }
+    }
+  },
+  "$defs": {
+    "dimensionId": {
+      "enum": [
+        "physical-identity",
+        "rf-link",
+        "captured-audio",
+        "mute-control",
+        "primary-spare",
+        "battery-window",
+        "placement-costume",
+        "operator-signoff"
+      ]
+    },
+    "dimensionRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "verdict", "by", "atUtc", "reason"],
+      "properties": {
+        "id": { "$ref": "#/$defs/dimensionId" },
+        "verdict": { "enum": ["pass", "fail", "waiting"] },
+        "by": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "atUtc": { "type": "string", "format": "date-time" },
+        "reason": { "type": ["string", "null"], "maxLength": 200 }
+      }
+    },
+    "checkSubject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inputIndex", "receiverId", "receiverChannelIndex", "performer"],
+      "properties": {
+        "inputIndex": { "type": ["integer", "null"], "minimum": 0, "maximum": 255 },
+        "receiverId": { "type": ["string", "null"], "minLength": 1, "maxLength": 64 },
+        "receiverChannelIndex": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 127
+        },
+        "performer": { "type": ["string", "null"], "maxLength": 120 }
+      }
+    },
+    "channelCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "channelId",
+        "subject",
+        "startedAtUtc",
+        "updatedAtUtc",
+        "dimensions",
+        "stale"
+      ],
+      "properties": {
+        "channelId": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "subject": { "$ref": "#/$defs/checkSubject" },
+        "startedAtUtc": { "type": "string", "format": "date-time" },
+        "updatedAtUtc": { "type": "string", "format": "date-time" },
+        "dimensions": {
+          "type": "array",
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/dimensionRecord" }
+        },
+        "stale": { "type": "boolean" }
+      }
+    }
+  }
+}

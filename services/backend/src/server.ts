@@ -1,11 +1,17 @@
 import Fastify, { type FastifyInstance } from "fastify";
+import type { ServerResponse } from "node:http";
 import { isIP } from "node:net";
 import healthResponseSchema from "@rvlt/pulse-protocol/schema/health-response" with { type: "json" };
 import liveSnapshotResponseSchema from "@rvlt/pulse-protocol/schema/live-snapshot-response" with { type: "json" };
 import showfileSchema from "@rvlt/pulse-protocol/schema/showfile" with { type: "json" };
 import productionListSchema from "@rvlt/pulse-protocol/schema/production-list" with { type: "json" };
 import channelLevelHistorySchema from "@rvlt/pulse-protocol/schema/channel-level-history" with { type: "json" };
+import liveStateSchema from "@rvlt/pulse-protocol/schema/live-state" with { type: "json" };
+import alertLogSchema from "@rvlt/pulse-protocol/schema/alert-log" with { type: "json" };
+import micChecksSchema from "@rvlt/pulse-protocol/schema/mic-checks" with { type: "json" };
 import type {
+  AlertLog,
+  MicChecks,
   ChannelLevelHistory,
   HealthResponse,
   LiveSnapshot,
@@ -16,8 +22,24 @@ import {
   createStrictAjv2020,
   stringifyValidatedJson,
 } from "@rvlt/pulse-protocol/validation/strict-ajv";
+import { isCoherentAlertPolicy } from "./alert-policy.js";
+import type { AlertPersistence } from "./alerts.js";
+import {
+  CheckNotFoundError,
+  MIC_CHECK_DIMENSIONS,
+  type CheckPersistence,
+} from "./checks.js";
+import {
+  REPORT_ACTIONS,
+  REPORTED_FAULTS,
+  ReportError,
+  type ReportAction,
+  type ReportPersistence,
+} from "./reports.js";
 import { fabricatedLiveSnapshot } from "./fixtures/live-snapshot.js";
-import { LevelHistoryStore } from "./level-history.js";
+import { LiveMonitor, type PublishedState } from "./live-monitor.js";
+import type { NodeSource } from "./node-observer.js";
+import { hasUniqueChannelIds } from "./showfile.js";
 import {
   ActiveProductionError,
   MemoryProductionStore,
@@ -62,10 +84,87 @@ const channelHistoryQuerySchema = {
   },
 } as const;
 
+const alertIdParamsSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["id"],
+  properties: { id: { type: "string", minLength: 1, maxLength: 64 } },
+} as const;
+
+const acknowledgeBodySchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["operator"],
+  properties: { operator: { type: "string", maxLength: 80 } },
+} as const;
+
+const checkParamsSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["channelId", "dimensionId"],
+  properties: {
+    channelId: { type: "string", minLength: 1, maxLength: 64 },
+    dimensionId: { enum: MIC_CHECK_DIMENSIONS },
+  },
+} as const;
+
+const checkChannelParamsSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["channelId"],
+  properties: { channelId: { type: "string", minLength: 1, maxLength: 64 } },
+} as const;
+
+const checkVerdictBodySchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["verdict", "by"],
+  properties: {
+    verdict: { enum: ["pass", "fail", "waiting"] },
+    by: { type: "string", minLength: 1, maxLength: 80 },
+    reason: { type: ["string", "null"], maxLength: 200 },
+  },
+} as const;
+
+const createReportBodySchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["channelId", "faults", "requestedBy"],
+  properties: {
+    channelId: { type: "string", minLength: 1, maxLength: 64 },
+    faults: {
+      type: "array",
+      minItems: 1,
+      maxItems: 9,
+      items: { enum: REPORTED_FAULTS },
+    },
+    note: { type: ["string", "null"], maxLength: 200 },
+    requestedBy: { type: "string", maxLength: 80 },
+  },
+} as const;
+
+const reportActionParamsSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["id"],
+  properties: { id: { type: "string", minLength: 1, maxLength: 64 } },
+} as const;
+
+const reportActionBodySchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["action", "by"],
+  properties: {
+    action: { enum: REPORT_ACTIONS },
+    by: { type: "string", maxLength: 80 },
+  },
+} as const;
+
 const DEFAULT_HISTORY_WINDOW_MS = 30 * 60 * 1000;
 const MIN_HISTORY_WINDOW_MS = 1000;
 const MAX_HISTORY_WINDOW_MS = 60 * 60 * 1000;
-const HISTORY_INTERVAL_MS = 1000;
+const MAX_EVENT_STREAMS = 64;
+const EVENT_HEARTBEAT_MS = 15_000;
 
 const IMAGE_URL_SCHEMES = ["http://", "https://"];
 const DATA_IMAGE_URL =
@@ -81,9 +180,19 @@ function isValidImageUrl(imageUrl: string): boolean {
 type BuildServerOptions = {
   snapshotProvider?: SnapshotProvider;
   productionStore?: ProductionStore;
-  historyStore?: LevelHistoryStore;
+  nodeSource?: NodeSource;
+  alertPersistence?: AlertPersistence;
+  checkPersistence?: CheckPersistence;
+  reportPersistence?: ReportPersistence;
+  liveMonitor?: LiveMonitor;
   logger?: boolean;
 };
+
+const DATA_URL_PARTS = /^data:(image\/(?:png|jpe?g|webp|gif));base64,(.+)$/;
+
+function stateEvent({ state, json }: PublishedState): string {
+  return `event: state\nid: ${state.revision}\ndata: ${json}\n\n`;
+}
 
 export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
   const server = Fastify({ logger: options.logger ?? false });
@@ -94,8 +203,20 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
   ajv.addSchema(showfileSchema);
   ajv.addSchema(productionListSchema);
   ajv.addSchema(channelLevelHistorySchema);
+  ajv.addSchema(liveStateSchema);
+  ajv.addSchema(alertLogSchema);
+  ajv.addSchema(micChecksSchema);
 
   server.setValidatorCompiler(({ schema }) => ajv.compile(schema as object));
+  // Request validation failures answer in the same closed `{ error }` shape as
+  // every other refusal, so a route's declared 400 contract cannot turn a bad
+  // request into a 500.
+  server.setErrorHandler(async (error, _request, reply) => {
+    if ((error as { validation?: unknown }).validation) {
+      return reply.code(400).send({ error: "invalid-request" });
+    }
+    throw error;
+  });
   server.setSerializerCompiler(({ schema }) => {
     const validate = ajv.compile(schema as object);
     return (data) => stringifyValidatedJson(validate, data);
@@ -122,13 +243,278 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     async (): Promise<LiveSnapshot> => snapshotProvider(),
   );
 
-  const historyStore =
-    options.historyStore ??
-    new LevelHistoryStore(snapshotProvider, {
-      intervalMs: HISTORY_INTERVAL_MS,
+  const liveMonitor =
+    options.liveMonitor ??
+    new LiveMonitor({
+      productionStore,
+      nodeSource: options.nodeSource,
+      alertPersistence: options.alertPersistence,
+      checkPersistence: options.checkPersistence,
+      reportPersistence: options.reportPersistence,
+      onError: (error) => server.log.error(error),
     });
-  historyStore.start();
-  server.addHook("onClose", async () => historyStore.stop());
+  const eventStreams = new Set<ServerResponse>();
+  server.addHook("onReady", async () => {
+    await liveMonitor.start();
+  });
+  server.addHook("preClose", async () => {
+    for (const stream of eventStreams) stream.end();
+    eventStreams.clear();
+  });
+  server.addHook("onClose", async () => {
+    await liveMonitor.stop();
+  });
+
+  server.get(
+    "/api/v1/live/state",
+    { schema: { response: { 200: liveStateSchema } } },
+    async (_request, reply) => {
+      const { json } = await liveMonitor.current();
+      // Already serialized through the strict live-state validator.
+      return reply
+        .header("Cache-Control", "no-store")
+        .type("application/json; charset=utf-8")
+        .send(json);
+    },
+  );
+
+  server.get("/api/v1/live/events", async (request, reply) => {
+    if (eventStreams.size >= MAX_EVENT_STREAMS) {
+      return reply.code(503).send({ error: "event-stream-capacity" });
+    }
+    const initial = await liveMonitor.current();
+    reply.hijack();
+    const stream = reply.raw;
+    stream.writeHead(200, {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-store",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    });
+    stream.write(`retry: 2000\n\n${stateEvent(initial)}`);
+    eventStreams.add(stream);
+    const onState = (published: PublishedState) => {
+      // A client that cannot keep up misses intermediate states, never the latest.
+      if (stream.writableLength > 1024 * 1024) return;
+      stream.write(stateEvent(published));
+    };
+    const heartbeat = setInterval(
+      () => stream.write(": heartbeat\n\n"),
+      EVENT_HEARTBEAT_MS,
+    );
+    heartbeat.unref();
+    liveMonitor.on("state", onState);
+    request.raw.on("close", () => {
+      clearInterval(heartbeat);
+      liveMonitor.off("state", onState);
+      eventStreams.delete(stream);
+    });
+  });
+
+  server.get(
+    "/api/v1/alerts",
+    { schema: { response: { 200: alertLogSchema } } },
+    async (): Promise<AlertLog> => liveMonitor.alertLog(),
+  );
+
+  server.post(
+    "/api/v1/alerts/:id/acknowledge",
+    {
+      schema: {
+        params: alertIdParamsSchema,
+        body: acknowledgeBodySchema,
+        response: { 200: liveStateSchema, 404: errorResponseSchema },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const { operator } = request.body as { operator: string };
+      const alert = await liveMonitor.acknowledge(id, operator);
+      if (!alert) {
+        return reply.code(404).send({ error: "alert-not-active" });
+      }
+      const { json } = await liveMonitor.current();
+      return reply
+        .header("Cache-Control", "no-store")
+        .type("application/json; charset=utf-8")
+        .send(json);
+    },
+  );
+
+  server.post(
+    "/api/v1/reports",
+    {
+      schema: {
+        body: createReportBodySchema,
+        response: {
+          201: liveStateSchema,
+          400: errorResponseSchema,
+          404: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { channelId, faults, note, requestedBy } = request.body as {
+        channelId: string;
+        faults: Array<(typeof REPORTED_FAULTS)[number]>;
+        note?: string | null;
+        requestedBy: string;
+      };
+      try {
+        const published = await liveMonitor.createReport(
+          channelId,
+          faults,
+          note ?? null,
+          requestedBy,
+        );
+        if (!published) {
+          return reply.code(404).send({ error: "channel-not-found" });
+        }
+        return reply
+          .code(201)
+          .header("Cache-Control", "no-store")
+          .type("application/json; charset=utf-8")
+          .send(published.json);
+      } catch (error) {
+        if (error instanceof ReportError) {
+          return reply.code(400).send({ error: error.code });
+        }
+        throw error;
+      }
+    },
+  );
+
+  server.post(
+    "/api/v1/reports/:id/actions",
+    {
+      schema: {
+        params: reportActionParamsSchema,
+        body: reportActionBodySchema,
+        response: {
+          200: liveStateSchema,
+          404: errorResponseSchema,
+          409: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const { action, by } = request.body as {
+        action: ReportAction;
+        by: string;
+      };
+      try {
+        const published = await liveMonitor.reportAction(id, action, by);
+        return reply
+          .header("Cache-Control", "no-store")
+          .type("application/json; charset=utf-8")
+          .send(published.json);
+      } catch (error) {
+        if (error instanceof ReportError) {
+          return reply
+            .code(error.code === "report-not-found" ? 404 : 409)
+            .send({ error: error.code });
+        }
+        throw error;
+      }
+    },
+  );
+
+  server.get(
+    "/api/v1/checks",
+    { schema: { response: { 200: micChecksSchema } } },
+    async (): Promise<MicChecks> => liveMonitor.checkList(),
+  );
+
+  server.put(
+    "/api/v1/checks/:channelId/dimensions/:dimensionId",
+    {
+      schema: {
+        params: checkParamsSchema,
+        body: checkVerdictBodySchema,
+        response: { 200: micChecksSchema, 404: errorResponseSchema },
+      },
+    },
+    async (request, reply): Promise<MicChecks | undefined> => {
+      const { channelId, dimensionId } = request.params as {
+        channelId: string;
+        dimensionId: (typeof MIC_CHECK_DIMENSIONS)[number];
+      };
+      const { verdict, by, reason } = request.body as {
+        verdict: "pass" | "fail" | "waiting";
+        by: string;
+        reason?: string | null;
+      };
+      const checks = await liveMonitor.recordCheck(
+        channelId,
+        dimensionId,
+        verdict,
+        by,
+        reason ?? null,
+      );
+      if (!checks) {
+        await reply.code(404).send({ error: "channel-not-found" });
+        return undefined;
+      }
+      return checks;
+    },
+  );
+
+  server.delete(
+    "/api/v1/checks/:channelId",
+    {
+      schema: {
+        params: checkChannelParamsSchema,
+        response: { 200: micChecksSchema, 404: errorResponseSchema },
+      },
+    },
+    async (request, reply): Promise<MicChecks | undefined> => {
+      const { channelId } = request.params as { channelId: string };
+      try {
+        return await liveMonitor.resetChecks(channelId);
+      } catch (error) {
+        if (error instanceof CheckNotFoundError) {
+          await reply.code(404).send({ error: "check-not-found" });
+          return undefined;
+        }
+        throw error;
+      }
+    },
+  );
+
+  server.delete(
+    "/api/v1/checks",
+    { schema: { response: { 200: micChecksSchema } } },
+    async (): Promise<MicChecks> => liveMonitor.resetChecks(),
+  );
+
+  server.get(
+    "/api/v1/channels/:id/image",
+    { schema: { params: productionIdParamsSchema } },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      // Photos come from the monitor's cached showfile: a grid of cards must
+      // not re-read and re-validate the whole production library per image.
+      const showfile = await liveMonitor.activeShowfile();
+      const imageUrl = showfile.channels.find(
+        (channel) => channel.id === id,
+      )?.imageUrl;
+      if (!imageUrl) {
+        return reply.code(404).send({ error: "image-not-found" });
+      }
+      const inline = DATA_URL_PARTS.exec(imageUrl);
+      if (!inline) return reply.redirect(imageUrl);
+      const etag = `"${showfile.revision}-${id}"`;
+      if (request.headers["if-none-match"] === etag) {
+        return reply.code(304).send();
+      }
+      return reply
+        .header("Cache-Control", "no-cache")
+        .header("ETag", etag)
+        .type(inline[1]!)
+        .send(Buffer.from(inline[2]!, "base64"));
+    },
+  );
 
   server.get(
     "/api/v1/live/history",
@@ -143,8 +529,8 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
         channelId: string;
         windowMs?: string;
       };
-      const snapshot = await snapshotProvider();
-      if (!snapshot.channels.some(({ id }) => id === channelId)) {
+      const { state } = await liveMonitor.current();
+      if (!state.channels.some(({ id }) => id === channelId)) {
         await reply.code(404).send({ error: "channel-not-found" });
         return undefined;
       }
@@ -159,8 +545,8 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
         channelId,
         generatedAtUtc: new Date().toISOString(),
         windowMs,
-        intervalMs: HISTORY_INTERVAL_MS,
-        samples: historyStore.getWindow(channelId, windowMs),
+        intervalMs: liveMonitor.history.intervalMs,
+        samples: liveMonitor.history.getWindow(channelId, windowMs),
       };
     },
   );
@@ -228,13 +614,18 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
           )) ||
         candidate.channels.some(
           ({ imageUrl }) => imageUrl != null && !isValidImageUrl(imageUrl),
-        );
+        ) ||
+        !hasUniqueChannelIds(candidate) ||
+        (candidate.alertPolicy !== undefined &&
+          !isCoherentAlertPolicy(candidate.alertPolicy));
       if (invalid) {
         await reply.code(400).send({ error: "invalid-showfile" });
         return undefined;
       }
       try {
-        return await productionStore.saveActive(candidate);
+        const saved = await productionStore.saveActive(candidate);
+        liveMonitor.invalidateShowfile();
+        return saved;
       } catch (error) {
         if (error instanceof ShowfileConflictError) {
           await reply.code(409).send({ error: "showfile-conflict" });
@@ -285,6 +676,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
         return undefined;
       }
       await productionStore.create(name);
+      liveMonitor.invalidateShowfile();
       reply.code(201);
       return productionStore.list();
     },
@@ -302,6 +694,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
       const { id } = request.params as { id: string };
       try {
         await productionStore.activate(id);
+        liveMonitor.invalidateShowfile();
         return await productionStore.list();
       } catch (error) {
         if (error instanceof ProductionNotFoundError) {

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "0",
+  "generatedAtUtc": "2026-09-23T01:00:00Z",
+  "capture": {
+    "status": "ready",
+    "detail": "Capture is ready.",
+    "device": {
+      "name": "USB Interface",
+      "sampleRateHz": 48000,
+      "channelCount": 1,
+      "simulated": false
+    }
+  },
+  "windowMs": 1000,
+  "inputs": [
+    { "index": 0, "peakDbfs": 3, "rmsDbfs": -31.2, "clippedSamples": 12 }
+  ]
+}

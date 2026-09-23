@@ -1,23 +1,31 @@
 import type { CSSProperties } from "react";
-import type {
-  ChannelLevelSample,
-  LiveChannel as Channel,
-} from "@rvlt/pulse-protocol/http";
-import { deriveAudioVerdict } from "../audio-check";
-import { useChannelHistory } from "../useChannelHistory";
+import type { LiveAlert, LiveStateChannel } from "@rvlt/pulse-protocol/http";
+import { overlayRemaining } from "../alerts";
+import type { MeterStore } from "../meters";
+import { MeterTrace } from "./MeterTrace";
 import { StatusStrip } from "./StatusStrip";
 
-const CARD_TRACE_WINDOW_MS = 10_000;
-const CARD_TRACE_REFRESH_MS = 2_000;
-const CARD_TRACE_BAR_COUNT = 10;
-const AUDIO_METER_FLOOR_DBFS = -60;
-const AUDIO_METER_CEILING_DBFS = -6;
+export type CardReportState = {
+  /** Reports nobody has claimed yet; the card pulses while this is above zero. */
+  unclaimed: number;
+  claimedBy: string | null;
+  awaitingConfirmation: boolean;
+};
 
 type ChannelCardProps = {
-  channel: Channel;
-  acknowledged: boolean;
+  channel: LiveStateChannel;
+  alert: LiveAlert | null;
+  report?: CardReportState | null;
+  /** The card's one action: select on the A2 grid, report on the A1 grid. */
+  actionLabel?: string;
+  overlayExpiryMs: number;
+  nowMs: number;
   selected: boolean;
-  onAcknowledge: () => void;
+  listening: boolean;
+  imageRevision: number;
+  meterStore: MeterStore;
+  metersStale: boolean;
+  onAcknowledge: (alert: LiveAlert) => void;
   onSelect: () => void;
   onOpenDetail: () => void;
 };
@@ -30,7 +38,11 @@ function ExpandIcon() {
   );
 }
 
-function AlertIcon({ dimension }: { dimension: "RF" | "Audio" | "Battery" }) {
+export function AlertIcon({
+  dimension,
+}: {
+  dimension: LiveAlert["dimension"];
+}) {
   if (dimension === "RF") {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -46,122 +58,105 @@ function AlertIcon({ dimension }: { dimension: "RF" | "Audio" | "Battery" }) {
       </svg>
     );
   }
+  if (dimension === "Battery") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="2" y="7" width="16" height="10" rx="2.5" />
+        <path d="M21 10.5v3M5.5 10.5v3" />
+      </svg>
+    );
+  }
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="2" y="7" width="16" height="10" rx="2.5" />
-      <path d="M21 10.5v3M5.5 10.5v3" />
+      <rect x="3" y="4" width="18" height="12" rx="2" />
+      <path d="M8 20h8M12 16v4M12 8v3m0 2.5h.01" />
     </svg>
   );
 }
 
-function audioMeterHeightPercent(dbfs: number): number {
-  const ratio =
-    (dbfs - AUDIO_METER_FLOOR_DBFS) /
-    (AUDIO_METER_CEILING_DBFS - AUDIO_METER_FLOOR_DBFS);
-  return Math.round(Math.max(6, Math.min(100, ratio * 100)));
-}
-
-/**
- * The card's 10-second rolling trace (design system §10.1): real per-second
- * samples from the backend's level-history store, not a decorative
- * placeholder. Each bar carries its own honesty-grammar state — a channel
- * can be present for eight seconds and silent for two within the same
- * window.
- */
-function MeterTrace({ samples }: { samples: readonly ChannelLevelSample[] }) {
-  const bars: Array<ChannelLevelSample | null> =
-    samples.length > 0
-      ? samples.slice(-CARD_TRACE_BAR_COUNT)
-      : Array.from({ length: CARD_TRACE_BAR_COUNT }, () => null);
-
-  return (
-    <div className="meter-trace" aria-hidden="true">
-      {bars.map((sample, index) => {
-        if (!sample) {
-          return (
-            <i
-              key={index}
-              data-state="unknown"
-              style={{ "--meter-value": "4%" } as CSSProperties}
-            />
-          );
-        }
-        const state =
-          sample.availability === "stale"
-            ? "stale"
-            : sample.availability === "unknown"
-              ? "unknown"
-              : sample.audioDbfs === null
-                ? "silent"
-                : "observed";
-        const height =
-          sample.audioDbfs === null
-            ? 4
-            : audioMeterHeightPercent(sample.audioDbfs);
-        return (
-          <i
-            key={index}
-            data-state={state}
-            style={{ "--meter-value": `${height}%` } as CSSProperties}
-          />
-        );
-      })}
-    </div>
-  );
+/** The secondary caption line: the performer when known, otherwise where the signal comes from. */
+function secondaryLine(channel: LiveStateChannel): string {
+  if (channel.performer) return channel.performer;
+  if (channel.receiver) {
+    return `${channel.receiver.name} · channel ${channel.receiver.channelIndex + 1}`;
+  }
+  return channel.input.label;
 }
 
 export function ChannelCard({
   channel,
-  acknowledged,
+  alert,
+  report = null,
+  actionLabel = "Select",
+  overlayExpiryMs,
+  nowMs,
   selected,
+  listening,
+  imageRevision,
+  meterStore,
+  metersStale,
   onAcknowledge,
   onSelect,
   onOpenDetail,
 }: ChannelCardProps) {
-  const alerting = Boolean(channel.alert && !acknowledged);
-  const observedDeviceInput = channel.id.startsWith("device-channel-");
-  const handlePrimaryAction = alerting ? onAcknowledge : onSelect;
-  const primaryAction = alerting ? "Acknowledge" : "Select";
-  const history = useChannelHistory(
-    channel.id,
-    CARD_TRACE_WINDOW_MS,
-    CARD_TRACE_REFRESH_MS,
-  );
-  const historySamples =
-    history.status === "ready" ? history.history.samples : [];
-  const statuses = {
-    ...channel.statuses,
-    audio: deriveAudioVerdict(channel.statuses.audio, historySamples),
-  };
+  const alerting = alert !== null;
+  const remaining = alert
+    ? overlayRemaining(alert, overlayExpiryMs, nowMs)
+    : null;
+  const classes = [
+    "channel-card",
+    selected ? "is-selected" : "",
+    listening ? "is-listening" : "",
+    alerting ? "has-alert" : "",
+    report && report.unclaimed > 0 ? "is-reported" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <article
-      className={`channel-card ${selected ? "is-selected" : ""} ${alerting ? "has-alert" : ""}`}
-      data-channel-id={channel.id}
-    >
+    <article className={classes} data-channel-id={channel.id}>
       <button
         className="card-hit-target"
         type="button"
-        onClick={handlePrimaryAction}
-        aria-label={`${primaryAction} ${channel.character}, channel ${channel.number}`}
+        onClick={onSelect}
+        aria-label={`${actionLabel} ${channel.name}, channel ${channel.number}`}
         aria-hidden={alerting || undefined}
         tabIndex={alerting ? -1 : 0}
       />
 
       <div className="channel-tile">
-        <div
-          className="photo-placeholder"
-          aria-label={
-            observedDeviceInput ? "Identity unknown" : "Headshot not added"
-          }
-        >
+        <div className={`channel-photo ${channel.hasImage ? "has-photo" : ""}`}>
+          {channel.hasImage ? (
+            <img
+              src={`/api/v1/channels/${encodeURIComponent(channel.id)}/image?revision=${imageRevision}`}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <span className="photo-missing">Photo not added</span>
+          )}
           <span className="channel-number">
             {String(channel.number).padStart(2, "0")}
           </span>
-          <span className="photo-missing">
-            {observedDeviceInput ? "Identity unknown" : "Photo not added"}
-          </span>
-          {selected ? (
+          {report ? (
+            <span
+              className={`report-badge ${report.unclaimed > 0 ? "is-unclaimed" : ""}`}
+            >
+              {report.unclaimed > 0
+                ? report.unclaimed > 1
+                  ? `Reported · ${report.unclaimed}`
+                  : "Reported"
+                : report.awaitingConfirmation
+                  ? "Fixed · A1 to confirm"
+                  : `Being worked · ${report.claimedBy ?? "A2"}`}
+            </span>
+          ) : null}
+          {listening ? (
+            <span className="listening-badge">
+              <i aria-hidden="true" /> Listening
+            </span>
+          ) : selected ? (
             <span className="selected-badge">
               <i aria-hidden="true" /> Selected
             </span>
@@ -170,33 +165,44 @@ export function ChannelCard({
             className="expand-button"
             type="button"
             onClick={onOpenDetail}
-            aria-label={`Open details for ${channel.character}`}
+            aria-label={`Open details for ${channel.name}`}
           >
             <ExpandIcon />
           </button>
-          <MeterTrace samples={historySamples} />
+          <MeterTrace
+            store={meterStore}
+            input={channel.input.index}
+            stale={metersStale}
+          />
         </div>
 
         <div className="channel-identity">
-          <h2>{channel.character}</h2>
-          <p>{channel.performer}</p>
+          <h2>{channel.name}</h2>
+          <p>{secondaryLine(channel)}</p>
         </div>
       </div>
 
-      <StatusStrip statuses={statuses} />
+      <StatusStrip statuses={channel.statuses} />
 
-      {alerting && channel.alert ? (
+      {alert ? (
         <button
-          className={`alert-overlay alert-${channel.alert.severity}`}
+          className={`alert-overlay alert-${alert.severity}`}
           type="button"
-          onClick={onAcknowledge}
-          aria-label={`${channel.alert.label} on ${channel.character}, channel ${channel.number}. Press to acknowledge.`}
+          onClick={() => onAcknowledge(alert)}
+          aria-label={`${alert.label} on ${channel.name}, channel ${channel.number}. Press to acknowledge.`}
         >
           <span className="alert-mark">
-            <AlertIcon dimension={channel.alert.dimension} />
-            <strong>{channel.alert.label}</strong>
+            <AlertIcon dimension={alert.dimension} />
+            <strong>{alert.label}</strong>
             <span>Press to acknowledge</span>
           </span>
+          {remaining !== null ? (
+            <span
+              className="alert-expiry"
+              aria-hidden="true"
+              style={{ "--expiry-remaining": remaining } as CSSProperties}
+            />
+          ) : null}
         </button>
       ) : null}
     </article>

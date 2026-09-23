@@ -1,0 +1,208 @@
+{
+  "schemaVersion": "0",
+  "revision": 118,
+  "generatedAtUtc": "2026-09-23T01:00:05Z",
+  "show": {
+    "name": "The Winter Circus",
+    "showfileRevision": 3,
+    "overlayExpiryMs": 300000
+  },
+  "node": {
+    "status": "ready",
+    "detail": "Capture is ready.",
+    "device": {
+      "name": "USB Interface",
+      "sampleRateHz": 48000,
+      "channelCount": 2,
+      "simulated": false
+    },
+    "observedAtUtc": "2026-09-23T01:00:05Z"
+  },
+  "receivers": {
+    "status": "ready",
+    "detail": "All configured Shure receivers are reporting.",
+    "units": [
+      {
+        "id": "receiver-a",
+        "name": "Stage left",
+        "model": "ULXD4D",
+        "status": "ready",
+        "detail": "Read-only Shure telemetry is current."
+      }
+    ]
+  },
+  "channels": [
+    {
+      "id": "ch-marguerite",
+      "number": 1,
+      "name": "Marguerite",
+      "performer": "Eleanor Vance",
+      "kind": "wireless",
+      "micType": "headset",
+      "hasImage": true,
+      "input": {
+        "index": 0,
+        "label": "USB Interface \u00b7 input 1"
+      },
+      "receiver": {
+        "id": "receiver-a",
+        "name": "Stage left",
+        "model": "ULXD4D",
+        "channelIndex": 0,
+        "status": "ready",
+        "frequencyRaw": "0578125",
+        "groupChannelRaw": "1,4"
+      },
+      "monitor": {
+        "battery": true,
+        "rf": true,
+        "audio": true
+      },
+      "statuses": {
+        "rf": "good",
+        "audio": "good",
+        "battery": "fault",
+        "check": "unknown"
+      },
+      "audio": {
+        "availability": "observed",
+        "peakDbfs": -14.2,
+        "rmsDbfs": -33.8,
+        "silentForMs": 0,
+        "clipping": false
+      },
+      "rf": {
+        "availability": "observed",
+        "levelDbm": -61,
+        "linkQualityPercent": null,
+        "activeAntenna": "B",
+        "interference": "none",
+        "transmitterPresent": true
+      },
+      "battery": {
+        "availability": "observed",
+        "percent": 8,
+        "bars": 1,
+        "runtimeMinutes": 22,
+        "type": "LION"
+      },
+      "transmitter": {
+        "type": "ULXD1",
+        "name": "MARGUERITE",
+        "muted": false,
+        "observedAtUtc": "2026-09-23T01:00:04Z"
+      },
+      "check": {
+        "passed": 5,
+        "failed": 0,
+        "waiting": 1,
+        "total": 8,
+        "stale": false,
+        "updatedAtUtc": "2026-09-23T00:55:00Z"
+      }
+    },
+    {
+      "id": "ch-talkback",
+      "number": 2,
+      "name": "Talkback",
+      "performer": null,
+      "kind": "wired",
+      "micType": null,
+      "hasImage": false,
+      "input": {
+        "index": 1,
+        "label": "USB Interface \u00b7 input 2"
+      },
+      "receiver": null,
+      "monitor": {
+        "battery": true,
+        "rf": true,
+        "audio": false
+      },
+      "statuses": {
+        "rf": "not-applicable",
+        "audio": "unknown",
+        "battery": "not-applicable",
+        "check": "unknown"
+      },
+      "audio": {
+        "availability": "observed",
+        "peakDbfs": -120,
+        "rmsDbfs": -120,
+        "silentForMs": 184000,
+        "clipping": false
+      },
+      "rf": {
+        "availability": "unknown",
+        "levelDbm": null,
+        "linkQualityPercent": null,
+        "activeAntenna": null,
+        "interference": "unavailable",
+        "transmitterPresent": null
+      },
+      "battery": {
+        "availability": "unknown",
+        "percent": null,
+        "bars": null,
+        "runtimeMinutes": null,
+        "type": null
+      },
+      "transmitter": {
+        "type": null,
+        "name": null,
+        "muted": null,
+        "observedAtUtc": null
+      },
+      "check": null
+    }
+  ],
+  "alerts": [
+    {
+      "id": "alert-000001",
+      "kind": "battery-critical",
+      "dimension": "Battery",
+      "severity": "critical",
+      "label": "Battery critical",
+      "detail": "Battery 8 % on Marguerite (Stage left channel 1). Critical at 10 %.",
+      "channelId": "ch-marguerite",
+      "channelNumber": 1,
+      "channelName": "Marguerite",
+      "receiverId": "receiver-a",
+      "raisedAtUtc": "2026-09-23T00:58:40Z",
+      "acknowledgedAtUtc": null,
+      "acknowledgedBy": null,
+      "clearedAtUtc": null,
+      "overlayExpiresAtUtc": null
+    }
+  ],
+  "reports": [
+    {
+      "id": "report-000001",
+      "channelId": "ch-marguerite",
+      "channelNumber": 1,
+      "channelName": "Marguerite",
+      "performer": "Eleanor Vance",
+      "faults": [
+        "gremlins"
+      ],
+      "note": null,
+      "urgent": false,
+      "incident": true,
+      "incidentReason": "telemetry",
+      "status": "claimed",
+      "requestedBy": "Morgan (A1)",
+      "requestedAtUtc": "2026-09-23T00:59:10Z",
+      "undoUntilUtc": "2026-09-23T00:59:20Z",
+      "claimedBy": "Sam (A2)",
+      "claimedAtUtc": "2026-09-23T00:59:31Z",
+      "resolvedBy": null,
+      "resolvedAtUtc": null,
+      "closedAtUtc": null
+    }
+  ],
+  "summary": {
+    "active": 1,
+    "outstanding": 1,
+    "outstandingCritical": 1
+  }
+}

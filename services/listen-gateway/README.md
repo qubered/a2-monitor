@@ -9,17 +9,35 @@ passes through this process.
 
 Signaling is WHEP-style, with no trickle ICE because the node is ICE-lite:
 
-| Request | Body | Response |
-| --- | --- | --- |
-| `POST /audio/v0/listen/sessions` | `{"channel": N, "offer": "<sdp>"}` | `201 {"sessionId", "answer"}` |
-| `PUT /audio/v0/listen/sessions/{id}/channel` | `{"channel": N}` | `204`; the node crossfades to the new input |
-| `DELETE /audio/v0/listen/sessions/{id}` | none | `204` |
+| Request                                      | Body                               | Response                                    |
+| -------------------------------------------- | ---------------------------------- | ------------------------------------------- |
+| `POST /audio/v0/listen/sessions`             | `{"channel": N, "offer": "<sdp>"}` | `201 {"sessionId", "answer"}`               |
+| `PUT /audio/v0/listen/sessions/{id}/channel` | `{"channel": N}`                   | `204`; the node crossfades to the new input |
+| `DELETE /audio/v0/listen/sessions/{id}`      | none                               | `204`                                       |
 
 Bodies must be `application/json`. The node advertises the address the browser
 used to reach this server as its only ICE candidate. For a loopback page load it
 advertises the first LAN IPv4 address instead, because browsers pair from their
 LAN interfaces. Media is DTLS-SRTP encrypted and marked DSCP EF for Wi-Fi WMM
 voice queueing.
+
+The worker also meters every captured input outside the capture callback
+(ADR 0027). `GET /audio/v0/levels` returns capture state plus each input's
+peak, RMS and clipped-sample count over the trailing second (`node-levels`
+contract), which the backend polls to evaluate alerts. `GET /audio/v0/meters`
+is a receive-only Server-Sent Events stream of 20 Hz `meter-frame` payloads
+(`event: meters`) for Live's card traces; a slow client skips frames. If the
+worker exits, the gateway restarts the same named device with bounded backoff
+(1, 2, 4, 8, 15 then 30 s); it never falls back to another device.
+
+The reserved device name `Pulse test signal` makes `pulse-device-capture`
+generate a built-in test signal instead of opening a physical input
+(`A2_SIMULATED_CHANNELS`, default 8): speech, a steady tone, room noise,
+periodic clipping, digital silence and a dropout. It is reported as
+`simulated: true` and is never evidence about hardware. `npm run dev:simulate`
+at the repository root runs it with a seeded demo show, and
+`npm run simulate:shure` starts a development AD4Q double on `127.0.0.1:2202`
+with scripted battery drain, RF dips, interference, mute and transmitter loss.
 
 The gateway is deliberately outside the management backend. Signaling has no
 listener authorization and makes no performance claim. It must not be exposed
@@ -44,6 +62,7 @@ development defaults:
 
 - `A2_MEDIA_WORKER_BIN`
 - `A2_CAPTURE_BIN`
+- `A2_SIMULATED_CHANNELS` (test signal only, 1 to 64)
 - `A2_LISTEN_HOST`
 - `A2_LISTEN_PORT`
 

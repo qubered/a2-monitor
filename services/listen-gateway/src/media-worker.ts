@@ -1,9 +1,20 @@
 import { spawn } from "node:child_process";
 import { EventEmitter } from "node:events";
 import type { Readable, Writable } from "node:stream";
+import type { MeterReading } from "./levels.js";
 
 const EVENT_LINE_LIMIT_BYTES = 256 * 1024;
 const OPEN_TIMEOUT_MS = 10_000;
+/**
+ * Reserved device name that makes `pulse-device-capture` generate the built-in
+ * test signal instead of opening a physical input (ADR 0027). It is always
+ * reported as simulated.
+ */
+export const SIMULATED_DEVICE_NAME = "Pulse test signal";
+/** Restart delays for the same explicitly named device. Capture never falls back to another device. */
+export const RESTART_DELAYS_MS = [1_000, 2_000, 4_000, 8_000, 15_000, 30_000];
+/** A worker that stays ready this long resets the restart backoff. */
+const STABLE_WORKER_MS = 30_000;
 
 export type DeviceChannel = {
   index: number;
@@ -48,6 +59,8 @@ export type MediaWorkerOptions = {
   workerBinary?: string;
   captureBinary?: string;
   processFactory?: WorkerProcessFactory;
+  restartDelaysMs?: readonly number[];
+  now?: () => number;
 };
 
 export type OpenSessionRequest = {
@@ -85,6 +98,7 @@ type WorkerEvent =
   | { type: "rejected"; sessionId: string; detail: string }
   | { type: "connected"; sessionId: string }
   | { type: "closed"; sessionId: string; reason: string }
+  | ({ type: "meters" } & MeterReading)
   | { type: "stats"; sessions: number; droppedCaptureBlocks: number };
 
 const EVENT_FIELDS: Readonly<Record<WorkerEvent["type"], readonly string[]>> = {
@@ -93,6 +107,14 @@ const EVENT_FIELDS: Readonly<Record<WorkerEvent["type"], readonly string[]>> = {
   rejected: ["detail", "sessionId", "type"],
   connected: ["sessionId", "type"],
   closed: ["reason", "sessionId", "type"],
+  meters: [
+    "clippedSamples",
+    "intervalMs",
+    "peakDbfs",
+    "rmsDbfs",
+    "sequence",
+    "type",
+  ],
   stats: ["droppedCaptureBlocks", "sessions", "type"],
 };
 
@@ -124,6 +146,20 @@ function isCount(value: unknown, min: number, max: number): value is number {
     value >= min &&
     value <= max
   );
+}
+
+function levelArray(value: unknown, field: string): number[] {
+  if (
+    !Array.isArray(value) ||
+    value.length < 1 ||
+    value.length > 256 ||
+    !value.every(
+      (level) => typeof level === "number" && level >= -120 && level <= 0,
+    )
+  ) {
+    throw new Error(`Media worker meters event ${field} is invalid.`);
+  }
+  return value as number[];
 }
 
 export function parseWorkerEvent(line: string): WorkerEvent {
@@ -184,6 +220,33 @@ export function parseWorkerEvent(line: string): WorkerEvent {
       return { type, sessionId: text("sessionId") };
     case "closed":
       return { type, sessionId: text("sessionId"), reason: text("reason") };
+    case "meters": {
+      const peakDbfs = levelArray(record.peakDbfs, "peakDbfs");
+      const rmsDbfs = levelArray(record.rmsDbfs, "rmsDbfs");
+      const clippedSamples = record.clippedSamples;
+      if (
+        !Array.isArray(clippedSamples) ||
+        clippedSamples.length !== peakDbfs.length ||
+        rmsDbfs.length !== peakDbfs.length ||
+        !clippedSamples.every((count) => isCount(count, 0, 4_294_967_295))
+      ) {
+        throw new Error("Media worker meters event clippedSamples is invalid.");
+      }
+      if (
+        !isCount(record.sequence, 0, Number.MAX_SAFE_INTEGER) ||
+        !isCount(record.intervalMs, 10, 1_000)
+      ) {
+        throw new Error("Media worker meters event is invalid.");
+      }
+      return {
+        type,
+        sequence: record.sequence,
+        intervalMs: record.intervalMs,
+        peakDbfs,
+        rmsDbfs,
+        clippedSamples: clippedSamples as number[],
+      };
+    }
     default: {
       if (
         !isCount(record.sessions, 0, 1_000) ||
@@ -201,9 +264,10 @@ export function parseWorkerEvent(line: string): WorkerEvent {
 }
 
 /**
- * Supervises `pulse-media-worker`, which owns the capture child, Opus encoding and
- * WebRTC media. Audio never passes through this process: the gateway only relays
- * signaling and control lines.
+ * Supervises `pulse-media-worker`, which owns the capture child, metering, Opus
+ * encoding and WebRTC media. Audio never passes through this process: the gateway
+ * only relays signaling, control lines and meter readings. A failed worker is
+ * restarted on the same named device with bounded backoff.
  */
 export class MediaWorkerManager extends EventEmitter {
   private state: DeviceState;
@@ -218,6 +282,11 @@ export class MediaWorkerManager extends EventEmitter {
   private readonly pending = new Map<string, PendingOpen>();
   private readonly sessions = new Set<string>();
   private droppedCaptureBlocks = 0;
+  private readonly restartDelaysMs: readonly number[];
+  private readonly now: () => number;
+  private restartAttempt = 0;
+  private restartTimer: NodeJS.Timeout | undefined;
+  private readyAtMs: number | undefined;
 
   constructor(options: MediaWorkerOptions) {
     super();
@@ -227,6 +296,8 @@ export class MediaWorkerManager extends EventEmitter {
     this.captureBinary =
       options.captureBinary ?? "target/debug/pulse-device-capture";
     this.processFactory = options.processFactory ?? defaultProcessFactory;
+    this.restartDelaysMs = options.restartDelaysMs ?? RESTART_DELAYS_MS;
+    this.now = options.now ?? Date.now;
     this.state = {
       schemaVersion: 0,
       status: "configuration-required",
@@ -238,12 +309,17 @@ export class MediaWorkerManager extends EventEmitter {
     return this.state;
   }
 
+  /** True when the configured device is the built-in test signal, not a physical input. */
+  get simulated(): boolean {
+    return this.device === SIMULATED_DEVICE_NAME;
+  }
+
   hasSession(sessionId: string): boolean {
     return this.sessions.has(sessionId);
   }
 
   start(): void {
-    if (this.child || this.stopping) return;
+    if (this.child || this.stopping || this.restartTimer) return;
     if (this.device === undefined || this.device.length === 0) return;
 
     this.setState({
@@ -251,9 +327,12 @@ export class MediaWorkerManager extends EventEmitter {
       status: "starting",
       detail: `Opening configured device ${JSON.stringify(this.device)}.`,
     });
+    this.lineBytes = [];
+    this.lineLength = 0;
 
+    let child: WorkerProcess;
     try {
-      this.child = this.processFactory(this.workerBinary, [
+      child = this.processFactory(this.workerBinary, [
         "--capture-bin",
         this.captureBinary,
         "--device",
@@ -263,18 +342,22 @@ export class MediaWorkerManager extends EventEmitter {
       this.fail("Media worker could not be started.");
       return;
     }
+    this.child = child;
 
-    this.child.stdout.on("data", (data: Buffer | Uint8Array | string) => {
+    child.stdout.on("data", (data: Buffer | Uint8Array | string) => {
+      if (this.child !== child) return;
       this.consume(typeof data === "string" ? Buffer.from(data) : data);
     });
-    this.child.stdin.on("error", () => {
+    child.stdin.on("error", () => {
+      if (this.child !== child) return;
       this.fail("Media worker control pipe closed.");
     });
-    this.child.onError(() => {
+    child.onError(() => {
+      if (this.child !== child) return;
       this.fail("Media worker could not be started.");
     });
-    this.child.onExit((code, signal) => {
-      if (this.stopping) return;
+    child.onExit((code, signal) => {
+      if (this.stopping || this.child !== child) return;
       const outcome = signal ?? (code === null ? "unknown" : String(code));
       this.fail(`Media worker exited (${outcome}).`);
     });
@@ -282,6 +365,8 @@ export class MediaWorkerManager extends EventEmitter {
 
   stop(): void {
     this.stopping = true;
+    if (this.restartTimer) clearTimeout(this.restartTimer);
+    this.restartTimer = undefined;
     this.clearSessions(new Error("Media worker stopped."));
     this.child?.stdin.end();
     this.child?.stop();
@@ -339,11 +424,40 @@ export class MediaWorkerManager extends EventEmitter {
     this.sessions.clear();
   }
 
+  /** Stops the failed worker and schedules a bounded restart of the same named device. */
   private fail(detail: string): void {
-    if (this.state.status === "error" || this.stopping) return;
+    if (this.stopping || this.restartTimer) return;
+    const child = this.child;
+    this.child = undefined;
     this.clearSessions(new Error(detail));
-    this.setState({ schemaVersion: 0, status: "error", detail });
-    this.child?.stop();
+    child?.stop();
+
+    if (
+      this.readyAtMs !== undefined &&
+      this.now() - this.readyAtMs >= STABLE_WORKER_MS
+    ) {
+      this.restartAttempt = 0;
+    }
+    this.readyAtMs = undefined;
+    const delayMs =
+      this.restartDelaysMs[
+        Math.min(this.restartAttempt, this.restartDelaysMs.length - 1)
+      ];
+    this.restartAttempt += 1;
+    if (delayMs === undefined) {
+      this.setState({ schemaVersion: 0, status: "error", detail });
+      return;
+    }
+    this.setState({
+      schemaVersion: 0,
+      status: "error",
+      detail: `${detail} Retrying the same device in ${Math.round(delayMs / 1000)} s.`,
+    });
+    this.restartTimer = setTimeout(() => {
+      this.restartTimer = undefined;
+      this.start();
+    }, delayMs);
+    this.restartTimer.unref?.();
   }
 
   private consume(bytes: Uint8Array): void {
@@ -368,7 +482,7 @@ export class MediaWorkerManager extends EventEmitter {
   }
 
   private handleLine(line: string): boolean {
-    if (this.state.status === "error" || this.stopping) return false;
+    if (!this.child || this.stopping) return false;
     let event: WorkerEvent;
     try {
       event = parseWorkerEvent(line);
@@ -381,6 +495,7 @@ export class MediaWorkerManager extends EventEmitter {
 
     switch (event.type) {
       case "ready":
+        this.readyAtMs = this.now();
         this.setState({
           schemaVersion: 0,
           status: "ready",
@@ -430,6 +545,15 @@ export class MediaWorkerManager extends EventEmitter {
         if (this.sessions.delete(event.sessionId)) {
           this.emit("session-closed", event.sessionId);
         }
+        break;
+      case "meters":
+        this.emit("meters", {
+          sequence: event.sequence,
+          intervalMs: event.intervalMs,
+          peakDbfs: event.peakDbfs,
+          rmsDbfs: event.rmsDbfs,
+          clippedSamples: event.clippedSamples,
+        } satisfies MeterReading);
         break;
       case "stats":
         if (event.droppedCaptureBlocks > this.droppedCaptureBlocks) {

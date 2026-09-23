@@ -31,6 +31,9 @@ function showError(message) {
   }
 }
 
+// Reserved name pulse-device-capture serves with its built-in test signal.
+const SIMULATED_DEVICE = "Pulse test signal";
+
 function listDevices() {
   const raw = execFileSync(captureBinary, ["--list"], { encoding: "utf8" });
   const payload = JSON.parse(raw);
@@ -41,7 +44,8 @@ function listDevices() {
           config.minSampleRateHz <= 48_000 && config.maxSampleRateHz >= 48_000,
       ),
     )
-    .map((device) => device.deviceName);
+    .map((device) => device.deviceName)
+    .concat(SIMULATED_DEVICE);
 }
 
 function chooseDevice(devices) {
@@ -157,6 +161,9 @@ async function main() {
         process.env.HOME ?? "/tmp",
         "Library/Application Support/Pulse",
       ),
+      // The backend reads normalized levels and receiver telemetry from the
+      // gateway on loopback, whichever network scope the gateway serves.
+      A2_NODE_ORIGIN: "http://127.0.0.1:4173",
     },
   });
   const gateway = spawn(

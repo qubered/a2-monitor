@@ -7,6 +7,7 @@ import type {
   Showfile,
 } from "@rvlt/pulse-protocol/http";
 import {
+  assignChannelIds,
   emptyShowfile,
   migrateShowfile,
   ShowfileConflictError,
@@ -66,7 +67,7 @@ function summarizeAll(
 
 function bumpRevision(candidate: Showfile): Showfile {
   return {
-    ...trimShowfile(candidate),
+    ...assignChannelIds(trimShowfile(candidate)),
     revision: candidate.revision + 1,
     updatedAtUtc: new Date().toISOString(),
   };

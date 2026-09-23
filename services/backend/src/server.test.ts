@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { LiveSnapshot } from "@rvlt/pulse-protocol/http";
 import { fabricatedLiveSnapshot } from "./fixtures/live-snapshot.js";
-import { LevelHistoryStore } from "./level-history.js";
+import {
+  FakeNodeSource,
+  levelsWith,
+  showfileWith,
+  telemetryWith,
+} from "./monitoring.test-support.js";
+import { MemoryProductionStore } from "./productions.js";
 import { buildServer } from "./server.js";
 
 const servers = new Set<ReturnType<typeof buildServer>>();
@@ -448,37 +454,42 @@ describe("channel level history", () => {
     expect(response.json()).toEqual({ error: "channel-not-found" });
   });
 
-  it("serves a validated, growing window of samples for a known channel", async () => {
-    const historyStore = new LevelHistoryStore(() => fabricatedLiveSnapshot, {
-      intervalMs: 5,
-      capacityMs: 500,
+  it("serves a validated window of observed samples for a known channel", async () => {
+    const nodeSource = new FakeNodeSource();
+    const productionStore = new MemoryProductionStore();
+    const initial = await productionStore.loadActive();
+    await productionStore.saveActive({
+      ...showfileWith(),
+      revision: initial.revision,
     });
-    const server = trackedServer({
-      snapshotProvider: () => fabricatedLiveSnapshot,
-      historyStore,
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, 30));
+    const server = trackedServer({ productionStore, nodeSource });
+    nodeSource.observe(Date.now(), levelsWith([-12, -30]), telemetryWith([{}]));
+    await server.ready();
 
     const response = await server.inject({
       method: "GET",
-      url: "/api/v1/live/history?channelId=ch-27&windowMs=5000",
+      url: "/api/v1/live/history?channelId=ch-marguerite&windowMs=5000",
     });
 
     expect(response.statusCode).toBe(200);
     const body = response.json();
-    expect(body.channelId).toBe("ch-27");
+    expect(body.channelId).toBe("ch-marguerite");
     expect(body.windowMs).toBe(5000);
     expect(body.samples.length).toBeGreaterThan(0);
-    for (const sample of body.samples) {
-      expect(["observed", "stale", "unknown"]).toContain(sample.availability);
-    }
+    expect(body.samples.at(-1)).toMatchObject({
+      audioDbfs: -12,
+      rfLevelDbm: -58,
+      batteryPercent: 90,
+      availability: "observed",
+    });
   });
 
   it("clamps an out-of-range window to the supported bounds", async () => {
-    const response = await trackedServer().inject({
+    const productionStore = new MemoryProductionStore();
+    await productionStore.saveActive(showfileWith({ revision: 0 }));
+    const response = await trackedServer({ productionStore }).inject({
       method: "GET",
-      url: "/api/v1/live/history?channelId=ch-27&windowMs=9999999",
+      url: "/api/v1/live/history?channelId=ch-marguerite&windowMs=9999999",
     });
 
     expect(response.statusCode).toBe(200);

@@ -6,10 +6,15 @@
 //   - schema/v0/http/shure-telemetry.schema.json
 //   - schema/v0/http/production-list.schema.json
 //   - schema/v0/http/channel-level-history.schema.json
+//   - schema/v0/http/node-levels.schema.json
+//   - schema/v0/http/meter-frame.schema.json
+//   - schema/v0/http/live-state.schema.json
+//   - schema/v0/http/alert-log.schema.json
+//   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: 304d93cb8ffb7c872ae4f1f740b92c7a97fdfa682cedf2df33c1a9a9c20a7d91
-// Generator-SHA256: 8f6d50bf68722def8565b5a1c595bc298ce2146b449dfed3e83846b799791c7d
-// Body-SHA256: eeb07c4eff54023e1c7dea5b564ea4fc9cc68d1709dd635f45ec1a673e1d8ab9
+// Schema-SHA256: 50ddea44559473413171c8bab6c01d3aa63d760cc3573f890c9629fbb8df9b5a
+// Generator-SHA256: 1a037c5d886a218624ec27da5ce598a9d0abd5d3c5e4690b1e37bf4b6b235531
+// Body-SHA256: 76c63b481d31a1cb8c48855a5e711483e24f1ed6906f2bcb0298034dd0b9af10
 
 export type HealthResponse = {
   status: "ok";
@@ -78,6 +83,18 @@ export type Showfile = {
   show: {
     name: string;
   };
+  alertPolicy?: {
+    batteryCautionPercent: number;
+    batteryCriticalPercent: number;
+    rfCautionDbm: number;
+    rfCriticalDbm: number;
+    qualityCautionPercent: number;
+    qualityCriticalPercent: number;
+    silenceFloorDbfs: number;
+    silenceAfterSeconds: number;
+    clipAlerts: boolean;
+    overlayExpiryMinutes: number;
+  };
   device: {
     name: string;
     channelCount: number;
@@ -108,8 +125,10 @@ export type Showfile = {
     channelCount: number;
   }>;
   channels: Array<{
+    id?: string;
     inputIndex: number | null;
     name: string;
+    performer?: string | null;
     shureChannelIndex?: number | null;
     shureReceiverId?: string | null;
     micType?:
@@ -216,6 +235,314 @@ export type ChannelLevelHistory = {
   windowMs: number;
   intervalMs: number;
   samples: Array<ChannelLevelSample>;
+};
+
+export type NodeInputLevel = {
+  index: number;
+  peakDbfs: number | null;
+  rmsDbfs: number | null;
+  clippedSamples: number;
+};
+
+export type NodeLevels = {
+  schemaVersion: "0";
+  generatedAtUtc: string;
+  capture: {
+    status: "ready" | "configuration-required" | "starting" | "error";
+    detail: string;
+    device: {
+      name: string;
+      sampleRateHz: number;
+      channelCount: number;
+      simulated: boolean;
+    } | null;
+  };
+  windowMs: number;
+  inputs: Array<NodeInputLevel>;
+};
+
+export type MeterFrame = {
+  schemaVersion: "0";
+  sequence: number;
+  intervalMs: number;
+  peakDbfs: Array<number>;
+  rmsDbfs: Array<number>;
+  clipped: Array<boolean>;
+};
+
+export type LiveStateVerdict =
+  "good" | "fault" | "caution" | "unknown" | "not-applicable";
+
+export type LiveStateAvailability = "observed" | "stale" | "unknown";
+
+export type LiveStateReceiverUnit = {
+  id: string;
+  name: string;
+  model: string | null;
+  status: "connecting" | "ready" | "stale" | "error";
+  detail: string;
+};
+
+export type LiveStateChannel = {
+  id: string;
+  number: number;
+  name: string;
+  performer: string | null;
+  kind: "wireless" | "wired";
+  micType:
+    | "lavalier"
+    | "headset"
+    | "handheld"
+    | "boundary"
+    | "instrument"
+    | "other"
+    | null;
+  hasImage: boolean;
+  input: {
+    index: number | null;
+    label: string;
+  };
+  receiver: {
+    id: string;
+    name: string;
+    model: string | null;
+    channelIndex: number;
+    status: "connecting" | "ready" | "stale" | "error" | "missing";
+    frequencyRaw: string | null;
+    groupChannelRaw: string | null;
+  } | null;
+  monitor: {
+    battery: boolean;
+    rf: boolean;
+    audio: boolean;
+  };
+  statuses: {
+    rf: LiveStateVerdict;
+    audio: LiveStateVerdict;
+    battery: LiveStateVerdict;
+    check: LiveStateVerdict;
+  };
+  audio: {
+    availability: LiveStateAvailability;
+    peakDbfs: number | null;
+    rmsDbfs: number | null;
+    silentForMs: number | null;
+    clipping: boolean;
+  };
+  rf: {
+    availability: LiveStateAvailability;
+    levelDbm: number | null;
+    linkQualityPercent: number | null;
+    activeAntenna: "A" | "B" | "C" | "D" | null;
+    interference: "none" | "detected" | "unavailable";
+    transmitterPresent: boolean | null;
+  };
+  battery: {
+    availability: LiveStateAvailability;
+    percent: number | null;
+    bars: number | null;
+    runtimeMinutes: number | null;
+    type: string | null;
+  };
+  transmitter: {
+    type: string | null;
+    name: string | null;
+    muted: boolean | null;
+    observedAtUtc: string | null;
+  };
+  check: {
+    passed: number;
+    failed: number;
+    waiting: number;
+    total: 8;
+    stale: boolean;
+    updatedAtUtc: string;
+  } | null;
+};
+
+export type LiveAlert = {
+  id: string;
+  kind:
+    | "battery-low"
+    | "battery-critical"
+    | "rf-low"
+    | "rf-lost"
+    | "link-quality-low"
+    | "interference"
+    | "encryption-mismatch"
+    | "tx-muted"
+    | "no-audio"
+    | "clipping"
+    | "receiver-offline"
+    | "capture-error"
+    | "node-unreachable";
+  dimension: "RF" | "Audio" | "Battery" | "System";
+  severity: "critical" | "caution";
+  label: string;
+  detail: string;
+  channelId: string | null;
+  channelNumber: number | null;
+  channelName: string | null;
+  receiverId: string | null;
+  raisedAtUtc: string;
+  acknowledgedAtUtc: string | null;
+  acknowledgedBy: string | null;
+  clearedAtUtc: string | null;
+  overlayExpiresAtUtc: string | null;
+};
+
+export type FaultReport = {
+  id: string;
+  channelId: string;
+  channelNumber: number;
+  channelName: string;
+  performer: string | null;
+  faults: Array<ReportedFault>;
+  note: string | null;
+  urgent: boolean;
+  incident: boolean;
+  incidentReason: "urgent" | "telemetry" | null;
+  status: "open" | "claimed" | "awaiting-confirmation" | "closed" | "cancelled";
+  requestedBy: string;
+  requestedAtUtc: string;
+  undoUntilUtc: string;
+  claimedBy: string | null;
+  claimedAtUtc: string | null;
+  resolvedBy: string | null;
+  resolvedAtUtc: string | null;
+  closedAtUtc: string | null;
+};
+
+export type ReportedFault =
+  | "dropping-out"
+  | "crackling"
+  | "distorted"
+  | "too-quiet"
+  | "clothing-noise"
+  | "popping"
+  | "hum-buzz"
+  | "nothing-at-all"
+  | "other";
+
+export type LiveState = {
+  schemaVersion: "0";
+  revision: number;
+  generatedAtUtc: string;
+  show: {
+    name: string;
+    showfileRevision: number;
+    overlayExpiryMs: number;
+  };
+  node: {
+    status:
+      "ready" | "starting" | "configuration-required" | "error" | "unreachable";
+    detail: string;
+    device: {
+      name: string;
+      sampleRateHz: number;
+      channelCount: number;
+      simulated: boolean;
+    } | null;
+    observedAtUtc: string | null;
+  };
+  receivers: {
+    status:
+      | "unconfigured"
+      | "connecting"
+      | "ready"
+      | "degraded"
+      | "stale"
+      | "error"
+      | "unavailable";
+    detail: string;
+    units: Array<LiveStateReceiverUnit>;
+  };
+  channels: Array<LiveStateChannel>;
+  alerts: Array<LiveAlert>;
+  reports: Array<FaultReport>;
+  summary: {
+    active: number;
+    outstanding: number;
+    outstandingCritical: number;
+  };
+};
+
+export type LoggedAlert = {
+  id: string;
+  kind:
+    | "battery-low"
+    | "battery-critical"
+    | "rf-low"
+    | "rf-lost"
+    | "link-quality-low"
+    | "interference"
+    | "encryption-mismatch"
+    | "tx-muted"
+    | "no-audio"
+    | "clipping"
+    | "receiver-offline"
+    | "capture-error"
+    | "node-unreachable";
+  dimension: "RF" | "Audio" | "Battery" | "System";
+  severity: "critical" | "caution";
+  label: string;
+  detail: string;
+  channelId: string | null;
+  channelNumber: number | null;
+  channelName: string | null;
+  receiverId: string | null;
+  raisedAtUtc: string;
+  acknowledgedAtUtc: string | null;
+  acknowledgedBy: string | null;
+  clearedAtUtc: string | null;
+  overlayExpiresAtUtc: string | null;
+};
+
+export type AlertLog = {
+  schemaVersion: "0";
+  generatedAtUtc: string;
+  active: Array<LoggedAlert>;
+  history: Array<LoggedAlert>;
+};
+
+export type MicCheckDimensionId =
+  | "physical-identity"
+  | "rf-link"
+  | "captured-audio"
+  | "mute-control"
+  | "primary-spare"
+  | "battery-window"
+  | "placement-costume"
+  | "operator-signoff";
+
+export type MicCheckDimensionRecord = {
+  id: MicCheckDimensionId;
+  verdict: "pass" | "fail" | "waiting";
+  by: string;
+  atUtc: string;
+  reason: string | null;
+};
+
+export type MicCheckSubject = {
+  inputIndex: number | null;
+  receiverId: string | null;
+  receiverChannelIndex: number | null;
+  performer: string | null;
+};
+
+export type ChannelMicCheck = {
+  channelId: string;
+  subject: MicCheckSubject;
+  startedAtUtc: string;
+  updatedAtUtc: string;
+  dimensions: Array<MicCheckDimensionRecord>;
+  stale: boolean;
+};
+
+export type MicChecks = {
+  schemaVersion: "0";
+  generatedAtUtc: string;
+  checks: Array<ChannelMicCheck>;
 };
 
 export class ProtocolContractError extends Error {
@@ -520,6 +847,72 @@ const showfileSchema = {
         },
       },
     },
+    alertPolicy: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "batteryCautionPercent",
+        "batteryCriticalPercent",
+        "rfCautionDbm",
+        "rfCriticalDbm",
+        "qualityCautionPercent",
+        "qualityCriticalPercent",
+        "silenceFloorDbfs",
+        "silenceAfterSeconds",
+        "clipAlerts",
+        "overlayExpiryMinutes",
+      ],
+      properties: {
+        batteryCautionPercent: {
+          type: "integer",
+          minimum: 1,
+          maximum: 100,
+        },
+        batteryCriticalPercent: {
+          type: "integer",
+          minimum: 0,
+          maximum: 100,
+        },
+        rfCautionDbm: {
+          type: "integer",
+          minimum: -130,
+          maximum: 0,
+        },
+        rfCriticalDbm: {
+          type: "integer",
+          minimum: -130,
+          maximum: 0,
+        },
+        qualityCautionPercent: {
+          type: "integer",
+          minimum: 0,
+          maximum: 100,
+        },
+        qualityCriticalPercent: {
+          type: "integer",
+          minimum: 0,
+          maximum: 100,
+        },
+        silenceFloorDbfs: {
+          type: "integer",
+          minimum: -120,
+          maximum: 0,
+        },
+        silenceAfterSeconds: {
+          type: "integer",
+          minimum: 5,
+          maximum: 3600,
+        },
+        clipAlerts: {
+          type: "boolean",
+        },
+        overlayExpiryMinutes: {
+          type: "integer",
+          minimum: 1,
+          maximum: 60,
+        },
+      },
+    },
     device: {
       type: ["object", "null"],
       additionalProperties: false,
@@ -598,6 +991,11 @@ const showfileSchema = {
         additionalProperties: false,
         required: ["inputIndex", "name"],
         properties: {
+          id: {
+            type: "string",
+            minLength: 1,
+            maxLength: 64,
+          },
           inputIndex: {
             type: ["integer", "null"],
             minimum: 0,
@@ -606,6 +1004,10 @@ const showfileSchema = {
           name: {
             type: "string",
             minLength: 1,
+            maxLength: 120,
+          },
+          performer: {
+            type: ["string", "null"],
             maxLength: 120,
           },
           shureChannelIndex: {
@@ -1084,6 +1486,1222 @@ const channelLevelHistorySchema = {
   },
 } as const;
 
+const nodeLevelsSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://pulse.local/schema/v0/http/node-levels.schema.json",
+  title: "Audio node capture state and input level summary",
+  description:
+    "Served by the audio node at GET /audio/v0/levels. Levels are the peak and RMS of each captured input over the trailing window, in dBFS, floored at -120 for digital silence and ceilinged at 0. A null level means no audio was captured for that input inside the window.",
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "schemaVersion",
+    "generatedAtUtc",
+    "capture",
+    "windowMs",
+    "inputs",
+  ],
+  properties: {
+    schemaVersion: {
+      const: "0",
+    },
+    generatedAtUtc: {
+      type: "string",
+      format: "date-time",
+    },
+    capture: {
+      type: "object",
+      additionalProperties: false,
+      required: ["status", "detail", "device"],
+      properties: {
+        status: {
+          enum: ["ready", "configuration-required", "starting", "error"],
+        },
+        detail: {
+          type: "string",
+          minLength: 1,
+          maxLength: 240,
+        },
+        device: {
+          type: ["object", "null"],
+          additionalProperties: false,
+          required: ["name", "sampleRateHz", "channelCount", "simulated"],
+          properties: {
+            name: {
+              type: "string",
+              minLength: 1,
+              maxLength: 512,
+            },
+            sampleRateHz: {
+              type: "integer",
+              minimum: 8000,
+              maximum: 384000,
+            },
+            channelCount: {
+              type: "integer",
+              minimum: 1,
+              maximum: 256,
+            },
+            simulated: {
+              type: "boolean",
+            },
+          },
+        },
+      },
+    },
+    windowMs: {
+      type: "integer",
+      minimum: 100,
+      maximum: 10000,
+    },
+    inputs: {
+      type: "array",
+      maxItems: 256,
+      items: {
+        $ref: "#/$defs/inputLevel",
+      },
+    },
+  },
+  $defs: {
+    inputLevel: {
+      type: "object",
+      additionalProperties: false,
+      required: ["index", "peakDbfs", "rmsDbfs", "clippedSamples"],
+      properties: {
+        index: {
+          type: "integer",
+          minimum: 0,
+          maximum: 255,
+        },
+        peakDbfs: {
+          type: ["number", "null"],
+          minimum: -120,
+          maximum: 0,
+        },
+        rmsDbfs: {
+          type: ["number", "null"],
+          minimum: -120,
+          maximum: 0,
+        },
+        clippedSamples: {
+          type: "integer",
+          minimum: 0,
+          maximum: 10000000,
+        },
+      },
+    },
+  },
+} as const;
+
+const meterFrameSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://pulse.local/schema/v0/http/meter-frame.schema.json",
+  title: "Audio node meter frame",
+  description:
+    "The data of one `meters` event on the audio node's /audio/v0/meters Server-Sent Events stream. Each array holds one value per captured input, indexed by input. Levels are dBFS over the frame interval, floored at -120 for digital silence. Meters are measurements of captured audio, never samples.",
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "schemaVersion",
+    "sequence",
+    "intervalMs",
+    "peakDbfs",
+    "rmsDbfs",
+    "clipped",
+  ],
+  properties: {
+    schemaVersion: {
+      const: "0",
+    },
+    sequence: {
+      type: "integer",
+      minimum: 0,
+      maximum: 9007199254740991,
+    },
+    intervalMs: {
+      type: "integer",
+      minimum: 10,
+      maximum: 1000,
+    },
+    peakDbfs: {
+      type: "array",
+      maxItems: 256,
+      items: {
+        type: "number",
+        minimum: -120,
+        maximum: 0,
+      },
+    },
+    rmsDbfs: {
+      type: "array",
+      maxItems: 256,
+      items: {
+        type: "number",
+        minimum: -120,
+        maximum: 0,
+      },
+    },
+    clipped: {
+      type: "array",
+      maxItems: 256,
+      items: {
+        type: "boolean",
+      },
+    },
+  },
+} as const;
+
+const liveStateSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://pulse.local/schema/v0/http/live-state.schema.json",
+  title: "Live monitoring state",
+  description:
+    "The backend's shared monitoring truth for the active show: channel identity from the showfile, per-dimension verdicts and measurements from the audio node and receiver telemetry, and the active alert set. Served at GET /api/v1/live/state and as the data of each 'state' event on GET /api/v1/live/events.",
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "schemaVersion",
+    "revision",
+    "generatedAtUtc",
+    "show",
+    "node",
+    "receivers",
+    "channels",
+    "alerts",
+    "summary",
+    "reports",
+  ],
+  properties: {
+    schemaVersion: {
+      const: "0",
+    },
+    revision: {
+      type: "integer",
+      minimum: 0,
+      maximum: 9007199254740991,
+    },
+    generatedAtUtc: {
+      type: "string",
+      format: "date-time",
+    },
+    show: {
+      type: "object",
+      additionalProperties: false,
+      required: ["name", "showfileRevision", "overlayExpiryMs"],
+      properties: {
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        showfileRevision: {
+          type: "integer",
+          minimum: 0,
+          maximum: 2147483647,
+        },
+        overlayExpiryMs: {
+          type: "integer",
+          minimum: 60000,
+          maximum: 3600000,
+        },
+      },
+    },
+    node: {
+      type: "object",
+      additionalProperties: false,
+      required: ["status", "detail", "device", "observedAtUtc"],
+      properties: {
+        status: {
+          enum: [
+            "ready",
+            "starting",
+            "configuration-required",
+            "error",
+            "unreachable",
+          ],
+        },
+        detail: {
+          type: "string",
+          minLength: 1,
+          maxLength: 240,
+        },
+        device: {
+          type: ["object", "null"],
+          additionalProperties: false,
+          required: ["name", "sampleRateHz", "channelCount", "simulated"],
+          properties: {
+            name: {
+              type: "string",
+              minLength: 1,
+              maxLength: 512,
+            },
+            sampleRateHz: {
+              type: "integer",
+              minimum: 8000,
+              maximum: 384000,
+            },
+            channelCount: {
+              type: "integer",
+              minimum: 1,
+              maximum: 256,
+            },
+            simulated: {
+              type: "boolean",
+            },
+          },
+        },
+        observedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+      },
+    },
+    receivers: {
+      type: "object",
+      additionalProperties: false,
+      required: ["status", "detail", "units"],
+      properties: {
+        status: {
+          enum: [
+            "unconfigured",
+            "connecting",
+            "ready",
+            "degraded",
+            "stale",
+            "error",
+            "unavailable",
+          ],
+        },
+        detail: {
+          type: "string",
+          minLength: 1,
+          maxLength: 240,
+        },
+        units: {
+          type: "array",
+          maxItems: 64,
+          items: {
+            $ref: "#/$defs/receiverUnit",
+          },
+        },
+      },
+    },
+    channels: {
+      type: "array",
+      maxItems: 128,
+      items: {
+        $ref: "#/$defs/channel",
+      },
+    },
+    alerts: {
+      type: "array",
+      maxItems: 512,
+      items: {
+        $ref: "#/$defs/alert",
+      },
+    },
+    reports: {
+      description:
+        "A1 fault reports that are open, being worked, awaiting the A1's confirmation, or closed within the last few minutes.",
+      type: "array",
+      maxItems: 256,
+      items: {
+        $ref: "#/$defs/faultReport",
+      },
+    },
+    summary: {
+      type: "object",
+      additionalProperties: false,
+      required: ["active", "outstanding", "outstandingCritical"],
+      properties: {
+        active: {
+          type: "integer",
+          minimum: 0,
+          maximum: 512,
+        },
+        outstanding: {
+          type: "integer",
+          minimum: 0,
+          maximum: 512,
+        },
+        outstandingCritical: {
+          type: "integer",
+          minimum: 0,
+          maximum: 512,
+        },
+      },
+    },
+  },
+  $defs: {
+    verdict: {
+      enum: ["good", "fault", "caution", "unknown", "not-applicable"],
+    },
+    availability: {
+      enum: ["observed", "stale", "unknown"],
+    },
+    receiverUnit: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "name", "model", "status", "detail"],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        model: {
+          type: ["string", "null"],
+          maxLength: 64,
+        },
+        status: {
+          enum: ["connecting", "ready", "stale", "error"],
+        },
+        detail: {
+          type: "string",
+          minLength: 1,
+          maxLength: 240,
+        },
+      },
+    },
+    channel: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "id",
+        "number",
+        "name",
+        "performer",
+        "kind",
+        "micType",
+        "hasImage",
+        "input",
+        "receiver",
+        "monitor",
+        "statuses",
+        "audio",
+        "rf",
+        "battery",
+        "transmitter",
+        "check",
+      ],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        number: {
+          type: "integer",
+          minimum: 1,
+          maximum: 999,
+        },
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        performer: {
+          type: ["string", "null"],
+          maxLength: 120,
+        },
+        kind: {
+          enum: ["wireless", "wired"],
+        },
+        micType: {
+          enum: [
+            "lavalier",
+            "headset",
+            "handheld",
+            "boundary",
+            "instrument",
+            "other",
+            null,
+          ],
+        },
+        hasImage: {
+          type: "boolean",
+        },
+        input: {
+          type: "object",
+          additionalProperties: false,
+          required: ["index", "label"],
+          properties: {
+            index: {
+              type: ["integer", "null"],
+              minimum: 0,
+              maximum: 255,
+            },
+            label: {
+              type: "string",
+              minLength: 1,
+              maxLength: 160,
+            },
+          },
+        },
+        receiver: {
+          type: ["object", "null"],
+          additionalProperties: false,
+          required: [
+            "id",
+            "name",
+            "model",
+            "channelIndex",
+            "status",
+            "frequencyRaw",
+            "groupChannelRaw",
+          ],
+          properties: {
+            id: {
+              type: "string",
+              minLength: 1,
+              maxLength: 64,
+            },
+            name: {
+              type: "string",
+              minLength: 1,
+              maxLength: 120,
+            },
+            model: {
+              type: ["string", "null"],
+              maxLength: 64,
+            },
+            channelIndex: {
+              type: "integer",
+              minimum: 0,
+              maximum: 127,
+            },
+            status: {
+              enum: ["connecting", "ready", "stale", "error", "missing"],
+            },
+            frequencyRaw: {
+              type: ["string", "null"],
+              maxLength: 16,
+            },
+            groupChannelRaw: {
+              type: ["string", "null"],
+              maxLength: 16,
+            },
+          },
+        },
+        monitor: {
+          type: "object",
+          additionalProperties: false,
+          required: ["battery", "rf", "audio"],
+          properties: {
+            battery: {
+              type: "boolean",
+            },
+            rf: {
+              type: "boolean",
+            },
+            audio: {
+              type: "boolean",
+            },
+          },
+        },
+        statuses: {
+          type: "object",
+          additionalProperties: false,
+          required: ["rf", "audio", "battery", "check"],
+          properties: {
+            rf: {
+              $ref: "#/$defs/verdict",
+            },
+            audio: {
+              $ref: "#/$defs/verdict",
+            },
+            battery: {
+              $ref: "#/$defs/verdict",
+            },
+            check: {
+              $ref: "#/$defs/verdict",
+            },
+          },
+        },
+        audio: {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "availability",
+            "peakDbfs",
+            "rmsDbfs",
+            "silentForMs",
+            "clipping",
+          ],
+          properties: {
+            availability: {
+              $ref: "#/$defs/availability",
+            },
+            peakDbfs: {
+              type: ["number", "null"],
+              minimum: -120,
+              maximum: 0,
+            },
+            rmsDbfs: {
+              type: ["number", "null"],
+              minimum: -120,
+              maximum: 0,
+            },
+            silentForMs: {
+              type: ["integer", "null"],
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            clipping: {
+              type: "boolean",
+            },
+          },
+        },
+        rf: {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "availability",
+            "levelDbm",
+            "linkQualityPercent",
+            "activeAntenna",
+            "interference",
+            "transmitterPresent",
+          ],
+          properties: {
+            availability: {
+              $ref: "#/$defs/availability",
+            },
+            levelDbm: {
+              type: ["number", "null"],
+              minimum: -160,
+              maximum: 0,
+            },
+            linkQualityPercent: {
+              type: ["number", "null"],
+              minimum: 0,
+              maximum: 100,
+            },
+            activeAntenna: {
+              enum: ["A", "B", "C", "D", null],
+            },
+            interference: {
+              enum: ["none", "detected", "unavailable"],
+            },
+            transmitterPresent: {
+              type: ["boolean", "null"],
+            },
+          },
+        },
+        battery: {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "availability",
+            "percent",
+            "bars",
+            "runtimeMinutes",
+            "type",
+          ],
+          properties: {
+            availability: {
+              $ref: "#/$defs/availability",
+            },
+            percent: {
+              type: ["integer", "null"],
+              minimum: 0,
+              maximum: 100,
+            },
+            bars: {
+              type: ["integer", "null"],
+              minimum: 0,
+              maximum: 5,
+            },
+            runtimeMinutes: {
+              type: ["integer", "null"],
+              minimum: 0,
+              maximum: 1440,
+            },
+            type: {
+              type: ["string", "null"],
+              maxLength: 32,
+            },
+          },
+        },
+        transmitter: {
+          type: "object",
+          additionalProperties: false,
+          required: ["type", "name", "muted", "observedAtUtc"],
+          properties: {
+            type: {
+              type: ["string", "null"],
+              maxLength: 64,
+            },
+            name: {
+              type: ["string", "null"],
+              maxLength: 64,
+            },
+            muted: {
+              type: ["boolean", "null"],
+            },
+            observedAtUtc: {
+              type: ["string", "null"],
+              format: "date-time",
+            },
+          },
+        },
+        check: {
+          description:
+            "Summary of this channel's guided mic check against its current subject; null when no check exists.",
+          type: ["object", "null"],
+          additionalProperties: false,
+          required: [
+            "passed",
+            "failed",
+            "waiting",
+            "total",
+            "stale",
+            "updatedAtUtc",
+          ],
+          properties: {
+            passed: {
+              type: "integer",
+              minimum: 0,
+              maximum: 8,
+            },
+            failed: {
+              type: "integer",
+              minimum: 0,
+              maximum: 8,
+            },
+            waiting: {
+              type: "integer",
+              minimum: 0,
+              maximum: 8,
+            },
+            total: {
+              const: 8,
+            },
+            stale: {
+              type: "boolean",
+            },
+            updatedAtUtc: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+        },
+      },
+    },
+    alert: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "id",
+        "kind",
+        "dimension",
+        "severity",
+        "label",
+        "detail",
+        "channelId",
+        "channelNumber",
+        "channelName",
+        "receiverId",
+        "raisedAtUtc",
+        "acknowledgedAtUtc",
+        "acknowledgedBy",
+        "clearedAtUtc",
+        "overlayExpiresAtUtc",
+      ],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        kind: {
+          enum: [
+            "battery-low",
+            "battery-critical",
+            "rf-low",
+            "rf-lost",
+            "link-quality-low",
+            "interference",
+            "encryption-mismatch",
+            "tx-muted",
+            "no-audio",
+            "clipping",
+            "receiver-offline",
+            "capture-error",
+            "node-unreachable",
+          ],
+        },
+        dimension: {
+          enum: ["RF", "Audio", "Battery", "System"],
+        },
+        severity: {
+          enum: ["critical", "caution"],
+        },
+        label: {
+          type: "string",
+          minLength: 1,
+          maxLength: 40,
+        },
+        detail: {
+          type: "string",
+          minLength: 1,
+          maxLength: 240,
+        },
+        channelId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        channelNumber: {
+          type: ["integer", "null"],
+          minimum: 1,
+          maximum: 999,
+        },
+        channelName: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 120,
+        },
+        receiverId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        raisedAtUtc: {
+          type: "string",
+          format: "date-time",
+        },
+        acknowledgedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        acknowledgedBy: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 80,
+        },
+        clearedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        overlayExpiresAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+      },
+    },
+    faultReport: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "id",
+        "channelId",
+        "channelNumber",
+        "channelName",
+        "performer",
+        "faults",
+        "note",
+        "urgent",
+        "incident",
+        "incidentReason",
+        "status",
+        "requestedBy",
+        "requestedAtUtc",
+        "undoUntilUtc",
+        "claimedBy",
+        "claimedAtUtc",
+        "resolvedBy",
+        "resolvedAtUtc",
+        "closedAtUtc",
+      ],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        channelId: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        channelNumber: {
+          type: "integer",
+          minimum: 1,
+          maximum: 999,
+        },
+        channelName: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        performer: {
+          type: ["string", "null"],
+          maxLength: 120,
+        },
+        faults: {
+          type: "array",
+          maxItems: 9,
+          items: {
+            $ref: "#/$defs/reportedFault",
+          },
+        },
+        note: {
+          type: ["string", "null"],
+          maxLength: 200,
+        },
+        urgent: {
+          type: "boolean",
+        },
+        incident: {
+          type: "boolean",
+        },
+        incidentReason: {
+          enum: ["urgent", "telemetry", null],
+        },
+        status: {
+          enum: [
+            "open",
+            "claimed",
+            "awaiting-confirmation",
+            "closed",
+            "cancelled",
+          ],
+        },
+        requestedBy: {
+          type: "string",
+          minLength: 1,
+          maxLength: 80,
+        },
+        requestedAtUtc: {
+          type: "string",
+          format: "date-time",
+        },
+        undoUntilUtc: {
+          type: "string",
+          format: "date-time",
+        },
+        claimedBy: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 80,
+        },
+        claimedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        resolvedBy: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 80,
+        },
+        resolvedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        closedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+      },
+    },
+    reportedFault: {
+      enum: [
+        "dropping-out",
+        "crackling",
+        "distorted",
+        "too-quiet",
+        "clothing-noise",
+        "popping",
+        "hum-buzz",
+        "nothing-at-all",
+        "other",
+      ],
+    },
+  },
+} as const;
+
+const alertLogSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://pulse.local/schema/v0/http/alert-log.schema.json",
+  title: "Alert log",
+  description:
+    "Served at GET /api/v1/alerts: every active alert plus bounded history of cleared alerts, newest first. Each record keeps the channel identity captured when it was raised, so later showfile edits do not rewrite history.",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "generatedAtUtc", "active", "history"],
+  properties: {
+    schemaVersion: {
+      const: "0",
+    },
+    generatedAtUtc: {
+      type: "string",
+      format: "date-time",
+    },
+    active: {
+      type: "array",
+      maxItems: 512,
+      items: {
+        $ref: "#/$defs/loggedAlert",
+      },
+    },
+    history: {
+      type: "array",
+      maxItems: 1000,
+      items: {
+        $ref: "#/$defs/loggedAlert",
+      },
+    },
+  },
+  $defs: {
+    loggedAlert: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "id",
+        "kind",
+        "dimension",
+        "severity",
+        "label",
+        "detail",
+        "channelId",
+        "channelNumber",
+        "channelName",
+        "receiverId",
+        "raisedAtUtc",
+        "acknowledgedAtUtc",
+        "acknowledgedBy",
+        "clearedAtUtc",
+        "overlayExpiresAtUtc",
+      ],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        kind: {
+          enum: [
+            "battery-low",
+            "battery-critical",
+            "rf-low",
+            "rf-lost",
+            "link-quality-low",
+            "interference",
+            "encryption-mismatch",
+            "tx-muted",
+            "no-audio",
+            "clipping",
+            "receiver-offline",
+            "capture-error",
+            "node-unreachable",
+          ],
+        },
+        dimension: {
+          enum: ["RF", "Audio", "Battery", "System"],
+        },
+        severity: {
+          enum: ["critical", "caution"],
+        },
+        label: {
+          type: "string",
+          minLength: 1,
+          maxLength: 40,
+        },
+        detail: {
+          type: "string",
+          minLength: 1,
+          maxLength: 240,
+        },
+        channelId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        channelNumber: {
+          type: ["integer", "null"],
+          minimum: 1,
+          maximum: 999,
+        },
+        channelName: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 120,
+        },
+        receiverId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        raisedAtUtc: {
+          type: "string",
+          format: "date-time",
+        },
+        acknowledgedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        acknowledgedBy: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 80,
+        },
+        clearedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        overlayExpiresAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+      },
+    },
+  },
+} as const;
+
+const micChecksSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://pulse.local/schema/v0/http/mic-checks.schema.json",
+  title: "Guided mic checks",
+  description:
+    "Served at GET /api/v1/checks and returned by check mutations. Each check belongs to one show channel and records the subject it was made against (patch and performer); a check whose subject has since changed is stale and no longer counts. Every verdict records who gave it and when.",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "generatedAtUtc", "checks"],
+  properties: {
+    schemaVersion: {
+      const: "0",
+    },
+    generatedAtUtc: {
+      type: "string",
+      format: "date-time",
+    },
+    checks: {
+      type: "array",
+      maxItems: 128,
+      items: {
+        $ref: "#/$defs/channelCheck",
+      },
+    },
+  },
+  $defs: {
+    dimensionId: {
+      enum: [
+        "physical-identity",
+        "rf-link",
+        "captured-audio",
+        "mute-control",
+        "primary-spare",
+        "battery-window",
+        "placement-costume",
+        "operator-signoff",
+      ],
+    },
+    dimensionRecord: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "verdict", "by", "atUtc", "reason"],
+      properties: {
+        id: {
+          $ref: "#/$defs/dimensionId",
+        },
+        verdict: {
+          enum: ["pass", "fail", "waiting"],
+        },
+        by: {
+          type: "string",
+          minLength: 1,
+          maxLength: 80,
+        },
+        atUtc: {
+          type: "string",
+          format: "date-time",
+        },
+        reason: {
+          type: ["string", "null"],
+          maxLength: 200,
+        },
+      },
+    },
+    checkSubject: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "inputIndex",
+        "receiverId",
+        "receiverChannelIndex",
+        "performer",
+      ],
+      properties: {
+        inputIndex: {
+          type: ["integer", "null"],
+          minimum: 0,
+          maximum: 255,
+        },
+        receiverId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        receiverChannelIndex: {
+          type: ["integer", "null"],
+          minimum: 0,
+          maximum: 127,
+        },
+        performer: {
+          type: ["string", "null"],
+          maxLength: 120,
+        },
+      },
+    },
+    channelCheck: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "channelId",
+        "subject",
+        "startedAtUtc",
+        "updatedAtUtc",
+        "dimensions",
+        "stale",
+      ],
+      properties: {
+        channelId: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        subject: {
+          $ref: "#/$defs/checkSubject",
+        },
+        startedAtUtc: {
+          type: "string",
+          format: "date-time",
+        },
+        updatedAtUtc: {
+          type: "string",
+          format: "date-time",
+        },
+        dimensions: {
+          type: "array",
+          maxItems: 8,
+          items: {
+            $ref: "#/$defs/dimensionRecord",
+          },
+        },
+        stale: {
+          type: "boolean",
+        },
+      },
+    },
+  },
+} as const;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -1308,6 +2926,26 @@ export function parseChannelLevelHistory(value: unknown): ChannelLevelHistory {
     channelLevelHistorySchema,
     "ChannelLevelHistory",
   );
+}
+
+export function parseNodeLevels(value: unknown): NodeLevels {
+  return parseWithSchema<NodeLevels>(value, nodeLevelsSchema, "NodeLevels");
+}
+
+export function parseMeterFrame(value: unknown): MeterFrame {
+  return parseWithSchema<MeterFrame>(value, meterFrameSchema, "MeterFrame");
+}
+
+export function parseLiveState(value: unknown): LiveState {
+  return parseWithSchema<LiveState>(value, liveStateSchema, "LiveState");
+}
+
+export function parseAlertLog(value: unknown): AlertLog {
+  return parseWithSchema<AlertLog>(value, alertLogSchema, "AlertLog");
+}
+
+export function parseMicChecks(value: unknown): MicChecks {
+  return parseWithSchema<MicChecks>(value, micChecksSchema, "MicChecks");
 }
 
 export type ProtocolFetch = (

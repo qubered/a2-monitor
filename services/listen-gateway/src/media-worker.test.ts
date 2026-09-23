@@ -201,21 +201,104 @@ describe("MediaWorkerManager", () => {
     await expect(opened).rejects.toThrow("ready event fields are invalid");
     expect(media.getState()).toMatchObject({ status: "error" });
     expect(child.stop).toHaveBeenCalledOnce();
+    media.stop();
   });
 
-  it("reports worker exit as an error", () => {
+  it("restarts the same named device with bounded backoff after the worker exits", () => {
+    vi.useFakeTimers();
+    try {
+      let clock = 0;
+      const children: FakeWorkerProcess[] = [];
+      const factory = vi.fn((_binary: string, args: readonly string[]) => {
+        const child = new FakeWorkerProcess();
+        children.push(child);
+        expect(args.at(-1)).toBe("DVS");
+        return child;
+      });
+      const media = new MediaWorkerManager({
+        device: "DVS",
+        processFactory: factory,
+        restartDelaysMs: [1_000, 2_000],
+        now: () => clock,
+      });
+      media.start();
+      children[0]!.exit(2);
+      expect(media.getState()).toEqual({
+        schemaVersion: 0,
+        status: "error",
+        detail: "Media worker exited (2). Retrying the same device in 1 s.",
+      });
+
+      vi.advanceTimersByTime(999);
+      expect(factory).toHaveBeenCalledOnce();
+      vi.advanceTimersByTime(1);
+      expect(factory).toHaveBeenCalledTimes(2);
+      expect(media.getState()).toMatchObject({ status: "starting" });
+
+      // A second failure before the worker was stable backs off further.
+      children[1]!.exit(null);
+      expect(media.getState()).toMatchObject({
+        detail:
+          "Media worker exited (unknown). Retrying the same device in 2 s.",
+      });
+      vi.advanceTimersByTime(2_000);
+      expect(factory).toHaveBeenCalledTimes(3);
+
+      // A worker that stayed ready for 30 s resets the backoff.
+      children[2]!.ready();
+      clock += 30_000;
+      children[2]!.exit(2);
+      expect(media.getState()).toMatchObject({
+        detail: "Media worker exited (2). Retrying the same device in 1 s.",
+      });
+      media.stop();
+      vi.advanceTimersByTime(60_000);
+      expect(factory).toHaveBeenCalledTimes(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("relays per-input meter readings without the event type", () => {
     const child = new FakeWorkerProcess();
     const media = new MediaWorkerManager({
       device: "DVS",
       processFactory: () => child,
     });
+    const readings: unknown[] = [];
+    media.on("meters", (reading) => readings.push(reading));
     media.start();
-    child.exit(2);
-    expect(media.getState()).toEqual({
-      schemaVersion: 0,
-      status: "error",
-      detail: "Media worker exited (2).",
+    child.ready();
+    child.emit({
+      type: "meters",
+      sequence: 4,
+      intervalMs: 50,
+      peakDbfs: [-6, -120],
+      rmsDbfs: [-9.1, -120],
+      clippedSamples: [0, 0],
     });
+    return flush().then(() => {
+      expect(readings).toEqual([
+        {
+          sequence: 4,
+          intervalMs: 50,
+          peakDbfs: [-6, -120],
+          rmsDbfs: [-9.1, -120],
+          clippedSamples: [0, 0],
+        },
+      ]);
+      expect(media.simulated).toBe(false);
+      media.stop();
+    });
+  });
+
+  it("marks only the reserved test-signal device as simulated", () => {
+    expect(
+      new MediaWorkerManager({ device: "Pulse test signal" }).simulated,
+    ).toBe(true);
+    expect(
+      new MediaWorkerManager({ device: "pulse test signal" }).simulated,
+    ).toBe(false);
   });
 });
 
@@ -229,5 +312,31 @@ describe("parseWorkerEvent", () => {
       type: "connected",
       sessionId: "a",
     });
+  });
+
+  it("accepts only bounded, equal-length meter arrays", () => {
+    const meters = (fields: Record<string, unknown>) =>
+      JSON.stringify({
+        type: "meters",
+        sequence: 0,
+        intervalMs: 50,
+        peakDbfs: [-6],
+        rmsDbfs: [-9],
+        clippedSamples: [0],
+        ...fields,
+      });
+    expect(parseWorkerEvent(meters({}))).toMatchObject({ peakDbfs: [-6] });
+    for (const invalid of [
+      { peakDbfs: [0.5] },
+      { rmsDbfs: [-121] },
+      { peakDbfs: [], rmsDbfs: [], clippedSamples: [] },
+      { clippedSamples: [0, 0] },
+      { clippedSamples: [-1] },
+      { intervalMs: 5 },
+      { sequence: -1 },
+      { peakDbfs: ["-6"] },
+    ]) {
+      expect(() => parseWorkerEvent(meters(invalid))).toThrow();
+    }
   });
 });

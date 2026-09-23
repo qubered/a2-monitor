@@ -26,9 +26,12 @@ The proposed semantics, including negotiation, snapshots/deltas, command
 idempotency, atomic single-node activation, event delivery, imports, and Live
 leases, are in [protocol v0](specification.md).
 
-The only current machine-readable contracts are the two closed Phase 0T HTTP
-response schemas needed by the running backend health and Live snapshot routes.
-They do not restore the withdrawn command, event, authority, or IPC schemas.
+The current machine-readable contracts are the closed HTTP schemas the running
+MVP uses: health, the fabricated Live snapshot, the local showfile (with its
+optional alert policy), the production list, Shure fleet telemetry, channel
+level history, node levels, meter frames, live state and the alert log. Shared
+alert-policy defaults live in `policy/alert-policy.ts`. None of these restores
+the withdrawn command, event, authority, or IPC schemas.
 Those contracts remain absent because the earlier `schema/v0` tree conflated
 bootstrap and Live authority and accepted unconstrained canonical data. See
 [open questions](../../docs/open-questions.md).
@@ -38,7 +41,7 @@ will be generated from the frozen domain schemas when concrete
 HTTP/subscription routes are implemented; hand-written copies may not diverge
 from them.
 
-`schema/v0/http` is authoritative for the two running response contracts.
+`schema/v0/http` is authoritative for the running HTTP contracts.
 `generated/http-contracts.ts` contains their generated TypeScript types,
 closed response parsers and small HTTP client. The header records its inputs
 and regeneration command; never edit it by hand. The generated client applies

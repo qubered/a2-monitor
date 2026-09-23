@@ -1,14 +1,25 @@
 import { buildServer } from "./server.js";
 import { startBackendProcess } from "./process-lifecycle.js";
+import { FileAlertPersistence } from "./alerts.js";
+import { FileCheckPersistence } from "./checks.js";
+import { FileReportPersistence } from "./reports.js";
+import { NodeObserver } from "./node-observer.js";
 import { FileProductionStore } from "./productions.js";
 import { resolve } from "node:path";
 
 const host = "127.0.0.1";
 const port = 3000;
 const dataDirectory = resolve(process.env.A2_DATA_DIR ?? "data");
+// The audio node the backend reads normalized observations from. Development
+// runs the listen gateway on 3001; the packaged app points this at its port.
+const nodeOrigin = process.env.A2_NODE_ORIGIN ?? "http://127.0.0.1:3001";
 const server = buildServer({
   logger: true,
   productionStore: new FileProductionStore(dataDirectory),
+  alertPersistence: new FileAlertPersistence(dataDirectory),
+  checkPersistence: new FileCheckPersistence(dataDirectory),
+  reportPersistence: new FileReportPersistence(dataDirectory),
+  nodeSource: new NodeObserver({ origin: nodeOrigin }),
 });
 
 try {

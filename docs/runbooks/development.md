@@ -34,6 +34,20 @@ npm ci
 npm run check --workspaces --if-present
 ```
 
+Run the whole local stack against a physical input with
+`A2_AUDIO_DEVICE="Exact device name" npm run dev`, or without hardware with:
+
+```sh
+npm run dev:simulate
+```
+
+Simulate mode starts the backend, listen gateway, Live, Manager and a
+development Shure AD4Q double, opens the built-in `Pulse test signal` source and
+seeds a demo show in `data/simulated` (never your normal `data` directory). It
+exercises every monitoring verdict and alert kind: battery drain, RF dips,
+interference, transmitter loss and mute, clipping, silence and dropout. Nothing
+it produces is evidence about real equipment.
+
 Public health/snapshot TypeScript artifacts are generated from the closed JSON
 Schemas. Regenerate after changing either schema and verify freshness before
 handoff:

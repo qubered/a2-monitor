@@ -65,11 +65,20 @@ describe("Manager showfile editor", () => {
   let activeId: string;
   let nextId: number;
 
+  let deviceReady = true;
+
   const fetchMock = vi.fn(
     async (input: RequestInfo | URL, init?: RequestInit) => {
       const path = String(input);
       const method = init?.method ?? "GET";
 
+      if (path === "/audio/v0/device" && !deviceReady) {
+        return Response.json({
+          schemaVersion: 0,
+          status: "configuration-required",
+          detail: "Set A2_AUDIO_DEVICE to an explicit capture device.",
+        });
+      }
       if (path === "/audio/v0/device") {
         return Response.json({
           schemaVersion: 0,
@@ -158,6 +167,7 @@ describe("Manager showfile editor", () => {
   beforeEach(() => {
     window.localStorage.clear();
     showfiles = { p1: { ...storedShowfile, shureReceivers: [] } };
+    deviceReady = true;
     activeId = "p1";
     nextId = 2;
     vi.stubGlobal("fetch", fetchMock);
@@ -341,5 +351,74 @@ describe("Manager showfile editor", () => {
     const downloaded = JSON.parse(await blob.text());
     expect(downloaded.show.name).toBe("Q3 All-Hands");
     expect(HTMLAnchorElement.prototype.click).toHaveBeenCalledTimes(1);
+  });
+
+  it("edits the show without a running audio device and keeps saved patches", async () => {
+    deviceReady = false;
+    const user = userEvent.setup();
+    render(<App />);
+
+    expect(
+      await screen.findByText(
+        "Showfile loaded. The audio device is not running, so input patches are shown as saved and cannot be checked.",
+      ),
+    ).toBeTruthy();
+    await user.click(screen.getByRole("tab", { name: /channels/i }));
+    const performer = await screen.findByLabelText("Channel 1 performer");
+    await user.type(performer, "Eleanor Vance");
+    await user.click(screen.getByRole("button", { name: "Save showfile" }));
+
+    expect(await screen.findByText("Revision 3")).toBeTruthy();
+    const saveCall = fetchMock.mock.calls.find(
+      ([path, init]) =>
+        String(path) === "/api/v1/showfile" && init?.method === "PUT",
+    );
+    const saved = JSON.parse(String(saveCall?.[1]?.body)) as StoredShowfile;
+    expect(saved.device).toEqual({ name: "USB Interface", channelCount: 2 });
+    expect(saved.channels[0]).toMatchObject({
+      inputIndex: 0,
+      performer: "Eleanor Vance",
+    });
+  });
+
+  it("sets a custom alert policy, refuses incoherent limits, and resets to defaults", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /alerts/i }));
+    expect(screen.getByText("Using defaults")).toBeTruthy();
+    const [batteryCaution] = screen.getAllByLabelText(
+      "Caution at or below (%)",
+    );
+    await user.clear(batteryCaution!);
+    await user.type(batteryCaution!, "30");
+    expect(screen.getByText("Custom policy")).toBeTruthy();
+
+    const [batteryCritical] = screen.getAllByLabelText(
+      "Critical at or below (%)",
+    );
+    await user.clear(batteryCritical!);
+    await user.type(batteryCritical!, "40");
+    expect(screen.getByRole("alert").textContent).toContain(
+      "Each critical limit must be beyond its caution limit.",
+    );
+    await user.clear(batteryCritical!);
+    await user.type(batteryCritical!, "12");
+    expect(screen.queryByRole("alert")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Save showfile" }));
+    expect(await screen.findByText("Revision 3")).toBeTruthy();
+    const saveCall = fetchMock.mock.calls.find(
+      ([path, init]) =>
+        String(path) === "/api/v1/showfile" && init?.method === "PUT",
+    );
+    expect(JSON.parse(String(saveCall?.[1]?.body)).alertPolicy).toMatchObject({
+      batteryCautionPercent: 30,
+      batteryCriticalPercent: 12,
+      rfCautionDbm: -80,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Reset to defaults" }));
+    expect(screen.getByText("Using defaults")).toBeTruthy();
   });
 });

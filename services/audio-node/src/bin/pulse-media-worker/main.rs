@@ -2,11 +2,13 @@
 //!
 //! The worker starts `pulse-device-capture` as its child, reads its PCM pipe, and serves each
 //! browser listener one ICE-lite WebRTC session carrying a 10 ms mono Opus stream of the
-//! selected input. The capture callback stays in the capture process; this process owns
-//! only network-facing media work. The listen gateway controls it over stdin/stdout.
+//! selected input. It also meters every captured input and reports 20 Hz levels (ADR 0027).
+//! The capture callback stays in the capture process; this process owns only network-facing
+//! media work and metering. The listen gateway controls it over stdin/stdout.
 
 mod capture;
 mod control;
+mod meters;
 mod session;
 
 use std::collections::HashMap;
@@ -22,6 +24,7 @@ use std::time::{Duration, Instant};
 
 use capture::{CaptureBlock, CaptureHeader};
 use control::{Command, EventWriter};
+use meters::MeterBank;
 use session::{ListenSession, SessionEvent};
 use socket2::{Domain, Protocol, Socket, Type};
 
@@ -162,6 +165,7 @@ struct Worker<W: io::Write> {
     sockets: Sockets,
     sessions: HashMap<String, ListenSession>,
     channel_count: Option<usize>,
+    meters: Option<MeterBank>,
     recycle: Sender<Vec<f32>>,
     dropped_blocks: Arc<AtomicU64>,
 }
@@ -229,11 +233,19 @@ impl<W: io::Write> Worker<W> {
         }
     }
 
-    fn handle_block(&mut self, block: CaptureBlock, now: Instant) {
+    fn handle_block(&mut self, block: CaptureBlock, now: Instant) -> io::Result<()> {
         for session in self.sessions.values_mut() {
             session.write_block(&block, now);
         }
+        let reading = self
+            .meters
+            .as_mut()
+            .and_then(|meters| meters.process(&block));
         let _ = self.recycle.send(block.samples);
+        match reading {
+            Some(reading) => self.output.meters(&reading),
+            None => Ok(()),
+        }
     }
 
     fn handle_datagram(
@@ -329,6 +341,7 @@ fn run(args: &Args) -> Result<(), String> {
         },
         sessions: HashMap::new(),
         channel_count: None,
+        meters: None,
         recycle: recycle_tx,
         dropped_blocks,
     };
@@ -351,9 +364,12 @@ fn event_loop<W: io::Write>(
         match events.recv_timeout(wait) {
             Ok(Event::CaptureReady(header)) => {
                 worker.channel_count = Some(header.channel_count);
+                worker.meters = Some(MeterBank::new(header.channel_count));
                 worker.output.ready(&header).map_err(io_error)?;
             }
-            Ok(Event::Capture(block)) => worker.handle_block(block, Instant::now()),
+            Ok(Event::Capture(block)) => worker
+                .handle_block(block, Instant::now())
+                .map_err(io_error)?,
             Ok(Event::Datagram {
                 local,
                 source,

@@ -43,7 +43,6 @@ fn u16_sample(sample: u16) -> f32 {
     (f32::from(sample) - 32_768.0) / 32_768.0
 }
 
-#[cfg(any(test, target_os = "macos", target_os = "windows"))]
 fn encode_float32_le(samples: &[f32], output: &mut [u8]) -> usize {
     let sample_count = samples.len().min(output.len() / size_of::<f32>());
     let (output_samples, _) = output.as_chunks_mut::<{ size_of::<f32>() }>();
@@ -411,10 +410,71 @@ mod supported {
     }
 }
 
+/// Writes the built-in test signal with the same stdout contract as a physical capture,
+/// paced by the wall clock in 10 ms steps. It is selected only by the reserved device name.
+fn run_test_signal() -> Result<(), Box<dyn std::error::Error>> {
+    use a2_audio_node::test_signal::{
+        TEST_SIGNAL_DEVICE_NAME, TEST_SIGNAL_SAMPLE_RATE_HZ, TestSignal, channel_count_from,
+    };
+    use std::io::{ErrorKind, Write};
+    use std::time::{Duration, Instant};
+
+    const TICK: Duration = Duration::from_millis(10);
+    const MAX_FRAMES_PER_TICK: u64 = TEST_SIGNAL_SAMPLE_RATE_HZ as u64 / 10;
+
+    let channel_count = channel_count_from(std::env::var("A2_SIMULATED_CHANNELS").ok().as_deref())?;
+    let mut signal = TestSignal::new(channel_count);
+    let stdout = std::io::stdout();
+    let mut output = stdout.lock();
+    let header = serde_json::json!({
+        "schemaVersion": 0,
+        "deviceName": TEST_SIGNAL_DEVICE_NAME,
+        "sampleRateHz": TEST_SIGNAL_SAMPLE_RATE_HZ,
+        "channelCount": channel_count,
+    });
+    let mut samples = vec![0.0_f32; MAX_FRAMES_PER_TICK as usize * channel_count];
+    let mut bytes = vec![0_u8; samples.len() * size_of::<f32>()];
+    let started = Instant::now();
+    let mut emitted_frames = 0_u64;
+
+    let result = (|| -> std::io::Result<()> {
+        writeln!(output, "{header}")?;
+        output.flush()?;
+        loop {
+            std::thread::sleep(TICK);
+            let due =
+                (started.elapsed().as_secs_f64() * f64::from(TEST_SIGNAL_SAMPLE_RATE_HZ)) as u64;
+            let frames = due.saturating_sub(emitted_frames).min(MAX_FRAMES_PER_TICK) as usize;
+            if frames == 0 {
+                continue;
+            }
+            let count = frames * channel_count;
+            signal.fill(&mut samples[..count]);
+            let byte_count = encode_float32_le(&samples[..count], &mut bytes);
+            output.write_all(&bytes[..byte_count])?;
+            output.flush()?;
+            emitted_frames += frames as u64;
+        }
+    })();
+    match result {
+        // The reader closed the pipe: the worker is stopping.
+        Err(error) if error.kind() == ErrorKind::BrokenPipe => Ok(()),
+        Err(error) => Err(error.into()),
+        Ok(()) => Ok(()),
+    }
+}
+
 fn main() {
     let result = parse_args(std::env::args_os().skip(1))
         .map_err(|error| -> Box<dyn std::error::Error> { error.into() })
-        .and_then(supported::run);
+        .and_then(|command| match command {
+            Command::Capture { device_name }
+                if device_name == a2_audio_node::test_signal::TEST_SIGNAL_DEVICE_NAME =>
+            {
+                run_test_signal()
+            }
+            command => supported::run(command),
+        });
     if let Err(error) = result {
         eprintln!("pulse-device-capture: {error}");
         std::process::exit(2);

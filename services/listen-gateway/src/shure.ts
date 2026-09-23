@@ -181,9 +181,13 @@ const FAMILY_COMMANDS: Record<ShureReceiverFamily, FamilyCommands> = {
   "slxd-plus": SLXD_PLUS_COMMANDS,
 };
 
+/** Shure's command-string control port. Only tests override it. */
+export const SHURE_CONTROL_PORT = 2202;
+
 export type ShureFleetOptions = {
   backendOrigin?: string;
   fetch?: typeof fetch;
+  port?: number;
 };
 
 export type ShureFrame = {
@@ -389,17 +393,29 @@ export function applyChannelProperty(
   if (property === commands.batteryTypeProperty)
     return { ...channel, batteryType: boundedText(value, 32) };
   if (property === commands.batteryCycleProperty)
-    return { ...channel, batteryCycleCount: boundedInteger(value, 0, 100_000) };
+    // 65535 is the receiver's "unknown" sentinel for this 16-bit field.
+    return { ...channel, batteryCycleCount: boundedInteger(value, 0, 65_534) };
   if (property === commands.batteryRunTimeProperty)
     return {
       ...channel,
       batteryRunTimeMinutes: boundedInteger(value, 0, 1_440),
     };
-  if (property === commands.txTypeProperty)
+  if (property === commands.txTypeProperty) {
+    // Receivers report UNKNOWN/UNKN for the transmitter model while no
+    // transmitter is linked, which is the only direct presence signal the
+    // read-only command set gives us.
+    const absent = ["", "UNKNOWN", "UNKN", "NONE"].includes(
+      value.trim().toUpperCase(),
+    );
     return {
       ...channel,
-      transmitter: { ...channel.transmitter, type: boundedText(value, 64) },
+      linkStatus: absent ? "no-transmitter" : "active",
+      transmitter: {
+        ...channel.transmitter,
+        type: absent ? null : boundedText(value, 64),
+      },
     };
+  }
   if (property === commands.muteProperty) {
     const muted = parseOnOff(value, commands.muteTrueValues);
     if (muted === null) return channel;
@@ -439,7 +455,10 @@ class ReceiverMonitor {
   private readonly capabilities: ShureCapabilityProfile;
   private readonly commands: FamilyCommands | null;
 
-  constructor(readonly config: ReceiverConfig) {
+  constructor(
+    readonly config: ReceiverConfig,
+    private readonly port = SHURE_CONTROL_PORT,
+  ) {
     this.capabilities = capabilitiesFor(config);
     this.commands = commandsFor(config);
     this.state = {
@@ -491,7 +510,10 @@ class ReceiverMonitor {
       detail: "Connecting to this Shure receiver.",
     };
     const parser = new ShureFrameParser();
-    const socket = createConnection({ host: this.config.host, port: 2202 });
+    const socket = createConnection({
+      host: this.config.host,
+      port: this.port,
+    });
     this.socket = socket;
     socket.setKeepAlive(true, 5_000);
     socket.setTimeout(20_000, () =>
@@ -639,9 +661,17 @@ class ReceiverMonitor {
       frame.value,
     );
     if (!updated) return;
+    const reportsTransmitterType =
+      this.capabilities.transmitterDetail &&
+      this.commands.txTypeProperty !== null;
     const observed: ChannelState = {
       ...updated,
-      linkStatus: "active",
+      // Presence comes from the transmitter-type report where the receiver
+      // has one; otherwise any report means the channel is live.
+      linkStatus:
+        reportsTransmitterType || updated.linkStatus !== "unavailable"
+          ? updated.linkStatus
+          : "active",
       observedAtUtc: new Date().toISOString(),
       availability: "observed",
     };
@@ -759,7 +789,7 @@ export class ShureFleetMonitor {
       if (current && JSON.stringify(current.config) === JSON.stringify(config))
         continue;
       current?.close();
-      const monitor = new ReceiverMonitor(config);
+      const monitor = new ReceiverMonitor(config, this.options.port);
       this.monitors.set(config.id, monitor);
       monitor.start();
     }

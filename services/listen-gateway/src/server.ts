@@ -7,6 +7,8 @@ import {
   type ServerResponse,
 } from "node:http";
 import { networkInterfaces, type NetworkInterfaceInfo } from "node:os";
+import type { MeterFrame, NodeLevels } from "@rvlt/pulse-protocol/http";
+import { LEVEL_WINDOW_MS, LevelBank, type MeterReading } from "./levels.js";
 import {
   MediaWorkerManager,
   SessionRejectedError,
@@ -16,6 +18,10 @@ import { handleWebRequest, type WebHostOptions } from "./web-host.js";
 import { ShureFleetMonitor } from "./shure.js";
 
 const MAX_SIGNALING_BODY_BYTES = 64 * 1024;
+const MAX_METER_CLIENTS = 64;
+const MAX_METER_BUFFERED_BYTES = 64 * 1024;
+const METER_KEEPALIVE_MS = 15_000;
+const MAX_DETAIL_LENGTH = 240;
 const SESSION_PATH = /^\/audio\/v0\/listen\/sessions\/([0-9a-f-]{36})$/;
 const SESSION_CHANNEL_PATH =
   /^\/audio\/v0\/listen\/sessions\/([0-9a-f-]{36})\/channel$/;
@@ -93,6 +99,13 @@ async function readJsonObject(
   return record;
 }
 
+function boundedDetail(detail: string): string {
+  const trimmed = detail.trim() || "Capture state is unknown.";
+  return trimmed.length > MAX_DETAIL_LENGTH
+    ? `${trimmed.slice(0, MAX_DETAIL_LENGTH - 1)}…`
+    : trimmed;
+}
+
 function isLoopback(address: string): boolean {
   return address === "::1" || address.startsWith("127.");
 }
@@ -136,6 +149,9 @@ export class ListenGateway {
   readonly shure: ShureFleetMonitor;
   readonly server: Server;
   private readonly interfaces: () => NodeJS.Dict<NetworkInterfaceInfo[]>;
+  private readonly meterClients = new Set<ServerResponse>();
+  private readonly keepalive: NodeJS.Timeout;
+  private levels: LevelBank | undefined;
 
   constructor(options: ListenGatewayOptions = {}) {
     this.media =
@@ -146,6 +162,14 @@ export class ListenGateway {
         captureBinary: options.captureBinary,
         processFactory: options.processFactory,
       });
+    this.media.on("state", () => this.resetLevels());
+    this.media.on("meters", (reading: MeterReading) =>
+      this.levels?.ingest(reading),
+    );
+    this.keepalive = setInterval(() => {
+      for (const client of this.meterClients) client.write(": keepalive\n\n");
+    }, METER_KEEPALIVE_MS);
+    this.keepalive.unref();
     this.shure =
       options.shureMonitor ??
       new ShureFleetMonitor({ backendOrigin: options.backendOrigin });
@@ -153,6 +177,14 @@ export class ListenGateway {
     this.server = createServer((request, response) => {
       if (request.method === "GET" && request.url === "/audio/v0/device") {
         sendJson(response, 200, this.media.getState());
+        return;
+      }
+      if (request.method === "GET" && request.url === "/audio/v0/levels") {
+        sendJson(response, 200, this.getLevels());
+        return;
+      }
+      if (request.method === "GET" && request.url === "/audio/v0/meters") {
+        this.openMeterStream(response);
         return;
       }
       if (request.method === "GET" && request.url === "/audio/v0/shure") {
@@ -250,16 +282,87 @@ export class ListenGateway {
     throw new HttpError(404, "not-found");
   }
 
+  /** The capture state plus the trailing per-input level summary the backend evaluates alerts from. */
+  getLevels(): NodeLevels {
+    const state = this.media.getState();
+    return {
+      schemaVersion: "0",
+      generatedAtUtc: new Date().toISOString(),
+      capture: {
+        status: state.status,
+        detail: boundedDetail(state.detail),
+        device:
+          state.status === "ready"
+            ? {
+                name: state.device.name.slice(0, 512),
+                sampleRateHz: state.device.sampleRateHz,
+                channelCount: state.device.channelCount,
+                simulated: this.media.simulated,
+              }
+            : null,
+      },
+      windowMs: LEVEL_WINDOW_MS,
+      inputs:
+        state.status === "ready" && this.levels
+          ? this.levels.summary(LEVEL_WINDOW_MS)
+          : [],
+    };
+  }
+
+  /**
+   * Receive-only Server-Sent Events stream of 20 Hz `meter-frame` payloads for Live's
+   * card traces. A slow client skips frames instead of growing a buffer.
+   */
+  private openMeterStream(response: ServerResponse): void {
+    if (this.meterClients.size >= MAX_METER_CLIENTS) {
+      sendJson(response, 503, { error: "meter-capacity-reached" });
+      return;
+    }
+    response.writeHead(200, {
+      "Cache-Control": "no-store",
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "X-Accel-Buffering": "no",
+    });
+    response.flushHeaders();
+    this.meterClients.add(response);
+    response.on("close", () => this.meterClients.delete(response));
+  }
+
+  private broadcastMeters(frame: MeterFrame): void {
+    if (this.meterClients.size === 0) return;
+    const message = `event: meters\ndata: ${JSON.stringify(frame)}\n\n`;
+    for (const client of this.meterClients) {
+      if (client.writableLength > MAX_METER_BUFFERED_BYTES) continue;
+      client.write(message);
+    }
+  }
+
+  private resetLevels(): void {
+    this.levels?.removeAllListeners();
+    this.levels = undefined;
+    const state = this.media.getState();
+    if (state.status !== "ready") return;
+    this.levels = new LevelBank({ channelCount: state.device.channelCount });
+    this.levels.on("frame", (frame) => this.broadcastMeters(frame));
+  }
+
   startCapture(): void {
     this.media.start();
     this.shure.start();
   }
 
   async close(): Promise<void> {
+    clearInterval(this.keepalive);
     this.media.stop();
     this.shure.close();
-    await new Promise<void>((resolve, reject) => {
+    for (const client of this.meterClients) client.end();
+    this.meterClients.clear();
+    const closed = new Promise<void>((resolve, reject) => {
       this.server.close((error) => (error ? reject(error) : resolve()));
     });
+    // Long-lived streams (the proxied live-state events, keep-alive sockets)
+    // would otherwise hold shutdown open until every browser disconnects.
+    this.server.closeAllConnections();
+    await closed;
   }
 }

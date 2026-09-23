@@ -10,6 +10,7 @@ use std::sync::mpsc::SyncSender;
 
 use crate::Event;
 use crate::capture::CaptureHeader;
+use crate::meters::{METER_INTERVAL_MS, MeterReading};
 
 const COMMAND_LIMIT_BYTES: usize = 128 * 1024;
 const OFFER_LIMIT_BYTES: usize = 64 * 1024;
@@ -195,6 +196,18 @@ impl<W: Write> EventWriter<W> {
 
     pub fn closed(&mut self, session_id: &str, reason: &str) -> std::io::Result<()> {
         self.emit(json!({ "type": "closed", "sessionId": session_id, "reason": reason }))
+    }
+
+    /// Per-input levels for one closed 50 ms interval. Levels are dBFS; audio never crosses.
+    pub fn meters(&mut self, reading: &MeterReading) -> std::io::Result<()> {
+        self.emit(json!({
+            "type": "meters",
+            "sequence": reading.sequence,
+            "intervalMs": METER_INTERVAL_MS,
+            "peakDbfs": reading.peak_dbfs,
+            "rmsDbfs": reading.rms_dbfs,
+            "clippedSamples": reading.clipped_samples,
+        }))
     }
 
     pub fn stats(&mut self, sessions: usize, dropped_blocks: u64) -> std::io::Result<()> {

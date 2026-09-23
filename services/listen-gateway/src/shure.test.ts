@@ -1,4 +1,4 @@
-import { createServer, type Socket } from "node:net";
+import { createServer, type AddressInfo, type Socket } from "node:net";
 import type { Showfile } from "@rvlt/pulse-protocol/http";
 import { describe, expect, it } from "vitest";
 import {
@@ -11,6 +11,7 @@ import {
   TELEMETRY_REFRESH_MS,
   ULXD_COMMANDS,
 } from "./shure.js";
+import { startShureSimulator } from "./dev/shure-simulator.js";
 
 describe("ShureFrameParser", () => {
   it("accepts fragmented and coalesced read-only receiver reports", () => {
@@ -166,8 +167,8 @@ describe("ShureFleetMonitor telemetry refresh", () => {
   it(
     "keeps re-polling a ULX-D channel after the initial connect burst, instead of going quiet until it hits STALE_AFTER_MS",
     async () => {
-      // ReceiverMonitor connects to the fixed Shure Control port (2202); a
-      // fake receiver has to listen there to exercise the real TCP path.
+      // A fake receiver on an ephemeral port exercises the real TCP path
+      // without colliding with anything already holding 2202.
       let received = "";
       const server = createServer((socket: Socket) => {
         socket.on("data", (chunk) => {
@@ -176,8 +177,9 @@ describe("ShureFleetMonitor telemetry refresh", () => {
       });
       await new Promise<void>((resolve, reject) => {
         server.once("error", reject);
-        server.listen(2202, "127.0.0.1", resolve);
+        server.listen(0, "127.0.0.1", resolve);
       });
+      const { port } = server.address() as AddressInfo;
 
       const showfile: Showfile = {
         schemaVersion: "0",
@@ -199,6 +201,7 @@ describe("ShureFleetMonitor telemetry refresh", () => {
 
       const monitor = new ShureFleetMonitor({
         backendOrigin: "http://showfile.invalid/",
+        port,
         fetch: (async () =>
           new Response(JSON.stringify(showfile), {
             status: 200,
@@ -226,4 +229,81 @@ describe("ShureFleetMonitor telemetry refresh", () => {
     },
     TELEMETRY_REFRESH_MS + 5_000,
   );
+});
+
+describe("ShureFleetMonitor against the development AD4Q simulator", () => {
+  async function waitFor(
+    predicate: () => boolean,
+    timeoutMs = 3_000,
+  ): Promise<void> {
+    const deadline = Date.now() + timeoutMs;
+    while (!predicate()) {
+      if (Date.now() > deadline) throw new Error("Condition not reached.");
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+  }
+
+  it("normalizes a transmitter that disappears into an explicit no-transmitter state", async () => {
+    let offsetMs = 0;
+    const simulator = await startShureSimulator(
+      "127.0.0.1",
+      0,
+      () => Date.now() + offsetMs,
+    );
+    const { port } = simulator.address() as AddressInfo;
+    const showfile: Showfile = {
+      schemaVersion: "0",
+      revision: 1,
+      updatedAtUtc: null,
+      show: { name: "Test" },
+      device: null,
+      shureReceivers: [
+        {
+          id: "sim",
+          name: "Simulated rack",
+          host: "127.0.0.1",
+          model: "AD4Q",
+          channelCount: 4,
+        },
+      ],
+      channels: [],
+    };
+    const monitor = new ShureFleetMonitor({
+      backendOrigin: "http://showfile.invalid/",
+      port,
+      fetch: (async () =>
+        new Response(JSON.stringify(showfile), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })) as typeof fetch,
+    });
+    const host = () => monitor.getState().receivers[0]?.channels[3];
+
+    try {
+      monitor.start();
+      await waitFor(() => host()?.transmitter.type === "ADX1");
+      expect(monitor.getState().receivers[0]).toMatchObject({
+        model: "AD4Q",
+        status: "ready",
+      });
+      expect(host()).toMatchObject({
+        linkStatus: "active",
+        availability: "observed",
+        transmitter: { name: "HOST", muted: false },
+      });
+
+      offsetMs = 65_000;
+      await waitFor(() => host()?.linkStatus === "no-transmitter");
+      expect(host()).toMatchObject({
+        transmitter: { type: null },
+        batteryChargePercent: null,
+        batteryBars: null,
+        batteryRunTimeMinutes: null,
+        batteryCycleCount: null,
+      });
+    } finally {
+      monitor.close();
+      await new Promise<void>((resolve) => simulator.close(() => resolve()));
+    }
+  }, 10_000);
 });

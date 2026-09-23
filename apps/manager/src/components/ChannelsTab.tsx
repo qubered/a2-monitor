@@ -237,6 +237,7 @@ export function ChannelsTab({
               <TableHead className="w-14">#</TableHead>
               <TableHead>Photo</TableHead>
               <TableHead>Name</TableHead>
+              <TableHead>Performer</TableHead>
               <TableHead>Mic type</TableHead>
               <TableHead>Audio input</TableHead>
               <TableHead>Shure channel</TableHead>
@@ -248,7 +249,7 @@ export function ChannelsTab({
           </TableHeader>
           <TableBody>
             {showfile.channels.map((channel, position) => (
-              <TableRow key={position}>
+              <TableRow key={channel.id ?? `position-${position}`}>
                 <TableCell className="font-mono text-table tabular-nums text-muted-foreground">
                   {position + 1}
                 </TableCell>
@@ -273,6 +274,22 @@ export function ChannelsTab({
                       channels[position] = {
                         ...channel,
                         name: event.target.value,
+                      };
+                      onChange({ ...showfile, channels });
+                    }}
+                  />
+                </TableCell>
+                <TableCell className="min-w-40">
+                  <Input
+                    aria-label={`Channel ${position + 1} performer`}
+                    value={channel.performer ?? ""}
+                    placeholder="Not recorded"
+                    maxLength={120}
+                    onChange={(event) => {
+                      const channels = [...showfile.channels];
+                      channels[position] = {
+                        ...channel,
+                        performer: event.target.value || null,
                       };
                       onChange({ ...showfile, channels });
                     }}
@@ -331,6 +348,11 @@ export function ChannelsTab({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={NONE}>Not patched</SelectItem>
+                      {!device && channel.inputIndex !== null ? (
+                        <SelectItem value={String(channel.inputIndex)}>
+                          Input {channel.inputIndex + 1} · device not running
+                        </SelectItem>
+                      ) : null}
                       {device?.channels.map((input) => (
                         <SelectItem
                           key={input.index}

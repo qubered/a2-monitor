@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "0",
+  "revision": 0,
+  "generatedAtUtc": "2026-09-23T01:00:00Z",
+  "show": {
+    "name": "Untitled show",
+    "showfileRevision": 0,
+    "overlayExpiryMs": 300000
+  },
+  "node": {
+    "status": "unreachable",
+    "detail": "The audio node has not answered yet.",
+    "device": null,
+    "observedAtUtc": null,
+    "ip": "192.0.2.1"
+  },
+  "receivers": {
+    "status": "unconfigured",
+    "detail": "No Shure receivers are configured in Manager.",
+    "units": []
+  },
+  "channels": [],
+  "alerts": [],
+  "reports": [],
+  "summary": {
+    "active": 0,
+    "outstanding": 0,
+    "outstandingCritical": 0
+  }
+}
