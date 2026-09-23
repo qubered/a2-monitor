@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "0",
+  "generatedAtUtc": "2026-09-23T01:00:05Z",
+  "active": [
+    {
+      "id": "alert-000001",
+      "kind": "battery-critical",
+      "dimension": "Battery",
+      "severity": "critical",
+      "label": "Battery critical",
+      "detail": "Battery 8 % on Marguerite (Stage left channel 1). Critical at 10 %.",
+      "channelId": "ch-marguerite",
+      "channelNumber": 1,
+      "channelName": "Marguerite",
+      "receiverId": "receiver-a",
+      "raisedAtUtc": "2026-09-23T00:58:40Z",
+      "acknowledgedAtUtc": null,
+      "acknowledgedBy": null,
+      "clearedAtUtc": null,
+      "overlayExpiresAtUtc": null
+    }
+  ],
+  "history": [
+    {
+      "id": "alert-000000",
+      "kind": "rf-low",
+      "dimension": "RF",
+      "severity": "caution",
+      "label": "Low RF",
+      "detail": "RF −84 dBm on Marguerite (Stage left channel 1). Caution at −80 dBm.",
+      "channelId": "ch-marguerite",
+      "channelNumber": 1,
+      "channelName": "Marguerite",
+      "receiverId": "receiver-a",
+      "raisedAtUtc": "2026-09-23T00:41:10Z",
+      "acknowledgedAtUtc": "2026-09-23T00:41:30Z",
+      "acknowledgedBy": "Sam (A2)",
+      "clearedAtUtc": "2026-09-23T00:42:02Z",
+      "overlayExpiresAtUtc": "2026-09-23T00:46:10Z",
+      "rootCause": "body-worn antenna"
+    }
+  ]
+}

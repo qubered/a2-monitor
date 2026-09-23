@@ -88,7 +88,31 @@ describe("bounded Web Audio playback", () => {
     session.close();
   });
 
-  it("reports a sample-rate mismatch and closes the stream", () => {
+  it("asks for a context at the node's rate so the browser resamples", () => {
+    FakeSocket.instances = [];
+    const requested: Array<AudioContextOptions | undefined> = [];
+    class ResamplingContext extends FakeAudioContext {
+      constructor(options?: AudioContextOptions) {
+        super();
+        requested.push(options);
+        this.sampleRate = options?.sampleRate ?? 44100;
+      }
+    }
+    const updates: string[] = [];
+    createWebAudioPlaybackFactory({
+      AudioContext: ResamplingContext as unknown as new () => AudioContext,
+      WebSocket: FakeSocket as unknown as typeof WebSocket,
+    })({
+      channel: 0,
+      sampleRateHz: 48000,
+      onUpdate: ({ status }) => updates.push(status),
+    });
+
+    expect(requested[0]).toMatchObject({ sampleRate: 48000 });
+    expect(updates).toEqual(["connecting"]);
+  });
+
+  it("reports a sample-rate mismatch it cannot resample, and keeps that reason", () => {
     FakeSocket.instances = [];
     FakeAudioContext.sampleRate = 44100;
     const details: string[] = [];
@@ -100,9 +124,36 @@ describe("bounded Web Audio playback", () => {
       sampleRateHz: 48000,
       onUpdate: ({ detail }) => details.push(detail),
     });
+    FakeSocket.instances[0]?.onerror?.();
+    FakeSocket.instances[0]?.onclose?.();
 
+    expect(details).toHaveLength(1);
     expect(details[0]).toContain("48000 Hz");
     expect(details[0]).toContain("44100 Hz");
     expect(FakeSocket.instances[0]?.close).toHaveBeenCalledOnce();
+  });
+
+  it("never reports a late socket error from a session that was already closed", () => {
+    FakeSocket.instances = [];
+    FakeAudioContext.sampleRate = 48000;
+    const updates: string[] = [];
+    const session = createWebAudioPlaybackFactory({
+      AudioContext: FakeAudioContext as unknown as new () => AudioContext,
+      WebSocket: FakeSocket as unknown as typeof WebSocket,
+    })({
+      channel: 0,
+      sampleRateHz: 48000,
+      onUpdate: ({ status }) => updates.push(status),
+    });
+
+    session.close();
+    // Browsers fire error and close for a socket closed while connecting.
+    FakeSocket.instances[0]?.onerror?.();
+    FakeSocket.instances[0]?.onclose?.();
+    FakeSocket.instances[0]?.onmessage?.(
+      new MessageEvent("message", { data: new Float32Array([1]).buffer }),
+    );
+
+    expect(updates).toEqual(["connecting"]);
   });
 });

@@ -27,7 +27,29 @@ export type PlaybackFactory = (options: {
   onUpdate: (update: PlaybackUpdate) => void;
 }) => PlaybackSession;
 
-type AudioContextConstructor = new () => AudioContext;
+type AudioContextConstructor = new (
+  options?: AudioContextOptions,
+) => AudioContext;
+
+/**
+ * Asks for a context at the node's sample rate so the browser resamples to
+ * whatever the output hardware runs at (44.1 kHz on many Macs). Only when the
+ * browser refuses that rate does playback fall back to the default context,
+ * where a mismatch is reported instead of played at the wrong speed.
+ */
+function openContext(
+  AudioContextClass: AudioContextConstructor,
+  sampleRateHz: number,
+): AudioContext {
+  try {
+    return new AudioContextClass({
+      sampleRate: sampleRateHz,
+      latencyHint: "interactive",
+    });
+  } catch {
+    return new AudioContextClass();
+  }
+}
 
 export function websocketListenUrl(
   channel: number,
@@ -52,7 +74,7 @@ export function createWebAudioPlaybackFactory(dependencies?: {
       (window.AudioContext as unknown as AudioContextConstructor);
     const WebSocketClass = dependencies?.WebSocket ?? window.WebSocket;
     const queueCap = dependencies?.queueCapSamples ?? sampleRateHz / 4;
-    const context = new AudioContextClass();
+    const context = openContext(AudioContextClass, sampleRateHz);
     const gain = context.createGain();
     const processor = context.createScriptProcessor(1024, 0, 1);
     const queue: Float32Array[] = [];
@@ -61,6 +83,7 @@ export function createWebAudioPlaybackFactory(dependencies?: {
     let dimmed = false;
     let gainDb = DEFAULT_MONITOR_GAIN_DB;
     let closed = false;
+    let failed = false;
     let receivedAudio = false;
 
     const socket = new WebSocketClass(websocketListenUrl(channel));
@@ -75,6 +98,11 @@ export function createWebAudioPlaybackFactory(dependencies?: {
     }
 
     function fail(detail: string) {
+      // A session the caller already closed must never overwrite the state
+      // of the session that replaced it, and the first, specific reason is
+      // never replaced by the socket error its own shutdown causes.
+      if (closed || failed) return;
+      failed = true;
       onUpdate({ status: "error", detail });
       socket.close();
     }
@@ -100,12 +128,12 @@ export function createWebAudioPlaybackFactory(dependencies?: {
     };
     socket.onerror = () => fail("Audio stream connection failed.");
     socket.onclose = () => {
-      if (!closed && context.sampleRate === sampleRateHz) {
+      if (!closed && !failed && context.sampleRate === sampleRateHz) {
         onUpdate({ status: "error", detail: "Audio stream disconnected." });
       }
     };
     socket.onmessage = (event) => {
-      if (!(event.data instanceof ArrayBuffer)) return;
+      if (closed || !(event.data instanceof ArrayBuffer)) return;
       const view = new DataView(event.data);
       const samples = new Float32Array(Math.floor(view.byteLength / 4));
       for (let index = 0; index < samples.length; index += 1) {

@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { FolderKanban, Radio, SlidersHorizontal, Theater } from "lucide-react";
+import {
+  BellRing,
+  FolderKanban,
+  Radio,
+  SlidersHorizontal,
+  Theater,
+} from "lucide-react";
 import type {
   ProductionList,
   Showfile,
@@ -17,6 +23,7 @@ import {
   saveShowfile,
   type ObservedDevice,
 } from "./showfile";
+import { AlertsTab } from "./components/AlertsTab";
 import { ChannelsTab } from "./components/ChannelsTab";
 import { EmptyState } from "./components/EmptyState";
 import { ProductionsTab } from "./components/ProductionsTab";
@@ -55,12 +62,16 @@ export function App() {
     const controller = new AbortController();
     void Promise.all([
       loadShowfile(controller.signal),
-      loadObservedDevice(controller.signal),
+      // Manager edits the show whether or not an audio device is running;
+      // without one, the input list is unknown and existing patches are kept.
+      loadObservedDevice(controller.signal).catch(() => null),
       loadShureTelemetry(controller.signal).catch(() => null),
       loadProductions(controller.signal).catch(() => null),
     ])
       .then(([loaded, observed, receiver, productionList]) => {
-        const projected = projectShowfileToDevice(loaded, observed);
+        const projected = observed
+          ? projectShowfileToDevice(loaded, observed)
+          : loaded;
         const changed =
           loaded.device?.name !== projected.device?.name ||
           loaded.device?.channelCount !== projected.device?.channelCount ||
@@ -72,9 +83,11 @@ export function App() {
         setProductions(productionList);
         setSaveState(changed ? "dirty" : "saved");
         setMessage(
-          changed
-            ? "Observed inputs are ready. Save this showfile to bind their names."
-            : "Showfile loaded from this Mac.",
+          !observed
+            ? "Showfile loaded. The audio device is not running, so input patches are shown as saved and cannot be checked."
+            : changed
+              ? "Observed inputs are ready. Save this showfile to bind their names."
+              : "Showfile loaded from this Mac.",
         );
       })
       .catch((error: unknown) => {
@@ -313,6 +326,11 @@ export function App() {
                   ? ` · ${showfile.channels.length}`
                   : ""}
               </TabsTrigger>
+              <TabsTrigger value="alerts">
+                <BellRing aria-hidden="true" />
+                Alerts
+                {showfile.alertPolicy ? " · custom" : ""}
+              </TabsTrigger>
             </TabsList>
             <div className="min-w-0 flex-1">
               <TabsContent value="show">
@@ -347,6 +365,9 @@ export function App() {
                   device={device}
                   onChange={update}
                 />
+              </TabsContent>
+              <TabsContent value="alerts">
+                <AlertsTab showfile={showfile} onChange={update} />
               </TabsContent>
             </div>
           </Tabs>

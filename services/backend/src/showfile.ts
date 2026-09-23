@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import showfileSchema from "@rvlt/pulse-protocol/schema/showfile" with { type: "json" };
 import type { Showfile } from "@rvlt/pulse-protocol/http";
 import { createStrictAjv2020 } from "@rvlt/pulse-protocol/validation/strict-ajv";
@@ -35,8 +36,39 @@ export function trimShowfile(candidate: Showfile): Showfile {
     channels: candidate.channels.map((channel) => ({
       ...channel,
       name: channel.name.trim(),
+      ...(channel.performer === undefined
+        ? {}
+        : { performer: channel.performer?.trim() || null }),
     })),
   };
+}
+
+/**
+ * Gives every channel a stable identity. Alerts, level history and future
+ * assignment records key on this id, so it must survive renames, repatching
+ * and reordering. Existing ids are kept; only missing ones are minted.
+ */
+export function assignChannelIds(candidate: Showfile): Showfile {
+  const used = new Set(
+    candidate.channels.flatMap(({ id }) => (id === undefined ? [] : [id])),
+  );
+  return {
+    ...candidate,
+    channels: candidate.channels.map((channel) => {
+      if (channel.id !== undefined) return channel;
+      let id = `ch-${randomUUID().slice(0, 8)}`;
+      while (used.has(id)) id = `ch-${randomUUID().slice(0, 8)}`;
+      used.add(id);
+      return { id, ...channel };
+    }),
+  };
+}
+
+export function hasUniqueChannelIds(candidate: Showfile): boolean {
+  const ids = candidate.channels.flatMap(({ id }) =>
+    id === undefined ? [] : [id],
+  );
+  return new Set(ids).size === ids.length;
 }
 
 const DEFAULT_MONITOR = { battery: true, rf: true, audio: true };
@@ -51,10 +83,13 @@ export function migrateShowfile(value: unknown): unknown {
     ...record,
     shureReceivers: needsReceivers ? [] : record.shureReceivers,
     channels: Array.isArray(record.channels)
-      ? record.channels.map((channel) => {
+      ? record.channels.map((channel, position) => {
           if (typeof channel !== "object" || channel === null) return channel;
           const channelRecord = channel as Record<string, unknown>;
           return {
+            // Channels saved before ids existed get a position-derived id so
+            // repeated loads agree; the next save persists it unchanged.
+            id: channelRecord.id ?? `legacy-${position + 1}`,
             ...(needsReceivers
               ? {
                   ...channelRecord,

@@ -81,6 +81,8 @@ boundary; production evidence promotion remains deferred.
 - [Menu-bar shell and temporary Shure MVP host](decisions/0023-menu-bar-shell-and-shure-mvp-host.md)
 - [App window for device and network selection](decisions/0024-app-window-device-and-network-selection.md)
 - [Manager production library and inline photo upload](decisions/0025-manager-production-library-and-photo-upload.md)
+- [MVP live monitoring state and alert lifecycle](decisions/0027-mvp-live-monitoring-and-alerts.md)
+- [MVP shared mic checks and A1 fault reports](decisions/0028-mvp-shared-checks-and-fault-reports.md)
 
 ## Reference
 

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pulse.local/schema/v0/http/meter-frame.schema.json",
+  "title": "Audio node meter frame",
+  "description": "One text message on the audio node's /audio/v0/meters WebSocket. Each array holds one value per captured input, indexed by input. Levels are dBFS over the frame interval, floored at -120 for digital silence. Meters are measurements of captured audio, never samples.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sequence", "intervalMs", "peakDbfs", "rmsDbfs", "clipped"],
+  "properties": {
+    "schemaVersion": { "const": "0" },
+    "sequence": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "intervalMs": { "type": "integer", "minimum": 10, "maximum": 1000 },
+    "peakDbfs": {
+      "type": "array",
+      "maxItems": 256,
+      "items": { "type": "number", "minimum": -120, "maximum": 0 }
+    },
+    "rmsDbfs": {
+      "type": "array",
+      "maxItems": 256,
+      "items": { "type": "number", "minimum": -120, "maximum": 0 }
+    },
+    "clipped": {
+      "type": "array",
+      "maxItems": 256,
+      "items": { "type": "boolean" }
+    }
+  }
+}

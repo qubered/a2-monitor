@@ -42,6 +42,48 @@ const contracts = [
     parserName: "parseChannelLevelHistory",
     definitionNames: { sample: "ChannelLevelSample" },
   },
+  {
+    schemaPath: "schema/v0/http/node-levels.schema.json",
+    typeName: "NodeLevels",
+    parserName: "parseNodeLevels",
+    definitionNames: { inputLevel: "NodeInputLevel" },
+  },
+  {
+    schemaPath: "schema/v0/http/meter-frame.schema.json",
+    typeName: "MeterFrame",
+    parserName: "parseMeterFrame",
+  },
+  {
+    schemaPath: "schema/v0/http/live-state.schema.json",
+    typeName: "LiveState",
+    parserName: "parseLiveState",
+    definitionNames: {
+      verdict: "LiveStateVerdict",
+      availability: "LiveStateAvailability",
+      receiverUnit: "LiveStateReceiverUnit",
+      channel: "LiveStateChannel",
+      alert: "LiveAlert",
+      faultReport: "FaultReport",
+      reportedFault: "ReportedFault",
+    },
+  },
+  {
+    schemaPath: "schema/v0/http/alert-log.schema.json",
+    typeName: "AlertLog",
+    parserName: "parseAlertLog",
+    definitionNames: { loggedAlert: "LoggedAlert" },
+  },
+  {
+    schemaPath: "schema/v0/http/mic-checks.schema.json",
+    typeName: "MicChecks",
+    parserName: "parseMicChecks",
+    definitionNames: {
+      dimensionId: "MicCheckDimensionId",
+      dimensionRecord: "MicCheckDimensionRecord",
+      checkSubject: "MicCheckSubject",
+      channelCheck: "ChannelMicCheck",
+    },
+  },
 ];
 
 const outputPath = path.join(packageRoot, "generated/http-contracts.ts");

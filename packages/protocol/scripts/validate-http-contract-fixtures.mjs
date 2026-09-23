@@ -77,6 +77,61 @@ const contracts = [
       "fixtures/v0/http/incompatible/channel-level-history.unknown-field.json",
     ],
   },
+  {
+    name: "node-levels",
+    schema: "schema/v0/http/node-levels.schema.json",
+    accepted: [
+      "fixtures/v0/http/current/node-levels.valid.json",
+      "fixtures/v0/http/previous/node-levels.valid.json",
+    ],
+    rejected: [
+      "fixtures/v0/http/incompatible/node-levels.unknown-field.json",
+      "fixtures/v0/http/incompatible/node-levels.level-above-full-scale.json",
+    ],
+  },
+  {
+    name: "meter-frame",
+    schema: "schema/v0/http/meter-frame.schema.json",
+    accepted: [
+      "fixtures/v0/http/current/meter-frame.valid.json",
+      "fixtures/v0/http/previous/meter-frame.valid.json",
+    ],
+    rejected: ["fixtures/v0/http/incompatible/meter-frame.unknown-field.json"],
+  },
+  {
+    name: "live-state",
+    schema: "schema/v0/http/live-state.schema.json",
+    accepted: [
+      "fixtures/v0/http/current/live-state.valid.json",
+      "fixtures/v0/http/previous/live-state.valid.json",
+    ],
+    rejected: [
+      "fixtures/v0/http/incompatible/live-state.unknown-field.json",
+      "fixtures/v0/http/incompatible/live-state.unknown-alert-kind.json",
+      "fixtures/v0/http/incompatible/live-state.unknown-fault.json",
+    ],
+  },
+  {
+    name: "alert-log",
+    schema: "schema/v0/http/alert-log.schema.json",
+    accepted: [
+      "fixtures/v0/http/current/alert-log.valid.json",
+      "fixtures/v0/http/previous/alert-log.valid.json",
+    ],
+    rejected: ["fixtures/v0/http/incompatible/alert-log.unknown-field.json"],
+  },
+  {
+    name: "mic-checks",
+    schema: "schema/v0/http/mic-checks.schema.json",
+    accepted: [
+      "fixtures/v0/http/current/mic-checks.valid.json",
+      "fixtures/v0/http/previous/mic-checks.valid.json",
+    ],
+    rejected: [
+      "fixtures/v0/http/incompatible/mic-checks.unknown-field.json",
+      "fixtures/v0/http/incompatible/mic-checks.unknown-verdict.json",
+    ],
+  },
 ];
 
 async function readJson(relativePath) {

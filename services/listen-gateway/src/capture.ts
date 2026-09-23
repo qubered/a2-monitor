@@ -2,9 +2,18 @@ import { Buffer } from "node:buffer";
 import { spawn } from "node:child_process";
 import { EventEmitter } from "node:events";
 import type { Readable } from "node:stream";
+import {
+  createSimulatedCaptureProcess,
+  DEFAULT_SIMULATED_CHANNELS,
+  SIMULATED_DEVICE_NAME,
+} from "./simulated-capture.js";
 
 const HEADER_LIMIT_BYTES = 16 * 1024;
 export const MAX_FRAMES_PER_CHUNK = 480;
+/** Restart delays for the same explicitly named device. Capture never falls back to another device. */
+export const RESTART_DELAYS_MS = [1_000, 2_000, 4_000, 8_000, 15_000, 30_000];
+/** A capture that stays ready this long resets the restart backoff. */
+const STABLE_CAPTURE_MS = 30_000;
 
 export type DeviceChannel = {
   index: number;
@@ -60,6 +69,9 @@ export type CaptureManagerOptions = {
   device?: string;
   captureBinary?: string;
   processFactory?: CaptureProcessFactory;
+  simulatedChannels?: number;
+  restartDelaysMs?: readonly number[];
+  now?: () => number;
 };
 
 function defaultProcessFactory(
@@ -150,6 +162,12 @@ export class CaptureManager extends EventEmitter {
   private partialFrame = Buffer.alloc(0);
   private header: CaptureHeader | undefined;
   private stopping = false;
+  private readonly simulatedChannels: number;
+  private readonly restartDelaysMs: readonly number[];
+  private readonly now: () => number;
+  private restartAttempt = 0;
+  private restartTimer: NodeJS.Timeout | undefined;
+  private readyAtMs: number | undefined;
 
   constructor(options: CaptureManagerOptions) {
     super();
@@ -157,6 +175,10 @@ export class CaptureManager extends EventEmitter {
     this.captureBinary =
       options.captureBinary ?? "target/debug/pulse-device-capture";
     this.processFactory = options.processFactory ?? defaultProcessFactory;
+    this.simulatedChannels =
+      options.simulatedChannels ?? DEFAULT_SIMULATED_CHANNELS;
+    this.restartDelaysMs = options.restartDelaysMs ?? RESTART_DELAYS_MS;
+    this.now = options.now ?? Date.now;
     this.state = {
       schemaVersion: 0,
       status: "configuration-required",
@@ -168,8 +190,13 @@ export class CaptureManager extends EventEmitter {
     return this.state;
   }
 
+  /** True when the configured device is the built-in test signal, not a physical input. */
+  get simulated(): boolean {
+    return this.device === SIMULATED_DEVICE_NAME;
+  }
+
   start(): void {
-    if (this.child || this.stopping) return;
+    if (this.child || this.stopping || this.restartTimer) return;
     if (this.device === undefined || this.device.length === 0) return;
 
     this.setState({
@@ -177,27 +204,33 @@ export class CaptureManager extends EventEmitter {
       status: "starting",
       detail: `Opening configured device ${JSON.stringify(this.device)}.`,
     });
+    this.header = undefined;
+    this.headerBytes = Buffer.alloc(0);
+    this.partialFrame = Buffer.alloc(0);
 
+    let child: CaptureProcess;
     try {
-      this.child = this.processFactory(this.captureBinary, [
-        "--device",
-        this.device,
-      ]);
+      child = this.simulated
+        ? createSimulatedCaptureProcess(this.simulatedChannels)
+        : this.processFactory(this.captureBinary, ["--device", this.device]);
     } catch {
       this.fail("Capture process could not be started.");
       return;
     }
+    this.child = child;
 
-    this.child.stdout.on("data", (data: Buffer | Uint8Array | string) => {
+    child.stdout.on("data", (data: Buffer | Uint8Array | string) => {
+      if (this.child !== child) return;
       const bytes =
         typeof data === "string" ? Buffer.from(data) : Buffer.from(data);
       this.consume(bytes);
     });
-    this.child.onError(() => {
+    child.onError(() => {
+      if (this.child !== child) return;
       this.fail("Capture process could not be started.");
     });
-    this.child.onExit((code, signal) => {
-      if (this.stopping) return;
+    child.onExit((code, signal) => {
+      if (this.stopping || this.child !== child) return;
       const outcome = signal ?? (code === null ? "unknown" : String(code));
       this.fail(`Capture process exited (${outcome}).`);
     });
@@ -205,6 +238,8 @@ export class CaptureManager extends EventEmitter {
 
   stop(): void {
     this.stopping = true;
+    if (this.restartTimer) clearTimeout(this.restartTimer);
+    this.restartTimer = undefined;
     this.child?.stop();
     this.child = undefined;
   }
@@ -214,10 +249,39 @@ export class CaptureManager extends EventEmitter {
     this.emit("state", state);
   }
 
+  /** Stops the failed process and schedules a bounded restart of the same named device. */
   private fail(detail: string): void {
-    if (this.state.status === "error" || this.stopping) return;
-    this.setState({ schemaVersion: 0, status: "error", detail });
-    this.child?.stop();
+    if (this.stopping || this.restartTimer) return;
+    const child = this.child;
+    this.child = undefined;
+    child?.stop();
+
+    if (
+      this.readyAtMs !== undefined &&
+      this.now() - this.readyAtMs >= STABLE_CAPTURE_MS
+    ) {
+      this.restartAttempt = 0;
+    }
+    this.readyAtMs = undefined;
+    const delayMs =
+      this.restartDelaysMs[
+        Math.min(this.restartAttempt, this.restartDelaysMs.length - 1)
+      ];
+    this.restartAttempt += 1;
+    if (delayMs === undefined) {
+      this.setState({ schemaVersion: 0, status: "error", detail });
+      return;
+    }
+    this.setState({
+      schemaVersion: 0,
+      status: "error",
+      detail: `${detail} Retrying the same device in ${Math.round(delayMs / 1000)} s.`,
+    });
+    this.restartTimer = setTimeout(() => {
+      this.restartTimer = undefined;
+      this.start();
+    }, delayMs);
+    this.restartTimer.unref?.();
   }
 
   private consume(bytes: Buffer): void {
@@ -257,6 +321,7 @@ export class CaptureManager extends EventEmitter {
         { length: this.header.channelCount },
         (_, index) => ({ index, label: `Channel ${index + 1}` }),
       );
+      this.readyAtMs = this.now();
       this.setState({
         schemaVersion: 0,
         status: "ready",

@@ -1,6 +1,6 @@
 import type {
-  LiveChannel as Channel,
-  Verdict,
+  LiveStateChannel,
+  LiveStateVerdict as Verdict,
 } from "@rvlt/pulse-protocol/http";
 
 const verdictLabels: Record<Verdict, string> = {
@@ -27,7 +27,7 @@ function VerdictGlyph({ verdict }: { verdict: Verdict }) {
   return <path d="m4.5 11.5 7-7" />;
 }
 
-export function StatusStrip({ statuses }: Pick<Channel, "statuses">) {
+export function StatusStrip({ statuses }: Pick<LiveStateChannel, "statuses">) {
   const dimensions = [
     ["rf", "RF", "RF link"],
     ["audio", "Audio", "Audio"],

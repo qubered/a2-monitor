@@ -1,5 +1,5 @@
 import { Buffer } from "node:buffer";
-import { createServer, type Server } from "node:http";
+import { createServer, type Server, type ServerResponse } from "node:http";
 import type { Duplex } from "node:stream";
 import { URL } from "node:url";
 import { WebSocket, WebSocketServer } from "ws";
@@ -8,11 +8,16 @@ import {
   type CaptureAudioChunk,
   type CaptureManagerOptions,
 } from "./capture.js";
+import type { NodeLevels } from "@rvlt/pulse-protocol/http";
 import { handleWebRequest, type WebHostOptions } from "./web-host.js";
+import { LEVEL_WINDOW_MS, LevelMeter } from "./levels.js";
 import { ShureFleetMonitor } from "./shure.js";
 
 const MAX_CLIENTS = 32;
+const MAX_METER_CLIENTS = 64;
 const MAX_BUFFERED_BYTES = 256 * 1024;
+const MAX_METER_BUFFERED_BYTES = 64 * 1024;
+const MAX_DETAIL_LENGTH = 240;
 
 type Listener = {
   socket: WebSocket;
@@ -44,6 +49,23 @@ function parseChannel(url: URL): number | undefined {
   return Number.isSafeInteger(channel) ? channel : undefined;
 }
 
+function sendJson(response: ServerResponse, value: unknown): void {
+  const body = JSON.stringify(value);
+  response.writeHead(200, {
+    "Cache-Control": "no-store",
+    "Content-Type": "application/json; charset=utf-8",
+    "Content-Length": Buffer.byteLength(body),
+  });
+  response.end(body);
+}
+
+function boundedDetail(detail: string): string {
+  const trimmed = detail.trim() || "Capture state is unknown.";
+  return trimmed.length > MAX_DETAIL_LENGTH
+    ? `${trimmed.slice(0, MAX_DETAIL_LENGTH - 1)}…`
+    : trimmed;
+}
+
 function extractMono(chunk: CaptureAudioChunk, channel: number): Buffer {
   const sampleBytes = Float32Array.BYTES_PER_ELEMENT;
   const frameBytes = chunk.channelCount * sampleBytes;
@@ -66,6 +88,8 @@ export class ListenGateway {
   readonly server: Server;
   private readonly webSockets: WebSocketServer;
   private readonly listeners = new Set<Listener>();
+  private readonly meterSockets = new Set<WebSocket>();
+  private meter: LevelMeter | undefined;
 
   constructor(options: ListenGatewayOptions = {}) {
     this.capture =
@@ -74,6 +98,7 @@ export class ListenGateway {
         device: options.device,
         captureBinary: options.captureBinary,
         processFactory: options.processFactory,
+        simulatedChannels: options.simulatedChannels,
       });
     this.shure =
       options.shureMonitor ??
@@ -85,23 +110,15 @@ export class ListenGateway {
     });
     this.server = createServer((request, response) => {
       if (request.method === "GET" && request.url === "/audio/v0/device") {
-        const body = JSON.stringify(this.capture.getState());
-        response.writeHead(200, {
-          "Cache-Control": "no-store",
-          "Content-Type": "application/json; charset=utf-8",
-          "Content-Length": Buffer.byteLength(body),
-        });
-        response.end(body);
+        sendJson(response, this.capture.getState());
+        return;
+      }
+      if (request.method === "GET" && request.url === "/audio/v0/levels") {
+        sendJson(response, this.getLevels());
         return;
       }
       if (request.method === "GET" && request.url === "/audio/v0/shure") {
-        const body = JSON.stringify(this.shure.getState());
-        response.writeHead(200, {
-          "Cache-Control": "no-store",
-          "Content-Type": "application/json; charset=utf-8",
-          "Content-Length": Buffer.byteLength(body),
-        });
-        response.end(body);
+        sendJson(response, this.shure.getState());
         return;
       }
 
@@ -119,6 +136,21 @@ export class ListenGateway {
 
     this.server.on("upgrade", (request, socket, head) => {
       const url = new URL(request.url ?? "", "http://listen-gateway.local");
+      if (request.method === "GET" && url.pathname === "/audio/v0/meters") {
+        if (this.meterSockets.size >= MAX_METER_CLIENTS) {
+          rejectUpgrade(socket, 503, "Meter Capacity Reached");
+          return;
+        }
+        this.webSockets.handleUpgrade(request, socket, head, (webSocket) => {
+          this.meterSockets.add(webSocket);
+          webSocket.on("message", () => {
+            webSocket.close(1008, "meter stream is receive-only");
+          });
+          webSocket.on("close", () => this.meterSockets.delete(webSocket));
+          webSocket.on("error", () => this.meterSockets.delete(webSocket));
+        });
+        return;
+      }
       if (request.method !== "GET" || url.pathname !== "/audio/v0/listen") {
         rejectUpgrade(socket, 404, "Not Found");
         return;
@@ -152,6 +184,7 @@ export class ListenGateway {
     });
 
     this.capture.on("audio", (chunk: CaptureAudioChunk) => {
+      this.meter?.process(chunk);
       const monoByChannel = new Map<number, Buffer>();
       for (const listener of this.listeners) {
         if (
@@ -170,11 +203,62 @@ export class ListenGateway {
     });
 
     this.capture.on("state", () => {
-      if (this.capture.getState().status === "ready") return;
+      const state = this.capture.getState();
+      if (state.status === "ready") {
+        this.meter = new LevelMeter({
+          sampleRateHz: state.device.sampleRateHz,
+          channelCount: state.device.channelCount,
+        });
+        this.meter.on("frame", (frame) => this.broadcastMeters(frame));
+        return;
+      }
+      this.meter?.removeAllListeners();
+      this.meter = undefined;
       for (const listener of this.listeners) {
         listener.socket.close(1011, "audio capture unavailable");
       }
     });
+  }
+
+  /** The capture state plus the trailing per-input level summary the backend evaluates alerts from. */
+  getLevels(): NodeLevels {
+    const state = this.capture.getState();
+    return {
+      schemaVersion: "0",
+      generatedAtUtc: new Date().toISOString(),
+      capture: {
+        status: state.status,
+        detail: boundedDetail(state.detail),
+        device:
+          state.status === "ready"
+            ? {
+                name: state.device.name.slice(0, 512),
+                sampleRateHz: state.device.sampleRateHz,
+                channelCount: state.device.channelCount,
+                simulated: this.capture.simulated,
+              }
+            : null,
+      },
+      windowMs: LEVEL_WINDOW_MS,
+      inputs:
+        state.status === "ready" && this.meter
+          ? this.meter.summary(LEVEL_WINDOW_MS)
+          : [],
+    };
+  }
+
+  private broadcastMeters(frame: unknown): void {
+    if (this.meterSockets.size === 0) return;
+    const message = JSON.stringify(frame);
+    for (const socket of this.meterSockets) {
+      if (
+        socket.readyState !== WebSocket.OPEN ||
+        socket.bufferedAmount > MAX_METER_BUFFERED_BYTES
+      ) {
+        continue;
+      }
+      socket.send(message);
+    }
   }
 
   startCapture(): void {
@@ -187,6 +271,8 @@ export class ListenGateway {
     this.shure.close();
     for (const listener of this.listeners) listener.socket.terminate();
     this.listeners.clear();
+    for (const socket of this.meterSockets) socket.terminate();
+    this.meterSockets.clear();
     await new Promise<void>((resolve, reject) => {
       this.webSockets.close(() => {
         this.server.close((error) => (error ? reject(error) : resolve()));

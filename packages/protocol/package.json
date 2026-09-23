@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "check": "npm run generate:check && npm run validate:fixtures && npm run format && npm run test",
-    "format": "prettier --check \"generated/**/*.ts\" \"receivers/**/*.ts\" \"scripts/**/*.mjs\" \"tests/**/*.{mjs,ts}\" \"validation/*.{d.mts,mjs}\" \"*.json\"",
+    "format": "prettier --check \"generated/**/*.ts\" \"receivers/**/*.ts\" \"policy/**/*.ts\" \"scripts/**/*.mjs\" \"tests/**/*.{mjs,ts}\" \"validation/*.{d.mts,mjs}\" \"*.json\"",
     "generate": "node scripts/generate-http-contracts.mjs",
     "generate:check": "node scripts/generate-http-contracts.mjs --check",
     "test": "node --test tests/generator.test.mjs tests/strict-ajv.test.mjs && vitest run tests/http-contracts.test.ts",
@@ -14,12 +14,18 @@
   "exports": {
     "./http": "./generated/http-contracts.ts",
     "./shure-models": "./receivers/shure-models.ts",
+    "./alert-policy": "./policy/alert-policy.ts",
     "./schema/health-response": "./schema/v0/http/health-response.schema.json",
     "./schema/live-snapshot-response": "./schema/v0/http/live-snapshot-response.schema.json",
     "./schema/showfile": "./schema/v0/http/showfile.schema.json",
     "./schema/shure-telemetry": "./schema/v0/http/shure-telemetry.schema.json",
     "./schema/production-list": "./schema/v0/http/production-list.schema.json",
     "./schema/channel-level-history": "./schema/v0/http/channel-level-history.schema.json",
+    "./schema/node-levels": "./schema/v0/http/node-levels.schema.json",
+    "./schema/meter-frame": "./schema/v0/http/meter-frame.schema.json",
+    "./schema/live-state": "./schema/v0/http/live-state.schema.json",
+    "./schema/alert-log": "./schema/v0/http/alert-log.schema.json",
+    "./schema/mic-checks": "./schema/v0/http/mic-checks.schema.json",
     "./validation/strict-ajv": {
       "types": "./validation/strict-ajv.d.mts",
       "default": "./validation/strict-ajv.mjs"

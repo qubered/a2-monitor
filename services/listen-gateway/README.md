@@ -5,6 +5,22 @@ Development-only direct audio-node transport for the local MVP. It launches
 `GET /audio/v0/device`, and streams one selected mono Float32LE input at
 `/audio/v0/listen?channel=N` over WebSocket.
 
+It also meters every captured input outside the real-time callback (ADR 0027):
+`GET /audio/v0/levels` returns capture state plus each input's peak, RMS and
+clipped-sample count over the trailing second (`node-levels` contract), and
+`/audio/v0/meters` is a receive-only WebSocket of 20 Hz `meter-frame` messages
+for Live's card traces. If the capture process exits, the gateway restarts the
+same named device with bounded backoff (1, 2, 4, 8, 15 then 30 s); it never
+falls back to another device.
+
+The reserved device name `Pulse test signal` selects a built-in simulated
+source instead of a physical input (`A2_SIMULATED_CHANNELS`, default 8): speech,
+a steady tone, room noise, periodic clipping, digital silence and a dropout.
+It is reported as `simulated: true` and is never evidence about hardware.
+`npm run simulate:shure` starts a development AD4Q double on
+`127.0.0.1:2202` with scripted battery drain, RF dips, interference, mute and
+transmitter loss.
+
 The gateway is deliberately outside the management backend. It has no release
 authorization, encryption, jitter recovery or performance claim and must not be
 exposed to an untrusted network. ADR 0021 records its temporary scope.

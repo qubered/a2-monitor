@@ -2,21 +2,54 @@
   "schemaVersion": "0",
   "revision": 3,
   "updatedAtUtc": "2026-09-21T08:00:00Z",
-  "show": { "name": "The Winter Circus" },
-  "device": { "name": "USB Interface", "channelCount": 2 },
+  "show": {
+    "name": "The Winter Circus"
+  },
+  "device": {
+    "name": "USB Interface",
+    "channelCount": 2
+  },
   "shureReceivers": [
-    { "id": "receiver-a", "name": "Stage left", "host": "192.0.2.10", "model": "ULXD4D", "channelCount": 2 }
+    {
+      "id": "receiver-a",
+      "name": "Stage left",
+      "host": "192.0.2.10",
+      "model": "ULXD4D",
+      "channelCount": 2
+    }
   ],
   "channels": [
     {
+      "id": "ch-marguerite",
       "inputIndex": 0,
       "name": "Marguerite",
       "shureReceiverId": "receiver-a",
       "shureChannelIndex": 0,
       "micType": "headset",
       "imageUrl": "https://example.com/headshots/marguerite.jpg",
-      "monitor": { "battery": true, "rf": true, "audio": true }
+      "monitor": {
+        "battery": true,
+        "rf": true,
+        "audio": true
+      },
+      "performer": "Eleanor Vance"
     },
-    { "inputIndex": 1, "name": "Talkback" }
-  ]
+    {
+      "id": "ch-talkback",
+      "inputIndex": 1,
+      "name": "Talkback"
+    }
+  ],
+  "alertPolicy": {
+    "batteryCautionPercent": 25,
+    "batteryCriticalPercent": 10,
+    "rfCautionDbm": -80,
+    "rfCriticalDbm": -90,
+    "qualityCautionPercent": 40,
+    "qualityCriticalPercent": 20,
+    "silenceFloorDbfs": -70,
+    "silenceAfterSeconds": 30,
+    "clipAlerts": true,
+    "overlayExpiryMinutes": 5
+  }
 }

@@ -68,24 +68,46 @@ loop, but it is not an operating-system crash or privilege boundary.
 
 The running local MVP exposes:
 
-- `GET /healthz` reports the backend process health contract; and
-- `GET /api/v1/live/snapshot` returns a bounded, explicitly fabricated Live
-  snapshot for development;
-- `GET /api/v1/showfile` returns one revisioned local MVP showfile; and
-- `PUT /api/v1/showfile` validates and saves it with optimistic revision
-  conflict detection.
+- `GET /healthz` reports the backend process health contract;
+- `GET /api/v1/showfile` and `PUT /api/v1/showfile` read and save one
+  revisioned local MVP showfile with optimistic conflict detection; saves mint
+  stable channel ids and reject duplicate ids or an incoherent alert policy;
+- `GET/POST/DELETE /api/v1/productions…` manage the local production library;
+- `GET /api/v1/live/state` returns the shared monitoring state and
+  `GET /api/v1/live/events` streams it as server-sent `state` events;
+- `GET /api/v1/alerts` returns active alerts and bounded cleared history, and
+  `POST /api/v1/alerts/:id/acknowledge` records who saw an alert;
+- `GET /api/v1/live/history` returns per-second observed audio, RF, link
+  quality and battery samples for one channel;
+- `GET /api/v1/channels/:id/image` serves a channel's showfile photo;
+- `GET /api/v1/checks`, `PUT /api/v1/checks/:channelId/dimensions/:dimensionId`
+  and `DELETE /api/v1/checks[/:channelId]` share guided mic checks (ADR 0028);
+- `POST /api/v1/reports` and `POST /api/v1/reports/:id/actions` file and move
+  A1 fault reports through their task/incident lifecycle (ADR 0028); and
+- `GET /api/v1/live/snapshot` still returns the fabricated development
+  snapshot, which Live no longer reads.
 
-Both responses use the Draft 2020-12 schemas and shared validator runtime in
+The live monitor (ADR 0027) polls the audio node's `GET /audio/v0/levels` and
+`GET /audio/v0/shure` once a second from `A2_NODE_ORIGIN` (default
+`http://127.0.0.1:3001`), evaluates the active showfile's alert policy, advances
+the alert lifecycle and publishes one validated state. It never receives PCM.
+Active alerts and 1,000 cleared alerts persist to `alerts.json` in
+`A2_DATA_DIR`; mic checks and fault reports persist beside them in
+`checks.json` and `reports.json`. A request that fails its body or parameter
+schema answers `400 { "error": "invalid-request" }`.
+
+All responses use the Draft 2020-12 schemas and shared validator runtime in
 `packages/protocol`. Fastify validates both the supplied response object and the
-exact value produced by ordinary `JSON.stringify` serialization. Undeclared,
-inherited-only, coerced, defaulted, removed, or post-validation transformed
-response data fails closed.
+exact value produced by ordinary `JSON.stringify` serialization; the live state
+is serialized once through the same strict validator and shared by every
+request and stream. Undeclared, inherited-only, coerced, defaulted, removed, or
+post-validation transformed response data fails closed.
 
 The standalone process handles `SIGINT` and `SIGTERM` by closing Fastify once,
-which stops accepting new requests and waits for Fastify's ordinary close
-hooks. Signal handlers are installed only after listen succeeds and are removed
-after shutdown. This is process-local graceful shutdown only: no backend supervisor,
-storage worker, database queue or storage-drain protocol exists yet.
+which ends open event streams, stops accepting new requests and waits for
+Fastify's ordinary close hooks. This is process-local graceful shutdown only: no
+backend supervisor, storage worker, database queue or storage-drain protocol
+exists yet.
 
 Run the backend on `http://127.0.0.1:3000` with:
 
@@ -93,8 +115,8 @@ Run the backend on `http://127.0.0.1:3000` with:
 npm run dev --workspace @rvlt/pulse-backend
 ```
 
-The macOS MVP persists the showfile as an atomically replaced JSON file under
-its application-support directory. This scaffold has no production database,
-authorization, WebSocket, node connection, immutable activation or real
-telemetry. It does not establish a hardware, latency, security, receiver, or
-operator result.
+The macOS MVP persists the showfile and alert state as atomically replaced JSON
+files under its application-support directory. This scaffold has no production
+database, authorization, authenticated node connection or immutable activation.
+It does not establish a hardware, latency, security, receiver, or operator
+result.

@@ -67,43 +67,53 @@ mutations or media, and it does not change the foreground-only contract.
 
 ## Current implementation
 
-The first runnable slice is the A2 channel grid. It currently provides:
+Live renders one shared monitoring state from the backend (ADR 0027):
 
-- a responsive Paper/dark/system-themed channel grid using shared design
-  tokens and locally bundled project fonts;
-- fabricated wireless and wired sources with separate RF, audio, battery and
-  check verdicts, including unknown and not-applicable states;
-- the required two-step alert/selection behavior: the first press acknowledges an
-  active alert and the next press selects the channel;
-- local filters, a capability-honest detail surface and persistent theme choice;
-- a resumable eight-dimension guided mic check with named A2/A1 verdicts and
-  per-channel device-local progress;
-- device-local persistence for selected source and alert acknowledgements;
-- automatic five-second snapshot refresh while the backend remains available;
-- a fixed monitor-output bar that starts muted and keeps mute and dim visible;
-- neutral local source selection labelled `Selected`, without claiming that
-  fabricated state is confirmed listening; and
-- unit-level interaction coverage plus verified desktop and iPad portrait
-  rendering against the canonical design reference;
-- a typed HTTP snapshot adapter which rejects unknown or malformed state; and
-- explicit waiting, backend-unavailable, invalid-response and reconnect states
-  which never replace unknown data with zero or healthy values.
+- channel cards from the active showfile with the real headshot when Manager
+  has one, a 10-second meter trace drawn from the node's 20 Hz meter stream
+  (present, silent, gap and stale drawn differently), and the four-cell
+  RF · Audio · Battery · Check status strip computed by the backend;
+- the alert veil from backend alerts: pressing it acknowledges that alert as
+  the operator named on this device, for every Live client; caution overlays
+  show an expiry countdown and expire while still counting as outstanding;
+  critical overlays hold until acknowledged, and a cleared fault takes its
+  alert with it;
+- channels with an active critical alert pinned first regardless of filter,
+  with grid order held for a moment under a touch so a card never moves under
+  a finger;
+- a header counter of outstanding and critical alerts that opens a show-wide
+  exceptions sheet with recently cleared history, and an assertive live-region
+  announcement for each newly raised critical alert;
+- a capability-driven detail surface: captured peak/RMS and silence duration,
+  RF level and link quality kept separate, antenna, interference, transmitter,
+  battery, receiver, frequency and telemetry age, with stale and unknown values
+  labelled as such;
+- a player with the selected input's live peak and an honest history cursor
+  over the backend's per-second level history (the cursor never implies audio
+  replay, which does not exist yet);
+- explicit waiting, reconnecting, backend-offline, node-unreachable,
+  capture-failed, receiver-stale and meter-reconnecting states; with the
+  backend offline, cards keep last-known identity, every verdict becomes
+  unknown and listening continues through the node;
+- the resumable eight-dimension guided mic check, shared through the backend
+  so every device sees the same attributed verdicts and the Check cell is real
+  (a changed patch or performer makes an old check stale);
+- an A1 role (set per device on the name chip) that turns the grid into the
+  mix-confidence surface: no listen control; pressing a channel opens the
+  report sheet (nine faults in the A1's words, multi-select, two presses, a
+  ten-second undo and "Mark urgent — it is on air now"); the bottom bar lists
+  open reports and who has them, plus captured-audio check requests;
+- on the A2 side, a persistent, silent, dismissible banner for every unclaimed
+  report, a pulsing outline and Reported badge on the card until claimed, and
+  claim and mark-fixed actions in the banner, detail and exceptions sheet;
+  incidents wait for the A1 to confirm the fix; and
+- muted-start listening through the temporary PCM path (ADR 0021). The Web
+  Audio context runs at the node's rate so browsers on 44.1 kHz output resample
+  instead of refusing to play. Input changes keep mute, dim and gain; gain runs
+  from `-60 dB` to `+12 dB` and dim adds `-12 dB`.
 
-The Live grid reads the Phase 0T snapshot route through Vite's local backend
-proxy. That backend response remains fabricated and has no audio-node or receiver
-connection. Independently, when the temporary local listen gateway is configured,
-Live shows the physical device's observed input count, keeps identity unknown,
-and receives selected-channel audio directly from the node gateway. Fabricated
-data is labelled in the header, missing headshots render as missing, and no
-support or performance claim follows from this build.
-
-When Manager has saved the local MVP showfile for the exact observed device,
-Live renders its ordered logical channels and listens through their physical
-input patches. Unpatched channels stay visible but cannot listen. Optional Shure
-channel patches add normalized battery status; receiver loss never stops audio.
-Listening starts muted. After the operator unmutes, input changes preserve mute,
-dim and gain state. Monitor gain is adjustable from `-60 dB` through `+12 dB`;
-dim adds `-12 dB` attenuation to the selected value.
+A simulated test signal is labelled `Simulated test signal` in the header at
+every width. No support, performance or operator claim follows from this build.
 
 ## Run locally
 
@@ -115,7 +125,10 @@ npm run devices
 A2_AUDIO_DEVICE="Exact device name" npm run dev
 ```
 
-Vite serves the app at `http://127.0.0.1:4173`. Component checks are:
+Without hardware, `npm run dev:simulate` runs the same stack against the
+built-in test signal and a simulated Shure AD4Q, with a seeded demo show in
+`data/simulated`. Vite serves Live at `http://127.0.0.1:4173` and Manager at
+`http://127.0.0.1:4174/manager/`. Component checks are:
 
 ```sh
 npm run check --workspace @rvlt/pulse-live
@@ -132,11 +145,10 @@ npm run check --workspace @rvlt/pulse-live
 - [x] Live snapshot loading, explicit waiting/offline/error states and reconnect
 - [x] resumable guided mic-check prototype with explicit per-dimension verdicts
 - [x] local physical-device input selection and muted direct PCM listening MVP
-- [ ] external meter store and bounded rendering path
-- [ ] audio-node media/control integration and real listening
-- [ ] A1 mix-confidence, server-synchronized mic check and replay surfaces
-
-The next application slice should add the independent Manager shell. The next
-Live data slice should add bounded subscription/delta handling only after its
-public contract is claimed separately; this snapshot remains fabricated until
-node/backend state exists.
+- [x] external meter store and bounded canvas rendering path
+- [x] shared backend state over server-sent events, backend-owned alerts and
+  acknowledgements, exceptions sheet
+- [ ] audio-node WebRTC media/control integration
+- [x] server-synchronized mic check with the A1 captured-audio verdict
+- [x] A1 mix-confidence surface and fault report → A2 task/incident loop
+- [ ] audio replay

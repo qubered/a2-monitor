@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pulse.local/schema/v0/http/node-levels.schema.json",
+  "title": "Audio node capture state and input level summary",
+  "description": "Served by the audio node at GET /audio/v0/levels. Levels are the peak and RMS of each captured input over the trailing window, in dBFS, floored at -120 for digital silence and ceilinged at 0. A null level means no audio was captured for that input inside the window.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "generatedAtUtc", "capture", "windowMs", "inputs"],
+  "properties": {
+    "schemaVersion": { "const": "0" },
+    "generatedAtUtc": { "type": "string", "format": "date-time" },
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "detail", "device"],
+      "properties": {
+        "status": {
+          "enum": ["ready", "configuration-required", "starting", "error"]
+        },
+        "detail": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "device": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["name", "sampleRateHz", "channelCount", "simulated"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1, "maxLength": 512 },
+            "sampleRateHz": {
+              "type": "integer",
+              "minimum": 8000,
+              "maximum": 384000
+            },
+            "channelCount": { "type": "integer", "minimum": 1, "maximum": 256 },
+            "simulated": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "windowMs": { "type": "integer", "minimum": 100, "maximum": 10000 },
+    "inputs": {
+      "type": "array",
+      "maxItems": 256,
+      "items": { "$ref": "#/$defs/inputLevel" }
+    }
+  },
+  "$defs": {
+    "inputLevel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index", "peakDbfs", "rmsDbfs", "clippedSamples"],
+      "properties": {
+        "index": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "peakDbfs": { "type": ["number", "null"], "minimum": -120, "maximum": 0 },
+        "rmsDbfs": { "type": ["number", "null"], "minimum": -120, "maximum": 0 },
+        "clippedSamples": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000000
+        }
+      }
+    }
+  }
+}

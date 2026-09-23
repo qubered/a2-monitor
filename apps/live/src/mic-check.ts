@@ -1,3 +1,9 @@
+import {
+  parseMicChecks,
+  type MicCheckDimensionId,
+  type MicChecks,
+} from "@rvlt/pulse-protocol/http";
+
 export type MicCheckVerdict = "pass" | "fail" | "waiting";
 
 export type MicCheckRecord = {
@@ -63,46 +69,61 @@ export const micCheckDimensions = [
   },
 ] as const;
 
-function storageKey(showName: string, channelId: string) {
-  return `pulse-mic-check:${showName}:${channelId}`;
-}
-
-export function loadMicCheck(
-  showName: string,
-  channelId: string,
-): MicCheckProgress {
-  try {
-    const value = JSON.parse(
-      window.localStorage.getItem(storageKey(showName, channelId)) ?? "{}",
-    ) as unknown;
-    if (value === null || typeof value !== "object" || Array.isArray(value)) {
-      return {};
-    }
-    return Object.fromEntries(
-      Object.entries(value).filter(([, record]) => {
-        if (record === null || typeof record !== "object") return false;
-        const candidate = record as Partial<MicCheckRecord>;
-        return (
-          (candidate.verdict === "pass" ||
-            candidate.verdict === "fail" ||
-            candidate.verdict === "waiting") &&
-          typeof candidate.by === "string" &&
-          typeof candidate.atUtc === "string"
-        );
-      }),
-    );
-  } catch {
-    return {};
+/** Loads every shared check; the backend marks a check stale when its subject changed. */
+export async function loadChecks(
+  fetchResponse: typeof fetch = fetch,
+  signal?: AbortSignal,
+): Promise<MicChecks> {
+  const response = await fetchResponse("/api/v1/checks", { signal });
+  if (!response.ok) {
+    throw new Error(`Checks could not be loaded (HTTP ${response.status}).`);
   }
+  return parseMicChecks(await response.json());
 }
 
-export function saveMicCheck(
-  showName: string,
+/** Records one verdict for every Pulse device and returns the updated checks. */
+export async function recordCheck(
   channelId: string,
-  progress: MicCheckProgress,
-) {
-  window.localStorage.setItem(
-    storageKey(showName, channelId),
-    JSON.stringify(progress),
+  dimensionId: MicCheckDimensionId,
+  verdict: MicCheckVerdict,
+  by: string,
+  reason: string | null = null,
+  fetchResponse: typeof fetch = fetch,
+): Promise<MicChecks> {
+  const response = await fetchResponse(
+    `/api/v1/checks/${encodeURIComponent(channelId)}/dimensions/${dimensionId}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ verdict, by, reason }),
+    },
   );
+  if (!response.ok) {
+    throw new Error(
+      response.status === 404
+        ? "This channel is no longer in the show."
+        : `The verdict was not recorded (HTTP ${response.status}).`,
+    );
+  }
+  return parseMicChecks(await response.json());
+}
+
+/** One channel's shared progress, keyed by dimension. */
+export function progressFor(
+  checks: MicChecks,
+  channelId: string,
+): { progress: MicCheckProgress; stale: boolean } {
+  const check = checks.checks.find((item) => item.channelId === channelId);
+  if (!check) return { progress: {}, stale: false };
+  return {
+    stale: check.stale,
+    progress: check.stale
+      ? {}
+      : Object.fromEntries(
+          check.dimensions.map(({ id, verdict, by, atUtc }) => [
+            id,
+            { verdict, by, atUtc },
+          ]),
+        ),
+  };
 }

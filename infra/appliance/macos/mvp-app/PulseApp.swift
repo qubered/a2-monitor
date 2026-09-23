@@ -1,6 +1,8 @@
 import AppKit
 
 private let listenBase = "http://127.0.0.1:4173"
+/// Reserved name the listen gateway maps to its built-in simulated source.
+private let simulatedDevice = "Pulse test signal"
 private let deviceDefaultsKey = "PulseAudioDevice"
 private let hostDefaultsKey = "PulseBindHost"
 
@@ -164,15 +166,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.deviceButton.removeAllItems()
-                self.deviceButton.addItems(withTitles: devices)
-                if let savedDevice, devices.contains(savedDevice) {
+                // Physical inputs first; the simulated source is always last so
+                // it is never the accidental default for a real show.
+                self.deviceButton.addItems(withTitles: devices + [simulatedDevice])
+                if let savedDevice, devices.contains(savedDevice) || savedDevice == simulatedDevice {
                     self.deviceButton.selectItem(withTitle: savedDevice)
                 }
                 self.deviceButton.isEnabled = true
                 self.refreshButton.isEnabled = true
-                self.startStopButton.isEnabled = self.launcher != nil || !devices.isEmpty
+                self.startStopButton.isEnabled = true
                 if devices.isEmpty {
-                    self.statusLabel.stringValue = "No 48 kHz input devices found"
+                    self.statusLabel.stringValue = "No 48 kHz input devices found. The simulated test signal is available."
                 }
             }
         }

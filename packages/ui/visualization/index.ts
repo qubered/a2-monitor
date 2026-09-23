@@ -4,6 +4,7 @@ export {
   TIMELINE_WINDOW_OPTIONS_MS,
   type MultiLaneTimelineProps,
   type TimelineLane,
+  type TimelineMark,
 } from "./MultiLaneTimeline.js";
 export {
   drawTrace,

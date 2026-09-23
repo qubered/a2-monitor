@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pulse.local/schema/v0/http/alert-log.schema.json",
+  "title": "Alert log",
+  "description": "Served at GET /api/v1/alerts: every active alert plus bounded history of cleared alerts, newest first. Each record keeps the channel identity captured when it was raised, so later showfile edits do not rewrite history.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "generatedAtUtc",
+    "active",
+    "history"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "0"
+    },
+    "generatedAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "active": {
+      "type": "array",
+      "maxItems": 512,
+      "items": {
+        "$ref": "#/$defs/loggedAlert"
+      }
+    },
+    "history": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": {
+        "$ref": "#/$defs/loggedAlert"
+      }
+    }
+  },
+  "$defs": {
+    "loggedAlert": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "dimension",
+        "severity",
+        "label",
+        "detail",
+        "channelId",
+        "channelNumber",
+        "channelName",
+        "receiverId",
+        "raisedAtUtc",
+        "acknowledgedAtUtc",
+        "acknowledgedBy",
+        "clearedAtUtc",
+        "overlayExpiresAtUtc"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "kind": {
+          "enum": [
+            "battery-low",
+            "battery-critical",
+            "rf-low",
+            "rf-lost",
+            "link-quality-low",
+            "interference",
+            "encryption-mismatch",
+            "tx-muted",
+            "no-audio",
+            "clipping",
+            "receiver-offline",
+            "capture-error",
+            "node-unreachable"
+          ]
+        },
+        "dimension": {
+          "enum": [
+            "RF",
+            "Audio",
+            "Battery",
+            "System"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "critical",
+            "caution"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "channelId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "channelNumber": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 999
+        },
+        "channelName": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "receiverId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "raisedAtUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "acknowledgedAtUtc": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "acknowledgedBy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "clearedAtUtc": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "overlayExpiresAtUtc": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

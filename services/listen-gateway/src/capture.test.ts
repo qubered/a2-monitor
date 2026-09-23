@@ -1,12 +1,17 @@
 import { Buffer } from "node:buffer";
 import { PassThrough } from "node:stream";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CaptureManager,
   MAX_FRAMES_PER_CHUNK,
   type CaptureAudioChunk,
   type CaptureProcess,
 } from "./capture.js";
+import { SIMULATED_DEVICE_NAME } from "./simulated-capture.js";
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 class FakeCaptureProcess implements CaptureProcess {
   readonly stdout = new PassThrough();
@@ -122,6 +127,7 @@ describe("CaptureManager", () => {
     const capture = new CaptureManager({
       device: "Test Device",
       processFactory: () => child,
+      restartDelaysMs: [],
     });
     capture.start();
 
@@ -135,5 +141,90 @@ describe("CaptureManager", () => {
       detail: "Capture header fields do not match schema version 0.",
     });
     expect(child.stop).toHaveBeenCalledOnce();
+  });
+
+  it("restarts the same named device with backoff after the process exits", () => {
+    vi.useFakeTimers();
+    const children = [new FakeCaptureProcess(), new FakeCaptureProcess()];
+    const factory = vi.fn(() => children[factory.mock.calls.length - 1]!);
+    const capture = new CaptureManager({
+      device: "Dante Virtual Soundcard",
+      captureBinary: "/opt/a2/device-capture",
+      processFactory: factory,
+      restartDelaysMs: [1_000, 5_000],
+    });
+
+    capture.start();
+    children[0]!.exit(1);
+    expect(capture.getState()).toEqual({
+      schemaVersion: 0,
+      status: "error",
+      detail: "Capture process exited (1). Retrying the same device in 1 s.",
+    });
+    expect(children[0]!.stop).toHaveBeenCalledOnce();
+
+    vi.advanceTimersByTime(999);
+    expect(factory).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(1);
+    expect(factory).toHaveBeenCalledTimes(2);
+    expect(factory).toHaveBeenLastCalledWith("/opt/a2/device-capture", [
+      "--device",
+      "Dante Virtual Soundcard",
+    ]);
+    expect(capture.getState().status).toBe("starting");
+
+    children[1]!.stdout.write(
+      '{"schemaVersion":0,"deviceName":"DVS","sampleRateHz":48000,"channelCount":2}\n',
+    );
+    expect(capture.getState().status).toBe("ready");
+
+    // A late exit from the replaced process must not fail the new capture.
+    children[0]!.exit(1);
+    expect(capture.getState().status).toBe("ready");
+    capture.stop();
+  });
+
+  it("does not restart after an explicit stop", () => {
+    vi.useFakeTimers();
+    const child = new FakeCaptureProcess();
+    const factory = vi.fn(() => child);
+    const capture = new CaptureManager({
+      device: "Test Device",
+      processFactory: factory,
+      restartDelaysMs: [1_000],
+    });
+    capture.start();
+    child.exit(1);
+    capture.stop();
+    vi.advanceTimersByTime(60_000);
+    expect(factory).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens the built-in test signal for the reserved device name without spawning", async () => {
+    const factory = vi.fn();
+    const capture = new CaptureManager({
+      device: SIMULATED_DEVICE_NAME,
+      processFactory: factory,
+      simulatedChannels: 3,
+    });
+    const chunk = new Promise<CaptureAudioChunk>((resolve) =>
+      capture.once("audio", resolve),
+    );
+    capture.start();
+    const audio = await chunk;
+    capture.stop();
+
+    expect(factory).not.toHaveBeenCalled();
+    expect(capture.simulated).toBe(true);
+    expect(capture.getState()).toMatchObject({
+      status: "ready",
+      device: {
+        name: SIMULATED_DEVICE_NAME,
+        sampleRateHz: 48_000,
+        channelCount: 3,
+      },
+    });
+    expect(audio.channelCount).toBe(3);
+    expect(audio.frameCount).toBeGreaterThan(0);
   });
 });
