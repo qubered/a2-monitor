@@ -1,127 +1,70 @@
-import { Buffer } from "node:buffer";
 import { parseMeterFrame, type MeterFrame } from "@rvlt/pulse-protocol/http";
 import { describe, expect, it } from "vitest";
-import { LEVEL_FLOOR_DBFS, LevelMeter, toDbfs } from "./levels.js";
+import { LEVEL_FLOOR_DBFS, LevelBank, type MeterReading } from "./levels.js";
 
-function chunkOf(frames: number[][], byteOffset = 0) {
-  const channelCount = frames[0]!.length;
-  const bytes = Buffer.alloc(byteOffset + frames.length * channelCount * 4);
-  frames.forEach((frame, frameIndex) =>
-    frame.forEach((sample, channel) =>
-      bytes.writeFloatLE(
-        sample,
-        byteOffset + (frameIndex * channelCount + channel) * 4,
-      ),
-    ),
-  );
-  return {
-    interleaved: bytes.subarray(byteOffset),
-    frameCount: frames.length,
-    channelCount,
-  };
+function reading(
+  sequence: number,
+  peakDbfs: number[],
+  rmsDbfs: number[],
+  clippedSamples = peakDbfs.map(() => 0),
+): MeterReading {
+  return { sequence, intervalMs: 50, peakDbfs, rmsDbfs, clippedSamples };
 }
 
-describe("toDbfs", () => {
-  it("floors digital silence instead of reporting -Infinity", () => {
-    expect(toDbfs(0)).toBe(LEVEL_FLOOR_DBFS);
-    expect(toDbfs(1e-9)).toBe(LEVEL_FLOOR_DBFS);
-  });
-
-  it("rounds to a tenth of a dB and never exceeds full scale", () => {
-    expect(toDbfs(0.5)).toBe(-6);
-    expect(toDbfs(1.8)).toBe(0);
-  });
-});
-
-describe("LevelMeter", () => {
-  it("publishes one contract-valid frame per interval with per-input peak, RMS and clipping", () => {
-    let clock = 1_000;
-    const meter = new LevelMeter({
-      sampleRateHz: 400,
-      channelCount: 3,
-      intervalMs: 10,
-      now: () => clock,
-    });
+describe("LevelBank", () => {
+  it("relays each worker reading as a contract-valid meter frame", () => {
+    const bank = new LevelBank({ channelCount: 2, now: () => 0 });
     const frames: MeterFrame[] = [];
-    meter.on("frame", (frame) => frames.push(parseMeterFrame(frame)));
+    bank.on("frame", (frame) => frames.push(parseMeterFrame(frame)));
 
-    meter.process(
-      chunkOf([
-        [0.5, 0, 1],
-        [-0.5, 0, -1],
-        [0.5, 0, 0.2],
-        [-0.5, 0, 0.2],
-        [0.1, 0, 0],
-      ]),
-    );
+    bank.ingest(reading(7, [-6, -120], [-9, -120], [3, 0]));
 
-    expect(frames).toHaveLength(1);
-    expect(frames[0]).toEqual({
-      schemaVersion: "0",
-      sequence: 0,
-      intervalMs: 10,
-      peakDbfs: [-6, LEVEL_FLOOR_DBFS, 0],
-      rmsDbfs: [-6, LEVEL_FLOOR_DBFS, toDbfs(Math.sqrt((1 + 1 + 0.08) / 4))],
-      clipped: [false, false, true],
-    });
-
-    clock += 10;
-    meter.process(
-      chunkOf([
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-      ]),
-    );
-    expect(frames).toHaveLength(2);
-    expect(frames[1]?.sequence).toBe(1);
-    expect(frames[1]?.peakDbfs[0]).toBe(-20);
+    expect(frames).toEqual([
+      {
+        schemaVersion: "0",
+        sequence: 7,
+        intervalMs: 50,
+        peakDbfs: [-6, -120],
+        rmsDbfs: [-9, -120],
+        clipped: [true, false],
+      },
+    ]);
   });
 
-  it("summarises only intervals that closed inside the trailing window", () => {
+  it("ignores a reading for a different channel count", () => {
+    const bank = new LevelBank({ channelCount: 3, now: () => 0 });
+    const frames: MeterFrame[] = [];
+    bank.on("frame", (frame) => frames.push(frame));
+    bank.ingest(reading(0, [-6, -6], [-9, -9]));
+    expect(frames).toHaveLength(0);
+    expect(bank.summary()[0]?.peakDbfs).toBeNull();
+  });
+
+  it("summarises the trailing window with max peak, power-mean RMS and summed clips", () => {
     let clock = 0;
-    const meter = new LevelMeter({
-      sampleRateHz: 1_000,
-      channelCount: 1,
-      intervalMs: 2,
-      now: () => clock,
-    });
-    expect(meter.summary(1_000)).toEqual([
+    const bank = new LevelBank({ channelCount: 2, now: () => clock });
+
+    bank.ingest(reading(0, [-30, -120], [-40, -120], [0, 0]));
+    clock = 600;
+    bank.ingest(reading(1, [-3, -120], [-6, -120], [2, 0]));
+    clock = 1_200;
+    bank.ingest(reading(2, [-12, -120], [-6, -120], [1, 0]));
+
+    // The reading at t=0 has left the one-second window.
+    expect(bank.summary(1_000)).toEqual([
+      { index: 0, peakDbfs: -3, rmsDbfs: -6, clippedSamples: 3 },
+      { index: 1, peakDbfs: -120, rmsDbfs: -120, clippedSamples: 0 },
+    ]);
+  });
+
+  it("reports unknown levels rather than silence once readings stop arriving", () => {
+    let clock = 0;
+    const bank = new LevelBank({ channelCount: 1, now: () => clock });
+    bank.ingest(reading(0, [-20], [-24]));
+    clock = 5_000;
+    expect(bank.summary()).toEqual([
       { index: 0, peakDbfs: null, rmsDbfs: null, clippedSamples: 0 },
     ]);
-
-    meter.process(chunkOf([[1], [1]]));
-    clock = 1_500;
-    meter.process(chunkOf([[0.25], [-0.25]]));
-
-    expect(meter.summary(1_000)).toEqual([
-      { index: 0, peakDbfs: -12, rmsDbfs: -12, clippedSamples: 0 },
-    ]);
-    clock = 3_000;
-    expect(meter.summary(1_000)[0]?.peakDbfs).toBeNull();
-  });
-
-  it("reads capture chunks that are not four-byte aligned", () => {
-    const meter = new LevelMeter({
-      sampleRateHz: 1_000,
-      channelCount: 2,
-      intervalMs: 1,
-    });
-    const frames: MeterFrame[] = [];
-    meter.on("frame", (frame) => frames.push(frame));
-    meter.process(chunkOf([[0.5, -0.25]], 1));
-    expect(frames[0]?.peakDbfs).toEqual([-6, -12]);
-  });
-
-  it("ignores chunks from a device with a different channel count", () => {
-    const meter = new LevelMeter({
-      sampleRateHz: 1_000,
-      channelCount: 2,
-      intervalMs: 1,
-    });
-    const frames: MeterFrame[] = [];
-    meter.on("frame", (frame) => frames.push(frame));
-    meter.process(chunkOf([[0.5, 0.5, 0.5]]));
-    expect(frames).toHaveLength(0);
+    expect(LEVEL_FLOOR_DBFS).toBe(-120);
   });
 });

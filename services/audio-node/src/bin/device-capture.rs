@@ -1,6 +1,6 @@
 use std::ffi::OsString;
 
-#[cfg(any(test, target_os = "macos", target_os = "windows"))]
+#[cfg(any(target_os = "macos", target_os = "windows"))]
 const SAMPLE_RATE_HZ: u32 = 48_000;
 
 #[derive(Debug, Eq, PartialEq)]
@@ -43,7 +43,6 @@ fn u16_sample(sample: u16) -> f32 {
     (f32::from(sample) - 32_768.0) / 32_768.0
 }
 
-#[cfg(any(test, target_os = "macos", target_os = "windows"))]
 fn encode_float32_le(samples: &[f32], output: &mut [u8]) -> usize {
     let sample_count = samples.len().min(output.len() / size_of::<f32>());
     let (output_samples, _) = output.as_chunks_mut::<{ size_of::<f32>() }>();
@@ -60,7 +59,10 @@ fn encode_float32_le(samples: &[f32], output: &mut [u8]) -> usize {
 mod supported {
     use super::{Command, SAMPLE_RATE_HZ, encode_float32_le, f32_sample, i16_sample, u16_sample};
     use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-    use cpal::{Device, SampleFormat, SampleRate, StreamConfig, SupportedStreamConfigRange};
+    use cpal::{
+        Device, SampleFormat, SampleRate, StreamConfig, SupportedBufferSize,
+        SupportedStreamConfigRange,
+    };
     use serde_json::json;
     use std::cell::UnsafeCell;
     use std::error::Error;
@@ -74,6 +76,7 @@ mod supported {
     const MAX_CONFIGS_PER_DEVICE: usize = 128;
     const QUEUE_SECONDS: usize = 2;
     const WRITER_SAMPLES: usize = 16_384;
+    const TARGET_BUFFER_FRAMES: u32 = 128;
 
     pub fn run(command: Command) -> Result<(), Box<dyn Error>> {
         match command {
@@ -136,57 +139,55 @@ mod supported {
         })?;
         let channels = selected.channels();
         let format = selected.sample_format();
-        let config = StreamConfig {
-            channels,
-            sample_rate: SampleRate(SAMPLE_RATE_HZ),
-            buffer_size: cpal::BufferSize::Default,
-        };
-
         let queue_samples = usize::try_from(SAMPLE_RATE_HZ)?
             .checked_mul(usize::from(channels))
             .and_then(|samples| samples.checked_mul(QUEUE_SECONDS))
             .ok_or("capture queue size overflow")?;
-        let queue = PcmQueue::new(queue_samples)?;
-        let (producer, mut consumer) = queue.split();
         let stream_failed = Arc::new(AtomicBool::new(false));
         let callback_errors = Arc::new(AtomicU64::new(0));
-        let errors_for_callback = Arc::clone(&callback_errors);
-        let failed_for_callback = Arc::clone(&stream_failed);
-        let error_callback = move |_error| {
-            errors_for_callback.fetch_add(1, Ordering::Relaxed);
-            failed_for_callback.store(true, Ordering::Release);
-        };
 
-        let stream = match format {
-            SampleFormat::F32 => {
-                let mut producer = producer;
-                device.build_input_stream(
-                    &config,
-                    move |data: &[f32], _| producer.try_push(data.iter().copied().map(f32_sample)),
-                    error_callback,
-                    None,
-                )?
+        // The driver default is often 512 frames (10.7 ms at 48 kHz) before a sample reaches
+        // this process. Ask for a small fixed buffer where the device advertises one, and fall
+        // back to the default when the host (for example WASAPI shared mode) refuses it.
+        let buffer_sizes = [
+            match selected.buffer_size() {
+                SupportedBufferSize::Range { min, max } => Some(cpal::BufferSize::Fixed(
+                    TARGET_BUFFER_FRAMES.clamp(*min, *max),
+                )),
+                SupportedBufferSize::Unknown => None,
+            },
+            Some(cpal::BufferSize::Default),
+        ];
+        let mut opened = None;
+        let mut last_error = None;
+        for buffer_size in buffer_sizes.into_iter().flatten() {
+            let config = StreamConfig {
+                channels,
+                sample_rate: SampleRate(SAMPLE_RATE_HZ),
+                buffer_size,
+            };
+            let (producer, consumer) = PcmQueue::new(queue_samples)?.split();
+            let errors_for_callback = Arc::clone(&callback_errors);
+            let failed_for_callback = Arc::clone(&stream_failed);
+            let error_callback = move |_error| {
+                errors_for_callback.fetch_add(1, Ordering::Relaxed);
+                failed_for_callback.store(true, Ordering::Release);
+            };
+            match build_stream(&device, &config, format, producer, error_callback) {
+                Ok(stream) => {
+                    eprintln!("pulse-device-capture: input buffer {buffer_size:?}");
+                    opened = Some((stream, consumer));
+                    break;
+                }
+                Err(error) => last_error = Some(error),
             }
-            SampleFormat::I16 => {
-                let mut producer = producer;
-                device.build_input_stream(
-                    &config,
-                    move |data: &[i16], _| producer.try_push(data.iter().copied().map(i16_sample)),
-                    error_callback,
-                    None,
-                )?
-            }
-            SampleFormat::U16 => {
-                let mut producer = producer;
-                device.build_input_stream(
-                    &config,
-                    move |data: &[u16], _| producer.try_push(data.iter().copied().map(u16_sample)),
-                    error_callback,
-                    None,
-                )?
-            }
-            _ => return Err(format!("unsupported input sample format: {format}").into()),
-        };
+        }
+        let (stream, mut consumer) = opened.ok_or_else(|| {
+            format!(
+                "device {device_name:?} could not open a 48 kHz input stream: {}",
+                last_error.map_or_else(|| "no configuration".to_owned(), |error| error.to_string())
+            )
+        })?;
 
         let stdout = io::stdout();
         let mut output = stdout.lock();
@@ -220,7 +221,39 @@ mod supported {
             }
             let byte_count = encode_float32_le(&samples[..count], &mut bytes);
             output.write_all(&bytes[..byte_count])?;
+            // Stdout is line-buffered; binary PCM must not wait for a 0x0A byte.
+            output.flush()?;
         }
+    }
+
+    fn build_stream(
+        device: &Device,
+        config: &StreamConfig,
+        format: SampleFormat,
+        mut producer: Producer,
+        error_callback: impl FnMut(cpal::StreamError) + Send + 'static,
+    ) -> Result<cpal::Stream, Box<dyn Error>> {
+        Ok(match format {
+            SampleFormat::F32 => device.build_input_stream(
+                config,
+                move |data: &[f32], _| producer.try_push(data.iter().copied().map(f32_sample)),
+                error_callback,
+                None,
+            )?,
+            SampleFormat::I16 => device.build_input_stream(
+                config,
+                move |data: &[i16], _| producer.try_push(data.iter().copied().map(i16_sample)),
+                error_callback,
+                None,
+            )?,
+            SampleFormat::U16 => device.build_input_stream(
+                config,
+                move |data: &[u16], _| producer.try_push(data.iter().copied().map(u16_sample)),
+                error_callback,
+                None,
+            )?,
+            _ => return Err(format!("unsupported input sample format: {format}").into()),
+        })
     }
 
     fn find_exact_device(host: &cpal::Host, expected_name: &str) -> Result<Device, Box<dyn Error>> {
@@ -377,10 +410,71 @@ mod supported {
     }
 }
 
+/// Writes the built-in test signal with the same stdout contract as a physical capture,
+/// paced by the wall clock in 10 ms steps. It is selected only by the reserved device name.
+fn run_test_signal() -> Result<(), Box<dyn std::error::Error>> {
+    use a2_audio_node::test_signal::{
+        TEST_SIGNAL_DEVICE_NAME, TEST_SIGNAL_SAMPLE_RATE_HZ, TestSignal, channel_count_from,
+    };
+    use std::io::{ErrorKind, Write};
+    use std::time::{Duration, Instant};
+
+    const TICK: Duration = Duration::from_millis(10);
+    const MAX_FRAMES_PER_TICK: u64 = TEST_SIGNAL_SAMPLE_RATE_HZ as u64 / 10;
+
+    let channel_count = channel_count_from(std::env::var("A2_SIMULATED_CHANNELS").ok().as_deref())?;
+    let mut signal = TestSignal::new(channel_count);
+    let stdout = std::io::stdout();
+    let mut output = stdout.lock();
+    let header = serde_json::json!({
+        "schemaVersion": 0,
+        "deviceName": TEST_SIGNAL_DEVICE_NAME,
+        "sampleRateHz": TEST_SIGNAL_SAMPLE_RATE_HZ,
+        "channelCount": channel_count,
+    });
+    let mut samples = vec![0.0_f32; MAX_FRAMES_PER_TICK as usize * channel_count];
+    let mut bytes = vec![0_u8; samples.len() * size_of::<f32>()];
+    let started = Instant::now();
+    let mut emitted_frames = 0_u64;
+
+    let result = (|| -> std::io::Result<()> {
+        writeln!(output, "{header}")?;
+        output.flush()?;
+        loop {
+            std::thread::sleep(TICK);
+            let due =
+                (started.elapsed().as_secs_f64() * f64::from(TEST_SIGNAL_SAMPLE_RATE_HZ)) as u64;
+            let frames = due.saturating_sub(emitted_frames).min(MAX_FRAMES_PER_TICK) as usize;
+            if frames == 0 {
+                continue;
+            }
+            let count = frames * channel_count;
+            signal.fill(&mut samples[..count]);
+            let byte_count = encode_float32_le(&samples[..count], &mut bytes);
+            output.write_all(&bytes[..byte_count])?;
+            output.flush()?;
+            emitted_frames += frames as u64;
+        }
+    })();
+    match result {
+        // The reader closed the pipe: the worker is stopping.
+        Err(error) if error.kind() == ErrorKind::BrokenPipe => Ok(()),
+        Err(error) => Err(error.into()),
+        Ok(()) => Ok(()),
+    }
+}
+
 fn main() {
     let result = parse_args(std::env::args_os().skip(1))
         .map_err(|error| -> Box<dyn std::error::Error> { error.into() })
-        .and_then(supported::run);
+        .and_then(|command| match command {
+            Command::Capture { device_name }
+                if device_name == a2_audio_node::test_signal::TEST_SIGNAL_DEVICE_NAME =>
+            {
+                run_test_signal()
+            }
+            command => supported::run(command),
+        });
     if let Err(error) = result {
         eprintln!("pulse-device-capture: {error}");
         std::process::exit(2);

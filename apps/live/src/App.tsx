@@ -30,7 +30,7 @@ import {
 import {
   clampMonitorGainDb,
   DEFAULT_MONITOR_GAIN_DB,
-  webAudioPlaybackFactory,
+  webRtcPlaybackFactory,
   type PlaybackFactory,
   type PlaybackSession,
   type PlaybackUpdate,
@@ -331,7 +331,7 @@ function ConnectionNotice({
 export function App({
   liveStateSource = defaultLiveStateSource,
   audioDeviceSource = httpAudioDeviceSource,
-  playbackFactory = webAudioPlaybackFactory,
+  playbackFactory = webRtcPlaybackFactory,
   meterStore: providedMeterStore,
   fetchAlertLog = fetch,
 }: {
@@ -395,16 +395,6 @@ export function App({
   const device =
     audioDeviceState.status === "ready" ? audioDeviceState.device : null;
 
-  // Listening needs the node's capture to be ready; each time it becomes
-  // ready again (a restart) the playback session is re-opened.
-  const [captureEpoch, setCaptureEpoch] = useState(0);
-  const deviceReady = device !== null;
-  const wasReady = useRef(false);
-  useEffect(() => {
-    if (deviceReady && !wasReady.current) setCaptureEpoch((epoch) => epoch + 1);
-    wasReady.current = deviceReady;
-  }, [deviceReady]);
-
   const channels = useMemo<LiveStateChannel[]>(() => {
     if (liveState && !offline) return liveState.channels;
     if (liveState) {
@@ -438,7 +428,6 @@ export function App({
   const micCheckChannel =
     channels.find((channel) => channel.id === micCheckId) ?? null;
   const selectedInput = device ? (selectedChannel?.input.index ?? null) : null;
-  const sampleRateHz = device?.device?.sampleRateHz;
 
   useEffect(() => {
     try {
@@ -450,11 +439,20 @@ export function App({
     }
   }, [selectedId]);
 
+  // One WebRTC session lives while any patched input is selected and the node
+  // is ready; changing input moves that session server-side instead of
+  // renegotiating, and the session itself reconnects after a capture restart.
+  const hasSelectedInput = selectedInput !== null;
+  const selectedInputRef = useRef(selectedInput);
   useEffect(() => {
-    if (selectedInput === null || sampleRateHz === undefined) return;
+    // Declared before the session effect so a new session starts on the current input.
+    selectedInputRef.current = selectedInput;
+  }, [selectedInput]);
+  useEffect(() => {
+    const initialInput = selectedInputRef.current;
+    if (initialInput === null) return;
     const session = playbackFactory({
-      channel: selectedInput,
-      sampleRateHz,
+      channel: initialInput,
       onUpdate: setPlayback,
     });
     session.setGainDb(outputState.current.gainDb);
@@ -465,7 +463,12 @@ export function App({
       if (playbackSession.current === session) playbackSession.current = null;
       session.close();
     };
-  }, [captureEpoch, playbackFactory, sampleRateHz, selectedInput]);
+  }, [hasSelectedInput, playbackFactory]);
+
+  useEffect(() => {
+    if (selectedInput !== null)
+      playbackSession.current?.setChannel(selectedInput);
+  }, [selectedInput]);
 
   useEffect(() => {
     outputState.current = { muted, dimmed, gainDb };
@@ -708,23 +711,24 @@ export function App({
   function selectChannel(channel: LiveStateChannel) {
     setSelectedId(channel.id);
     if (channel.id === selectedId) return;
-    setPlayback(
-      channel.input.index === null
-        ? {
-            status: "idle",
-            detail: `${channel.input.label}. There is nothing to listen to.`,
-          }
-        : device
-          ? {
-              status: "connecting",
-              detail: `Connecting to input ${channel.input.index + 1}.`,
-            }
-          : {
-              status: "idle",
-              detail:
-                "The audio node is not ready, so listening is unavailable.",
-            },
-    );
+    if (channel.input.index === null) {
+      setPlayback({
+        status: "idle",
+        detail: `${channel.input.label}. There is nothing to listen to.`,
+      });
+    } else if (!device) {
+      setPlayback({
+        status: "idle",
+        detail: "The audio node is not ready, so listening is unavailable.",
+      });
+    } else if (!playbackSession.current) {
+      setPlayback({
+        status: "connecting",
+        detail: `Connecting to input ${channel.input.index + 1}.`,
+      });
+    }
+    // With a session open the switch happens in place; the session reports
+    // when the new input is flowing, so a source change never shows a reconnect.
   }
 
   const listening =

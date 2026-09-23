@@ -1,7 +1,7 @@
 import AppKit
 
 private let listenBase = "http://127.0.0.1:4173"
-/// Reserved name the listen gateway maps to its built-in simulated source.
+/// Reserved name pulse-device-capture serves with its built-in test signal.
 private let simulatedDevice = "Pulse test signal"
 private let deviceDefaultsKey = "PulseAudioDevice"
 private let hostDefaultsKey = "PulseBindHost"

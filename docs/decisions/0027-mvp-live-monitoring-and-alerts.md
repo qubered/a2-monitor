@@ -24,12 +24,14 @@ IPC, authorization, control ledger and storage worker do not exist yet.
 
 For the local MVP only:
 
-1. **The node measures.** The listen gateway meters every captured input
-   (peak, RMS and clipped-sample count) on bytes already drained from the
-   capture queue, never on the real-time callback. It publishes
-   `GET /audio/v0/levels`, a one-second trailing summary plus capture state
-   (`node-levels` contract), and `/audio/v0/meters`, a 20 Hz WebSocket of
-   `meter-frame` messages. Meters are measurements, not samples.
+1. **The node measures.** `pulse-media-worker` (ADR 0026) meters every
+   captured input (peak, RMS and clipped-sample count) over 50 ms intervals on
+   blocks already read from the capture pipe, never on the real-time callback,
+   and reports each interval as a `meters` control event. The listen gateway
+   relays them: `GET /audio/v0/levels` is a one-second trailing summary plus
+   capture state (`node-levels` contract), and `GET /audio/v0/meters` is a
+   20 Hz Server-Sent Events stream of `meter-frame` payloads. Meters are
+   measurements, not samples; audio never passes through the gateway.
 2. **The backend judges.** The backend polls the node's levels and normalized
    Shure telemetry once a second, evaluates the active showfile against its
    alert policy, and owns one alert lifecycle: a finding must hold for a
@@ -53,9 +55,11 @@ For the local MVP only:
    setting (ADR 0019); channels gain stable ids so alerts and history survive
    renames, repatching and reordering.
 5. **Simulation is labelled.** The reserved device name `Pulse test signal`
-   selects a built-in eight-channel test signal and a development AD4Q
-   simulator is available, so every path can run without hardware. The node
-   reports the device as `simulated` and Live labels it at every width.
+   makes `pulse-device-capture` generate a built-in eight-channel test signal
+   in place of a physical input, and a development AD4Q simulator is
+   available, so metering, alerting and WebRTC listening can all run without
+   hardware. The node reports the device as `simulated` and Live labels it at
+   every width.
 
 When the backend is unreachable, Live keeps last-known identity, withdraws
 every verdict and alert to unknown, and keeps listening through the node.
@@ -80,7 +84,7 @@ every verdict and alert to unknown, and keeps listening through the node.
 - `alerts.json` is a mutable local file, not the durable, append-only control
   ledger; RF-lost detection forgets which transmitters it has seen when the
   backend restarts.
-- The endpoints inherit ADR 0021's trust boundary: no authentication or
+- The endpoints inherit ADR 0026's trust boundary: no authentication or
   encryption, trusted local networks only.
 
 ## Alternatives considered
@@ -89,12 +93,16 @@ every verdict and alert to unknown, and keeps listening through the node.
   acknowledgements cannot be shared.
 - **Evaluate alerts in the gateway.** Rejected: alert policy, acknowledgement
   and history are backend responsibilities, and the gateway is a temporary
-  MVP host (ADR 0021, ADR 0023).
+  MVP host (ADR 0026, ADR 0023).
 - **Route meters through the backend.** Rejected: 20 Hz meters for every input
   to every client would put high-rate traffic through the management service
   and would stop with the backend.
-- **WebSocket for the state stream.** Server-sent events are one-way, reconnect
-  on their own and pass through the gateway's plain HTTP proxy unchanged.
+- **Meter in the gateway process.** Superseded when ADR 0026 moved audio out
+  of the gateway: the worker already holds every captured block, so metering
+  there adds no second PCM pipe.
+- **WebSocket for the state and meter streams.** Server-sent events are
+  one-way, reconnect on their own and pass through the gateway's plain HTTP
+  proxy unchanged; the gateway no longer carries a WebSocket dependency.
 
 ## Validation
 

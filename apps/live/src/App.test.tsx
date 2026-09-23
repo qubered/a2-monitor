@@ -634,16 +634,19 @@ describe("Live channel grid", () => {
   it("starts the first listen muted and keeps output state across channel changes", async () => {
     const user = userEvent.setup();
     const setMuted = vi.fn(async () => undefined);
+    const setChannel = vi.fn();
+    const close = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>((options) => {
       options.onUpdate({
         status: "listening",
         detail: `Receiving input ${options.channel + 1}.`,
       });
       return {
+        setChannel,
         setMuted,
         setDimmed: vi.fn(),
         setGainDb: vi.fn(),
-        close: vi.fn(),
+        close,
       };
     });
     renderApp(stateWith(), { audioDeviceSource: readyDevice, playbackFactory });
@@ -661,7 +664,7 @@ describe("Live channel grid", () => {
     );
     await vi.waitFor(() =>
       expect(playbackFactory).toHaveBeenCalledWith(
-        expect.objectContaining({ channel: 1, sampleRateHz: 48000 }),
+        expect.objectContaining({ channel: 1 }),
       ),
     );
     expect(setMuted).toHaveBeenCalledWith(true);
@@ -674,11 +677,13 @@ describe("Live channel grid", () => {
       .closest("article")!;
     expect(card.classList.contains("is-listening")).toBe(true);
 
-    setMuted.mockClear();
     await user.click(
       screen.getByRole("button", { name: "Select Marguerite, channel 1" }),
     );
-    expect(setMuted).toHaveBeenCalledWith(false);
+    // Switching input keeps the one WebRTC session and its unmuted output state.
+    expect(setChannel).toHaveBeenLastCalledWith(0);
+    expect(playbackFactory).toHaveBeenCalledOnce();
+    expect(close).not.toHaveBeenCalled();
     expect(screen.getByText("Monitor output is unmuted")).toBeTruthy();
   });
 

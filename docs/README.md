@@ -76,11 +76,12 @@ boundary; production evidence promotion remains deferred.
 - [Workspaces, testing and native packaging](decisions/0018-workspaces-testing-and-native-packaging.md)
 - [Cue-optional operation and show-time scope](decisions/0019-cue-optional-and-show-time-scope.md)
 - [Evidence verifier trust boundary](decisions/0020-evidence-verifier-trust-boundary.md)
-- [Temporary PCM listen MVP](decisions/0021-temporary-pcm-listen-mvp.md)
+- [Temporary PCM listen MVP](decisions/0021-temporary-pcm-listen-mvp.md) (superseded)
 - [Local MVP showfile](decisions/0022-local-mvp-showfile.md)
 - [Menu-bar shell and temporary Shure MVP host](decisions/0023-menu-bar-shell-and-shure-mvp-host.md)
 - [App window for device and network selection](decisions/0024-app-window-device-and-network-selection.md)
 - [Manager production library and inline photo upload](decisions/0025-manager-production-library-and-photo-upload.md)
+- [WebRTC/Opus listen transport for the local MVP](decisions/0026-webrtc-opus-listen-mvp.md)
 - [MVP live monitoring state and alert lifecycle](decisions/0027-mvp-live-monitoring-and-alerts.md)
 - [MVP shared mic checks and A1 fault reports](decisions/0028-mvp-shared-checks-and-fault-reports.md)
 

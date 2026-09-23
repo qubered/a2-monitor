@@ -1,6 +1,8 @@
 # ADR 0017: Use str0m as the Phase 0B native WebRTC engine
 
 - **Status:** Hypothesis; no supporting evidence. See [open questions](../open-questions.md).
+  The local MVP worker ([ADR 0026](0026-webrtc-opus-listen-mvp.md)) uses the AWS-LC
+  provider rather than the Apple or Windows providers.
 - **Date:** 2026-09-19
 - **Owners:** Media runtime owner; evidence authority for browser promotion
 - **Supersedes:** None

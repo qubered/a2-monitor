@@ -6,6 +6,7 @@ export type PlaybackUpdate = {
 };
 
 export interface PlaybackSession {
+  setChannel(channel: number): void;
   setMuted(muted: boolean): Promise<void>;
   setDimmed(dimmed: boolean): void;
   setGainDb(gainDb: number): void;
@@ -17,13 +18,19 @@ export const MAX_MONITOR_GAIN_DB = 12;
 export const DEFAULT_MONITOR_GAIN_DB = -18;
 export const DIM_ATTENUATION_DB = -12;
 
+/** Retry spacing after a lost connection, e.g. a Wi-Fi roam or a sleeping phone. */
+export const RECONNECT_DELAYS_MS = [250, 500, 1_000, 2_000, 4_000] as const;
+/** ICE `disconnected` often recovers on its own after a short Wi-Fi stall. */
+export const DISCONNECTED_GRACE_MS = 2_000;
+
+export const LISTEN_SESSIONS_PATH = "/audio/v0/listen/sessions";
+
 export function clampMonitorGainDb(value: number): number {
   return Math.min(MAX_MONITOR_GAIN_DB, Math.max(MIN_MONITOR_GAIN_DB, value));
 }
 
 export type PlaybackFactory = (options: {
   channel: number;
-  sampleRateHz: number;
   onUpdate: (update: PlaybackUpdate) => void;
 }) => PlaybackSession;
 
@@ -31,152 +38,296 @@ type AudioContextConstructor = new (
   options?: AudioContextOptions,
 ) => AudioContext;
 
-/**
- * Asks for a context at the node's sample rate so the browser resamples to
- * whatever the output hardware runs at (44.1 kHz on many Macs). Only when the
- * browser refuses that rate does playback fall back to the default context,
- * where a mismatch is reported instead of played at the wrong speed.
- */
-function openContext(
-  AudioContextClass: AudioContextConstructor,
-  sampleRateHz: number,
-): AudioContext {
-  try {
-    return new AudioContextClass({
-      sampleRate: sampleRateHz,
-      latencyHint: "interactive",
-    });
-  } catch {
-    return new AudioContextClass();
+type Timers = {
+  setTimeout: (callback: () => void, ms: number) => number;
+  clearTimeout: (handle: number) => void;
+};
+
+type Dependencies = {
+  AudioContext?: AudioContextConstructor;
+  RTCPeerConnection?: typeof RTCPeerConnection;
+  MediaStream?: typeof MediaStream;
+  fetch?: typeof fetch;
+  createAudioElement?: () => HTMLAudioElement;
+  network?: EventTarget;
+  timers?: Timers;
+};
+
+class SignalingError extends Error {
+  constructor(
+    readonly status: number,
+    readonly retryable: boolean,
+    message: string,
+  ) {
+    super(message);
   }
 }
 
-export function websocketListenUrl(
+async function postOffer(
+  fetchImpl: typeof fetch,
   channel: number,
-  location = window.location,
-) {
-  const url = new URL(location.href);
-  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-  url.pathname = "/audio/v0/listen";
-  url.search = new URLSearchParams({ channel: String(channel) }).toString();
-  url.hash = "";
-  return url.toString();
+  offer: string,
+): Promise<{ sessionId: string; answer: string }> {
+  let response: Response;
+  try {
+    response = await fetchImpl(LISTEN_SESSIONS_PATH, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ channel, offer }),
+    });
+  } catch {
+    throw new SignalingError(0, true, "Listen node is unreachable.");
+  }
+  if (response.status === 503) {
+    throw new SignalingError(503, true, "Listen node is not ready.");
+  }
+  if (!response.ok) {
+    throw new SignalingError(
+      response.status,
+      false,
+      `Listen node refused the stream (HTTP ${response.status}).`,
+    );
+  }
+  const body = (await response.json()) as unknown;
+  if (
+    typeof body !== "object" ||
+    body === null ||
+    typeof (body as { sessionId?: unknown }).sessionId !== "string" ||
+    typeof (body as { answer?: unknown }).answer !== "string"
+  ) {
+    throw new SignalingError(response.status, false, "Answer is invalid.");
+  }
+  return body as { sessionId: string; answer: string };
 }
 
-export function createWebAudioPlaybackFactory(dependencies?: {
-  AudioContext?: AudioContextConstructor;
-  WebSocket?: typeof WebSocket;
-  queueCapSamples?: number;
-}): PlaybackFactory {
-  return ({ channel, sampleRateHz, onUpdate }) => {
+/**
+ * Plays one node-encoded Opus stream over WebRTC. The peer connection is kept across
+ * input changes (the node switches and crossfades server-side) and rebuilt with backoff
+ * when the network path is lost. The browser's adaptive jitter buffer is left at its
+ * default minimum: it shrinks toward the network's real jitter on a quiet wired link and
+ * grows under Wi-Fi contention instead of concealing constant underruns.
+ */
+export function createWebRtcPlaybackFactory(
+  dependencies?: Dependencies,
+): PlaybackFactory {
+  return ({ channel: initialChannel, onUpdate }) => {
     const AudioContextClass =
       dependencies?.AudioContext ??
       (window.AudioContext as unknown as AudioContextConstructor);
-    const WebSocketClass = dependencies?.WebSocket ?? window.WebSocket;
-    const queueCap = dependencies?.queueCapSamples ?? sampleRateHz / 4;
-    const context = openContext(AudioContextClass, sampleRateHz);
+    const PeerConnection =
+      dependencies?.RTCPeerConnection ?? window.RTCPeerConnection;
+    const MediaStreamClass = dependencies?.MediaStream ?? window.MediaStream;
+    const fetchImpl = dependencies?.fetch ?? window.fetch.bind(window);
+    const createAudioElement =
+      dependencies?.createAudioElement ?? (() => new Audio());
+    const network = dependencies?.network ?? window;
+    const timers: Timers = dependencies?.timers ?? {
+      setTimeout: (callback, ms) => window.setTimeout(callback, ms),
+      clearTimeout: (handle) => window.clearTimeout(handle),
+    };
+
+    const context = new AudioContextClass({ latencyHint: "interactive" });
     const gain = context.createGain();
-    const processor = context.createScriptProcessor(1024, 0, 1);
-    const queue: Float32Array[] = [];
-    let queuedSamples = 0;
+    gain.gain.value = 0;
+    gain.connect(context.destination);
+
+    let channel = initialChannel;
     let muted = true;
     let dimmed = false;
     let gainDb = DEFAULT_MONITOR_GAIN_DB;
     let closed = false;
-    let failed = false;
-    let receivedAudio = false;
-
-    const socket = new WebSocketClass(websocketListenUrl(channel));
-    socket.binaryType = "arraybuffer";
-    gain.gain.value = 0;
-    processor.connect(gain);
-    gain.connect(context.destination);
+    let generation = 0;
+    let attempt = 0;
+    let peer: RTCPeerConnection | undefined;
+    let sessionId: string | undefined;
+    let source: MediaStreamAudioSourceNode | undefined;
+    let sink: HTMLAudioElement | undefined;
+    let retryTimer: number | undefined;
+    let graceTimer: number | undefined;
+    let listening = false;
 
     function applyGain() {
       const effectiveGainDb = gainDb + (dimmed ? DIM_ATTENUATION_DB : 0);
       gain.gain.value = muted ? 0 : 10 ** (effectiveGainDb / 20);
     }
 
-    function fail(detail: string) {
-      // A session the caller already closed must never overwrite the state
-      // of the session that replaced it, and the first, specific reason is
-      // never replaced by the socket error its own shutdown causes.
-      if (closed || failed) return;
-      failed = true;
-      onUpdate({ status: "error", detail });
-      socket.close();
+    function update(status: PlaybackState, detail: string) {
+      listening = status === "listening";
+      if (!closed) onUpdate({ status, detail });
     }
 
-    if (context.sampleRate !== sampleRateHz) {
-      fail(
-        `Device is ${sampleRateHz} Hz but browser output is ${context.sampleRate} Hz. Listening is stopped.`,
-      );
-    } else {
-      onUpdate({
-        status: "connecting",
-        detail: `Connecting to input ${channel + 1}.`,
+    /** Moves the live session to `channel`; the node crossfades, no renegotiation. */
+    function pushChannel() {
+      const target = sessionId;
+      if (target === undefined) return;
+      const requested = channel;
+      void fetchImpl(`${LISTEN_SESSIONS_PATH}/${target}/channel`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channel: requested }),
+      })
+        .then((response) => {
+          if (target !== sessionId) return;
+          if (!response.ok) {
+            scheduleReconnect("Audio session expired; reconnecting.");
+          } else if (listening && requested === channel) {
+            update("listening", `Receiving input ${channel + 1}.`);
+          }
+        })
+        .catch(() => {
+          if (target === sessionId) {
+            scheduleReconnect("Listen node is unreachable; reconnecting.");
+          }
+        });
+    }
+
+    function releaseSession() {
+      if (sessionId === undefined) return;
+      void fetchImpl(`${LISTEN_SESSIONS_PATH}/${sessionId}`, {
+        method: "DELETE",
+        keepalive: true,
+      }).catch(() => undefined);
+      sessionId = undefined;
+    }
+
+    function teardown() {
+      generation += 1;
+      if (graceTimer !== undefined) timers.clearTimeout(graceTimer);
+      graceTimer = undefined;
+      source?.disconnect();
+      source = undefined;
+      if (sink) sink.srcObject = null;
+      sink = undefined;
+      if (peer) {
+        peer.ontrack = null;
+        peer.onconnectionstatechange = null;
+        peer.close();
+      }
+      peer = undefined;
+      releaseSession();
+    }
+
+    function scheduleReconnect(detail: string) {
+      if (closed || retryTimer !== undefined) return;
+      teardown();
+      const delay =
+        RECONNECT_DELAYS_MS[Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)];
+      attempt += 1;
+      update("connecting", detail);
+      retryTimer = timers.setTimeout(() => {
+        retryTimer = undefined;
+        void connect();
+      }, delay ?? 4_000);
+    }
+
+    function attachTrack(track: MediaStreamTrack) {
+      const stream = new MediaStreamClass([track]);
+      // Chromium only pulls remote WebRTC audio into Web Audio while a media element
+      // also consumes the stream. The element stays muted; the gain node is the only
+      // audible path, so mute and dim remain authoritative.
+      sink = createAudioElement();
+      sink.muted = true;
+      sink.srcObject = stream;
+      void sink.play().catch(() => undefined);
+      source = context.createMediaStreamSource(stream);
+      source.connect(gain);
+      const markListening = () => {
+        attempt = 0;
+        update("listening", `Receiving input ${channel + 1}.`);
+      };
+      if (!track.muted) markListening();
+      else track.addEventListener("unmute", markListening, { once: true });
+    }
+
+    async function connect() {
+      if (closed) return;
+      const current = ++generation;
+      update("connecting", `Connecting to input ${channel + 1}.`);
+      const connection = new PeerConnection({
+        bundlePolicy: "max-bundle",
+        rtcpMuxPolicy: "require",
       });
+      peer = connection;
+      connection.addTransceiver("audio", { direction: "recvonly" });
+      connection.ontrack = (event) => {
+        if (current === generation) attachTrack(event.track);
+      };
+      connection.onconnectionstatechange = () => {
+        if (current !== generation) return;
+        const state = connection.connectionState;
+        if (state === "connected") {
+          if (graceTimer === undefined) return;
+          // Recovered from a brief stall without rebuilding the connection.
+          timers.clearTimeout(graceTimer);
+          graceTimer = undefined;
+          if (source) update("listening", `Receiving input ${channel + 1}.`);
+        } else if (state === "failed") {
+          scheduleReconnect("Audio connection lost; reconnecting.");
+        } else if (state === "disconnected" && graceTimer === undefined) {
+          update("connecting", "Audio connection interrupted; waiting.");
+          graceTimer = timers.setTimeout(() => {
+            graceTimer = undefined;
+            if (current === generation) {
+              scheduleReconnect("Audio connection lost; reconnecting.");
+            }
+          }, DISCONNECTED_GRACE_MS);
+        }
+      };
+
+      try {
+        const offer = await connection.createOffer();
+        await connection.setLocalDescription(offer);
+        const offerSdp = connection.localDescription?.sdp ?? offer.sdp ?? "";
+        const requested = channel;
+        const signaled = await postOffer(fetchImpl, requested, offerSdp);
+        if (current !== generation) {
+          // Superseded while signaling; release the node-side session at once.
+          void fetchImpl(`${LISTEN_SESSIONS_PATH}/${signaled.sessionId}`, {
+            method: "DELETE",
+            keepalive: true,
+          }).catch(() => undefined);
+          return;
+        }
+        sessionId = signaled.sessionId;
+        await connection.setRemoteDescription({
+          type: "answer",
+          sdp: signaled.answer,
+        });
+        // The operator picked another input while the offer was in flight.
+        if (channel !== requested) pushChannel();
+      } catch (error) {
+        if (current !== generation) return;
+        if (error instanceof SignalingError && !error.retryable) {
+          teardown();
+          update("error", error.message);
+          return;
+        }
+        scheduleReconnect(
+          error instanceof SignalingError
+            ? `${error.message} Retrying.`
+            : "Audio connection could not be set up; retrying.",
+        );
+      }
     }
 
-    socket.onopen = () => {
-      if (!closed && context.sampleRate === sampleRateHz) {
-        onUpdate({
-          status: "connecting",
-          detail: "Connected; waiting for audio.",
-        });
-      }
+    // A network change (Wi-Fi rejoin, interface up) is the best moment to retry.
+    const onOnline = () => {
+      if (closed || retryTimer === undefined) return;
+      timers.clearTimeout(retryTimer);
+      retryTimer = undefined;
+      attempt = 0;
+      void connect();
     };
-    socket.onerror = () => fail("Audio stream connection failed.");
-    socket.onclose = () => {
-      if (!closed && !failed && context.sampleRate === sampleRateHz) {
-        onUpdate({ status: "error", detail: "Audio stream disconnected." });
-      }
-    };
-    socket.onmessage = (event) => {
-      if (closed || !(event.data instanceof ArrayBuffer)) return;
-      const view = new DataView(event.data);
-      const samples = new Float32Array(Math.floor(view.byteLength / 4));
-      for (let index = 0; index < samples.length; index += 1) {
-        samples[index] = view.getFloat32(index * 4, true);
-      }
-      if (samples.length === 0) return;
-      if (!receivedAudio) {
-        receivedAudio = true;
-        onUpdate({
-          status: "listening",
-          detail: `Receiving input ${channel + 1}.`,
-        });
-      }
-      if (samples.length > queueCap) {
-        queue.length = 0;
-        const tail = samples.slice(samples.length - queueCap);
-        queue.push(tail);
-        queuedSamples = tail.length;
-        return;
-      }
-      while (queuedSamples + samples.length > queueCap && queue.length > 0) {
-        queuedSamples -= queue.shift()?.length ?? 0;
-      }
-      queue.push(samples);
-      queuedSamples += samples.length;
-    };
-    processor.onaudioprocess = (event) => {
-      const output = event.outputBuffer.getChannelData(0);
-      output.fill(0);
-      let position = 0;
-      while (position < output.length && queue.length > 0) {
-        const head = queue[0];
-        if (!head) break;
-        const count = Math.min(head.length, output.length - position);
-        output.set(head.subarray(0, count), position);
-        position += count;
-        queuedSamples -= count;
-        if (count === head.length) queue.shift();
-        else queue[0] = head.subarray(count);
-      }
-    };
+    network.addEventListener("online", onOnline);
+
+    void connect();
 
     return {
+      setChannel(nextChannel) {
+        if (nextChannel === channel) return;
+        channel = nextChannel;
+        pushChannel();
+      },
       async setMuted(nextMuted) {
         muted = nextMuted;
         applyGain();
@@ -186,10 +337,7 @@ export function createWebAudioPlaybackFactory(dependencies?: {
           } catch {
             muted = true;
             applyGain();
-            onUpdate({
-              status: "error",
-              detail: "Browser audio output could not be started.",
-            });
+            update("error", "Browser audio output could not be started.");
           }
         }
       },
@@ -203,8 +351,10 @@ export function createWebAudioPlaybackFactory(dependencies?: {
       },
       close() {
         closed = true;
-        socket.close();
-        processor.disconnect();
+        network.removeEventListener("online", onOnline);
+        if (retryTimer !== undefined) timers.clearTimeout(retryTimer);
+        retryTimer = undefined;
+        teardown();
         gain.disconnect();
         void context.close();
       },
@@ -212,4 +362,4 @@ export function createWebAudioPlaybackFactory(dependencies?: {
   };
 }
 
-export const webAudioPlaybackFactory = createWebAudioPlaybackFactory();
+export const webRtcPlaybackFactory = createWebRtcPlaybackFactory();

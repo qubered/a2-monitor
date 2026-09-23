@@ -1,38 +1,26 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it, vi } from "vitest";
-import { createWebAudioPlaybackFactory } from "./audio-playback";
-
-class FakeSocket {
-  static instances: FakeSocket[] = [];
-  binaryType = "blob";
-  onopen: (() => void) | null = null;
-  onerror: (() => void) | null = null;
-  onclose: (() => void) | null = null;
-  onmessage: ((event: MessageEvent) => void) | null = null;
-  close = vi.fn();
-
-  constructor(readonly url: string) {
-    FakeSocket.instances.push(this);
-  }
-}
+import {
+  DISCONNECTED_GRACE_MS,
+  LISTEN_SESSIONS_PATH,
+  createWebRtcPlaybackFactory,
+  type PlaybackUpdate,
+} from "./audio-playback";
 
 class FakeAudioContext {
-  static sampleRate = 48000;
   static latest: FakeAudioContext;
-  sampleRate = FakeAudioContext.sampleRate;
   state: AudioContextState = "suspended";
   destination = {} as AudioDestinationNode;
   resume = vi.fn(async () => undefined);
   close = vi.fn(async () => undefined);
   gain = { gain: { value: 1 }, connect: vi.fn(), disconnect: vi.fn() };
-  processor = {
-    connect: vi.fn(),
-    disconnect: vi.fn(),
-    onaudioprocess: null as ((event: AudioProcessingEvent) => void) | null,
-  };
+  sources: Array<{
+    connect: ReturnType<typeof vi.fn>;
+    disconnect: ReturnType<typeof vi.fn>;
+  }> = [];
 
-  constructor() {
+  constructor(readonly options?: AudioContextOptions) {
     FakeAudioContext.latest = this;
   }
 
@@ -40,44 +28,159 @@ class FakeAudioContext {
     return this.gain as unknown as GainNode;
   }
 
-  createScriptProcessor() {
-    return this.processor as unknown as ScriptProcessorNode;
+  createMediaStreamSource() {
+    const source = { connect: vi.fn(), disconnect: vi.fn() };
+    this.sources.push(source);
+    return source as unknown as MediaStreamAudioSourceNode;
   }
 }
 
-describe("bounded Web Audio playback", () => {
-  it("drops old queued samples, starts muted and applies dim safely", async () => {
-    FakeSocket.instances = [];
-    FakeAudioContext.sampleRate = 48000;
-    const updates: string[] = [];
-    const factory = createWebAudioPlaybackFactory({
-      AudioContext: FakeAudioContext as unknown as new () => AudioContext,
-      WebSocket: FakeSocket as unknown as typeof WebSocket,
-      queueCapSamples: 4,
-    });
-    const session = factory({
+class FakePeerConnection {
+  static instances: FakePeerConnection[] = [];
+  connectionState: RTCPeerConnectionState = "new";
+  localDescription: { sdp: string } | null = null;
+  remoteDescription: RTCSessionDescriptionInit | null = null;
+  ontrack: ((event: RTCTrackEvent) => void) | null = null;
+  onconnectionstatechange: (() => void) | null = null;
+  transceivers: Array<[string, RTCRtpTransceiverInit | undefined]> = [];
+  close = vi.fn();
+
+  constructor(readonly config: RTCConfiguration) {
+    FakePeerConnection.instances.push(this);
+  }
+
+  addTransceiver(kind: string, init?: RTCRtpTransceiverInit) {
+    this.transceivers.push([kind, init]);
+  }
+
+  async createOffer() {
+    return {
+      type: "offer",
+      sdp: `offer-${FakePeerConnection.instances.length}`,
+    };
+  }
+
+  async setLocalDescription(description: { sdp: string }) {
+    this.localDescription = description;
+  }
+
+  async setRemoteDescription(description: RTCSessionDescriptionInit) {
+    this.remoteDescription = description;
+  }
+
+  deliverTrack() {
+    const track = { muted: false, addEventListener: vi.fn() };
+    this.ontrack?.({ track } as unknown as RTCTrackEvent);
+  }
+
+  setState(state: RTCPeerConnectionState) {
+    this.connectionState = state;
+    this.onconnectionstatechange?.();
+  }
+}
+
+class FakeMediaStream {
+  constructor(readonly tracks: unknown[]) {}
+}
+
+function manualTimers() {
+  const pending = new Map<number, { callback: () => void; ms: number }>();
+  let next = 1;
+  return {
+    pending,
+    timers: {
+      setTimeout: (callback: () => void, ms: number) => {
+        pending.set(next, { callback, ms });
+        return next++;
+      },
+      clearTimeout: (handle: number) => {
+        pending.delete(handle);
+      },
+    },
+    runAll() {
+      const due = [...pending.entries()];
+      pending.clear();
+      for (const [, timer] of due) timer.callback();
+    },
+  };
+}
+
+async function settle() {
+  for (let index = 0; index < 5; index += 1) await Promise.resolve();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+function setup(responses?: (url: string, init?: RequestInit) => Response) {
+  FakePeerConnection.instances = [];
+  const calls: Array<{ url: string; init?: RequestInit }> = [];
+  let sessionCount = 0;
+  const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    calls.push({ url, init });
+    if (responses) return responses(url, init);
+    if (url === LISTEN_SESSIONS_PATH) {
+      sessionCount += 1;
+      return new Response(
+        JSON.stringify({
+          sessionId: `00000000-0000-4000-8000-00000000000${sessionCount}`,
+          answer: "answer",
+        }),
+        { status: 201 },
+      );
+    }
+    return new Response(null, { status: 204 });
+  });
+  const network = new EventTarget();
+  const clock = manualTimers();
+  const audio = {
+    muted: false,
+    srcObject: null as MediaProvider | null,
+    play: vi.fn(async () => undefined),
+  };
+  const updates: PlaybackUpdate[] = [];
+  const factory = createWebRtcPlaybackFactory({
+    AudioContext: FakeAudioContext as unknown as new () => AudioContext,
+    RTCPeerConnection:
+      FakePeerConnection as unknown as typeof RTCPeerConnection,
+    MediaStream: FakeMediaStream as unknown as typeof MediaStream,
+    fetch: fetch as unknown as typeof globalThis.fetch,
+    createAudioElement: () => audio as unknown as HTMLAudioElement,
+    network,
+    timers: clock.timers,
+  });
+  return { factory, calls, network, clock, audio, updates };
+}
+
+describe("WebRTC Opus playback", () => {
+  it("signals a recvonly offer, starts muted and applies dim safely", async () => {
+    const { factory, calls, audio, updates } = setup();
+    const session = factory({ channel: 1, onUpdate: (u) => updates.push(u) });
+    await settle();
+
+    const peer = FakePeerConnection.instances[0];
+    expect(peer?.transceivers).toEqual([["audio", { direction: "recvonly" }]]);
+    expect(calls[0]?.url).toBe(LISTEN_SESSIONS_PATH);
+    expect(JSON.parse(String(calls[0]?.init?.body))).toEqual({
       channel: 1,
-      sampleRateHz: 48000,
-      onUpdate: ({ status }) => updates.push(status),
+      offer: "offer-1",
     });
-    const socket = FakeSocket.instances[0];
-    expect(socket?.url).toContain("/audio/v0/listen?channel=1");
+    expect(peer?.remoteDescription).toEqual({ type: "answer", sdp: "answer" });
+    expect(FakeAudioContext.latest.options).toEqual({
+      latencyHint: "interactive",
+    });
     expect(FakeAudioContext.latest.gain.gain.value).toBe(0);
 
-    socket?.onopen?.();
-    socket?.onmessage?.(
-      new MessageEvent("message", { data: new Float32Array([1, 2, 3]).buffer }),
+    peer?.deliverTrack();
+    // The element only feeds Web Audio; it is never an audible path.
+    expect(audio.muted).toBe(true);
+    expect(FakeAudioContext.latest.sources[0]?.connect).toHaveBeenCalledWith(
+      FakeAudioContext.latest.gain,
     );
-    socket?.onmessage?.(
-      new MessageEvent("message", { data: new Float32Array([4, 5, 6]).buffer }),
-    );
-    const output = new Float32Array(4);
-    FakeAudioContext.latest.processor.onaudioprocess?.({
-      outputBuffer: { getChannelData: () => output },
-    } as unknown as AudioProcessingEvent);
+    expect(updates.map(({ status }) => status)).toEqual([
+      "connecting",
+      "listening",
+    ]);
 
-    expect([...output]).toEqual([4, 5, 6, 0]);
-    expect(updates).toEqual(["connecting", "connecting", "listening"]);
     session.setDimmed(true);
     await session.setMuted(false);
     expect(FakeAudioContext.latest.gain.gain.value).toBeCloseTo(0.0316);
@@ -85,75 +188,88 @@ describe("bounded Web Audio playback", () => {
     session.setDimmed(false);
     session.setGainDb(6);
     expect(FakeAudioContext.latest.gain.gain.value).toBeCloseTo(1.995, 3);
+
+    session.close();
+    expect(peer?.close).toHaveBeenCalledOnce();
+    expect(calls.at(-1)).toMatchObject({
+      url: `${LISTEN_SESSIONS_PATH}/00000000-0000-4000-8000-000000000001`,
+      init: { method: "DELETE", keepalive: true },
+    });
+  });
+
+  it("switches input on the live session without renegotiating", async () => {
+    const { factory, calls, updates } = setup();
+    const session = factory({ channel: 0, onUpdate: (u) => updates.push(u) });
+    await settle();
+    FakePeerConnection.instances[0]?.deliverTrack();
+
+    session.setChannel(3);
+    await settle();
+
+    expect(FakePeerConnection.instances).toHaveLength(1);
+    expect(calls.at(-1)).toMatchObject({
+      url: `${LISTEN_SESSIONS_PATH}/00000000-0000-4000-8000-000000000001/channel`,
+      init: { method: "PUT", body: JSON.stringify({ channel: 3 }) },
+    });
+    expect(updates.at(-1)).toEqual({
+      status: "listening",
+      detail: "Receiving input 4.",
+    });
     session.close();
   });
 
-  it("asks for a context at the node's rate so the browser resamples", () => {
-    FakeSocket.instances = [];
-    const requested: Array<AudioContextOptions | undefined> = [];
-    class ResamplingContext extends FakeAudioContext {
-      constructor(options?: AudioContextOptions) {
-        super();
-        requested.push(options);
-        this.sampleRate = options?.sampleRate ?? 44100;
-      }
-    }
-    const updates: string[] = [];
-    createWebAudioPlaybackFactory({
-      AudioContext: ResamplingContext as unknown as new () => AudioContext,
-      WebSocket: FakeSocket as unknown as typeof WebSocket,
-    })({
-      channel: 0,
-      sampleRateHz: 48000,
-      onUpdate: ({ status }) => updates.push(status),
+  it("rides out a short Wi-Fi stall, then rebuilds a lost connection", async () => {
+    const { factory, clock, network, updates } = setup();
+    const session = factory({ channel: 0, onUpdate: (u) => updates.push(u) });
+    await settle();
+    const first = FakePeerConnection.instances[0];
+    first?.deliverTrack();
+
+    first?.setState("disconnected");
+    expect(updates.at(-1)?.status).toBe("connecting");
+    expect([...clock.pending.values()][0]?.ms).toBe(DISCONNECTED_GRACE_MS);
+    first?.setState("connected");
+    expect(clock.pending.size).toBe(0);
+    expect(updates.at(-1)?.status).toBe("listening");
+
+    first?.setState("failed");
+    expect(first?.close).toHaveBeenCalledOnce();
+    expect(updates.at(-1)).toEqual({
+      status: "connecting",
+      detail: "Audio connection lost; reconnecting.",
     });
 
-    expect(requested[0]).toMatchObject({ sampleRate: 48000 });
-    expect(updates).toEqual(["connecting"]);
-  });
-
-  it("reports a sample-rate mismatch it cannot resample, and keeps that reason", () => {
-    FakeSocket.instances = [];
-    FakeAudioContext.sampleRate = 44100;
-    const details: string[] = [];
-    createWebAudioPlaybackFactory({
-      AudioContext: FakeAudioContext as unknown as new () => AudioContext,
-      WebSocket: FakeSocket as unknown as typeof WebSocket,
-    })({
-      channel: 0,
-      sampleRateHz: 48000,
-      onUpdate: ({ detail }) => details.push(detail),
+    // Rejoining the network retries immediately rather than waiting out the backoff.
+    network.dispatchEvent(new Event("online"));
+    await settle();
+    expect(FakePeerConnection.instances).toHaveLength(2);
+    expect(FakePeerConnection.instances[1]?.remoteDescription).toEqual({
+      type: "answer",
+      sdp: "answer",
     });
-    FakeSocket.instances[0]?.onerror?.();
-    FakeSocket.instances[0]?.onclose?.();
-
-    expect(details).toHaveLength(1);
-    expect(details[0]).toContain("48000 Hz");
-    expect(details[0]).toContain("44100 Hz");
-    expect(FakeSocket.instances[0]?.close).toHaveBeenCalledOnce();
-  });
-
-  it("never reports a late socket error from a session that was already closed", () => {
-    FakeSocket.instances = [];
-    FakeAudioContext.sampleRate = 48000;
-    const updates: string[] = [];
-    const session = createWebAudioPlaybackFactory({
-      AudioContext: FakeAudioContext as unknown as new () => AudioContext,
-      WebSocket: FakeSocket as unknown as typeof WebSocket,
-    })({
-      channel: 0,
-      sampleRateHz: 48000,
-      onUpdate: ({ status }) => updates.push(status),
-    });
-
     session.close();
-    // Browsers fire error and close for a socket closed while connecting.
-    FakeSocket.instances[0]?.onerror?.();
-    FakeSocket.instances[0]?.onclose?.();
-    FakeSocket.instances[0]?.onmessage?.(
-      new MessageEvent("message", { data: new Float32Array([1]).buffer }),
+  });
+
+  it("retries while the node is not ready and stops on a refused offer", async () => {
+    let status = 503;
+    const { factory, clock, updates } = setup(
+      () => new Response(null, { status }),
     );
+    const session = factory({ channel: 0, onUpdate: (u) => updates.push(u) });
+    await settle();
+    expect(updates.at(-1)).toEqual({
+      status: "connecting",
+      detail: "Listen node is not ready. Retrying.",
+    });
 
-    expect(updates).toEqual(["connecting"]);
+    status = 400;
+    clock.runAll();
+    await settle();
+    expect(updates.at(-1)).toEqual({
+      status: "error",
+      detail: "Listen node refused the stream (HTTP 400).",
+    });
+    expect(clock.pending.size).toBe(0);
+    session.close();
   });
 });

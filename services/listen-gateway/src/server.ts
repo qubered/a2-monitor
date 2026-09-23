@@ -1,62 +1,102 @@
 import { Buffer } from "node:buffer";
-import { createServer, type Server, type ServerResponse } from "node:http";
-import type { Duplex } from "node:stream";
-import { URL } from "node:url";
-import { WebSocket, WebSocketServer } from "ws";
+import { randomUUID } from "node:crypto";
 import {
-  CaptureManager,
-  type CaptureAudioChunk,
-  type CaptureManagerOptions,
-} from "./capture.js";
-import type { NodeLevels } from "@rvlt/pulse-protocol/http";
+  createServer,
+  type IncomingMessage,
+  type Server,
+  type ServerResponse,
+} from "node:http";
+import { networkInterfaces, type NetworkInterfaceInfo } from "node:os";
+import type { MeterFrame, NodeLevels } from "@rvlt/pulse-protocol/http";
+import { LEVEL_WINDOW_MS, LevelBank, type MeterReading } from "./levels.js";
+import {
+  MediaWorkerManager,
+  SessionRejectedError,
+  type MediaWorkerOptions,
+} from "./media-worker.js";
 import { handleWebRequest, type WebHostOptions } from "./web-host.js";
-import { LEVEL_WINDOW_MS, LevelMeter } from "./levels.js";
 import { ShureFleetMonitor } from "./shure.js";
 
-const MAX_CLIENTS = 32;
+const MAX_SIGNALING_BODY_BYTES = 64 * 1024;
 const MAX_METER_CLIENTS = 64;
-const MAX_BUFFERED_BYTES = 256 * 1024;
 const MAX_METER_BUFFERED_BYTES = 64 * 1024;
+const METER_KEEPALIVE_MS = 15_000;
 const MAX_DETAIL_LENGTH = 240;
+const SESSION_PATH = /^\/audio\/v0\/listen\/sessions\/([0-9a-f-]{36})$/;
+const SESSION_CHANNEL_PATH =
+  /^\/audio\/v0\/listen\/sessions\/([0-9a-f-]{36})\/channel$/;
 
-type Listener = {
-  socket: WebSocket;
-  channel: number;
-};
-
-export type ListenGatewayOptions = CaptureManagerOptions &
+export type ListenGatewayOptions = MediaWorkerOptions &
   WebHostOptions & {
-    captureManager?: CaptureManager;
+    mediaWorker?: MediaWorkerManager;
     shureMonitor?: ShureFleetMonitor;
+    interfaces?: () => NodeJS.Dict<NetworkInterfaceInfo[]>;
   };
 
-function rejectUpgrade(socket: Duplex, status: number, reason: string): void {
-  const body = `${reason}\n`;
-  socket.end(
-    `HTTP/1.1 ${status} ${reason}\r\n` +
-      "Connection: close\r\n" +
-      "Content-Type: text/plain; charset=utf-8\r\n" +
-      `Content-Length: ${Buffer.byteLength(body)}\r\n\r\n` +
-      body,
-  );
+class HttpError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+  ) {
+    super(code);
+  }
 }
 
-function parseChannel(url: URL): number | undefined {
-  if (url.searchParams.size !== 1) return undefined;
-  const raw = url.searchParams.get("channel");
-  if (raw === null || !/^(0|[1-9]\d*)$/.test(raw)) return undefined;
-  const channel = Number(raw);
-  return Number.isSafeInteger(channel) ? channel : undefined;
-}
-
-function sendJson(response: ServerResponse, value: unknown): void {
+function sendJson(
+  response: ServerResponse,
+  status: number,
+  value: unknown,
+): void {
   const body = JSON.stringify(value);
-  response.writeHead(200, {
+  response.writeHead(status, {
     "Cache-Control": "no-store",
     "Content-Type": "application/json; charset=utf-8",
     "Content-Length": Buffer.byteLength(body),
   });
   response.end(body);
+}
+
+/**
+ * Reads a small JSON object. Requiring `application/json` makes any cross-origin
+ * page go through a CORS preflight this server never approves.
+ */
+async function readJsonObject(
+  request: IncomingMessage,
+  keys: readonly string[],
+): Promise<Record<string, unknown>> {
+  const contentType = request.headers["content-type"] ?? "";
+  if (!/^application\/json(\s*;|$)/i.test(contentType)) {
+    throw new HttpError(415, "json-required");
+  }
+  const chunks: Buffer[] = [];
+  let length = 0;
+  for await (const chunk of request) {
+    const bytes = chunk as Buffer;
+    length += bytes.length;
+    if (length > MAX_SIGNALING_BODY_BYTES) {
+      throw new HttpError(413, "body-too-large");
+    }
+    chunks.push(bytes);
+  }
+  let value: unknown;
+  try {
+    value = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  } catch {
+    throw new HttpError(400, "invalid-json");
+  }
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new HttpError(400, "invalid-body");
+  }
+  const record = value as Record<string, unknown>;
+  const actual = Object.keys(record).sort();
+  const expected = [...keys].sort();
+  if (
+    actual.length !== expected.length ||
+    actual.some((key, index) => key !== expected[index])
+  ) {
+    throw new HttpError(400, "invalid-body");
+  }
+  return record;
 }
 
 function boundedDetail(detail: string): string {
@@ -66,59 +106,100 @@ function boundedDetail(detail: string): string {
     : trimmed;
 }
 
-function extractMono(chunk: CaptureAudioChunk, channel: number): Buffer {
-  const sampleBytes = Float32Array.BYTES_PER_ELEMENT;
-  const frameBytes = chunk.channelCount * sampleBytes;
-  const mono = Buffer.allocUnsafe(chunk.frameCount * sampleBytes);
-  for (let frame = 0; frame < chunk.frameCount; frame += 1) {
-    const sourceOffset = frame * frameBytes + channel * sampleBytes;
-    chunk.interleaved.copy(
-      mono,
-      frame * sampleBytes,
-      sourceOffset,
-      sourceOffset + sampleBytes,
-    );
+function isLoopback(address: string): boolean {
+  return address === "::1" || address.startsWith("127.");
+}
+
+/**
+ * Chooses the address advertised as the node's ICE candidate. The address the browser
+ * already reached this server on is routable from it, so it is preferred. A loopback
+ * page load still advertises a LAN address when one exists: Firefox ignores loopback
+ * candidates and browsers pair from their own LAN interfaces. Only the ICE credentials
+ * and DTLS fingerprint returned over this HTTP exchange can use the media port.
+ */
+export function candidateAddressFor(
+  localAddress: string | undefined,
+  interfaces: NodeJS.Dict<NetworkInterfaceInfo[]>,
+): string {
+  const address = (localAddress ?? "").replace(/^::ffff:/i, "");
+  const linkLocal = /^fe80:/i.test(address);
+  if (address && !isLoopback(address) && !linkLocal) return address;
+  for (const entries of Object.values(interfaces)) {
+    for (const entry of entries ?? []) {
+      if (entry.family === "IPv4" && !entry.internal) return entry.address;
+    }
   }
-  return mono;
+  return "127.0.0.1";
+}
+
+function channelFrom(value: unknown, channelCount: number): number {
+  if (
+    typeof value !== "number" ||
+    !Number.isInteger(value) ||
+    value < 0 ||
+    value >= channelCount
+  ) {
+    throw new HttpError(400, "invalid-channel");
+  }
+  return value;
 }
 
 export class ListenGateway {
-  readonly capture: CaptureManager;
+  readonly media: MediaWorkerManager;
   readonly shure: ShureFleetMonitor;
   readonly server: Server;
-  private readonly webSockets: WebSocketServer;
-  private readonly listeners = new Set<Listener>();
-  private readonly meterSockets = new Set<WebSocket>();
-  private meter: LevelMeter | undefined;
+  private readonly interfaces: () => NodeJS.Dict<NetworkInterfaceInfo[]>;
+  private readonly meterClients = new Set<ServerResponse>();
+  private readonly keepalive: NodeJS.Timeout;
+  private levels: LevelBank | undefined;
 
   constructor(options: ListenGatewayOptions = {}) {
-    this.capture =
-      options.captureManager ??
-      new CaptureManager({
+    this.media =
+      options.mediaWorker ??
+      new MediaWorkerManager({
         device: options.device,
+        workerBinary: options.workerBinary,
         captureBinary: options.captureBinary,
         processFactory: options.processFactory,
-        simulatedChannels: options.simulatedChannels,
       });
+    this.media.on("state", () => this.resetLevels());
+    this.media.on("meters", (reading: MeterReading) =>
+      this.levels?.ingest(reading),
+    );
+    this.keepalive = setInterval(() => {
+      for (const client of this.meterClients) client.write(": keepalive\n\n");
+    }, METER_KEEPALIVE_MS);
+    this.keepalive.unref();
     this.shure =
       options.shureMonitor ??
       new ShureFleetMonitor({ backendOrigin: options.backendOrigin });
-    this.webSockets = new WebSocketServer({
-      noServer: true,
-      perMessageDeflate: false,
-      maxPayload: 1024,
-    });
+    this.interfaces = options.interfaces ?? networkInterfaces;
     this.server = createServer((request, response) => {
       if (request.method === "GET" && request.url === "/audio/v0/device") {
-        sendJson(response, this.capture.getState());
+        sendJson(response, 200, this.media.getState());
         return;
       }
       if (request.method === "GET" && request.url === "/audio/v0/levels") {
-        sendJson(response, this.getLevels());
+        sendJson(response, 200, this.getLevels());
+        return;
+      }
+      if (request.method === "GET" && request.url === "/audio/v0/meters") {
+        this.openMeterStream(response);
         return;
       }
       if (request.method === "GET" && request.url === "/audio/v0/shure") {
-        sendJson(response, this.shure.getState());
+        sendJson(response, 200, this.shure.getState());
+        return;
+      }
+      if (request.url?.startsWith("/audio/v0/listen/")) {
+        this.handleListen(request, response).catch((error: unknown) => {
+          if (response.headersSent) return;
+          if (error instanceof HttpError) {
+            sendJson(response, error.status, { error: error.code });
+          } else {
+            sendJson(response, 500, { error: "internal-error" });
+          }
+        });
         return;
       }
 
@@ -133,96 +214,77 @@ export class ListenGateway {
           response.end(JSON.stringify({ error: "internal-error" }));
         });
     });
+  }
 
-    this.server.on("upgrade", (request, socket, head) => {
-      const url = new URL(request.url ?? "", "http://listen-gateway.local");
-      if (request.method === "GET" && url.pathname === "/audio/v0/meters") {
-        if (this.meterSockets.size >= MAX_METER_CLIENTS) {
-          rejectUpgrade(socket, 503, "Meter Capacity Reached");
-          return;
-        }
-        this.webSockets.handleUpgrade(request, socket, head, (webSocket) => {
-          this.meterSockets.add(webSocket);
-          webSocket.on("message", () => {
-            webSocket.close(1008, "meter stream is receive-only");
-          });
-          webSocket.on("close", () => this.meterSockets.delete(webSocket));
-          webSocket.on("error", () => this.meterSockets.delete(webSocket));
+  /**
+   * WHEP-style signaling: one POST exchanges SDP without trickle ICE (the node is
+   * ICE-lite), PUT changes the monitored input without renegotiation, DELETE ends it.
+   */
+  private async handleListen(
+    request: IncomingMessage,
+    response: ServerResponse,
+  ): Promise<void> {
+    const path = request.url ?? "";
+    if (path === "/audio/v0/listen/sessions" && request.method === "POST") {
+      const body = await readJsonObject(request, ["channel", "offer"]);
+      const state = this.media.getState();
+      if (state.status !== "ready") throw new HttpError(503, "audio-not-ready");
+      const channel = channelFrom(body.channel, state.device.channelCount);
+      if (typeof body.offer !== "string" || body.offer.length === 0) {
+        throw new HttpError(400, "invalid-offer");
+      }
+      const sessionId = randomUUID();
+      try {
+        const answer = await this.media.openSession({
+          sessionId,
+          channel,
+          offer: body.offer,
+          candidateAddress: candidateAddressFor(
+            request.socket.localAddress,
+            this.interfaces(),
+          ),
         });
-        return;
-      }
-      if (request.method !== "GET" || url.pathname !== "/audio/v0/listen") {
-        rejectUpgrade(socket, 404, "Not Found");
-        return;
-      }
-
-      const state = this.capture.getState();
-      if (state.status !== "ready") {
-        rejectUpgrade(socket, 503, "Audio Not Ready");
-        return;
-      }
-      const channel = parseChannel(url);
-      if (channel === undefined || channel >= state.device.channelCount) {
-        rejectUpgrade(socket, 400, "Invalid Channel");
-        return;
-      }
-      if (this.listeners.size >= MAX_CLIENTS) {
-        rejectUpgrade(socket, 503, "Listener Capacity Reached");
-        return;
-      }
-
-      this.webSockets.handleUpgrade(request, socket, head, (webSocket) => {
-        const listener = { socket: webSocket, channel };
-        this.listeners.add(listener);
-        webSocket.binaryType = "arraybuffer";
-        webSocket.on("message", () => {
-          webSocket.close(1008, "listen stream is receive-only");
-        });
-        webSocket.on("close", () => this.listeners.delete(listener));
-        webSocket.on("error", () => this.listeners.delete(listener));
-      });
-    });
-
-    this.capture.on("audio", (chunk: CaptureAudioChunk) => {
-      this.meter?.process(chunk);
-      const monoByChannel = new Map<number, Buffer>();
-      for (const listener of this.listeners) {
-        if (
-          listener.socket.readyState !== WebSocket.OPEN ||
-          listener.socket.bufferedAmount > MAX_BUFFERED_BYTES
-        ) {
-          continue;
+        sendJson(response, 201, { sessionId, answer });
+      } catch (error) {
+        if (error instanceof SessionRejectedError) {
+          throw new HttpError(
+            error.capacity ? 503 : 400,
+            error.capacity ? "listener-capacity-reached" : "offer-rejected",
+          );
         }
-        let mono = monoByChannel.get(listener.channel);
-        if (!mono) {
-          mono = extractMono(chunk, listener.channel);
-          monoByChannel.set(listener.channel, mono);
-        }
-        listener.socket.send(mono, { binary: true });
+        throw new HttpError(503, "media-worker-unavailable");
       }
-    });
+      return;
+    }
 
-    this.capture.on("state", () => {
-      const state = this.capture.getState();
-      if (state.status === "ready") {
-        this.meter = new LevelMeter({
-          sampleRateHz: state.device.sampleRateHz,
-          channelCount: state.device.channelCount,
-        });
-        this.meter.on("frame", (frame) => this.broadcastMeters(frame));
-        return;
+    const channelMatch = SESSION_CHANNEL_PATH.exec(path);
+    if (channelMatch?.[1] && request.method === "PUT") {
+      const body = await readJsonObject(request, ["channel"]);
+      const state = this.media.getState();
+      if (state.status !== "ready") throw new HttpError(503, "audio-not-ready");
+      const channel = channelFrom(body.channel, state.device.channelCount);
+      if (!this.media.selectChannel(channelMatch[1], channel)) {
+        throw new HttpError(404, "unknown-session");
       }
-      this.meter?.removeAllListeners();
-      this.meter = undefined;
-      for (const listener of this.listeners) {
-        listener.socket.close(1011, "audio capture unavailable");
+      response.writeHead(204, { "Cache-Control": "no-store" }).end();
+      return;
+    }
+
+    const sessionMatch = SESSION_PATH.exec(path);
+    if (sessionMatch?.[1] && request.method === "DELETE") {
+      if (!this.media.closeSession(sessionMatch[1])) {
+        throw new HttpError(404, "unknown-session");
       }
-    });
+      response.writeHead(204, { "Cache-Control": "no-store" }).end();
+      return;
+    }
+
+    throw new HttpError(404, "not-found");
   }
 
   /** The capture state plus the trailing per-input level summary the backend evaluates alerts from. */
   getLevels(): NodeLevels {
-    const state = this.capture.getState();
+    const state = this.media.getState();
     return {
       schemaVersion: "0",
       generatedAtUtc: new Date().toISOString(),
@@ -235,48 +297,72 @@ export class ListenGateway {
                 name: state.device.name.slice(0, 512),
                 sampleRateHz: state.device.sampleRateHz,
                 channelCount: state.device.channelCount,
-                simulated: this.capture.simulated,
+                simulated: this.media.simulated,
               }
             : null,
       },
       windowMs: LEVEL_WINDOW_MS,
       inputs:
-        state.status === "ready" && this.meter
-          ? this.meter.summary(LEVEL_WINDOW_MS)
+        state.status === "ready" && this.levels
+          ? this.levels.summary(LEVEL_WINDOW_MS)
           : [],
     };
   }
 
-  private broadcastMeters(frame: unknown): void {
-    if (this.meterSockets.size === 0) return;
-    const message = JSON.stringify(frame);
-    for (const socket of this.meterSockets) {
-      if (
-        socket.readyState !== WebSocket.OPEN ||
-        socket.bufferedAmount > MAX_METER_BUFFERED_BYTES
-      ) {
-        continue;
-      }
-      socket.send(message);
+  /**
+   * Receive-only Server-Sent Events stream of 20 Hz `meter-frame` payloads for Live's
+   * card traces. A slow client skips frames instead of growing a buffer.
+   */
+  private openMeterStream(response: ServerResponse): void {
+    if (this.meterClients.size >= MAX_METER_CLIENTS) {
+      sendJson(response, 503, { error: "meter-capacity-reached" });
+      return;
+    }
+    response.writeHead(200, {
+      "Cache-Control": "no-store",
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "X-Accel-Buffering": "no",
+    });
+    response.flushHeaders();
+    this.meterClients.add(response);
+    response.on("close", () => this.meterClients.delete(response));
+  }
+
+  private broadcastMeters(frame: MeterFrame): void {
+    if (this.meterClients.size === 0) return;
+    const message = `event: meters\ndata: ${JSON.stringify(frame)}\n\n`;
+    for (const client of this.meterClients) {
+      if (client.writableLength > MAX_METER_BUFFERED_BYTES) continue;
+      client.write(message);
     }
   }
 
+  private resetLevels(): void {
+    this.levels?.removeAllListeners();
+    this.levels = undefined;
+    const state = this.media.getState();
+    if (state.status !== "ready") return;
+    this.levels = new LevelBank({ channelCount: state.device.channelCount });
+    this.levels.on("frame", (frame) => this.broadcastMeters(frame));
+  }
+
   startCapture(): void {
-    this.capture.start();
+    this.media.start();
     this.shure.start();
   }
 
   async close(): Promise<void> {
-    this.capture.stop();
+    clearInterval(this.keepalive);
+    this.media.stop();
     this.shure.close();
-    for (const listener of this.listeners) listener.socket.terminate();
-    this.listeners.clear();
-    for (const socket of this.meterSockets) socket.terminate();
-    this.meterSockets.clear();
-    await new Promise<void>((resolve, reject) => {
-      this.webSockets.close(() => {
-        this.server.close((error) => (error ? reject(error) : resolve()));
-      });
+    for (const client of this.meterClients) client.end();
+    this.meterClients.clear();
+    const closed = new Promise<void>((resolve, reject) => {
+      this.server.close((error) => (error ? reject(error) : resolve()));
     });
+    // Long-lived streams (the proxied live-state events, keep-alive sockets)
+    // would otherwise hold shutdown open until every browser disconnects.
+    this.server.closeAllConnections();
+    await closed;
   }
 }

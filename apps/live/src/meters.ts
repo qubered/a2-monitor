@@ -21,11 +21,10 @@ type Frame = {
   clipped: boolean[];
 };
 
-type WebSocketConstructor = new (url: string) => WebSocket;
+type EventSourceConstructor = new (url: string) => EventSource;
 
 export function meterUrl(location = window.location): string {
   const url = new URL(location.href);
-  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
   url.pathname = "/audio/v0/meters";
   url.search = "";
   url.hash = "";
@@ -33,24 +32,24 @@ export function meterUrl(location = window.location): string {
 }
 
 /**
- * Holds the last ten seconds of meter frames from the audio node's meter
- * stream, outside React state, so sixty-four card traces can redraw at the
+ * Holds the last ten seconds of meter frames from the audio node's
+ * Server-Sent Events meter stream, outside React state, so sixty-four card traces can redraw at the
  * data rate without re-rendering the grid. Listeners are told a new frame
  * arrived and read what they need.
  */
 export class MeterStore {
   private frames: Frame[] = [];
   private readonly listeners = new Set<() => void>();
-  private socket: WebSocket | null = null;
+  private source: EventSource | null = null;
   private reconnectTimer: number | undefined;
   private attempt = 0;
   private stopped = true;
   connection: MeterConnection = "disconnected";
 
   constructor(
-    private readonly WebSocketClass: WebSocketConstructor | null = typeof window !==
-    "undefined"
-      ? window.WebSocket
+    private readonly EventSourceClass: EventSourceConstructor | null = typeof window !==
+      "undefined" && "EventSource" in window
+      ? window.EventSource
       : null,
     private readonly now: () => number = () => performance.now(),
   ) {}
@@ -66,8 +65,8 @@ export class MeterStore {
     if (this.reconnectTimer !== undefined) {
       window.clearTimeout(this.reconnectTimer);
     }
-    this.socket?.close();
-    this.socket = null;
+    this.source?.close();
+    this.source = null;
     this.setConnection("disconnected");
   }
 
@@ -136,15 +135,15 @@ export class MeterStore {
   }
 
   private connect(): void {
-    if (this.stopped || !this.WebSocketClass) return;
+    if (this.stopped || !this.EventSourceClass) return;
     this.setConnection("connecting");
-    const socket = new this.WebSocketClass(meterUrl());
-    this.socket = socket;
-    socket.onopen = () => {
+    const source = new this.EventSourceClass(meterUrl());
+    this.source = source;
+    source.onopen = () => {
       this.attempt = 0;
     };
-    socket.onmessage = (event) => {
-      if (typeof event.data !== "string") return;
+    source.addEventListener("meters", (event) => {
+      if (this.source !== source || typeof event.data !== "string") return;
       try {
         const frame = parseMeterFrame(JSON.parse(event.data));
         this.setConnection("live");
@@ -157,10 +156,13 @@ export class MeterStore {
       } catch {
         // A malformed frame is dropped, never drawn.
       }
-    };
-    socket.onclose = () => {
-      if (this.socket !== socket) return;
-      this.socket = null;
+    });
+    // The browser's own retry has no backoff and gives up on an HTTP error, so
+    // every error closes the stream and reconnects on this store's schedule.
+    source.onerror = () => {
+      if (this.source !== source) return;
+      source.close();
+      this.source = null;
       this.setConnection("disconnected");
       if (this.stopped) return;
       const delay =

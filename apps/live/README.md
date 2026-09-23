@@ -107,10 +107,10 @@ Live renders one shared monitoring state from the backend (ADR 0027):
   report, a pulsing outline and Reported badge on the card until claimed, and
   claim and mark-fixed actions in the banner, detail and exceptions sheet;
   incidents wait for the A1 to confirm the fix; and
-- muted-start listening through the temporary PCM path (ADR 0021). The Web
-  Audio context runs at the node's rate so browsers on 44.1 kHz output resample
-  instead of refusing to play. Input changes keep mute, dim and gain; gain runs
-  from `-60 dB` to `+12 dB` and dim adds `-12 dB`.
+- muted-start listening over WebRTC/Opus directly from the node (ADR 0026).
+  Changing input switches the node's selection inside the same session, so
+  mute, dim and gain carry over; gain runs from `-60 dB` to `+12 dB` and dim
+  adds `-12 dB`.
 
 A simulated test signal is labelled `Simulated test signal` in the header at
 every width. No support, performance or operator claim follows from this build.

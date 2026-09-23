@@ -12,9 +12,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: b3934bbf20a2105b66ed369f9975596a197bae69add7b723b1dd3fcc34352283
+// Schema-SHA256: 50ddea44559473413171c8bab6c01d3aa63d760cc3573f890c9629fbb8df9b5a
 // Generator-SHA256: 1a037c5d886a218624ec27da5ce598a9d0abd5d3c5e4690b1e37bf4b6b235531
-// Body-SHA256: 0778cd7994d7486ad28e9de7829dc2933df815709ffbb9a25f3556954c1cdeef
+// Body-SHA256: 76c63b481d31a1cb8c48855a5e711483e24f1ed6906f2bcb0298034dd0b9af10
 
 export type HealthResponse = {
   status: "ok";
@@ -1598,7 +1598,7 @@ const meterFrameSchema = {
   $id: "https://pulse.local/schema/v0/http/meter-frame.schema.json",
   title: "Audio node meter frame",
   description:
-    "One text message on the audio node's /audio/v0/meters WebSocket. Each array holds one value per captured input, indexed by input. Levels are dBFS over the frame interval, floored at -120 for digital silence. Meters are measurements of captured audio, never samples.",
+    "The data of one `meters` event on the audio node's /audio/v0/meters Server-Sent Events stream. Each array holds one value per captured input, indexed by input. Levels are dBFS over the frame interval, floored at -120 for digital silence. Meters are measurements of captured audio, never samples.",
   type: "object",
   additionalProperties: false,
   required: [

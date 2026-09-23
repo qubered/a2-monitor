@@ -60,7 +60,7 @@ per-device presentation preference, not a permission.
 ### Negative
 
 - There is no authentication: anyone on the trusted LAN can file, claim or
-  resolve as any name (ADR 0021's trust boundary).
+  resolve as any name (ADR 0026's trust boundary).
 - Reports and checks share the backend's fate; the design's node-path
   delivery of reports during a backend outage (design system §12) is not
   implemented, and Live says so rather than queueing silently.
