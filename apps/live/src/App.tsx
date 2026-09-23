@@ -78,8 +78,6 @@ const filterLabels: Record<Filter, string> = {
 };
 
 const ALERT_LOG_REFRESH_MS = 5_000;
-/** Grid order holds this long after a touch, so a pinned card never slides under a finger. */
-const ORDER_HOLD_MS = 2_500;
 const defaultLiveStateSource = createEventSourceLiveState();
 
 function readMonitorGainDb(): number {
@@ -386,8 +384,6 @@ export function App({
     detail: "Select a patched channel to listen.",
   });
   const playbackSession = useRef<PlaybackSession | null>(null);
-  const [heldOrder, setHeldOrder] = useState<string[] | null>(null);
-  const releaseOrderTimer = useRef<number | undefined>(undefined);
   const outputState = useRef({ muted: true, dimmed: false, gainDb });
   const announcedCritical = useRef<Set<string> | null>(null);
 
@@ -669,35 +665,12 @@ export function App({
         return channel.kind === filter;
       return true;
     };
-    const pinned = channels.filter(({ id }) => criticalIds.has(id));
-    const rest = channels.filter(
-      (channel) => !criticalIds.has(channel.id) && matches(channel),
+    // Showfile order, always: a critical channel stays visible whatever the
+    // filter, but in its own place, so no card ever moves.
+    return channels.filter(
+      (channel) => criticalIds.has(channel.id) || matches(channel),
     );
-    return [...pinned, ...rest];
   }, [activeAlerts, channels, criticalIds, filter]);
-
-  // While someone is touching the grid, keep cards where they were and only
-  // add or remove; the new pinned order lands once the hold is released.
-  const orderedChannels = heldOrder
-    ? [
-        ...heldOrder.flatMap((id) => {
-          const channel = visibleChannels.find((item) => item.id === id);
-          return channel ? [channel] : [];
-        }),
-        ...visibleChannels.filter(({ id }) => !heldOrder.includes(id)),
-      ]
-    : visibleChannels;
-
-  function holdGridOrder() {
-    const current = orderedChannels.map(({ id }) => id);
-    setHeldOrder((held) => held ?? current);
-    window.clearTimeout(releaseOrderTimer.current);
-    releaseOrderTimer.current = window.setTimeout(
-      () => setHeldOrder(null),
-      ORDER_HOLD_MS,
-    );
-  }
-  useEffect(() => () => window.clearTimeout(releaseOrderTimer.current), []);
 
   const counts: Record<Filter, number> = {
     all: channels.length,
@@ -902,11 +875,11 @@ export function App({
                 {isA1
                   ? `${visibleChannels.length} sources · press a channel to report what you hear · expand opens detail`
                   : `${visibleChannels.length} sources · press a card to select · expand opens detail`}
-                {criticalIds.size ? " · critical faults pinned first" : ""}
+                {criticalIds.size ? " · critical faults always shown" : ""}
               </p>
             </div>
-            <div className="channel-grid" onPointerDown={holdGridOrder}>
-              {orderedChannels.map((channel) => (
+            <div className="channel-grid">
+              {visibleChannels.map((channel) => (
                 <ChannelCard
                   key={channel.id}
                   channel={channel}

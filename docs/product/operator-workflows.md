@@ -114,7 +114,9 @@ Each source carries its own arm/disarm for silence, set when the show is built
 and changeable during it, because a spare, a backup capsule, an announce mic and
 a talkback tap are all legitimately quiet for long stretches and none of that
 depends on a cue list. A channel that is disarmed for silence says so on its
-card rather than reading as healthy.
+card rather than reading as healthy. An armed channel raises No audio only after
+it has been heard at least once since the backend started, so inputs not yet in
+use do not alarm before the show; until then its Audio status reads as unknown.
 
 Rules may additionally be zone aware — RF evaluated against a zone baseline,
 battery runtime compared with the next safe change opportunity. Where a cue

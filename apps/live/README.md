@@ -78,9 +78,8 @@ Live renders one shared monitoring state from the backend (ADR 0027):
   show an expiry countdown and expire while still counting as outstanding;
   critical overlays hold until acknowledged, and a cleared fault takes its
   alert with it;
-- channels with an active critical alert pinned first regardless of filter,
-  with grid order held for a moment under a touch so a card never moves under
-  a finger;
+- channels always in showfile order; a channel with an active critical alert
+  is shown whatever the filter, in its own place, and no card ever moves;
 - a header counter of outstanding and critical alerts that opens a show-wide
   exceptions sheet with recently cleared history, and an assertive live-region
   announcement for each newly raised critical alert;

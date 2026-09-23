@@ -1,9 +1,9 @@
 # Pulse — design language
 
-- **Version:** 2.1.1
+- **Version:** 2.2.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
-- **Last updated:** 2026-09-22
+- **Last updated:** 2026-09-23
 
 This is the whole design language in one document. It is normative: where it and
 anything else disagree, this document is the intent, and the implementation is
@@ -702,9 +702,12 @@ audio in one press and to a diagnosis in two.
 ```
 
 Default is **all channels** ([§1.5](#15-two-product-decisions-this-rests-on)).
-Sources with a critical exception pin to the top of the grid regardless of
-filter, and also appear in the exceptions sheet: the sheet is show-wide truth,
-the grid is current-context truth, and a critical fault belongs in both.
+The grid is always in showfile order. Pulse never reorders cards — not by
+severity, not by alert, not for a moment — because an operator finds a person
+by where their card lives. A source with a critical exception stays visible
+whatever the filter, in its own place, and also appears in the exceptions
+sheet: the sheet is show-wide truth, the grid is current-context truth, and a
+critical fault belongs in both.
 
 Press a card to listen. Source switching changes an established server-side bus
 and never renegotiates media, so the interface must not show a connecting state
@@ -903,6 +906,14 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.2.0 — 2026-09-23.** The A2 grid no longer reorders
+([§11.1](#111-a2-grid)). Critical sources used to pin to the top, with the
+order held briefly under a touch; now every card keeps its showfile position
+and a critical source outside the current filter is shown in place. Separately,
+the No audio alert arms only once a channel has been heard since the backend
+started; until then a silent channel reads as unknown on Audio, not as a fault
+and not as healthy. Implemented in Live and the backend alongside this entry.
 
 **2.1.1 — 2026-09-22.** Space Grotesk and Fredoka are retired. Both had
 become the default look of an AI-generated mockup rather than a considered

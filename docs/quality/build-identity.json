@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.b570676ddb552af8",
-  "sourceSha256": "b570676ddb552af85b3172c16ca2775e4af2ecc0f04044eb532610a7eab92855",
+  "buildId": "a2-0.0.0+sha256.4cf5e3bf4fbe9ad7",
+  "sourceSha256": "4cf5e3bf4fbe9ad77b9b627cbbde431b5d8ba0a9c1b7fb0e635546e165de8c7e",
   "inputCount": 393,
   "inputs": [
     {
@@ -77,7 +77,7 @@
     },
     {
       "path": "apps/live/README.md",
-      "sha256": "135f468865286ea4ec3716daf3e5d50bff336e749ab344d215b21d969ef01307"
+      "sha256": "eddb2bae43e34d560bda5e59b692855cc3446dc300c3938a61106b246fa55ef1"
     },
     {
       "path": "apps/live/index.html",
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "36b8fd3ed1e44ed7c16941e1f0f75b1b366b55379ec441c478a212b58abe3e2f"
+      "sha256": "14db8b66c03d6bad684e90ae8a8e5aed2d1a7b5307814c015acd7a464877c5fa"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "604ceee7cdabe90459a4d559407a316bd9ab4428fee1fa3d55c1fa7e4ae4b442"
+      "sha256": "09078d71ccb0e6ca50875e61eacfd750dc64ca8549f2957b94de6862149d79ba"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -253,7 +253,7 @@
     },
     {
       "path": "apps/manager/src/components/AlertsTab.tsx",
-      "sha256": "05788fee095f094649ef9e8d318e682f69206cfda80084f9c8642cbd835946b8"
+      "sha256": "afe28f161da6a648afff7e37d2f7db9f02b2f29dbe9b1d4750e1963475516b4c"
     },
     {
       "path": "apps/manager/src/components/ChannelsTab.tsx",
@@ -653,7 +653,7 @@
     },
     {
       "path": "docs/decisions/0027-mvp-live-monitoring-and-alerts.md",
-      "sha256": "b0e3850ef8e1d631fcf2edc4e174f56a7847a8172362ae47356716855dbe71e8"
+      "sha256": "dae1e29abcbe4641b8268bc29955aad33f6d03717528c94ec634b29a53b8228c"
     },
     {
       "path": "docs/decisions/0028-mvp-shared-checks-and-fault-reports.md",
@@ -661,7 +661,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "71242a6959e13f2d867a651ee1d89daef829777a0c68e801538cd3a25b06839d"
+      "sha256": "80539e9241478eeaab6657fd2c59205fe7924d915c09581dd485d60f4a68b285"
     },
     {
       "path": "docs/design/README.md",
@@ -757,7 +757,7 @@
     },
     {
       "path": "docs/product/operator-workflows.md",
-      "sha256": "f1708a7411b75a50fb4bf15a6e5a3fa526ea1bdf749767b6972b45a9aacc0330"
+      "sha256": "d2d4efe6bdbefde76679d6a22eb9dbcd0ec0b8a391ea80fb8149cf6118b9b55b"
     },
     {
       "path": "docs/product/phase-capability-matrix.md",
@@ -1409,11 +1409,11 @@
     },
     {
       "path": "services/backend/src/live-model.test.ts",
-      "sha256": "ba22fb94d77e14e545548e57d28e56b94e128210033e1bb9778fb08f5fce2694"
+      "sha256": "fbb6682d34b5fa3367352053544c0c01e42496eccc4758640bd2d5c6aff1d094"
     },
     {
       "path": "services/backend/src/live-model.ts",
-      "sha256": "eca6d7e73c52af05df3b28ef45f68a77c913f3076a01c2ac20d4874ee542045f"
+      "sha256": "6dfe6deb9a3a30f054d795317152066c8633454ca73b735e6ac6e2fe0a2e0445"
     },
     {
       "path": "services/backend/src/live-monitor.ts",

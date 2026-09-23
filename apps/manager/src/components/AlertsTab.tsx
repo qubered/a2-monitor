@@ -112,7 +112,7 @@ const SECTIONS: Array<{ title: string; detail: string; fields: FieldSpec[] }> =
           unit: "s",
           min: 5,
           max: 3600,
-          help: "Continuous silence before a critical No audio alert.",
+          help: "Continuous silence before a critical No audio alert. Arms once the channel has been heard since the backend started.",
         },
       ],
     },
