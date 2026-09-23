@@ -14,7 +14,12 @@ a2-media = { path = "../../crates/media" }
 a2-pcm-abi = { path = "../../crates/pcm-abi" }
 a2-replay = { path = "../../crates/replay" }
 a2-supervisor = { path = "../../crates/supervisor" }
+opus = "0.4.0"
 serde_json = "1.0.151"
+socket2 = "0.6.5"
+# AWS-LC is ADR 0017's named fallback provider; the Apple provider needs a Swift toolchain and a
+# macOS 15 deployment target. See ADR 0026.
+str0m = { version = "0.23.1", default-features = false, features = ["aws-lc-rs"] }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 cpal = "0.15.3"
@@ -37,3 +42,7 @@ path = "src/bin/media-worker-smoke.rs"
 [[bin]]
 name = "pulse-device-capture"
 path = "src/bin/device-capture.rs"
+
+[[bin]]
+name = "pulse-media-worker"
+path = "src/bin/pulse-media-worker/main.rs"

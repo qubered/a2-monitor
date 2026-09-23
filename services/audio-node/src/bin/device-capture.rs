@@ -1,6 +1,6 @@
 use std::ffi::OsString;
 
-#[cfg(any(test, target_os = "macos", target_os = "windows"))]
+#[cfg(any(target_os = "macos", target_os = "windows"))]
 const SAMPLE_RATE_HZ: u32 = 48_000;
 
 #[derive(Debug, Eq, PartialEq)]
@@ -60,7 +60,10 @@ fn encode_float32_le(samples: &[f32], output: &mut [u8]) -> usize {
 mod supported {
     use super::{Command, SAMPLE_RATE_HZ, encode_float32_le, f32_sample, i16_sample, u16_sample};
     use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-    use cpal::{Device, SampleFormat, SampleRate, StreamConfig, SupportedStreamConfigRange};
+    use cpal::{
+        Device, SampleFormat, SampleRate, StreamConfig, SupportedBufferSize,
+        SupportedStreamConfigRange,
+    };
     use serde_json::json;
     use std::cell::UnsafeCell;
     use std::error::Error;
@@ -74,6 +77,7 @@ mod supported {
     const MAX_CONFIGS_PER_DEVICE: usize = 128;
     const QUEUE_SECONDS: usize = 2;
     const WRITER_SAMPLES: usize = 16_384;
+    const TARGET_BUFFER_FRAMES: u32 = 128;
 
     pub fn run(command: Command) -> Result<(), Box<dyn Error>> {
         match command {
@@ -136,57 +140,55 @@ mod supported {
         })?;
         let channels = selected.channels();
         let format = selected.sample_format();
-        let config = StreamConfig {
-            channels,
-            sample_rate: SampleRate(SAMPLE_RATE_HZ),
-            buffer_size: cpal::BufferSize::Default,
-        };
-
         let queue_samples = usize::try_from(SAMPLE_RATE_HZ)?
             .checked_mul(usize::from(channels))
             .and_then(|samples| samples.checked_mul(QUEUE_SECONDS))
             .ok_or("capture queue size overflow")?;
-        let queue = PcmQueue::new(queue_samples)?;
-        let (producer, mut consumer) = queue.split();
         let stream_failed = Arc::new(AtomicBool::new(false));
         let callback_errors = Arc::new(AtomicU64::new(0));
-        let errors_for_callback = Arc::clone(&callback_errors);
-        let failed_for_callback = Arc::clone(&stream_failed);
-        let error_callback = move |_error| {
-            errors_for_callback.fetch_add(1, Ordering::Relaxed);
-            failed_for_callback.store(true, Ordering::Release);
-        };
 
-        let stream = match format {
-            SampleFormat::F32 => {
-                let mut producer = producer;
-                device.build_input_stream(
-                    &config,
-                    move |data: &[f32], _| producer.try_push(data.iter().copied().map(f32_sample)),
-                    error_callback,
-                    None,
-                )?
+        // The driver default is often 512 frames (10.7 ms at 48 kHz) before a sample reaches
+        // this process. Ask for a small fixed buffer where the device advertises one, and fall
+        // back to the default when the host (for example WASAPI shared mode) refuses it.
+        let buffer_sizes = [
+            match selected.buffer_size() {
+                SupportedBufferSize::Range { min, max } => Some(cpal::BufferSize::Fixed(
+                    TARGET_BUFFER_FRAMES.clamp(*min, *max),
+                )),
+                SupportedBufferSize::Unknown => None,
+            },
+            Some(cpal::BufferSize::Default),
+        ];
+        let mut opened = None;
+        let mut last_error = None;
+        for buffer_size in buffer_sizes.into_iter().flatten() {
+            let config = StreamConfig {
+                channels,
+                sample_rate: SampleRate(SAMPLE_RATE_HZ),
+                buffer_size,
+            };
+            let (producer, consumer) = PcmQueue::new(queue_samples)?.split();
+            let errors_for_callback = Arc::clone(&callback_errors);
+            let failed_for_callback = Arc::clone(&stream_failed);
+            let error_callback = move |_error| {
+                errors_for_callback.fetch_add(1, Ordering::Relaxed);
+                failed_for_callback.store(true, Ordering::Release);
+            };
+            match build_stream(&device, &config, format, producer, error_callback) {
+                Ok(stream) => {
+                    eprintln!("pulse-device-capture: input buffer {buffer_size:?}");
+                    opened = Some((stream, consumer));
+                    break;
+                }
+                Err(error) => last_error = Some(error),
             }
-            SampleFormat::I16 => {
-                let mut producer = producer;
-                device.build_input_stream(
-                    &config,
-                    move |data: &[i16], _| producer.try_push(data.iter().copied().map(i16_sample)),
-                    error_callback,
-                    None,
-                )?
-            }
-            SampleFormat::U16 => {
-                let mut producer = producer;
-                device.build_input_stream(
-                    &config,
-                    move |data: &[u16], _| producer.try_push(data.iter().copied().map(u16_sample)),
-                    error_callback,
-                    None,
-                )?
-            }
-            _ => return Err(format!("unsupported input sample format: {format}").into()),
-        };
+        }
+        let (stream, mut consumer) = opened.ok_or_else(|| {
+            format!(
+                "device {device_name:?} could not open a 48 kHz input stream: {}",
+                last_error.map_or_else(|| "no configuration".to_owned(), |error| error.to_string())
+            )
+        })?;
 
         let stdout = io::stdout();
         let mut output = stdout.lock();
@@ -220,7 +222,39 @@ mod supported {
             }
             let byte_count = encode_float32_le(&samples[..count], &mut bytes);
             output.write_all(&bytes[..byte_count])?;
+            // Stdout is line-buffered; binary PCM must not wait for a 0x0A byte.
+            output.flush()?;
         }
+    }
+
+    fn build_stream(
+        device: &Device,
+        config: &StreamConfig,
+        format: SampleFormat,
+        mut producer: Producer,
+        error_callback: impl FnMut(cpal::StreamError) + Send + 'static,
+    ) -> Result<cpal::Stream, Box<dyn Error>> {
+        Ok(match format {
+            SampleFormat::F32 => device.build_input_stream(
+                config,
+                move |data: &[f32], _| producer.try_push(data.iter().copied().map(f32_sample)),
+                error_callback,
+                None,
+            )?,
+            SampleFormat::I16 => device.build_input_stream(
+                config,
+                move |data: &[i16], _| producer.try_push(data.iter().copied().map(i16_sample)),
+                error_callback,
+                None,
+            )?,
+            SampleFormat::U16 => device.build_input_stream(
+                config,
+                move |data: &[u16], _| producer.try_push(data.iter().copied().map(u16_sample)),
+                error_callback,
+                None,
+            )?,
+            _ => return Err(format!("unsupported input sample format: {format}").into()),
+        })
     }
 
     fn find_exact_device(host: &cpal::Host, expected_name: &str) -> Result<Device, Box<dyn Error>> {

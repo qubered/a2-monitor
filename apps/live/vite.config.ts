@@ -8,10 +8,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       "/api": "http://127.0.0.1:3000",
-      "/audio": {
-        target: "http://127.0.0.1:3001",
-        ws: true,
-      },
+      "/audio": "http://127.0.0.1:3001",
     },
   },
 });

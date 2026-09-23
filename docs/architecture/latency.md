@@ -42,6 +42,11 @@ useful for attribution but is not an acceptable end-to-end result by itself.
 - requested jitter target of 10–20 ms; and
 - in-band FEC evaluated rather than assumed.
 
+The local MVP worker ([ADR 0026](../decisions/0026-webrtc-opus-listen-mvp.md))
+uses CELT-only restricted-low-delay mono at 128 kbit/s constrained VBR. It does
+not request a jitter target and leaves the browser's adaptive minimum in place.
+It marks media DSCP EF so Wi-Fi access points queue it as WMM voice.
+
 ### Resilient Wi-Fi profile
 
 - 48 kHz Opus;

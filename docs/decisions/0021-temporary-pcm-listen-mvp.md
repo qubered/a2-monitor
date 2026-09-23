@@ -1,6 +1,7 @@
 # ADR 0021: Temporary PCM listen path for the local MVP
 
-- **Status:** Accepted for local development only
+- **Status:** Superseded by [ADR 0026](0026-webrtc-opus-listen-mvp.md); the PCM
+  WebSocket and its client adapter are removed
 - **Date:** 2026-09-21
 - **Owners:** Project team
 - **Supersedes:** None

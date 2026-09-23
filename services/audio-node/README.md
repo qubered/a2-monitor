@@ -82,7 +82,11 @@ The runnable native scaffold now contains:
   and media-session identity fencing;
 - `services/audio-node`, a deterministic synthetic host, smoke binaries and a
   local-MVP `pulse-device-capture` adapter for one exact 48 kHz Core Audio/WASAPI
-  input; and
+  input;
+- `pulse-media-worker`, the local-MVP listen transport (ADR 0026). It runs
+  `pulse-device-capture` as a child and serves each listener an ICE-lite
+  `str0m` session with 10 ms mono Opus of the selected input. Input switches
+  crossfade server-side; and
 - `crates/supervisor`, a deterministic native-worker lifecycle policy with
   boot/generation fencing, role-specific readiness gates, bounded heartbeats,
   restart/quarantine, and confirmed-death shutdown deadlines behind injected

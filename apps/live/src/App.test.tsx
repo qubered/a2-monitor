@@ -273,10 +273,12 @@ describe("Live channel grid", () => {
       }),
     };
     const setMuted = vi.fn(async () => undefined);
+    const setChannel = vi.fn();
     const close = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>((options) => {
       options.onUpdate({ status: "listening", detail: "Receiving input 2." });
       return {
+        setChannel,
         setMuted,
         setDimmed: vi.fn(),
         setGainDb: vi.fn(),
@@ -309,7 +311,7 @@ describe("Live channel grid", () => {
     expect(screen.queryByText("Panel 2 — Panelist")).toBeNull();
     expect(screen.getAllByText("Identity unknown").length).toBeGreaterThan(0);
     expect(playbackFactory).toHaveBeenCalledWith(
-      expect.objectContaining({ channel: 1, sampleRateHz: 48000 }),
+      expect.objectContaining({ channel: 1 }),
     );
     expect(setMuted).toHaveBeenCalledWith(true);
     expect(screen.getByText("Listening")).toBeTruthy();
@@ -321,7 +323,10 @@ describe("Live channel grid", () => {
     await user.click(
       screen.getByRole("button", { name: "Select Input 1, channel 1" }),
     );
-    expect(setMuted).toHaveBeenCalledWith(false);
+    // Switching input keeps the one WebRTC session and its unmuted output state.
+    expect(setChannel).toHaveBeenLastCalledWith(0);
+    expect(playbackFactory).toHaveBeenCalledOnce();
+    expect(close).not.toHaveBeenCalled();
     expect(screen.getByText("Monitor output is unmuted")).toBeTruthy();
   });
 });
