@@ -13,7 +13,7 @@ import {
 import {
   clampMonitorGainDb,
   DEFAULT_MONITOR_GAIN_DB,
-  webAudioPlaybackFactory,
+  webRtcPlaybackFactory,
   type PlaybackFactory,
   type PlaybackSession,
   type PlaybackUpdate,
@@ -114,7 +114,7 @@ function SnapshotNotice({
 export function App({
   snapshotSource = httpSnapshotSource,
   audioDeviceSource = httpAudioDeviceSource,
-  playbackFactory = webAudioPlaybackFactory,
+  playbackFactory = webRtcPlaybackFactory,
 }: {
   snapshotSource?: SnapshotSource;
   audioDeviceSource?: AudioDeviceSource;
@@ -156,7 +156,6 @@ export function App({
     audioDeviceState.status === "ready"
       ? audioDeviceState.device.device
       : undefined;
-  const deviceSampleRateHz = device?.sampleRateHz;
   const selectedDeviceIndex =
     audioDeviceState.status === "ready"
       ? resolvePatchedInputIndex(selectedId, audioDeviceState.device, showfile)
@@ -180,17 +179,19 @@ export function App({
     }
   }, [selectedId]);
 
+  // One WebRTC session lives while any input is selected; changing input moves that
+  // session server-side instead of renegotiating, so switching is near-instant.
+  const hasSelectedInput = selectedDeviceIndex !== undefined;
+  const selectedInput = useRef(selectedDeviceIndex);
   useEffect(() => {
-    if (
-      !usingDeviceChannels ||
-      selectedDeviceIndex === undefined ||
-      deviceSampleRateHz === undefined
-    ) {
-      return;
-    }
+    // Declared before the session effect so a new session starts on the current input.
+    selectedInput.current = selectedDeviceIndex;
+  }, [selectedDeviceIndex]);
+  useEffect(() => {
+    const initialInput = selectedInput.current;
+    if (!usingDeviceChannels || initialInput === undefined) return;
     const session: PlaybackSession = playbackFactory({
-      channel: selectedDeviceIndex,
-      sampleRateHz: deviceSampleRateHz,
+      channel: initialInput,
       onUpdate: setPlayback,
     });
     session.setGainDb(outputState.current.gainDb);
@@ -201,12 +202,13 @@ export function App({
       if (playbackSession.current === session) playbackSession.current = null;
       session.close();
     };
-  }, [
-    deviceSampleRateHz,
-    playbackFactory,
-    selectedDeviceIndex,
-    usingDeviceChannels,
-  ]);
+  }, [hasSelectedInput, playbackFactory, usingDeviceChannels]);
+
+  useEffect(() => {
+    if (selectedDeviceIndex !== undefined) {
+      playbackSession.current?.setChannel(selectedDeviceIndex);
+    }
+  }, [selectedDeviceIndex]);
 
   useEffect(() => {
     outputState.current = { muted, dimmed, gainDb };

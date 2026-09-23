@@ -85,6 +85,10 @@ The app stores that local MVP showfile at
 restart and is read by every Live client connected to the Mac.
 
 This is an ad-hoc-signed development bundle, not the signed, hardened, notarized
-installer described by ADR 0018. The LAN option exposes ADR 0021's unauthenticated
-raw PCM transport and is suitable only for a trusted local network. It must not
-be port-forwarded or exposed to the internet.
+installer described by ADR 0018. Listening uses ADR 0026's WebRTC/Opus worker.
+Media is DTLS-SRTP encrypted, but signaling and listening are unauthenticated.
+The LAN option is suitable only for a trusted local network. It must not be
+port-forwarded or exposed to the internet. The media UDP socket binds the Mac's
+LAN address in both modes, so macOS may ask whether `pulse-media-worker` can
+accept incoming connections. Allow it for LAN listeners. Building the app
+requires `cmake` for libopus.

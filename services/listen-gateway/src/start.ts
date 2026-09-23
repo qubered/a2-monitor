@@ -8,6 +8,9 @@ const port = Number(rawPort);
 const defaultCaptureBinary = fileURLToPath(
   new URL("../../../target/debug/pulse-device-capture", import.meta.url),
 );
+const defaultWorkerBinary = fileURLToPath(
+  new URL("../../../target/debug/pulse-media-worker", import.meta.url),
+);
 
 if (!Number.isInteger(port) || port < 1 || port > 65_535) {
   throw new Error("A2_LISTEN_PORT must be an integer from 1 to 65535.");
@@ -15,6 +18,7 @@ if (!Number.isInteger(port) || port < 1 || port > 65_535) {
 
 const gateway = new ListenGateway({
   device: process.env.A2_AUDIO_DEVICE,
+  workerBinary: process.env.A2_MEDIA_WORKER_BIN ?? defaultWorkerBinary,
   captureBinary: process.env.A2_CAPTURE_BIN ?? defaultCaptureBinary,
   webRoot: process.env.A2_LIVE_DIR,
   managerRoot: process.env.A2_MANAGER_DIR,

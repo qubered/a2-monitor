@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 const resources = resolve(dirname(fileURLToPath(import.meta.url)));
 const appRoot = resolve(resources, "app");
 const captureBinary = resolve(resources, "bin/pulse-device-capture");
+const mediaWorkerBinary = resolve(resources, "bin/pulse-media-worker");
 const logPath = resolve(
   process.env.HOME ?? "/tmp",
   "Library/Logs/Pulse/mvp.log",
@@ -167,6 +168,7 @@ async function main() {
         ...process.env,
         A2_AUDIO_DEVICE: device,
         A2_CAPTURE_BIN: captureBinary,
+        A2_MEDIA_WORKER_BIN: mediaWorkerBinary,
         A2_LISTEN_HOST: host,
         A2_LISTEN_PORT: "4173",
         A2_LIVE_DIR: resolve(appRoot, "apps/live/dist"),

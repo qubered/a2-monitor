@@ -37,6 +37,12 @@ if [ -n "$non_system_deps" ]; then
   exit 1
 fi
 
+# pulse-media-worker builds upstream libopus from source (opusic-sys).
+if ! command -v cmake >/dev/null 2>&1; then
+  echo "cmake is required to build libopus for pulse-media-worker (brew install cmake)." >&2
+  exit 1
+fi
+
 case "$output_dir" in
   "$repo_root"/*) ;;
   *) echo "Output directory must be inside the repository." >&2; exit 1 ;;
@@ -56,7 +62,7 @@ npm run build --workspace @rvlt/pulse-backend
 npm run build --workspace @rvlt/pulse-listen-gateway
 npm run build --workspace @rvlt/pulse-live
 npm run build --workspace @rvlt/pulse-manager
-cargo build --locked --release --bin pulse-device-capture
+cargo build --locked --release --bin pulse-device-capture --bin pulse-media-worker
 
 runtime_root="$(mktemp -d)"
 icon_root="$(mktemp -d)"
@@ -106,6 +112,7 @@ swift infra/appliance/macos/mvp-app/svg-to-png.swift infra/appliance/macos/mvp-a
   "44:$app/Contents/Resources/MenuBarIcon.png"
 
 cp target/release/pulse-device-capture "$app/Contents/Resources/bin/pulse-device-capture"
+cp target/release/pulse-media-worker "$app/Contents/Resources/bin/pulse-media-worker"
 cp "$node_bin" "$app/Contents/Resources/bin/node"
 cp infra/appliance/macos/mvp-app/launcher.mjs "$app/Contents/Resources/launcher.mjs"
 xcrun swiftc \

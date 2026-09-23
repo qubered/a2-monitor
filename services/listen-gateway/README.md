@@ -1,13 +1,29 @@
 # Listen gateway
 
-Development-only direct audio-node transport for the local MVP. It launches
-`pulse-device-capture` with one exact device name, exposes the observed inputs at
-`GET /audio/v0/device`, and streams one selected mono Float32LE input at
-`/audio/v0/listen?channel=N` over WebSocket.
+Development-only host for the local MVP's direct node-to-Live listening path
+(ADR 0026). It launches `pulse-media-worker` with one exact device name. The
+worker runs `pulse-device-capture` as its child, encodes the selected input as
+10 ms mono Opus and sends it to each browser over WebRTC. The gateway exposes
+the observed inputs at `GET /audio/v0/device` and relays signaling. No audio
+passes through this process.
 
-The gateway is deliberately outside the management backend. It has no release
-authorization, encryption, jitter recovery or performance claim and must not be
-exposed to an untrusted network. ADR 0021 records its temporary scope.
+Signaling is WHEP-style, with no trickle ICE because the node is ICE-lite:
+
+| Request | Body | Response |
+| --- | --- | --- |
+| `POST /audio/v0/listen/sessions` | `{"channel": N, "offer": "<sdp>"}` | `201 {"sessionId", "answer"}` |
+| `PUT /audio/v0/listen/sessions/{id}/channel` | `{"channel": N}` | `204`; the node crossfades to the new input |
+| `DELETE /audio/v0/listen/sessions/{id}` | none | `204` |
+
+Bodies must be `application/json`. The node advertises the address the browser
+used to reach this server as its only ICE candidate. For a loopback page load it
+advertises the first LAN IPv4 address instead, because browsers pair from their
+LAN interfaces. Media is DTLS-SRTP encrypted and marked DSCP EF for Wi-Fi WMM
+voice queueing.
+
+The gateway is deliberately outside the management backend. Signaling has no
+listener authorization and makes no performance claim. It must not be exposed
+to an untrusted network.
 
 List the host's input devices:
 
@@ -21,13 +37,20 @@ Start the complete local application with an exact name from that output:
 A2_AUDIO_DEVICE="Exact device name" npm run dev
 ```
 
-The default bind is `127.0.0.1:3001`. `A2_CAPTURE_BIN`, `A2_LISTEN_HOST` and
-`A2_LISTEN_PORT` may override the development defaults. A packaged MVP may also
-set `A2_LIVE_DIR` to serve the compiled Live application and
-`A2_MANAGER_DIR` to serve Manager under `/manager/`.
-`A2_BACKEND_ORIGIN` proxies same-origin `/api/` requests to the management
-backend. These options keep the browser on one origin; they do not add transport
-authentication or encryption.
+Building the worker compiles libopus from source and needs `cmake`.
+
+The default bind is `127.0.0.1:3001`. These variables may override the
+development defaults:
+
+- `A2_MEDIA_WORKER_BIN`
+- `A2_CAPTURE_BIN`
+- `A2_LISTEN_HOST`
+- `A2_LISTEN_PORT`
+
+A packaged MVP may also set `A2_LIVE_DIR` to serve the compiled Live application
+and `A2_MANAGER_DIR` to serve Manager under `/manager/`. `A2_BACKEND_ORIGIN`
+proxies same-origin `/api/` requests to the management backend. These options
+keep the browser on one origin; they do not add authentication.
 
 The gateway loads Manager's receiver inventory from the local showfile and
 opens an independent read-only Shure command-string connection to each unit on
