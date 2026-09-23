@@ -232,6 +232,59 @@ describe("evaluate", () => {
     expect(back.conditions).toEqual([]);
   });
 
+  it("does not raise no-audio on a channel that has not been heard since start", () => {
+    const trackers = new Map<string, ChannelTracker>();
+    const at = (seconds: number, talkbackPeak: number) =>
+      run(
+        observationAt(
+          T0 + seconds * 1000,
+          levelsWith([-12, talkbackPeak]),
+          telemetryWith([{}]),
+        ),
+        { trackers, nowMs: T0 + seconds * 1000 },
+      );
+
+    let result = at(0, -120);
+    for (let second = 1; second <= 120; second += 1) result = at(second, -120);
+    expect(result.channels[1]?.audio.silentForMs).toBe(120_000);
+    expect(result.channels[1]?.statuses.audio).toBe("unknown");
+    expect(result.conditions).toEqual([]);
+
+    // First signal arms it; the timeout then counts from the last signal.
+    at(121, -35);
+    for (let second = 122; second <= 150; second += 1)
+      result = at(second, -120);
+    expect(result.channels[1]?.statuses.audio).toBe("good");
+    expect(result.conditions).toEqual([]);
+    const silent = at(151, -120);
+    expect(kinds(silent)).toEqual(["ch-talkback:no-audio/critical"]);
+  });
+
+  it("stays armed for no-audio after repatching a channel that was heard", () => {
+    const trackers = new Map<string, ChannelTracker>();
+    run(observationAt(T0, levelsWith([-12, -35]), telemetryWith([{}])), {
+      trackers,
+    });
+    const tracker = trackers.get("ch-talkback")!;
+    expect(tracker.heard).toBe(true);
+    // Simulate a repatch: silence timing restarts, but the channel stays heard.
+    tracker.inputKey = "another-device#0";
+    let result = run(
+      observationAt(T0 + 1_000, levelsWith([-12, -120]), telemetryWith([{}])),
+      { trackers, nowMs: T0 + 1_000 },
+    );
+    for (let second = 2; second <= 31; second += 1)
+      result = run(
+        observationAt(
+          T0 + second * 1000,
+          levelsWith([-12, -120]),
+          telemetryWith([{}]),
+        ),
+        { trackers, nowMs: T0 + second * 1000 },
+      );
+    expect(kinds(result)).toEqual(["ch-talkback:no-audio/critical"]);
+  });
+
   it("does not judge silence on a channel whose audio monitoring is off", () => {
     const base = showfileWith();
     const showfile: Showfile = {

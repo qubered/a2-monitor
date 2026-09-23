@@ -52,8 +52,10 @@ For the local MVP only:
    `alertPolicy` (battery, RF level, link quality, silence floor and timeout,
    clipping, overlay expiry) edited in Manager, with shared defaults in
    `@rvlt/pulse-protocol/alert-policy`. Silence alerting stays a per-channel
-   setting (ADR 0019); channels gain stable ids so alerts and history survive
-   renames, repatching and reordering.
+   setting (ADR 0019), and an armed channel raises No audio only after it has
+   been heard above the silence floor since the backend started, so unused
+   inputs stay quiet before the show. Channels gain stable ids so alerts and
+   history survive renames, repatching and reordering.
 5. **Simulation is labelled.** The reserved device name `Pulse test signal`
    makes `pulse-device-capture` generate a built-in eight-channel test signal
    in place of a physical input, and a development AD4Q simulator is

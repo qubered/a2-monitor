@@ -25,14 +25,18 @@ type TelemetryChannel = TelemetryReceiver["channels"][number];
 
 /**
  * Per-channel memory the evaluation needs between passes: how long an input
- * has been silent, and whether a transmitter has been seen on the patched
- * receiver channel since monitoring started. Both reset when the patch changes.
+ * has been silent, whether the channel has been heard at all, and whether a
+ * transmitter has been seen on the patched receiver channel since monitoring
+ * started. Silence timing and transmitter memory reset when the patch changes;
+ * `heard` lasts for the life of the backend process.
  */
 export type ChannelTracker = {
   inputKey: string | null;
   observingSinceMs: number | null;
   lastObservedAtMs: number | null;
   lastSignalAtMs: number | null;
+  /** Signal above the silence floor has been observed since the backend started; arms no-audio. */
+  heard: boolean;
   receiverKey: string | null;
   transmitterSeen: boolean;
 };
@@ -226,6 +230,7 @@ function trackerFor(
       observingSinceMs: null,
       lastObservedAtMs: null,
       lastSignalAtMs: null,
+      heard: false,
       receiverKey: null,
       transmitterSeen: false,
     };
@@ -319,7 +324,10 @@ function buildChannel(
     }
     tracker.lastObservedAtMs = nowMs;
     tracker.observingSinceMs ??= nowMs;
-    if (peakDbfs > policy.silenceFloorDbfs) tracker.lastSignalAtMs = nowMs;
+    if (peakDbfs > policy.silenceFloorDbfs) {
+      tracker.lastSignalAtMs = nowMs;
+      tracker.heard = true;
+    }
     silentForMs = nowMs - (tracker.lastSignalAtMs ?? tracker.observingSinceMs);
   }
   const clipping = audioObserved && clippedSamples > 0;
@@ -554,7 +562,10 @@ function buildChannel(
       receiverConfig?.id ?? null,
     );
   const silenceLimitMs = policy.silenceAfterSeconds * 1000;
-  const silentTooLong = silentForMs !== null && silentForMs >= silenceLimitMs;
+  // A channel that has never been heard this session is not yet in use, so its
+  // silence is not a fault: no-audio arms on the first signal above the floor.
+  const silentTooLong =
+    tracker.heard && silentForMs !== null && silentForMs >= silenceLimitMs;
   if (monitor.audio && silentTooLong)
     condition(
       "no-audio",
@@ -578,7 +589,7 @@ function buildChannel(
       ? "fault"
       : monitor.audio && ((policy.clipAlerts && clipping) || txMuted)
         ? "caution"
-        : signalPresent || monitor.audio
+        : signalPresent || (monitor.audio && tracker.heard)
           ? "good"
           : "unknown";
 

@@ -379,7 +379,32 @@ describe("Live channel grid", () => {
     ).toBeTruthy();
   });
 
-  it("pins a channel with a critical alert first, even outside the filter", async () => {
+  it("keeps showfile order when a channel raises a critical alert", () => {
+    renderApp(
+      stateWith({
+        alerts: [
+          alert({
+            id: "alert-000002",
+            kind: "no-audio",
+            dimension: "Audio",
+            label: "No audio",
+            channelId: "ch-spare",
+            channelNumber: 3,
+            channelName: "Spare",
+            receiverId: null,
+          }),
+        ],
+      }),
+    );
+
+    expect(
+      screen
+        .getAllByRole("article")
+        .map((card) => card.getAttribute("data-channel-id")),
+    ).toEqual(["ch-marguerite", "ch-talkback", "ch-spare"]);
+  });
+
+  it("shows a critical channel outside the filter in its own place", async () => {
     const user = userEvent.setup();
     renderApp(
       stateWith({
@@ -394,7 +419,6 @@ describe("Live channel grid", () => {
 
     await user.click(screen.getByRole("button", { name: /^Wired/ }));
     const cards = screen.getAllByRole("article");
-    expect(cards[0]?.getAttribute("data-channel-id")).toBe("ch-marguerite");
     expect(cards.map((card) => card.getAttribute("data-channel-id"))).toEqual([
       "ch-marguerite",
       "ch-talkback",
