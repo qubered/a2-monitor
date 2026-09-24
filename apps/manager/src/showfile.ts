@@ -78,7 +78,7 @@ export async function loadShureTelemetry(
   return parseShureTelemetry(await response.json());
 }
 
-/** The node's host output state (ADR 0029): device, channels in effect and status. */
+/** The node's host output state (ADR 0031): device, channels in effect and status. */
 export async function loadHostOutput(
   signal?: AbortSignal,
 ): Promise<HostOutput> {

@@ -336,6 +336,35 @@ afterEach(() => {
 });
 
 describe("Live channel grid", () => {
+  it("shows RF, Audio and Battery on the card, with no Check cell", async () => {
+    renderApp(
+      stateWith({
+        channels: [
+          channel({
+            statuses: {
+              rf: "good",
+              audio: "good",
+              battery: "good",
+              check: "fault",
+            },
+          }),
+        ],
+      }),
+    );
+    const card = (
+      await screen.findByText("Marguerite", { selector: "h2" })
+    ).closest("article")!;
+    const strip = within(card).getByRole("group", {
+      name: "Status by dimension",
+    });
+    expect(strip.querySelectorAll(".status-cell")).toHaveLength(3);
+    expect(within(strip).queryByText(/Mic check/)).toBeNull();
+    // A failed check alone is not a card-level problem.
+    expect(
+      screen.getByRole("button", { name: /Needs someone/ }).textContent,
+    ).toContain("0");
+  });
+
   it("starts unmuted and selecting a channel keeps the output state", async () => {
     const user = userEvent.setup();
     renderApp(stateWith());
@@ -360,7 +389,7 @@ describe("Live channel grid", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("veils a card with the backend alert and acknowledges it as the named operator", async () => {
+  it("marks a card with the backend alert and acknowledges it as the named operator", async () => {
     const user = userEvent.setup();
     window.localStorage.setItem("pulse-operator-name", "Sam");
     const raised = stateWith({ alerts: [alert()] });
@@ -1057,5 +1086,209 @@ describe("Live channel grid", () => {
     });
     await user.click(within(sheet).getByRole("button", { name: "Cancel" }));
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+describe("Run of show", () => {
+  const session: NonNullable<LiveState["runs"]>[number] = {
+    roomId: null,
+    activeId: null,
+    nextId: "ses-keynote",
+    startedAtUtc: null,
+    startedBy: null,
+    sessions: [
+      {
+        id: "ses-keynote",
+        name: "Keynote",
+        startMinute: 540,
+        channelCount: 1,
+      },
+      { id: "ses-panel", name: "Panel", startMinute: 615, channelCount: 2 },
+    ],
+  };
+
+  it("hides the run of show when the showfile has no sessions", async () => {
+    renderApp(stateWith());
+    await screen.findByText("Marguerite");
+    expect(screen.queryByRole("region", { name: "Run of show" })).toBeNull();
+  });
+
+  it("starts the next session from the turnover sheet and filters to it", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem("pulse-operator-name", "Sam");
+    const before = stateWith({
+      runs: [session],
+      channels: [
+        channel({
+          session: {
+            inUse: null,
+            nextInUse: true,
+            nextPresenter: "Dana Lee",
+          },
+        }),
+        {
+          ...talkback,
+          session: { inUse: null, nextInUse: false, nextPresenter: null },
+        },
+      ],
+    });
+    const after = stateWith({
+      revision: 11,
+      runs: [
+        {
+          ...session,
+          activeId: "ses-keynote",
+          nextId: "ses-panel",
+          startedAtUtc: new Date().toISOString(),
+          startedBy: "Sam (A2)",
+        },
+      ],
+      channels: [
+        channel({
+          performer: "Dana Lee",
+          session: { inUse: true, nextInUse: true, nextPresenter: null },
+        }),
+        {
+          ...talkback,
+          session: { inUse: false, nextInUse: true, nextPresenter: null },
+        },
+      ],
+    });
+    const put = vi.fn(
+      async () =>
+        new Response(JSON.stringify(after), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+    vi.stubGlobal("fetch", put);
+    renderApp(before);
+
+    const bar = await screen.findByRole("region", { name: "Run of show" });
+    expect(within(bar).getByText("No session running")).toBeTruthy();
+    expect(within(bar).getByText("1 channel ready")).toBeTruthy();
+
+    await user.click(within(bar).getByRole("button", { name: "Turnover" }));
+    const sheet = screen.getByRole("dialog", { name: "Turnover to Keynote" });
+    expect(
+      within(sheet).getByRole("button", {
+        name: /Marguerite, channel 1\. Ready: Battery 90 %/,
+      }),
+    ).toBeTruthy();
+    await user.click(
+      within(sheet).getByRole("button", { name: "Start Keynote" }),
+    );
+
+    expect(put).toHaveBeenCalledWith(
+      "/api/v1/live/session",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          sessionId: "ses-keynote",
+          roomId: null,
+          operator: "Sam (A2)",
+        }),
+      }),
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(within(bar).getByText("Keynote")).toBeTruthy();
+
+    const idleCard = screen
+      .getByRole("button", { name: "Select Talkback, channel 2" })
+      .closest("article")!;
+    expect(idleCard.classList.contains("is-idle")).toBe(true);
+    expect(within(idleCard).getByText(/Not in this session/)).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: /This session/ }));
+    expect(
+      screen.queryByRole("button", { name: "Select Talkback, channel 2" }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Select Marguerite, channel 1" }),
+    ).toBeTruthy();
+  });
+});
+
+describe("Rooms", () => {
+  const rooms: NonNullable<LiveState["rooms"]> = [
+    {
+      id: "room-ballroom",
+      name: "Ballroom",
+      categories: [{ id: "cat-stage", name: "Stage" }],
+    },
+    {
+      id: "room-breakout",
+      name: "Breakout B",
+      categories: [{ id: "cat-lectern", name: "Lectern" }],
+    },
+  ];
+  const run = (
+    roomId: string,
+    name: string,
+  ): NonNullable<LiveState["runs"]>[number] => ({
+    roomId,
+    activeId: null,
+    nextId: `ses-${roomId}`,
+    startedAtUtc: null,
+    startedBy: null,
+    sessions: [
+      { id: `ses-${roomId}`, name, startMinute: 540, channelCount: 1 },
+    ],
+  });
+  const roomed = () =>
+    stateWith({
+      rooms,
+      runs: [run("room-ballroom", "Keynote"), run("room-breakout", "Workshop")],
+      channels: [
+        channel({ roomId: "room-ballroom", categoryId: "cat-stage" }),
+        { ...talkback, roomId: "room-breakout", categoryId: "cat-lectern" },
+        { ...unpatched, roomId: null, categoryId: null },
+      ],
+    });
+
+  it("groups every room's channels under room and category headings", async () => {
+    renderApp(roomed());
+    expect(
+      await screen.findByRole("region", { name: "Ballroom · Stage" }),
+    ).toBeTruthy();
+    const lectern = screen.getByRole("region", {
+      name: "Breakout B · Lectern",
+    });
+    expect(
+      within(lectern).getByText("Talkback", { selector: "h2" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("region", { name: "No room" })).toBeTruthy();
+    expect(
+      screen.getByRole("region", { name: "Run of show: Ballroom" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("region", { name: "Run of show: Breakout B" }),
+    ).toBeTruthy();
+  });
+
+  it("shows one room per device and remembers it", async () => {
+    const user = userEvent.setup();
+    renderApp(roomed());
+    const picker = await screen.findByRole("navigation", { name: "Rooms" });
+    await user.click(
+      within(picker).getByRole("button", { name: /Breakout B/ }),
+    );
+
+    expect(window.localStorage.getItem("pulse-room")).toBe("room-breakout");
+    expect(screen.getByRole("region", { name: "Lectern" })).toBeTruthy();
+    expect(screen.queryByText("Marguerite", { selector: "h2" })).toBeNull();
+    expect(screen.getByRole("region", { name: "Run of show" })).toBeTruthy();
+    expect(
+      screen.queryByRole("region", { name: /Run of show: Ballroom/ }),
+    ).toBeNull();
+  });
+
+  it("falls back to every room when the remembered room is gone", async () => {
+    window.localStorage.setItem("pulse-room", "room-demolished");
+    renderApp(roomed());
+    expect(
+      await screen.findByText("Marguerite", { selector: "h2" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Talkback", { selector: "h2" })).toBeTruthy();
   });
 });

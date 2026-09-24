@@ -12,7 +12,7 @@ const MAX_CHANGED_BY_LENGTH = 80;
 
 export type HostMonitor = HostOutput["sessions"][number]["monitor"];
 
-/** A host output session as a production defines it (ADR 0029). */
+/** A host output session as a production defines it (ADR 0031). */
 export type HostSessionConfig = {
   id: string;
   name: string;
@@ -142,7 +142,7 @@ export function monitorCommand(monitor: HostMonitor): MonitorCommand {
 
 /**
  * The monitor state every Live client in one host output session shares
- * (ADR 0029): whoever changes the selection, mute, dim or level changes it for
+ * (ADR 0031): whoever changes the selection, mute, dim or level changes it for
  * everyone in the session, and every client sees the change. It is held in
  * memory: a gateway restart starts with nothing selected.
  */

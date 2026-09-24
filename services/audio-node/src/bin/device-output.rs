@@ -1,5 +1,5 @@
 //! `pulse-device-output`: plays the host monitor feed on one explicitly named output device
-//! (ADR 0029).
+//! (ADR 0031).
 //!
 //! stdin carries raw Float32LE at 48 kHz from `pulse-media-worker`: interleaved frames with
 //! one sample per session mix, in `--routes` order; there is no header. stdout carries JSON

@@ -77,7 +77,7 @@ function problems(sessions: readonly Session[]): string[] {
 }
 
 /**
- * Host output sessions for this production (ADR 0029): each is one shared mix
+ * Host output sessions for this production (ADR 0031): each is one shared mix
  * that Live operators join by name, played on its own outputs of the node's
  * host output device (for example DVS outputs routed to comms channels).
  */

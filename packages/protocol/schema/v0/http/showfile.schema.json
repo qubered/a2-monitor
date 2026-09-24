@@ -54,7 +54,7 @@
       }
     },
     "hostOutput": {
-      "description": "Host monitor output sessions for this production (ADR 0029). Each session is one shared mix that Live clients join by name; outputChannels are the 1-based channels of the node's host output device that carry it. A device channel belongs to at most one session. Absent means the node's own single default session.",
+      "description": "Host monitor output sessions for this production (ADR 0031). Each session is one shared mix that Live clients join by name; outputChannels are the 1-based channels of the node's host output device that carry it. A device channel belongs to at most one session. Absent means the node's own single default session.",
       "type": "object",
       "additionalProperties": false,
       "required": ["sessions"],
@@ -167,6 +167,16 @@
             "minLength": 1,
             "maxLength": 300000
           },
+          "roomId": {
+            "type": ["string", "null"],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "categoryId": {
+            "type": ["string", "null"],
+            "minLength": 1,
+            "maxLength": 64
+          },
           "monitor": {
             "type": "object",
             "additionalProperties": false,
@@ -175,6 +185,70 @@
               "battery": { "type": "boolean" },
               "rf": { "type": "boolean" },
               "audio": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "rooms": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "categories"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+          "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "categories": {
+            "type": "array",
+            "maxItems": 32,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name"],
+              "properties": {
+                "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+                "name": { "type": "string", "minLength": 1, "maxLength": 120 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "sessions": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "startMinute", "channels"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+          "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "roomId": {
+            "description": "The room this session runs in; null or absent for channels not in any room.",
+            "type": ["string", "null"],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "startMinute": {
+            "description": "Scheduled start as minutes after local midnight at the venue; null when not scheduled.",
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "maximum": 1439
+          },
+          "channels": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["channelId", "presenter"],
+              "properties": {
+                "channelId": { "type": "string", "minLength": 1, "maxLength": 64 },
+                "presenter": { "type": ["string", "null"], "maxLength": 120 }
+              }
             }
           }
         }

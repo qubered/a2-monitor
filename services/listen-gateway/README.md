@@ -44,7 +44,7 @@ with scripted battery drain, RF dips, interference, mute and transmitter loss.
 When `A2_OUTPUT_DEVICE` names an exact output device (for example Dante Virtual
 Soundcard, routed to comms), the worker also renders one shared monitor mix per
 host output **session**, and `pulse-device-output` plays each on its own 1-based
-output channels of that one device (ADR 0029). Sessions come from the active
+output channels of that one device (ADR 0031). Sessions come from the active
 production (`hostOutput.sessions`, set in Manager's Host output tab and read
 with the receiver inventory); a change reopens only the output device. Without
 saved sessions there is one default session, `Host output`, on

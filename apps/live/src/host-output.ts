@@ -15,7 +15,7 @@ export type HostMonitorChange = {
 };
 
 /**
- * Where this device's monitor audio plays (ADR 0029): here, or joined to one
+ * Where this device's monitor audio plays (ADR 0031): here, or joined to one
  * host output session by id.
  */
 export type OutputDestination = "device" | `host:${string}`;

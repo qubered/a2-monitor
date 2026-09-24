@@ -10,7 +10,7 @@ externally tested release.
 
 ### Added
 
-- Live: shared host monitor output sessions (ADR 0029). When the node has an
+- Live: shared host monitor output sessions (ADR 0031). When the node has an
   output device (for example Dante Virtual Soundcard routed to comms), Live
   asks on open whether audio plays on this device or in one of the
   production's sessions, e.g. Comms A on output 1 or Comms B on output 2.
@@ -18,6 +18,23 @@ externally tested release.
   changed it last. Manager's Host output tab defines the sessions and picks
   their outputs from the device; the node applies changes without a restart.
   The macOS app window gains an output device and default channel choice.
+- Rooms and categories (ADR 0030). Manager gains a Rooms section (rooms, and
+  categories inside each room) and a room/category picker per channel;
+  sessions belong to a room. Each room runs its own sessions, so a breakout
+  can turn over while the ballroom keynote runs. Live gains a per-device room
+  bar, groups the grid under category headings, and shows one now/next bar
+  per room. `PUT /api/v1/live/session` takes a `roomId` to end one room's run.
+
+- Sessions and a shared run of show for corporate events (ADR 0029). Manager
+  gains a Sessions section: an ordered agenda with start times, the channels
+  each session uses and a per-session presenter. Live gains a now/next bar and
+  a turnover sheet that lists what each channel in the next session needs —
+  transmitter off, a battery to change (including one whose reported runtime
+  will not last the scheduled session), a presenter change — then starts the
+  session for every client through `PUT /api/v1/live/session`. Channels the
+  running session does not use stop raising RF lost, TX muted and No audio,
+  and a This session filter hides them. A presenter change makes an earlier
+  mic check stale.
 
 - Manager: a Productions section for listing, creating, activating and
   removing named local productions, backed by a new
@@ -38,6 +55,13 @@ externally tested release.
 ### Changed
 
 - Live: listening no longer starts muted. Mute and dim stay one touch away.
+- Live alerts no longer veil the card. An unacknowledged alert is a 2px
+  severity ring plus a solid band across the photo's lower edge, so the card
+  underneath is not dimmed and the label reads from across a room
+  (DESIGN.md 2.3.0).
+- Live no longer overflows a phone-width viewport: the channel photo kept a
+  minimum width from its aspect ratio and the player controls clipped. Manager
+  tables no longer widen the page on a phone.
 
 - Manager navigation moved from horizontal tabs to a settings-style sidebar
   (Show, Productions, Receivers, Channels), and the Show and Receivers

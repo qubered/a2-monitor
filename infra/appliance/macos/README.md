@@ -77,7 +77,7 @@ window only hides it — reopen it from the menu bar's "Show Pulse" item.
 Optionally pick a **host monitor output** device and its output channels (for
 example Dante Virtual Soundcard output 1, routed to comms in Dante Controller);
 Live then offers to play on that shared output instead of each device
-(ADR 0029). The default is None. The channels here are the default
+(ADR 0031). The default is None. The channels here are the default
 single session's: sessions saved in Manager's Host output tab take precedence.
 The last chosen device, network scope and output are remembered for next
 launch.

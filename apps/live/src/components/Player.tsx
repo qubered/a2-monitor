@@ -32,7 +32,7 @@ type PlayerProps = {
   dimmed: boolean;
   gainDb: number;
   playback: PlaybackUpdate;
-  /** Set when controls act on the shared host output (ADR 0029), not this device. */
+  /** Set when controls act on the shared host output (ADR 0031), not this device. */
   hostOutput?: {
     /** The joined session, e.g. "Comms A". */
     sessionName: string;

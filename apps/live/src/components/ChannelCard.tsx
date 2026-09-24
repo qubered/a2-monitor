@@ -76,6 +76,11 @@ export function AlertIcon({
 
 /** The secondary caption line: the performer when known, otherwise where the signal comes from. */
 function secondaryLine(channel: LiveStateChannel): string {
+  if (channel.session?.inUse === false) {
+    return channel.session.nextInUse
+      ? `Not in this session · next: ${channel.session.nextPresenter ?? "in use"}`
+      : "Not in this session";
+  }
   if (channel.performer) return channel.performer;
   if (channel.receiver) {
     return `${channel.receiver.name} · channel ${channel.receiver.channelIndex + 1}`;
@@ -109,6 +114,7 @@ export function ChannelCard({
     listening ? "is-listening" : "",
     alerting ? "has-alert" : "",
     report && report.unclaimed > 0 ? "is-reported" : "",
+    channel.session?.inUse === false ? "is-idle" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -174,6 +180,22 @@ export function ChannelCard({
             input={channel.input.index}
             stale={metersStale}
           />
+          {alert ? (
+            <span
+              className={`alert-band alert-${alert.severity}`}
+              aria-hidden="true"
+            >
+              <AlertIcon dimension={alert.dimension} />
+              <strong>{alert.label}</strong>
+              <span>Press to acknowledge</span>
+              {remaining !== null ? (
+                <span
+                  className="alert-expiry"
+                  style={{ "--expiry-remaining": remaining } as CSSProperties}
+                />
+              ) : null}
+            </span>
+          ) : null}
         </div>
 
         <div className="channel-identity">
@@ -190,20 +212,7 @@ export function ChannelCard({
           type="button"
           onClick={() => onAcknowledge(alert)}
           aria-label={`${alert.label} on ${channel.name}, channel ${channel.number}. Press to acknowledge.`}
-        >
-          <span className="alert-mark">
-            <AlertIcon dimension={alert.dimension} />
-            <strong>{alert.label}</strong>
-            <span>Press to acknowledge</span>
-          </span>
-          {remaining !== null ? (
-            <span
-              className="alert-expiry"
-              aria-hidden="true"
-              style={{ "--expiry-remaining": remaining } as CSSProperties}
-            />
-          ) : null}
-        </button>
+        />
       ) : null}
     </article>
   );

@@ -1,4 +1,4 @@
-# ADR 0029: Shared host monitor output for the local MVP
+# ADR 0031: Shared host monitor output for the local MVP
 
 - **Status:** Accepted for the local MVP only
 - **Date:** 2026-09-24

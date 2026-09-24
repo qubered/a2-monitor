@@ -1,4 +1,4 @@
-//! Shared host monitor output (ADR 0029).
+//! Shared host monitor output (ADR 0031).
 //!
 //! One monitor mix per host output session, each controlled by every Live client that
 //! joined that session, is rendered from captured blocks and piped as interleaved Float32LE

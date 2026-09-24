@@ -1,4 +1,4 @@
-//! Host monitor output (ADR 0029): the pieces of `pulse-device-output` that do not touch a
+//! Host monitor output (ADR 0031): the pieces of `pulse-device-output` that do not touch a
 //! device API, so they are testable on every platform.
 //!
 //! The media worker renders one mono mix per host output session and sends them down a pipe

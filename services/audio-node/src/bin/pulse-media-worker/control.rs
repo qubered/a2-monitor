@@ -34,14 +34,14 @@ pub enum Command {
     Close {
         session_id: String,
     },
-    /// Sets one host output session's shared mix (ADR 0029). `None` fades it to silence.
+    /// Sets one host output session's shared mix (ADR 0031). `None` fades it to silence.
     Monitor {
         mix: usize,
         channel: Option<usize>,
         gain: f32,
     },
     /// Reopens the host output with one route of 1-based device channels per session,
-    /// e.g. a production's saved sessions (ADR 0029). Validated like `--output-routes`.
+    /// e.g. a production's saved sessions (ADR 0031). Validated like `--output-routes`.
     OutputRoutes {
         routes: String,
     },
@@ -264,7 +264,7 @@ impl<W: Write> EventWriter<W> {
         }))
     }
 
-    /// Host monitor output state for the gateway (ADR 0029).
+    /// Host monitor output state for the gateway (ADR 0031).
     pub fn output(&mut self, report: &OutputReport) -> std::io::Result<()> {
         self.emit(match report {
             OutputReport::Ready {

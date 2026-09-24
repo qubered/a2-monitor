@@ -42,7 +42,7 @@
       "hasImage": true,
       "input": {
         "index": 0,
-        "label": "USB Interface \u00b7 input 1"
+        "label": "USB Interface · input 1"
       },
       "receiver": {
         "id": "receiver-a",
@@ -99,7 +99,14 @@
         "total": 8,
         "stale": false,
         "updatedAtUtc": "2026-09-23T00:55:00Z"
-      }
+      },
+      "session": {
+        "inUse": true,
+        "nextInUse": false,
+        "nextPresenter": null
+      },
+      "roomId": "room-main",
+      "categoryId": "cat-cast"
     },
     {
       "id": "ch-talkback",
@@ -111,7 +118,7 @@
       "hasImage": false,
       "input": {
         "index": 1,
-        "label": "USB Interface \u00b7 input 2"
+        "label": "USB Interface · input 2"
       },
       "receiver": null,
       "monitor": {
@@ -153,7 +160,14 @@
         "muted": null,
         "observedAtUtc": null
       },
-      "check": null
+      "check": null,
+      "session": {
+        "inUse": true,
+        "nextInUse": true,
+        "nextPresenter": "Company manager"
+      },
+      "roomId": "room-main",
+      "categoryId": "cat-crew"
     }
   ],
   "alerts": [
@@ -205,5 +219,44 @@
     "active": 1,
     "outstanding": 1,
     "outstandingCritical": 1
-  }
+  },
+  "rooms": [
+    {
+      "id": "room-main",
+      "name": "Main house",
+      "categories": [
+        {
+          "id": "cat-cast",
+          "name": "Cast"
+        },
+        {
+          "id": "cat-crew",
+          "name": "Crew"
+        }
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "roomId": "room-main",
+      "activeId": "ses-act-1",
+      "nextId": "ses-curtain",
+      "startedAtUtc": "2026-09-23T00:30:00Z",
+      "startedBy": "Sam (A2)",
+      "sessions": [
+        {
+          "id": "ses-act-1",
+          "name": "Act one",
+          "startMinute": 1170,
+          "channelCount": 2
+        },
+        {
+          "id": "ses-curtain",
+          "name": "Curtain speech",
+          "startMinute": null,
+          "channelCount": 1
+        }
+      ]
+    }
+  ]
 }

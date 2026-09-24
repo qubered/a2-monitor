@@ -19,6 +19,7 @@ import { resolveAlertPolicy } from "./alert-policy.js";
 import {
   AlertBook,
   MemoryAlertPersistence,
+  normalizeOperator,
   type AlertPersistence,
 } from "./alerts.js";
 import {
@@ -38,6 +39,17 @@ import { evaluate, type ChannelTracker } from "./live-model.js";
 import { NodeObserver, type NodeSource } from "./node-observer.js";
 import type { ProductionStore } from "./productions.js";
 import { emptyShowfile } from "./showfile.js";
+import {
+  MemorySessionPersistence,
+  resolveRoom,
+  resolveSessions,
+  roomKey,
+  roomsSummary,
+  sessionPerformer,
+  sessionRunsSummary,
+  type SessionPersistence,
+  type SessionRun,
+} from "./sessions.js";
 
 const DEFAULT_TICK_MS = 1_000;
 const SHOWFILE_REFRESH_MS = 5_000;
@@ -49,6 +61,7 @@ export type LiveMonitorOptions = {
   alertPersistence?: AlertPersistence;
   checkPersistence?: CheckPersistence;
   reportPersistence?: ReportPersistence;
+  sessionPersistence?: SessionPersistence;
   history?: LevelHistoryStore;
   tickMs?: number;
   now?: () => number;
@@ -87,6 +100,9 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
   private readonly reports = new ReportBook();
   private readonly reportPersistence: ReportPersistence;
   private reportPersistTimer: NodeJS.Timeout | undefined;
+  private readonly sessionPersistence: SessionPersistence;
+  /** Running session per room key (see `roomKey`). */
+  private sessionRuns = new Map<string, SessionRun>();
   private showfile: Showfile | null = null;
   private showfileLoadedAtMs = 0;
   private published: PublishedState | null = null;
@@ -106,6 +122,8 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
       options.checkPersistence ?? new MemoryCheckPersistence();
     this.reportPersistence =
       options.reportPersistence ?? new MemoryReportPersistence();
+    this.sessionPersistence =
+      options.sessionPersistence ?? new MemorySessionPersistence();
     this.history = options.history ?? new LevelHistoryStore();
     this.tickMs = options.tickMs ?? DEFAULT_TICK_MS;
     this.now = options.now ?? Date.now;
@@ -127,6 +145,11 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
       }
       try {
         this.reports.restore(await this.reportPersistence.load());
+      } catch (error) {
+        this.onError(error);
+      }
+      try {
+        this.sessionRuns = (await this.sessionPersistence.load()) ?? new Map();
       } catch (error) {
         this.onError(error);
       }
@@ -209,13 +232,81 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
     return this.current();
   }
 
+  /**
+   * Starts a session of the active show in its own room, or ends a room's run
+   * with a null session and that room's id (null for channels in no room).
+   * Returns null when the show has no such session or room. Silence and
+   * transmitter-loss alerting re-arm for that room's channels, so a mic
+   * switched off at the last turnover is not a fault until it has been heard
+   * or seen in this session.
+   */
+  async startSession(
+    sessionId: string | null,
+    roomId: string | null,
+    by: string,
+  ): Promise<PublishedState | null> {
+    const showfile = await this.activeShowfile();
+    let key: string;
+    if (sessionId !== null) {
+      const session = (showfile.sessions ?? []).find(
+        ({ id }) => id === sessionId,
+      );
+      if (!session) return null;
+      key = roomKey(session.roomId);
+    } else {
+      if (
+        roomId !== null &&
+        !(showfile.rooms ?? []).some(({ id }) => id === roomId)
+      ) {
+        return null;
+      }
+      key = roomKey(roomId);
+    }
+    if (sessionId === null) this.sessionRuns.delete(key);
+    else
+      this.sessionRuns.set(key, {
+        activeId: sessionId,
+        startedAtUtc: new Date(this.now()).toISOString(),
+        startedBy: normalizeOperator(by),
+      });
+    for (const channel of showfile.channels) {
+      if (!channel.id || roomKey(channel.roomId) !== key) continue;
+      const tracker = this.trackers.get(channel.id);
+      if (!tracker) continue;
+      tracker.heard = false;
+      tracker.transmitterSeen = false;
+    }
+    try {
+      await this.sessionPersistence.save(this.sessionRuns);
+    } catch (error) {
+      this.onError(error);
+    }
+    await this.tick();
+    return this.current();
+  }
+
   /** Current subjects for every channel in the active show, keyed by channel id. */
   private async subjects(): Promise<Map<string, MicCheckSubject>> {
     const showfile = await this.activeShowfile();
     return new Map(
-      showfile.channels.flatMap((channel) =>
-        channel.id ? [[channel.id, subjectOf(channel)] as const] : [],
-      ),
+      showfile.channels.flatMap((channel) => {
+        if (!channel.id) return [];
+        const key = roomKey(channel.roomId);
+        const { active } = resolveRoom(
+          showfile,
+          this.sessionRuns.get(key),
+          key,
+        );
+        return [
+          [
+            channel.id,
+            subjectOf({
+              ...channel,
+              performer: sessionPerformer(channel, active),
+            }),
+          ] as const,
+        ];
+      }),
     );
   }
 
@@ -300,6 +391,7 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
         observation: this.nodeSource.current(),
         trackers: this.trackers,
         nowMs,
+        sessions: resolveSessions(showfile, this.sessionRuns),
         checks: new Map(
           showfile.channels.flatMap((channel) => {
             const check = channel.id ? this.checks.get(channel.id) : undefined;
@@ -336,6 +428,8 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
         channels: evaluation.channels,
         alerts,
         reports: this.reports.visible(nowMs),
+        rooms: roomsSummary(showfile),
+        runs: sessionRunsSummary(showfile, this.sessionRuns),
         summary: {
           active: alerts.length,
           outstanding: outstanding.length,

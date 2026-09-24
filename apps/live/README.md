@@ -71,15 +71,26 @@ Live renders one shared monitoring state from the backend (ADR 0027):
 
 - channel cards from the active showfile with the real headshot when Manager
   has one, a 10-second meter trace drawn from the node's 20 Hz meter stream
-  (present, silent, gap and stale drawn differently), and the four-cell
-  RF · Audio · Battery · Check status strip computed by the backend;
-- the alert veil from backend alerts: pressing it acknowledges that alert as
-  the operator named on this device, for every Live client; caution overlays
-  show an expiry countdown and expire while still counting as outstanding;
-  critical overlays hold until acknowledged, and a cleared fault takes its
-  alert with it;
+  (present, silent, gap and stale drawn differently), and the three-cell
+  RF · Audio · Battery status strip computed by the backend;
+- the alert ring and band from backend alerts: pressing the card acknowledges
+  that alert as the operator named on this device, for every Live client;
+  caution overlays show an expiry countdown and expire while still counting as
+  outstanding; critical overlays hold until acknowledged, and a cleared fault
+  takes its alert with it;
 - channels always in showfile order; a channel with an active critical alert
   is shown whatever the filter, in its own place, and no card ever moves;
+- a run-of-show bar when the showfile has sessions (ADR 0029): now and next,
+  and a turnover sheet listing each channel the next session uses with its
+  presenter change and what it waits on (transmitter off, a battery to change,
+  including one that will not last the scheduled session, or a battery nobody
+  can measure) before one action starts the session for every client;
+  channels the running session does not use read "Not in this session" and do
+  not alert for silence, mute or transmitter loss, and a "This session" filter
+  shows only the channels in use;
+- rooms and categories when the showfile has them (ADR 0030): a per-device
+  room bar, a grid grouped under category headings, and one run of show per
+  room; the header's alert count stays show-wide;
 - a header counter of outstanding and critical alerts that opens a show-wide
   exceptions sheet with recently cleared history, and an assertive live-region
   announcement for each newly raised critical alert;
@@ -95,7 +106,7 @@ Live renders one shared monitoring state from the backend (ADR 0027):
   backend offline, cards keep last-known identity, every verdict becomes
   unknown and listening continues through the node;
 - the resumable eight-dimension guided mic check, shared through the backend
-  so every device sees the same attributed verdicts and the Check cell is real
+  so every device sees the same attributed verdicts in the channel detail
   (a changed patch or performer makes an old check stale);
 - an A1 role (set per device on the name chip) that turns the grid into the
   mix-confidence surface: no listen control; pressing a channel opens the
@@ -107,10 +118,10 @@ Live renders one shared monitoring state from the backend (ADR 0027):
   claim and mark-fixed actions in the banner, detail and exceptions sheet;
   incidents wait for the A1 to confirm the fix;
 - listening over WebRTC/Opus directly from the node (ADR 0026), unmuted on
-  start (ADR 0029). Changing input switches the node's selection inside the
+  start (ADR 0031). Changing input switches the node's selection inside the
   same session, so mute, dim and gain carry over; gain runs from `-60 dB` to
   `+12 dB` and dim adds `-12 dB`; and
-- shared host output sessions (ADR 0029). When the node has an output device,
+- shared host output sessions (ADR 0031). When the node has an output device,
   Live asks on open whether audio plays on this device or in one of the
   production's sessions (for example Comms A on DVS output 1). Everyone in a
   session shares its selection, mute, dim and level, and the player names who
@@ -144,7 +155,7 @@ npm run check --workspace @rvlt/pulse-live
 - [x] shared Paper/dark design tokens and offline font assets
 - [x] A2 channel grid, filters, alert acknowledgement and detail surface
 - [x] source selection with visible mute and dim controls (unmuted on start)
-- [x] shared host output sessions chosen on open (ADR 0029)
+- [x] shared host output sessions chosen on open (ADR 0031)
 - [x] interaction tests and desktop/iPad visual checks
 - [x] backend health and fabricated snapshot endpoint
 - [x] Live snapshot loading, explicit waiting/offline/error states and reconnect
@@ -152,7 +163,7 @@ npm run check --workspace @rvlt/pulse-live
 - [x] local physical-device input selection and muted direct PCM listening MVP
 - [x] external meter store and bounded canvas rendering path
 - [x] shared backend state over server-sent events, backend-owned alerts and
-  acknowledgements, exceptions sheet
+      acknowledgements, exceptions sheet
 - [ ] audio-node WebRTC media/control integration
 - [x] server-synchronized mic check with the A1 captured-audio verdict
 - [x] A1 mix-confidence surface and fault report → A2 task/incident loop

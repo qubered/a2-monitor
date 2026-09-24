@@ -57,7 +57,7 @@ requirements below.
   and reduced-motion rules. Never make hover, precise dragging, colour, sound,
   or motion the only way to understand or complete an action.
 - Keep audio safety controls visible: mute and dim remain one touch away.
-  Listening starts unmuted (ADR 0029). Make replay unmistakable, keep a one-action return to
+  Listening starts unmuted (ADR 0031). Make replay unmistakable, keep a one-action return to
   live visible, and retain current critical alerts while viewing the past.
 - Implement the specific empty, loading, stale, degraded, offline, error, and
   permission states defined by the design language. Name what the product is

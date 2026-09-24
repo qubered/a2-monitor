@@ -230,7 +230,7 @@ export class ListenGateway {
       options.shureMonitor ??
       new ShureFleetMonitor({
         backendOrigin: options.backendOrigin,
-        // The active production's host output sessions (ADR 0029).
+        // The active production's host output sessions (ADR 0031).
         onShowfile: (showfile) => {
           this.hostSessions.configure(
             showfile.hostOutput?.sessions,
@@ -375,7 +375,7 @@ export class ListenGateway {
   }
 
   /**
-   * Shared host monitor output (ADR 0029). `GET /audio/v0/output` reads it;
+   * Shared host monitor output (ADR 0031). `GET /audio/v0/output` reads it;
    * `PATCH /audio/v0/output/sessions/{id}` changes any subset of one session's
    * monitor for everyone in it and returns the new document.
    */
@@ -513,7 +513,7 @@ export class ListenGateway {
   /**
    * Starts receivers and capture. With a backend and a host output, capture
    * waits briefly for the active production's output channels so the output
-   * opens on them rather than on the default first (ADR 0029).
+   * opens on them rather than on the default first (ADR 0031).
    */
   startCapture(): void {
     this.shure.start();

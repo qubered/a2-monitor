@@ -37,11 +37,14 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   );
 }
 
+// `relative` keeps a visually hidden (sr-only, absolutely positioned) header
+// label inside the table's scroll box; without it the label escaped to the
+// page and widened the whole Manager on a phone.
 function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   return (
     <th
       className={cn(
-        "h-11 px-3 text-left align-middle first:pl-5 last:pr-5",
+        "relative h-11 px-3 text-left align-middle first:pl-5 last:pr-5",
         className,
       )}
       {...props}

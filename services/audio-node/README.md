@@ -87,7 +87,7 @@ The runnable native scaffold now contains:
   `pulse-device-capture` as a child and serves each listener an ICE-lite
   `str0m` session with 10 ms mono Opus of the selected input. Input switches
   crossfade server-side. Given an output device it also renders one shared host
-  monitor mix and pipes it to `pulse-device-output` (ADR 0029);
+  monitor mix and pipes it to `pulse-device-output` (ADR 0031);
 - `pulse-device-output`, the local-MVP host monitor output. It opens one exact
   48 kHz Core Audio/WASAPI output device, copies the worker's mono feed to the
   listed output channels, and reports underruns and dropped frames. The device

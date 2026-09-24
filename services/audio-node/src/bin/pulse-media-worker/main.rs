@@ -7,7 +7,7 @@
 //! media work and metering. The listen gateway controls it over stdin/stdout.
 //!
 //! When given an output device it also renders the shared host monitor mix and feeds it to
-//! a `pulse-device-output` child (ADR 0029).
+//! a `pulse-device-output` child (ADR 0031).
 
 mod capture;
 mod control;

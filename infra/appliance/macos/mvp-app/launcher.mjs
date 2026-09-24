@@ -177,7 +177,7 @@ async function main() {
         A2_AUDIO_DEVICE: device,
         A2_CAPTURE_BIN: captureBinary,
         A2_MEDIA_WORKER_BIN: mediaWorkerBinary,
-        // Host monitor output (ADR 0029) is on only when the app names a device.
+        // Host monitor output (ADR 0031) is on only when the app names a device.
         A2_OUTPUT_BIN: outputBinary,
         A2_LISTEN_HOST: host,
         A2_LISTEN_PORT: "4173",

@@ -24,7 +24,7 @@ function capitalize(text: string): string {
 
 /**
  * Where this device's monitor audio plays: here, or joined to one of the host
- * output sessions (ADR 0029). Everyone in a session shares its mix.
+ * output sessions (ADR 0031). Everyone in a session shares its mix.
  */
 export function OutputSheet({
   output,

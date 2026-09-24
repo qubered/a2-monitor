@@ -27,12 +27,12 @@ function VerdictGlyph({ verdict }: { verdict: Verdict }) {
   return <path d="m4.5 11.5 7-7" />;
 }
 
+/** The card's measured dimensions. Mic-check progress lives in the channel detail, not on the card. */
 export function StatusStrip({ statuses }: Pick<LiveStateChannel, "statuses">) {
   const dimensions = [
     ["rf", "RF", "RF link"],
     ["audio", "Audio", "Audio"],
     ["battery", "Battery", "Battery"],
-    ["check", "Check", "Mic check"],
   ] as const;
 
   return (

@@ -7,7 +7,7 @@ private let deviceDefaultsKey = "PulseAudioDevice"
 private let hostDefaultsKey = "PulseBindHost"
 private let outputDefaultsKey = "PulseOutputDevice"
 private let outputChannelsDefaultsKey = "PulseOutputChannels"
-/// Host monitor output is off unless an output device is chosen (ADR 0029).
+/// Host monitor output is off unless an output device is chosen (ADR 0031).
 private let noOutput = "None (listen on each device only)"
 /// Reserved name pulse-device-output accepts and discards without opening a device.
 private let simulatedOutput = "Pulse simulated output"

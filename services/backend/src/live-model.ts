@@ -17,6 +17,11 @@ import {
   NODE_UNREACHABLE_AFTER_MS,
   type NodeObservation,
 } from "./node-observer.js";
+import {
+  roomKey,
+  sessionPerformer,
+  type ResolvedSessions,
+} from "./sessions.js";
 
 type ShowChannel = Showfile["channels"][number];
 type ReceiverConfig = Showfile["shureReceivers"][number];
@@ -59,6 +64,8 @@ export type EvaluationInput = {
   nowMs: number;
   /** Guided mic checks by channel id; absent means no channel has been checked. */
   checks?: ReadonlyMap<string, StoredCheck>;
+  /** Each room's running and next session, by room key; a room with none is not run by session. */
+  sessions?: ReadonlyMap<string, ResolvedSessions>;
 };
 
 const DEFAULT_MONITOR = { battery: true, rf: true, audio: true };
@@ -254,6 +261,20 @@ function buildChannel(
   const monitor = showChannel.monitor ?? DEFAULT_MONITOR;
   const tracker = trackerFor(input.trackers, id);
   const conditions: AlertCondition[] = [];
+  // A channel follows its own room's run of show.
+  const roomSessions = input.sessions?.get(roomKey(showChannel.roomId));
+  const activeSession = roomSessions?.active ?? null;
+  const nextSession = roomSessions?.next ?? null;
+  const inSession = (session: typeof activeSession) =>
+    session === null
+      ? null
+      : session.channels.some(({ channelId }) => channelId === id);
+  const inUse = inSession(activeSession);
+  const nextInUse = inSession(nextSession);
+  // A channel the running session does not use is expected to be switched off,
+  // muted and silent: none of those is a fault until a session needs it.
+  const idle = inUse === false;
+  const performer = sessionPerformer(showChannel, activeSession);
   const condition = (
     kind: AlertKind,
     severity: AlertCondition["severity"],
@@ -423,7 +444,7 @@ function buildChannel(
   if (wireless) {
     const observed = telemetryAvailability === "observed";
     const findings: LiveStateVerdict[] = [];
-    if (observed && transmitterPresent === false) {
+    if (observed && transmitterPresent === false && !idle) {
       if (tracker.transmitterSeen) {
         findings.push("fault");
         if (monitor.rf)
@@ -495,13 +516,15 @@ function buildChannel(
     }
     rfVerdict = !monitor.rf
       ? "unknown"
-      : !observed || (transmitterPresent === null && rf.levelDbm === null)
-        ? "unknown"
-        : findings.includes("fault")
-          ? "fault"
-          : findings.includes("caution")
-            ? "caution"
-            : "good";
+      : idle && observed && transmitterPresent === false
+        ? "not-applicable"
+        : !observed || (transmitterPresent === null && rf.levelDbm === null)
+          ? "unknown"
+          : findings.includes("fault")
+            ? "fault"
+            : findings.includes("caution")
+              ? "caution"
+              : "good";
   }
 
   // ---- Battery verdict and findings -------------------------------------
@@ -553,7 +576,7 @@ function buildChannel(
   // ---- Audio verdict and findings ---------------------------------------
   const txMuted =
     telemetryAvailability === "observed" && transmitter.muted === true;
-  if (txMuted && monitor.audio)
+  if (txMuted && monitor.audio && !idle)
     condition(
       "tx-muted",
       "caution",
@@ -565,7 +588,10 @@ function buildChannel(
   // A channel that has never been heard this session is not yet in use, so its
   // silence is not a fault: no-audio arms on the first signal above the floor.
   const silentTooLong =
-    tracker.heard && silentForMs !== null && silentForMs >= silenceLimitMs;
+    !idle &&
+    tracker.heard &&
+    silentForMs !== null &&
+    silentForMs >= silenceLimitMs;
   if (monitor.audio && silentTooLong)
     condition(
       "no-audio",
@@ -587,24 +613,34 @@ function buildChannel(
     ? "unknown"
     : monitor.audio && silentTooLong
       ? "fault"
-      : monitor.audio && ((policy.clipAlerts && clipping) || txMuted)
+      : monitor.audio && ((policy.clipAlerts && clipping) || (txMuted && !idle))
         ? "caution"
-        : signalPresent || (monitor.audio && tracker.heard)
+        : signalPresent
           ? "good"
-          : "unknown";
+          : idle
+            ? "not-applicable"
+            : monitor.audio && tracker.heard
+              ? "good"
+              : "unknown";
 
   const receiverStatus: NonNullable<LiveStateChannel["receiver"]>["status"] =
     telemetryReceiver?.status ?? "missing";
-  const check = summarizeCheck(input.checks?.get(id), subjectOf(showChannel));
+  // A presenter change between sessions makes an earlier check stale.
+  const check = summarizeCheck(
+    input.checks?.get(id),
+    subjectOf({ ...showChannel, performer }),
+  );
 
   return {
     channel: {
       id,
       number,
       name: showChannel.name,
-      performer: showChannel.performer ?? null,
+      performer,
       kind: wireless ? "wireless" : "wired",
       micType: showChannel.micType ?? null,
+      roomId: showChannel.roomId ?? null,
+      categoryId: showChannel.categoryId ?? null,
       hasImage: Boolean(showChannel.imageUrl),
       input: { index: inputIndex, label: bounded(inputLabel, 160) },
       receiver: wireless
@@ -630,6 +666,16 @@ function buildChannel(
       battery,
       transmitter,
       check,
+      session:
+        activeSession === null && nextSession === null
+          ? null
+          : {
+              inUse,
+              nextInUse,
+              nextPresenter: nextInUse
+                ? sessionPerformer(showChannel, nextSession)
+                : null,
+            },
     },
     conditions,
   };

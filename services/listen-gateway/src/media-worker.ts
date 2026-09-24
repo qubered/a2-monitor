@@ -61,7 +61,7 @@ export type MediaWorkerOptions = {
   workerBinary?: string;
   captureBinary?: string;
   /**
-   * Host monitor output (ADR 0029): all three are set together or not at all.
+   * Host monitor output (ADR 0031): all three are set together or not at all.
    * `outputChannels` are the default single session's channels, used when the
    * production defines no sessions.
    */
@@ -82,7 +82,7 @@ export type OpenSessionRequest = {
 
 /**
  * Reserved output device name that makes `pulse-device-output` accept and discard the
- * host monitor feed without opening a device (ADR 0029). It is always reported as simulated.
+ * host monitor feed without opening a device (ADR 0031). It is always reported as simulated.
  */
 export const SIMULATED_OUTPUT_DEVICE_NAME = "Pulse simulated output";
 
@@ -525,7 +525,7 @@ export class MediaWorkerManager extends EventEmitter {
 
   /**
    * Applies the active production's host output sessions as routes, one per
-   * mix (ADR 0029), or the node's default single session when it sets none.
+   * mix (ADR 0031), or the node's default single session when it sets none.
    * A change reopens only the output device; capture and listeners carry on.
    * Callers re-send each session's mix afterwards.
    */

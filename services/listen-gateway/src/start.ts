@@ -15,7 +15,7 @@ const defaultWorkerBinary = fileURLToPath(
 const defaultOutputBinary = fileURLToPath(
   new URL("../../../target/debug/pulse-device-output", import.meta.url),
 );
-// Host monitor output (ADR 0029) is off unless an exact output device is named.
+// Host monitor output (ADR 0031) is off unless an exact output device is named.
 const outputDevice = process.env.A2_OUTPUT_DEVICE || undefined;
 const outputChannels = outputDevice
   ? parseOutputChannels(process.env.A2_OUTPUT_CHANNELS ?? "1")

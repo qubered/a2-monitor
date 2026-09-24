@@ -13,9 +13,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: 7f3b9cb9e1a1f11bb0e5ed9da2db2c2777f801f2d65ee61c3a65cc1de8344a07
+// Schema-SHA256: ee8a877de8877fa41512cb5b0f0a0d95529ae423b72e8fd58d6d7eaf68f5493e
 // Generator-SHA256: 7c6c8c3297d1ffee85f78fc29a4b03c3fbf3fa68da597de8be09f1f2e73d4cbf
-// Body-SHA256: 16abb780bae94eab8ce2f3210f7602080fabf07997424a58d151704b9475a3e8
+// Body-SHA256: 404f722489e804b33dc4e0a3a63348ba7e0f11a141b2eb1c5b7938c9a1351489
 
 export type HealthResponse = {
   status: "ok";
@@ -148,11 +148,31 @@ export type Showfile = {
       | "other"
       | null;
     imageUrl?: string | null;
+    roomId?: string | null;
+    categoryId?: string | null;
     monitor?: {
       battery: boolean;
       rf: boolean;
       audio: boolean;
     };
+  }>;
+  rooms?: Array<{
+    id?: string;
+    name: string;
+    categories: Array<{
+      id?: string;
+      name: string;
+    }>;
+  }>;
+  sessions?: Array<{
+    id?: string;
+    name: string;
+    roomId?: string | null;
+    startMinute: number | null;
+    channels: Array<{
+      channelId: string;
+      presenter: string | null;
+    }>;
   }>;
 };
 
@@ -394,6 +414,13 @@ export type LiveStateChannel = {
     stale: boolean;
     updatedAtUtc: string;
   } | null;
+  session?: {
+    inUse: boolean | null;
+    nextInUse: boolean | null;
+    nextPresenter: string | null;
+  } | null;
+  roomId?: string | null;
+  categoryId?: string | null;
 };
 
 export type LiveAlert = {
@@ -460,6 +487,31 @@ export type ReportedFault =
   | "nothing-at-all"
   | "other";
 
+export type SessionSummary = {
+  id: string;
+  name: string;
+  startMinute: number | null;
+  channelCount: number;
+};
+
+export type SessionRun = {
+  roomId: string | null;
+  activeId: string | null;
+  nextId: string | null;
+  startedAtUtc: string | null;
+  startedBy: string | null;
+  sessions: Array<SessionSummary>;
+};
+
+export type Room = {
+  id: string;
+  name: string;
+  categories: Array<{
+    id: string;
+    name: string;
+  }>;
+};
+
 export type LiveState = {
   schemaVersion: "0";
   revision: number;
@@ -501,6 +553,8 @@ export type LiveState = {
     outstanding: number;
     outstandingCritical: number;
   };
+  rooms?: Array<Room>;
+  runs?: Array<SessionRun>;
 };
 
 export type LoggedAlert = {
@@ -951,7 +1005,7 @@ const showfileSchema = {
     },
     hostOutput: {
       description:
-        "Host monitor output sessions for this production (ADR 0029). Each session is one shared mix that Live clients join by name; outputChannels are the 1-based channels of the node's host output device that carry it. A device channel belongs to at most one session. Absent means the node's own single default session.",
+        "Host monitor output sessions for this production (ADR 0031). Each session is one shared mix that Live clients join by name; outputChannels are the 1-based channels of the node's host output device that carry it. A device channel belongs to at most one session. Absent means the node's own single default session.",
       type: "object",
       additionalProperties: false,
       required: ["sessions"],
@@ -1111,6 +1165,16 @@ const showfileSchema = {
             minLength: 1,
             maxLength: 300000,
           },
+          roomId: {
+            type: ["string", "null"],
+            minLength: 1,
+            maxLength: 64,
+          },
+          categoryId: {
+            type: ["string", "null"],
+            minLength: 1,
+            maxLength: 64,
+          },
           monitor: {
             type: "object",
             additionalProperties: false,
@@ -1124,6 +1188,103 @@ const showfileSchema = {
               },
               audio: {
                 type: "boolean",
+              },
+            },
+          },
+        },
+      },
+    },
+    rooms: {
+      type: "array",
+      maxItems: 32,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["name", "categories"],
+        properties: {
+          id: {
+            type: "string",
+            minLength: 1,
+            maxLength: 64,
+          },
+          name: {
+            type: "string",
+            minLength: 1,
+            maxLength: 120,
+          },
+          categories: {
+            type: "array",
+            maxItems: 32,
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["name"],
+              properties: {
+                id: {
+                  type: "string",
+                  minLength: 1,
+                  maxLength: 64,
+                },
+                name: {
+                  type: "string",
+                  minLength: 1,
+                  maxLength: 120,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    sessions: {
+      type: "array",
+      maxItems: 100,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["name", "startMinute", "channels"],
+        properties: {
+          id: {
+            type: "string",
+            minLength: 1,
+            maxLength: 64,
+          },
+          name: {
+            type: "string",
+            minLength: 1,
+            maxLength: 120,
+          },
+          roomId: {
+            description:
+              "The room this session runs in; null or absent for channels not in any room.",
+            type: ["string", "null"],
+            minLength: 1,
+            maxLength: 64,
+          },
+          startMinute: {
+            description:
+              "Scheduled start as minutes after local midnight at the venue; null when not scheduled.",
+            type: ["integer", "null"],
+            minimum: 0,
+            maximum: 1439,
+          },
+          channels: {
+            type: "array",
+            maxItems: 128,
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["channelId", "presenter"],
+              properties: {
+                channelId: {
+                  type: "string",
+                  minLength: 1,
+                  maxLength: 64,
+                },
+                presenter: {
+                  type: ["string", "null"],
+                  maxLength: 120,
+                },
               },
             },
           },
@@ -1731,7 +1892,7 @@ const hostOutputSchema = {
   $id: "https://pulse.local/schema/v0/http/host-output.schema.json",
   title: "Audio node host output",
   description:
-    "The audio node's host monitor output (ADR 0029), served at GET /audio/v0/output and as `output` events on /audio/v0/output/events. `output` is the output device, or null when the node has none. Each of `sessions` is one shared mix on its own output channels: Live clients join a session, and a change by any client in it is heard on its channels and shown to every client in it. A session's `revision` increases with every change to its monitor.",
+    "The audio node's host monitor output (ADR 0031), served at GET /audio/v0/output and as `output` events on /audio/v0/output/events. `output` is the output device, or null when the node has none. Each of `sessions` is one shared mix on its own output channels: Live clients join a session, and a change by any client in it is heard on its channels and shown to every client in it. A session's `revision` increases with every change to its monitor.",
   type: "object",
   additionalProperties: false,
   required: ["schemaVersion", "output", "sessions"],
@@ -2058,6 +2219,24 @@ const liveStateSchema = {
           minimum: 0,
           maximum: 512,
         },
+      },
+    },
+    rooms: {
+      description:
+        "Rooms and their categories, in showfile order. Absent from producers that predate rooms.",
+      type: "array",
+      maxItems: 32,
+      items: {
+        $ref: "#/$defs/room",
+      },
+    },
+    runs: {
+      description:
+        "One run of show per room that has sessions: which session is running there and what is next. Absent from producers that predate sessions.",
+      type: "array",
+      maxItems: 33,
+      items: {
+        $ref: "#/$defs/sessionRun",
       },
     },
   },
@@ -2420,6 +2599,35 @@ const liveStateSchema = {
             },
           },
         },
+        session: {
+          description:
+            "This channel's part in the active and next session; null when no session is active and none is next.",
+          type: ["object", "null"],
+          additionalProperties: false,
+          required: ["inUse", "nextInUse", "nextPresenter"],
+          properties: {
+            inUse: {
+              type: ["boolean", "null"],
+            },
+            nextInUse: {
+              type: ["boolean", "null"],
+            },
+            nextPresenter: {
+              type: ["string", "null"],
+              maxLength: 120,
+            },
+          },
+        },
+        roomId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        categoryId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
       },
     },
     alert: {
@@ -2651,6 +2859,118 @@ const liveStateSchema = {
         "nothing-at-all",
         "other",
       ],
+    },
+    sessionSummary: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "name", "startMinute", "channelCount"],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        startMinute: {
+          type: ["integer", "null"],
+          minimum: 0,
+          maximum: 1439,
+        },
+        channelCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 128,
+        },
+      },
+    },
+    sessionRun: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "roomId",
+        "activeId",
+        "nextId",
+        "startedAtUtc",
+        "startedBy",
+        "sessions",
+      ],
+      properties: {
+        roomId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+          description:
+            "The room this run of show belongs to; null for channels in no room.",
+        },
+        activeId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        nextId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        startedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        startedBy: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 80,
+        },
+        sessions: {
+          type: "array",
+          maxItems: 100,
+          items: {
+            $ref: "#/$defs/sessionSummary",
+          },
+        },
+      },
+    },
+    room: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "name", "categories"],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        categories: {
+          type: "array",
+          maxItems: 32,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["id", "name"],
+            properties: {
+              id: {
+                type: "string",
+                minLength: 1,
+                maxLength: 64,
+              },
+              name: {
+                type: "string",
+                minLength: 1,
+                maxLength: 120,
+              },
+            },
+          },
+        },
+      },
     },
   },
 } as const;
