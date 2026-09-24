@@ -427,7 +427,7 @@ describe("Live channel grid", () => {
     const bell = screen.getByRole("button", {
       name: "1 to acknowledge · 1 critical",
     });
-    // An unacknowledged critical alert radiates from its card and the bell.
+    // An unacknowledged critical alert glows around its card and the bell.
     const alertedCard = view.container.querySelector(
       '[data-channel-id="ch-marguerite"]',
     )!;
@@ -449,7 +449,7 @@ describe("Live channel grid", () => {
     const seen = await screen.findByRole("button", {
       name: "1 active · all seen",
     });
-    // Seen is not fixed, but nothing is left to radiate.
+    // Seen is not fixed, but nothing is left to glow.
     expect(seen.classList.contains("is-pulsing")).toBe(false);
     expect(alertedCard.classList.contains("is-critical-alert")).toBe(false);
     expect(
@@ -640,7 +640,7 @@ describe("Live channel grid", () => {
       screen.queryByRole("button", { name: /Press to acknowledge/ }),
     ).toBeNull();
     const bell = screen.getByRole("button", { name: "1 to acknowledge" });
-    // Only a critical alert radiates.
+    // Only a critical alert glows.
     expect(bell.classList.contains("is-pulsing")).toBe(false);
   });
 

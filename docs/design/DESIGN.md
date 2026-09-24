@@ -138,8 +138,9 @@ console that happens to be dark.
 
 - No gradients, anywhere, for any purpose.
 - No glow, halo, bloom or coloured drop shadow. Elevation comes from a soft
-  neutral shadow and a lighter surface, never a colour-tinted one. (The
-  [attention pulse](#6-motion) is a crisp 2px ring that moves, not a blur.)
+  neutral shadow and a lighter surface, never a colour-tinted one. The one
+  exception is the [attention pulse](#6-motion): a soft glow that breathes
+  around an element that needs someone, and nowhere else.
 - No glassmorphism or backdrop blur.
 - No emoji as a status icon.
 - No sparkle, wand or brain iconography.
@@ -372,8 +373,9 @@ remains legible because it is carried by colour, glyph and word, not by movement
 Pulse allows itself **at most two signature loops** — restraint here is a
 choice, not a limitation. This product spends both: the live dot's
 `pulse 1.7s`, and the **attention pulse**. The attention pulse is one motion
-in two tones: a crisp 2px ring that radiates outward from the element and
-fades over 1.8s, no blur and no shadow. Amber marks an unclaimed fault report
+in two tones: a soft glow in the alert's colour that breathes in and out around
+the element over 2s. It is the product's only glow. Amber marks an unclaimed
+fault report
 ([§10.7](#107-reported-state)); red marks a critical alert nobody has
 acknowledged, on its card and on the header's alert bell
 ([§10.3](#103-alert-overlay)). A caution alert never pulses, and acknowledging
@@ -552,10 +554,11 @@ an operator needs to start troubleshooting, and a dimmed card reads as a
 disabled one. A solid band is also the most legible thing on the grid from
 across a wing, which a coloured word on a translucent wash was not. The whole
 card is the press target; it takes the severity's soft tint only under hover
-or keyboard focus. An unacknowledged **critical** alert also radiates a red
-attention pulse from the card, and from the header's alert bell, until someone
-acknowledges it ([§6](#6-motion)); a caution alert never pulses. The pulse is a
-second cue, never the only one, and reduced motion removes the movement.
+or keyboard focus. An unacknowledged **critical** alert also makes the card
+glow red — the attention pulse ([§6](#6-motion)) — and so does the header's
+alert bell, until someone acknowledges it; a caution alert never glows. The
+glow is a second cue, never the only one, and reduced motion removes the
+movement.
 
 **It names the problem and nothing else.** One icon, two words — _Low RF_, _No
 audio_, _Low battery_ — and `Press to acknowledge`. No explanation, no timestamp,
@@ -680,7 +683,7 @@ The A1's whole job, in one thumb. Specified with its surface in
 
 ### 10.7 Reported state
 
-A channel with an unclaimed fault report **radiates an amber attention pulse**
+A channel with an unclaimed fault report **glows amber with the attention pulse**
 ([§6](#6-motion)), on the A1 grid
 and on the A2 grid, and shows a `Reported` badge with a count when more than one
 issue went. It stops on claim, when the card reads `Being worked` with the

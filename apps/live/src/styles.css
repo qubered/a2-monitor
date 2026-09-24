@@ -2177,35 +2177,56 @@ a:focus-visible {
 }
 
 /* The attention pulse (design system §6): the product's second and last
-   ambient loop. A crisp 2px ring radiates outward and fades, from a card with
-   work handed over and not yet picked up (amber), from a card whose critical
-   alert nobody has acknowledged (red), and from the alert bell while one is
-   outstanding. Reduced motion removes the movement and leaves the static ring. */
+   ambient loop, and its only glow. A soft glow in the alert's colour breathes
+   around a card with work handed over and not yet picked up (amber), a card
+   whose critical alert nobody has acknowledged (red), and the alert bell while
+   one is outstanding. Reduced motion removes the movement and leaves the
+   static ring. */
 .channel-card.is-reported {
   --pulse: var(--warn);
   outline: var(--size-2) solid var(--pulse);
   outline-offset: var(--size-2);
-  animation: radiate 1.8s ease-out infinite;
+  animation: glow-card 2s ease-in-out infinite;
 }
 
 .channel-card.has-alert.is-critical-alert {
   --pulse: var(--t-out);
-  outline: var(--size-2) solid var(--pulse);
-  outline-offset: var(--size-2);
-  animation: radiate 1.8s ease-out infinite;
+  animation: glow-card 2s ease-in-out infinite;
 }
 
 .alert-bell.is-pulsing {
   --pulse: var(--t-out);
-  outline: var(--size-2) solid var(--pulse);
-  outline-offset: 0;
-  animation: radiate 1.8s ease-out infinite;
+  animation: glow-bell 2s ease-in-out infinite;
 }
 
-@keyframes radiate {
-  to {
-    outline-offset: var(--space-4);
-    outline-color: transparent;
+@keyframes glow-card {
+  0%,
+  100% {
+    box-shadow:
+      var(--shadow-card),
+      var(--card-lit),
+      0 0 var(--space-2) 0 color-mix(in srgb, var(--pulse) 30%, transparent);
+  }
+
+  50% {
+    box-shadow:
+      var(--shadow-card),
+      var(--card-lit),
+      0 0 var(--space-6) var(--space-1)
+        color-mix(in srgb, var(--pulse) 75%, transparent);
+  }
+}
+
+@keyframes glow-bell {
+  0%,
+  100% {
+    box-shadow: 0 0 var(--space-2) 0
+      color-mix(in srgb, var(--pulse) 30%, transparent);
+  }
+
+  50% {
+    box-shadow: 0 0 var(--space-5) var(--space-1)
+      color-mix(in srgb, var(--pulse) 75%, transparent);
   }
 }
 
