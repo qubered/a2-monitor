@@ -113,9 +113,7 @@ a:focus-visible {
   white-space: nowrap;
 }
 
-.alert-count,
-.operator-chip,
-.manager-link {
+.alert-count {
   flex: none;
   white-space: nowrap;
 }
@@ -233,17 +231,6 @@ a:focus-visible {
   color: var(--rep);
 }
 
-.operator-chip {
-  min-height: var(--target);
-  padding: 0 var(--space-4);
-  border: var(--size-1) solid var(--line-2);
-  border-radius: var(--radius-pill);
-  background: var(--card);
-  color: var(--ink-2);
-  font-size: var(--font-ui);
-  font-weight: 600;
-}
-
 /* Rooms (design system §10.10): the room this device shows, in the header,
    with a hint when another room needs someone. */
 .room-switch {
@@ -351,18 +338,85 @@ a:focus-visible {
   background: var(--elev);
 }
 
-.manager-link {
-  min-height: var(--target);
-  display: inline-flex;
-  align-items: center;
-  padding: 0 var(--space-4);
+/* The header's one menu: audio output, operator and the Manager link. */
+.header-menu {
+  position: relative;
+  flex: none;
+}
+
+.header-menu-toggle {
+  position: relative;
+  width: var(--target);
+  height: var(--target);
+  display: grid;
+  place-items: center;
+  padding: 0;
   border: var(--size-1) solid var(--line-2);
-  border-radius: var(--radius-pill);
+  border-radius: 50%;
   background: var(--card);
+  color: var(--ink-2);
+}
+
+.header-menu-toggle[aria-expanded="true"] {
+  border-color: var(--ink-2);
   color: var(--ink);
-  font-size: var(--font-ui);
-  font-weight: 600;
+}
+
+.header-menu-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--space-3);
+  height: var(--space-3);
+  border: var(--size-1) solid var(--paper-2);
+  border-radius: 50%;
+  background: var(--warn);
+}
+
+.header-menu-list {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 20;
+  display: grid;
+  min-width: 15rem;
+  padding: var(--space-2);
+  border: var(--size-1) solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-hover);
+}
+
+.header-menu-item {
+  display: grid;
+  gap: var(--space-1);
+  min-height: var(--target);
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
   text-decoration: none;
+}
+
+.header-menu-item:hover,
+.header-menu-item:focus-visible {
+  background: var(--elev);
+}
+
+.header-menu-item strong {
+  font-size: var(--font-ui);
+}
+
+.header-menu-item span {
+  color: var(--muted);
+  font-size: var(--font-table);
+}
+
+.header-menu-item span.is-attention {
+  color: var(--warn);
 }
 
 /* One band for what this device shows: the room chips (design system §10.10)
@@ -2353,6 +2407,12 @@ a:focus-visible {
     margin-left: 0;
   }
 
+  /* Brand, room and the menu share the first row; the alert count wraps below. */
+  .header-menu {
+    order: 1;
+    margin-left: auto;
+  }
+
   .player-transport {
     flex-wrap: wrap;
     gap: var(--space-3);
@@ -2550,9 +2610,4 @@ a:focus-visible {
 
 .output-option:active {
   background: var(--elev);
-}
-
-.output-chip.is-host {
-  border-color: var(--blue);
-  color: var(--ink);
 }

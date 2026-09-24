@@ -10,6 +10,10 @@ externally tested release.
 
 ### Changed
 
+- Live: audio output, your name and the Manager link move into one settings
+  menu (a cog) in the header, leaving the room switch, node state and alert
+  count. The cog shows a dot while your name is unset or audio has no
+  destination.
 - Live: the room chips move into a room switch in the header. It opens a room
   sheet that shows each room's channel count, run of show and alert state, and
   a dot on the switch says when another room needs someone.

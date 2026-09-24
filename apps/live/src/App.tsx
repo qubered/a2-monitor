@@ -41,6 +41,7 @@ import { ChannelDetail } from "./components/ChannelDetail";
 import { ExceptionsSheet } from "./components/ExceptionsSheet";
 import { MicCheck } from "./components/MicCheck";
 import { OperatorSheet } from "./components/OperatorSheet";
+import { HeaderMenu } from "./components/HeaderMenu";
 import { OutputSheet } from "./components/OutputSheet";
 import { RoomSheet } from "./components/RoomSheet";
 import { Player } from "./components/Player";
@@ -1245,29 +1246,33 @@ export function App({
                 ? `${summary.active} active · all seen`
                 : "No active alerts"}
         </button>
-        {!isA1 && hostDocument?.output ? (
-          <button
-            className={`operator-chip output-chip ${hostMode ? "is-host" : ""}`}
-            type="button"
-            onClick={() => setOutputSheetOpen(true)}
-          >
-            {hostMode
-              ? `Audio: ${hostFeed?.name ?? "host output"}`
-              : deviceMode
-                ? "Audio: this device"
-                : "Audio: choose"}
-          </button>
-        ) : null}
-        <button
-          className="operator-chip"
-          type="button"
-          onClick={() => setOperatorOpen(true)}
-        >
-          {operator.name ? operatorLabel(operator) : "Set your name"}
-        </button>
-        <a className="manager-link" href="/manager/">
-          Manager
-        </a>
+        <HeaderMenu
+          items={[
+            ...(!isA1 && hostDocument?.output
+              ? [
+                  {
+                    key: "audio",
+                    label: "Audio output",
+                    value: hostMode
+                      ? (hostFeed?.name ?? "Host output")
+                      : deviceMode
+                        ? "This device"
+                        : "Choose",
+                    attention: !hostMode && !deviceMode,
+                    onSelect: () => setOutputSheetOpen(true),
+                  },
+                ]
+              : []),
+            {
+              key: "operator",
+              label: "You",
+              value: operator.name ? operatorLabel(operator) : "Set your name",
+              attention: !operator.name,
+              onSelect: () => setOperatorOpen(true),
+            },
+            { key: "manager", label: "Manager", href: "/manager/" },
+          ]}
+        />
       </header>
 
       <ConnectionNotice

@@ -294,6 +294,15 @@ const dvsOutput: NonNullable<HostOutput["output"]> = {
   droppedFrames: 0,
 };
 
+/** Opens the header's settings menu and returns one of its items. */
+async function settingsItem(
+  user: ReturnType<typeof userEvent.setup>,
+  name: RegExp,
+) {
+  await user.click(await screen.findByRole("button", { name: /^Settings/ }));
+  return screen.getByRole("menuitem", { name });
+}
+
 function renderApp(
   state: LiveState | null,
   options: {
@@ -572,6 +581,37 @@ describe("Live channel grid", () => {
         screen.queryByRole("button", { name: "Clear alerts and reset" }),
       ).toBeNull(),
     );
+  });
+
+  it("keeps the rarely changed settings in one header menu", async () => {
+    const user = userEvent.setup();
+    renderApp(stateWith());
+
+    const cog = await screen.findByRole("button", {
+      name: "Settings. Needs your attention",
+    });
+    expect(cog.getAttribute("aria-expanded")).toBe("false");
+    await user.click(cog);
+    expect(cog.getAttribute("aria-expanded")).toBe("true");
+    const items = screen.getAllByRole("menuitem");
+    // No host output: no audio choice to make, so just the operator and Manager.
+    expect(
+      items.map((item) => item.querySelector("strong")?.textContent),
+    ).toEqual(["You", "Manager"]);
+    expect(items[0]!.textContent).toContain("Set your name");
+    expect(items[1]!.getAttribute("href")).toBe("/manager/");
+    // The first item takes focus and the arrows move through the menu.
+    expect(document.activeElement).toBe(items[0]);
+    await user.keyboard("{ArrowDown}");
+    expect(document.activeElement).toBe(items[1]);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(document.activeElement).toBe(cog);
+
+    await user.click(cog);
+    await user.click(screen.getByRole("menuitem", { name: /^You/ }));
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(screen.getByRole("dialog")).toBeTruthy();
   });
 
   it("lets a caution overlay expire while it still counts as outstanding", () => {
@@ -1097,7 +1137,9 @@ describe("Live channel grid", () => {
     );
     await user.click(within(prompt).getByRole("button", { name: /^Comms A/ }));
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(screen.getByRole("button", { name: "Audio: Comms A" })).toBeTruthy();
+    expect(await settingsItem(user, /Audio output\s*Comms A/)).toBeTruthy();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).toBeNull();
     expect(screen.getByText("Comms A idle")).toBeTruthy();
     // Nothing else is spelled out when nothing is selected.
     expect(screen.queryByText(/Nothing selected in/)).toBeNull();
@@ -1193,9 +1235,7 @@ describe("Live channel grid", () => {
       audioDeviceSource: readyDevice,
       hostOutput: hostDocument(dvsOutput, feeds),
     });
-    expect(
-      await screen.findByRole("button", { name: "Audio: Comms B" }),
-    ).toBeTruthy();
+    expect(await settingsItem(user, /Audio output\s*Comms B/)).toBeTruthy();
     expect(screen.queryByRole("dialog")).toBeNull();
     cleanup();
 
@@ -1223,7 +1263,8 @@ describe("Live channel grid", () => {
       ]),
     });
 
-    await screen.findByRole("button", { name: "Audio: Comms A" });
+    await settingsItem(user, /Audio output\s*Comms A/);
+    await user.keyboard("{Escape}");
     await user.click(view.container.querySelector(".channel-grid")!);
     expect(hostOutput.changes.at(-1)).toEqual({
       feedId: "feed-a",
@@ -1271,9 +1312,7 @@ describe("Live channel grid", () => {
     expect(hostOutput.changes).toEqual([]);
 
     // The choice can be changed from the header.
-    await user.click(
-      screen.getByRole("button", { name: "Audio: this device" }),
-    );
+    await user.click(await settingsItem(user, /Audio output\s*This device/));
     const sheet = screen.getByRole("dialog", {
       name: "Where should audio play?",
     });
