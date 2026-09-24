@@ -628,10 +628,11 @@ permissioned from listening and from marking.
 **mute** · **dim** · output level with its numeric value · groups · expand.
 
 **Where audio plays.** When the node has a host output
-([ADR 0031](../decisions/0031-shared-host-monitor-output.md)), Live asks on open
+([ADR 0031](../decisions/0031-shared-host-monitor-output.md)), Live asks once
 whether to play on _this device_ or join one of the production's named host
-output _feeds_ (each on its own outputs, with what it is playing now),
-offering the last choice first; a header chip reopens the choice. In a feed
+output _feeds_ (each on its own outputs, with what it is playing now), then
+remembers the answer on that device and asks again only if the feed is
+removed; a header chip reopens the choice. In a feed
 the transport row controls that feed's shared mix: the selected card, mute,
 dim and level follow whoever in the feed changed them last, the row is
 labelled with the feed's name, and it says it is shared and who changed it

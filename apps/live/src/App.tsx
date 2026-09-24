@@ -432,9 +432,10 @@ export function App({
   const device =
     audioDeviceState.status === "ready" ? audioDeviceState.device : null;
 
-  // Where monitor audio plays (ADR 0031). The choice is asked each time Live
-  // opens when the node has a host output: this device, or one of its shared
-  // feeds. Without a host output, this device plays.
+  // Where monitor audio plays (ADR 0031). Live asks once when the node has a
+  // host output: this device, or one of its shared feeds. The answer is
+  // remembered in this browser and reused on later opens until the joined feed
+  // is removed. Without a host output, this device plays.
   const hostOutput = useHostOutput(hostOutputSource);
   const hostDocument = hostOutput.document;
   const hostAvailability: "unknown" | "absent" | "present" = hostDocument
@@ -448,7 +449,14 @@ export function App({
     null,
   );
   const [outputSheetOpen, setOutputSheetOpen] = useState(false);
-  const hostFeedId = destination ? feedIdOf(destination) : null;
+  const [rememberedDestination] = useState(readLastDestination);
+  // A remembered feed is only trusted once the node reports its host output, so
+  // it can be checked against the feeds the production has now.
+  const requestedDestination =
+    destination ?? (hostDocument?.output ? rememberedDestination : null);
+  const hostFeedId = requestedDestination
+    ? feedIdOf(requestedDestination)
+    : null;
   const hostFeed =
     hostFeedId === null
       ? null
@@ -458,7 +466,8 @@ export function App({
     hostFeedId !== null && hostDocument?.output != null && !hostFeed;
   const chosenDestination: OutputDestination | null = feedGone
     ? null
-    : (destination ?? (hostAvailability === "absent" ? "device" : null));
+    : (requestedDestination ??
+      (hostAvailability === "absent" ? "device" : null));
   const hostMode = chosenDestination !== null && chosenDestination !== "device";
   const deviceMode = chosenDestination === "device";
   const hostMonitor = hostMode ? (hostFeed?.monitor ?? null) : null;

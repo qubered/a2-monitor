@@ -26,13 +26,14 @@ open with no benefit on a rig where output level is set elsewhere.
 
 For the local MVP only:
 
-1. **Destination is chosen on open.** When the node has a host output, Live
-   asks "Where should audio play?" each time it opens: **This device** (the
-   ADR 0026 WebRTC path) or one of the host output **feeds** by name (for
-   example Comms A on output 1, Comms B on output 2), with what each is playing
-   now. Nothing plays on the device until the choice is made. The last choice is
-   offered first. It can be changed from a header chip. If the joined feed is
-   removed, Live asks again. A1 mode, which has no listening, is not asked.
+1. **Destination is chosen once per device.** When the node has a host output
+   and this device has no remembered choice, Live asks "Where should audio
+   play?": **This device** (the ADR 0026 WebRTC path) or one of the host output
+   **feeds** by name (for example Comms A on output 1, Comms B on output 2),
+   with what each is playing now. Nothing plays on the device until the choice
+   is made. The choice is remembered in that browser and used on later opens
+   without asking. It can be changed from a header chip. If the remembered feed
+   is removed, Live asks again. A1 mode, which has no listening, is not asked.
    Without a host output, Live plays on the device as before and asks nothing.
 2. **One shared mix per feed.** The listen gateway holds one monitor state
    per feed (`channelId`, `input`, `muted`, `dimmed`, `gainDb`, who changed
