@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.3ee6254878722271",
-  "sourceSha256": "3ee62548787222711bdef919ef0fd04db6f3db332203e35568a6b10fef393a4c",
+  "buildId": "a2-0.0.0+sha256.c289a80ed5b57f7a",
+  "sourceSha256": "c289a80ed5b57f7afd6b7ae7252e1c8b21e30c33d3d01b8fcbb17f69c6e4e8d3",
   "inputCount": 426,
   "inputs": [
     {
@@ -53,7 +53,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "df33590515d0acf44a7ed1293e236eea2fed214732103d8ce06e98d9294e7bac"
+      "sha256": "f398ae9ea3da1c80e13fb4c36503e38183fa9e613b190da8f25e1ebb49f5d121"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "de73e93fa30f3fec3a1b76964cf6ea7dbe1f79efda17e4eaa270eb3d1bf489d1"
+      "sha256": "99fa8c8e823b56bb57747af3ede179db23a8efc3084ca24e9829704981d6b9a0"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "b54d8d8688b673bf5d02229d39a1d6eaf88698f2c108a60b2c5eb8b26a1a7fcc"
+      "sha256": "a01087477655043bcfe057b06c00818af62d6c5ce213dfc542534e35a8339142"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -225,7 +225,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "f569db9af556a79d16795dcbd4bf76494238af73603430171d7632e136c8c603"
+      "sha256": "a83c3616c6faf91d86c24a14820d43b9be682c87e0dd5b563b334c7a9aff9aa5"
     },
     {
       "path": "apps/live/src/trim.ts",
@@ -741,7 +741,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "af5ed19e3c4530d1d235ab49d4391d545cf7c4f69e1ef616bf28fff4e2476302"
+      "sha256": "b2a72678f0bf04c2cb3fcfd4e1428204501eb9294298814bfd8cd91af713cdf7"
     },
     {
       "path": "docs/design/README.md",

@@ -776,8 +776,13 @@ audio in one press and to a diagnosis in two.
 ```
 
 Default is **all channels** ([§1.5](#15-two-product-decisions-this-rests-on)).
-The grid has no visible title or instructions: the active chips say what is
-shown and the counts say how many. A note appears only when a filter is
+The filter band lists `All channels`, `Needs someone` (and `This session`
+while a run is on), then the shown room's **categories** with counts — prefixed
+by the room's name under `All rooms`, plus `No category` inside one room when
+some channels have none. `Wireless` and `Wired` stand in only when the show has
+no categories. On a phone the band is one dropdown with the same choices. The
+grid has no visible title or instructions: the active chip says what is shown
+and the counts say how many. A note appears only when a filter is
 hiding cards while a critical fault is still shown.
 The grid is always in showfile order. Pulse never reorders cards — not by
 severity, not by alert, not for a moment — because an operator finds a person

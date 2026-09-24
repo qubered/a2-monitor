@@ -105,15 +105,13 @@ import { useAudioDevice } from "./useAudioDevice";
 import { useLiveState } from "./useLiveState";
 import { useNow } from "./useNow";
 
-type Filter = "all" | "session" | "needs-someone" | "wireless" | "wired";
+/**
+ * "all", "session", "needs-someone", "wireless", "wired", or a category
+ * (`cat:<id>`, `cat:none` for channels without one).
+ */
+type Filter = string;
 
-const filterLabels: Record<Filter, string> = {
-  all: "All channels",
-  session: "This session",
-  "needs-someone": "Needs someone",
-  wireless: "Wireless",
-  wired: "Wired",
-};
+type FilterOption = { key: Filter; label: string; count: number };
 
 const ALERT_LOG_REFRESH_MS = 5_000;
 const defaultLiveStateSource = createEventSourceLiveState();
@@ -950,9 +948,68 @@ export function App({
     });
   }
 
-  // "This session" means nothing once the run of show ends; fall back to all.
-  const filter: Filter =
-    chosenFilter === "session" && !sessionRunning ? "all" : chosenFilter;
+  // The filter row: everything, what needs someone, then the room's categories
+  // (Wireless and Wired stand in when the show has none).
+  const filterOptions = useMemo<FilterOption[]>(() => {
+    const count = (matches: (channel: LiveStateChannel) => boolean) =>
+      roomChannels.filter(matches).length;
+    const categories = rooms.flatMap((entry) =>
+      room !== "all" && room !== entry.id
+        ? []
+        : entry.categories.map((category) => ({
+            key: `cat:${category.id}`,
+            label:
+              room === "all" && rooms.length > 1
+                ? `${entry.name} · ${category.name}`
+                : category.name,
+            count: count(({ categoryId }) => categoryId === category.id),
+          })),
+    );
+    const uncategorised = count(({ categoryId }) => !categoryId);
+    const byCategory: FilterOption[] = [
+      ...categories.filter(({ count: members }) => members > 0),
+      ...(categories.length && room !== "all" && uncategorised > 0
+        ? [{ key: "cat:none", label: "No category", count: uncategorised }]
+        : []),
+    ];
+    return [
+      { key: "all", label: "All channels", count: roomChannels.length },
+      ...(sessionRunning
+        ? [
+            {
+              key: "session",
+              label: "This session",
+              count: count(({ session }) => session?.inUse !== false),
+            },
+          ]
+        : []),
+      {
+        key: "needs-someone",
+        label: "Needs someone",
+        count: count((channel) => needsSomeone(channel, activeAlerts)),
+      },
+      ...(byCategory.length
+        ? byCategory
+        : [
+            {
+              key: "wireless",
+              label: "Wireless",
+              count: count(({ kind }) => kind === "wireless"),
+            },
+            {
+              key: "wired",
+              label: "Wired",
+              count: count(({ kind }) => kind === "wired"),
+            },
+          ]),
+    ];
+  }, [activeAlerts, room, roomChannels, rooms, sessionRunning]);
+  // A filter that no longer exists (the run ended, another room) falls back to all.
+  const filter: Filter = filterOptions.some(({ key }) => key === chosenFilter)
+    ? chosenFilter
+    : "all";
+  const filterLabel =
+    filterOptions.find(({ key }) => key === filter)?.label ?? "All channels";
 
   const visibleChannels = useMemo(() => {
     const matches = (channel: LiveStateChannel) => {
@@ -961,6 +1018,9 @@ export function App({
         return needsSomeone(channel, activeAlerts);
       if (filter === "wireless" || filter === "wired")
         return channel.kind === filter;
+      if (filter === "cat:none") return !channel.categoryId;
+      if (filter.startsWith("cat:"))
+        return channel.categoryId === filter.slice("cat:".length);
       return true;
     };
     // Showfile order, always: a critical channel stays visible whatever the
@@ -975,17 +1035,6 @@ export function App({
     () => groupChannels(visibleChannels, rooms, room),
     [visibleChannels, rooms, room],
   );
-
-  const counts: Record<Filter, number> = {
-    all: roomChannels.length,
-    session: roomChannels.filter(({ session }) => session?.inUse !== false)
-      .length,
-    "needs-someone": roomChannels.filter((channel) =>
-      needsSomeone(channel, activeAlerts),
-    ).length,
-    wireless: roomChannels.filter(({ kind }) => kind === "wireless").length,
-    wired: roomChannels.filter(({ kind }) => kind === "wired").length,
-  };
 
   function selectChannel(channel: LiveStateChannel) {
     if (hostMode) {
@@ -1315,27 +1364,45 @@ export function App({
 
       {roomChannels.length ? (
         <div className="chip-bands">
-          {roomChannels.length ? (
-            <nav className="filters" aria-label="Channel filters">
-              {(Object.keys(filterLabels) as Filter[])
-                .filter(
-                  (filterOption) =>
-                    filterOption !== "session" || sessionRunning,
-                )
-                .map((filterOption) => (
-                  <button
-                    type="button"
-                    className="filter-button"
-                    aria-pressed={filter === filterOption}
-                    onClick={() => setFilter(filterOption)}
-                    key={filterOption}
-                  >
-                    {filterLabels[filterOption]}{" "}
-                    <span>{counts[filterOption]}</span>
-                  </button>
-                ))}
-            </nav>
-          ) : null}
+          <nav className="filters" aria-label="Channel filters">
+            {filterOptions.map((option) => (
+              <button
+                type="button"
+                className="filter-button"
+                aria-pressed={filter === option.key}
+                onClick={() => setFilter(option.key)}
+                key={option.key}
+              >
+                {option.label} <span>{option.count}</span>
+              </button>
+            ))}
+          </nav>
+          <label className="filter-select">
+            <span className="sr-only">Channel filter</span>
+            <select
+              value={filter}
+              onChange={(event) => setFilter(event.target.value)}
+            >
+              {filterOptions.map((option) => (
+                <option key={option.key} value={option.key}>
+                  {option.label} ({option.count})
+                </option>
+              ))}
+            </select>
+            <svg
+              viewBox="0 0 12 12"
+              width="12"
+              height="12"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M2.5 4.5 6 8l3.5-3.5" />
+            </svg>
+          </label>
         </div>
       ) : null}
 
@@ -1388,7 +1455,7 @@ export function App({
                   {room !== "all"
                     ? `${room === NO_ROOM ? "No room" : roomName(room)} · `
                     : ""}
-                  {filterLabels[filter]}
+                  {filterLabel}
                 </h1>
                 {criticalIds.size && filter !== "all" ? (
                   <p className="grid-note">Critical faults always shown</p>

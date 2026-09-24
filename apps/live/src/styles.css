@@ -761,6 +761,36 @@ a:focus-visible {
     background var(--transition-control);
 }
 
+/* On a phone the filter row is one dropdown. */
+.filter-select {
+  position: relative;
+  display: none;
+  flex: 1;
+}
+
+.filter-select select {
+  width: 100%;
+  min-height: var(--target);
+  padding: 0 var(--space-6) 0 var(--space-4);
+  appearance: none;
+  border: var(--size-1) solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--font-ui);
+  font-weight: 600;
+}
+
+.filter-select svg {
+  position: absolute;
+  top: 50%;
+  right: var(--space-4);
+  translate: 0 -50%;
+  color: var(--ink-2);
+  pointer-events: none;
+}
+
 .filter-button > span {
   margin-left: var(--space-1);
   color: var(--faint);
@@ -2417,6 +2447,14 @@ a:focus-visible {
 
   .alert-count {
     margin-left: 0;
+  }
+
+  .filters {
+    display: none;
+  }
+
+  .filter-select {
+    display: block;
   }
 
   /* Brand, room and the menu share the first row; the badges and alert count

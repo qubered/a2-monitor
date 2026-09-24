@@ -1555,6 +1555,46 @@ describe("Rooms", () => {
     ).toBeTruthy();
   });
 
+  it("filters by category instead of Wireless and Wired, and offers the same choices as a dropdown", async () => {
+    const user = userEvent.setup();
+    renderApp(roomed());
+    const nav = await screen.findByRole("navigation", {
+      name: "Channel filters",
+    });
+    const labels = within(nav)
+      .getAllByRole("button")
+      .map((button) => button.childNodes[0]?.textContent?.trim());
+    expect(labels).toEqual([
+      "All channels",
+      "Needs someone",
+      "Ballroom · Stage",
+      "Breakout B · Lectern",
+    ]);
+    const select = screen.getByRole("combobox", { name: "Channel filter" });
+    expect(
+      within(select)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual([
+      "All channels (3)",
+      "Needs someone (0)",
+      "Ballroom · Stage (1)",
+      "Breakout B · Lectern (1)",
+    ]);
+
+    await user.click(
+      within(nav).getByRole("button", { name: /^Breakout B · Lectern/ }),
+    );
+    expect(screen.getByText("Talkback", { selector: "h2" })).toBeTruthy();
+    expect(screen.queryByText("Marguerite", { selector: "h2" })).toBeNull();
+    expect((select as HTMLSelectElement).value).toBe("cat:cat-lectern");
+
+    // The dropdown drives the same filter.
+    await user.selectOptions(select, "cat:cat-stage");
+    expect(screen.getByText("Marguerite", { selector: "h2" })).toBeTruthy();
+    expect(screen.queryByText("Talkback", { selector: "h2" })).toBeNull();
+  });
+
   it("falls back to every room when the remembered room is gone", async () => {
     window.localStorage.setItem("pulse-room", "room-demolished");
     renderApp(roomed());
