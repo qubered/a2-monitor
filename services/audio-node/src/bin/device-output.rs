@@ -3,7 +3,7 @@
 //!
 //! stdin carries raw mono Float32LE at 48 kHz from `pulse-media-worker`; there is no header.
 //! stdout carries JSON lines: one `ready` line once the device is open, then a `stats` line
-//! every second. The device callback only pulls from a preallocated ring.
+//! every second, or one `failed` line with the reason before a non-zero exit. The device callback only pulls from a preallocated ring.
 
 use a2_audio_node::monitor_output::{
     DEFAULT_RING_TARGETS, OUTPUT_SAMPLE_RATE_HZ, RingCounters, RingProducer,
@@ -499,6 +499,8 @@ fn main() {
     });
     if let Err(error) = result {
         eprintln!("pulse-device-output: {error}");
+        // Best effort: the worker reports this reason instead of a bare exit status.
+        let _ = emit(&json!({ "type": "failed", "detail": error }));
         std::process::exit(2);
     }
 }

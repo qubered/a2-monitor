@@ -418,7 +418,10 @@ export class MediaWorkerManager extends EventEmitter {
   private restartTimer: NodeJS.Timeout | undefined;
   private readyAtMs: number | undefined;
   private readonly outputDevice: string | undefined;
-  private readonly outputChannels: readonly number[];
+  /** The app/env channels, used when the production sets none. */
+  private readonly defaultOutputChannels: readonly number[];
+  /** The channels in effect: the production's, else the default. */
+  private outputChannels: readonly number[];
   private readonly outputBinary: string;
   private outputState: HostOutputState | null;
   private monitor: MonitorCommand = { channel: null, gain: 0 };
@@ -434,7 +437,8 @@ export class MediaWorkerManager extends EventEmitter {
     this.restartDelaysMs = options.restartDelaysMs ?? RESTART_DELAYS_MS;
     this.now = options.now ?? Date.now;
     this.outputDevice = options.outputDevice || undefined;
-    this.outputChannels = options.outputChannels ?? [];
+    this.defaultOutputChannels = options.outputChannels ?? [];
+    this.outputChannels = this.defaultOutputChannels;
     this.outputBinary =
       options.outputBinary ?? "target/debug/pulse-device-output";
     if (this.outputDevice !== undefined && this.outputChannels.length === 0) {
@@ -486,6 +490,26 @@ export class MediaWorkerManager extends EventEmitter {
     };
     if (this.outputState && this.state.status === "ready") {
       this.send({ type: "monitor", ...this.monitor });
+    }
+  }
+
+  /**
+   * Applies the active production's host output channels (ADR 0029), or the
+   * node's default when it sets none. A change reopens only the output device
+   * on the new channels; capture and listeners carry on.
+   */
+  setOutputChannels(channels: readonly number[] | null | undefined): void {
+    if (!this.outputState) return;
+    const next = channels?.length ? channels : this.defaultOutputChannels;
+    if (next.join(",") === this.outputChannels.join(",")) return;
+    this.outputChannels = [...next];
+    this.setOutputState({
+      status: "starting",
+      detail: `Switching to ${next.length === 1 ? "output" : "outputs"} ${next.join(" + ")}.`,
+      outputChannels: [...next],
+    });
+    if (this.child && this.state.status === "ready") {
+      this.send({ type: "output-channels", channels: [...next] });
     }
   }
 
@@ -606,7 +630,10 @@ export class MediaWorkerManager extends EventEmitter {
 
   private setOutputState(
     change: Partial<
-      Pick<HostOutputState, "status" | "detail" | "underruns" | "droppedFrames">
+      Pick<
+        HostOutputState,
+        "status" | "detail" | "underruns" | "droppedFrames" | "outputChannels"
+      >
     >,
   ): void {
     if (!this.outputState) return;
@@ -715,8 +742,16 @@ export class MediaWorkerManager extends EventEmitter {
             label: `Channel ${index + 1}`,
           })),
         });
-        // A restarted worker starts silent; give it the shared mix again.
-        if (this.outputState) this.send({ type: "monitor", ...this.monitor });
+        // A restarted worker starts silent; give it the shared mix again, and
+        // the channels in case they changed while it was starting (a no-op
+        // when they did not).
+        if (this.outputState) {
+          this.send({ type: "monitor", ...this.monitor });
+          this.send({
+            type: "output-channels",
+            channels: [...this.outputChannels],
+          });
+        }
         break;
       case "answer": {
         const pending = this.pending.get(event.sessionId);
@@ -774,6 +809,7 @@ export class MediaWorkerManager extends EventEmitter {
         this.setOutputState({
           status: "ready",
           detail: `Ready on ${event.outputChannels.length === 1 ? "output" : "outputs"} ${event.outputChannels.join(" + ")} of ${event.deviceName}.`,
+          outputChannels: event.outputChannels,
           underruns: 0,
           droppedFrames: 0,
         });

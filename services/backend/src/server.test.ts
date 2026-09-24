@@ -293,6 +293,41 @@ describe("backend health and Live snapshot", () => {
   });
 });
 
+describe("backend showfile host output", () => {
+  it("saves the production's host output channels and rejects empty or repeated ones", async () => {
+    const server = trackedServer();
+    const initial = (
+      await server.inject({ method: "GET", url: "/api/v1/showfile" })
+    ).json();
+
+    const saved = await server.inject({
+      method: "PUT",
+      url: "/api/v1/showfile",
+      payload: { ...initial, hostOutput: { outputChannels: [12] } },
+    });
+    expect(saved.statusCode).toBe(200);
+    expect(saved.json()).toMatchObject({
+      hostOutput: { outputChannels: [12] },
+    });
+    const reloaded = await server.inject({
+      method: "GET",
+      url: "/api/v1/showfile",
+    });
+    expect(reloaded.json()).toMatchObject({
+      hostOutput: { outputChannels: [12] },
+    });
+
+    for (const outputChannels of [[], [3, 3], [0], [257]]) {
+      const refused = await server.inject({
+        method: "PUT",
+        url: "/api/v1/showfile",
+        payload: { ...saved.json(), hostOutput: { outputChannels } },
+      });
+      expect(refused.statusCode, JSON.stringify(outputChannels)).toBe(400);
+    }
+  });
+});
+
 describe("backend productions", () => {
   it("lists the default production as active", async () => {
     const response = await trackedServer().inject({

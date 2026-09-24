@@ -53,6 +53,19 @@
         "overlayExpiryMinutes": { "type": "integer", "minimum": 1, "maximum": 60 }
       }
     },
+    "hostOutput": {
+      "description": "Host monitor output settings for this production (ADR 0029). outputChannels are the 1-based channels of the node's host output device that carry the shared monitor feed: at least one, all distinct. Absent means the node's own default.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outputChannels"],
+      "properties": {
+        "outputChannels": {
+          "type": "array",
+          "maxItems": 8,
+          "items": { "type": "integer", "minimum": 1, "maximum": 256 }
+        }
+      }
+    },
     "device": {
       "type": ["object", "null"],
       "additionalProperties": false,

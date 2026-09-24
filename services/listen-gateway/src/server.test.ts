@@ -430,4 +430,40 @@ describe("ListenGateway shared host output", () => {
       }),
     );
   });
+
+  it("opens the host output on the production's saved channels at start", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          schemaVersion: "0",
+          revision: 1,
+          updatedAtUtc: null,
+          show: { name: "Show" },
+          hostOutput: { outputChannels: [12] },
+          device: null,
+          shureReceivers: [],
+          channels: [],
+        }),
+      ),
+    );
+    const worker = new ScriptedWorker();
+    const factory = vi.fn(() => worker);
+    const gateway = new ListenGateway({
+      device: "Test Device",
+      outputDevice: "DVS",
+      outputChannels: [1],
+      processFactory: factory,
+      backendOrigin: "http://backend.invalid/",
+    });
+    gateways.add(gateway);
+    gateway.server.listen(0, "127.0.0.1");
+    await once(gateway.server, "listening");
+    gateway.startCapture();
+    expect(factory).not.toHaveBeenCalled();
+    await vi.waitFor(() => expect(factory).toHaveBeenCalledOnce());
+    const args = factory.mock.calls[0]![1] as string[];
+    expect(args[args.indexOf("--output-channels") + 1]).toBe("12");
+    vi.unstubAllGlobals();
+  });
 });

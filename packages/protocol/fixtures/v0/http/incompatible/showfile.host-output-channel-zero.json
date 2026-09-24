@@ -6,7 +6,7 @@
     "name": "The Winter Circus"
   },
   "hostOutput": {
-    "outputChannels": [12]
+    "outputChannels": [0]
   },
   "device": {
     "name": "USB Interface",

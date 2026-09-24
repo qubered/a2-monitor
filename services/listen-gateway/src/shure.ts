@@ -186,6 +186,8 @@ export const SHURE_CONTROL_PORT = 2202;
 
 export type ShureFleetOptions = {
   backendOrigin?: string;
+  /** Called with every showfile the fleet reads, for settings outside receivers. */
+  onShowfile?: (showfile: Showfile) => void;
   fetch?: typeof fetch;
   port?: number;
 };
@@ -768,6 +770,7 @@ export class ShureFleetMonitor {
       const showfile = parseShowfile(await response.json());
       this.reconcile(showfile.shureReceivers);
       this.configError = undefined;
+      this.options.onShowfile?.(showfile);
     } catch (error) {
       this.configError =
         error instanceof Error

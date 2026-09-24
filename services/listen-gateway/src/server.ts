@@ -31,6 +31,8 @@ import { ShureFleetMonitor } from "./shure.js";
 const MAX_SIGNALING_BODY_BYTES = 64 * 1024;
 const MAX_METER_CLIENTS = 64;
 const MAX_OUTPUT_CLIENTS = 64;
+/** How long capture waits for the production's host output channels at start. */
+const SHOWFILE_WAIT_MS = 2_000;
 const MAX_METER_BUFFERED_BYTES = 64 * 1024;
 const METER_KEEPALIVE_MS = 15_000;
 const MAX_DETAIL_LENGTH = 240;
@@ -167,6 +169,8 @@ export class ListenGateway {
   private readonly meterClients = new Set<ServerResponse>();
   private readonly outputClients = new Set<ServerResponse>();
   readonly hostMonitor: SharedHostMonitor;
+  private readonly waitForShowfile: boolean;
+  private startMediaOnce: () => void = () => undefined;
   private readonly keepalive: NodeJS.Timeout;
   private levels: LevelBank | undefined;
 
@@ -183,6 +187,10 @@ export class ListenGateway {
         processFactory: options.processFactory,
       });
     this.hostMonitor = options.hostMonitor ?? new SharedHostMonitor();
+    this.waitForShowfile =
+      options.shureMonitor === undefined &&
+      options.backendOrigin !== undefined &&
+      this.media.getOutputState() !== null;
     this.media.on("state", () => {
       this.resetLevels();
       const state = this.media.getState();
@@ -205,7 +213,14 @@ export class ListenGateway {
     this.keepalive.unref();
     this.shure =
       options.shureMonitor ??
-      new ShureFleetMonitor({ backendOrigin: options.backendOrigin });
+      new ShureFleetMonitor({
+        backendOrigin: options.backendOrigin,
+        // The active production's host output channels (ADR 0029).
+        onShowfile: (showfile) => {
+          this.media.setOutputChannels(showfile.hostOutput?.outputChannels);
+          this.startMediaOnce();
+        },
+      });
     this.interfaces = options.interfaces ?? networkInterfaces;
     this.server = createServer((request, response) => {
       if (request.method === "GET" && request.url === "/audio/v0/device") {
@@ -464,9 +479,24 @@ export class ListenGateway {
     this.levels.on("frame", (frame) => this.broadcastMeters(frame));
   }
 
+  /**
+   * Starts receivers and capture. With a backend and a host output, capture
+   * waits briefly for the active production's output channels so the output
+   * opens on them rather than on the default first (ADR 0029).
+   */
   startCapture(): void {
-    this.media.start();
     this.shure.start();
+    if (!this.waitForShowfile) {
+      this.media.start();
+      return;
+    }
+    const timer = setTimeout(() => this.startMediaOnce(), SHOWFILE_WAIT_MS);
+    timer.unref?.();
+    this.startMediaOnce = () => {
+      clearTimeout(timer);
+      this.startMediaOnce = () => undefined;
+      this.media.start();
+    };
   }
 
   async close(): Promise<void> {

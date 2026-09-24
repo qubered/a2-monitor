@@ -95,6 +95,30 @@ describe("Manager showfile editor", () => {
           ],
         });
       }
+      if (path === "/audio/v0/output") {
+        return Response.json({
+          schemaVersion: "0",
+          revision: 0,
+          output: {
+            status: "ready",
+            detail: "Ready on output 1 of Dante Virtual Soundcard.",
+            deviceName: "Dante Virtual Soundcard",
+            outputChannels: [1],
+            simulated: false,
+            underruns: 0,
+            droppedFrames: 0,
+          },
+          monitor: {
+            channelId: null,
+            input: null,
+            muted: false,
+            dimmed: false,
+            gainDb: 0,
+            changedBy: null,
+            changedAtUtc: null,
+          },
+        });
+      }
       if (path === "/api/v1/showfile" && method === "PUT") {
         const body = JSON.parse(String(init?.body)) as StoredShowfile;
         const saved: StoredShowfile = {
@@ -420,5 +444,48 @@ describe("Manager showfile editor", () => {
 
     await user.click(screen.getByRole("button", { name: "Reset to defaults" }));
     expect(screen.getByText("Using defaults")).toBeTruthy();
+  });
+
+  it("saves the host output channel with the production and refuses invalid ones", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const field = await screen.findByLabelText("Host output channels");
+    expect(
+      await screen.findByText(
+        /Dante Virtual Soundcard: Ready on output 1 of Dante Virtual Soundcard\./,
+      ),
+    ).toBeTruthy();
+    await user.type(field, "0");
+    expect(screen.getByRole("alert").textContent).toContain(
+      "Use channel numbers from 1 to 256",
+    );
+    await user.clear(field);
+    await user.type(field, "12");
+    expect(screen.queryByRole("alert")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Save showfile" }));
+    expect(await screen.findByText("Revision 3")).toBeTruthy();
+    const saveCall = fetchMock.mock.calls.find(
+      ([path, init]) =>
+        String(path) === "/api/v1/showfile" && init?.method === "PUT",
+    );
+    expect(JSON.parse(String(saveCall?.[1]?.body)).hostOutput).toEqual({
+      outputChannels: [12],
+    });
+
+    // Clearing it returns the production to the node's default.
+    await user.clear(field);
+    await user.click(screen.getByRole("button", { name: "Save showfile" }));
+    expect(await screen.findByText("Revision 4")).toBeTruthy();
+    const lastSave = fetchMock.mock.calls
+      .filter(
+        ([path, init]) =>
+          String(path) === "/api/v1/showfile" && init?.method === "PUT",
+      )
+      .at(-1);
+    expect(JSON.parse(String(lastSave?.[1]?.body))).not.toHaveProperty(
+      "hostOutput",
+    );
   });
 });

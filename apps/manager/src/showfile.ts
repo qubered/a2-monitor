@@ -1,7 +1,9 @@
 import {
+  parseHostOutput,
   parseProductionList,
   parseShowfile,
   parseShureTelemetry,
+  type HostOutput,
   type ProductionList,
   type Showfile,
   type ShureTelemetry,
@@ -74,6 +76,41 @@ export async function loadShureTelemetry(
   const response = await fetch("/audio/v0/shure", { signal });
   if (!response.ok) throw new Error("Shure telemetry could not be loaded.");
   return parseShureTelemetry(await response.json());
+}
+
+/** The node's host output state (ADR 0029): device, channels in effect and status. */
+export async function loadHostOutput(
+  signal?: AbortSignal,
+): Promise<HostOutput> {
+  const response = await fetch("/audio/v0/output", { signal });
+  if (!response.ok)
+    throw new Error("The host output state could not be loaded.");
+  return parseHostOutput(await response.json());
+}
+
+/**
+ * Parses "12" or "1, 2" into distinct 1-based output channels. Empty means
+ * the node's default (null). Returns an error message for anything else.
+ */
+export function parseOutputChannelsText(
+  text: string,
+): { channels: number[] | null } | { error: string } {
+  if (text.trim() === "") return { channels: null };
+  const parts = text.split(",").map((part) => part.trim());
+  const channels = parts.map(Number);
+  if (
+    parts.some((part) => !/^\d+$/.test(part)) ||
+    channels.some((channel) => channel < 1 || channel > 256)
+  ) {
+    return { error: "Use channel numbers from 1 to 256, e.g. 12 or 1, 2." };
+  }
+  if (new Set(channels).size !== channels.length) {
+    return { error: "Each output channel can be listed once." };
+  }
+  if (channels.length > 8) {
+    return { error: "At most 8 output channels can carry the monitor feed." };
+  }
+  return { channels };
 }
 
 export async function saveShowfile(showfile: Showfile): Promise<Showfile> {

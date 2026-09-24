@@ -42,7 +42,10 @@ const contracts = [
       "fixtures/v0/http/current/showfile.valid.json",
       "fixtures/v0/http/previous/showfile.valid.json",
     ],
-    rejected: ["fixtures/v0/http/incompatible/showfile.unknown-field.json"],
+    rejected: [
+      "fixtures/v0/http/incompatible/showfile.unknown-field.json",
+      "fixtures/v0/http/incompatible/showfile.host-output-channel-zero.json",
+    ],
   },
   {
     name: "shure-telemetry",

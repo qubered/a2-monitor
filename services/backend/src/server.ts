@@ -617,7 +617,11 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
         ) ||
         !hasUniqueChannelIds(candidate) ||
         (candidate.alertPolicy !== undefined &&
-          !isCoherentAlertPolicy(candidate.alertPolicy));
+          !isCoherentAlertPolicy(candidate.alertPolicy)) ||
+        (candidate.hostOutput !== undefined &&
+          (candidate.hostOutput.outputChannels.length === 0 ||
+            new Set(candidate.hostOutput.outputChannels).size !==
+              candidate.hostOutput.outputChannels.length));
       if (invalid) {
         await reply.code(400).send({ error: "invalid-showfile" });
         return undefined;

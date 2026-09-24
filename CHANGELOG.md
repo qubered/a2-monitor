@@ -14,7 +14,9 @@ externally tested release.
   device (for example Dante Virtual Soundcard routed to comms), Live asks on
   open whether audio plays on this device or the host output. Everyone on host
   output shares one selection, mute, dim and level and sees who changed it
-  last. The macOS app window gains an output device and channel choice.
+  last. The macOS app window gains an output device and default channel
+  choice; Manager's Show tab saves the output channel (e.g. 12) with each
+  production, and the node switches to it without a restart.
 
 - Manager: a Productions section for listing, creating, activating and
   removing named local productions, backed by a new

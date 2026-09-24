@@ -43,8 +43,11 @@ with scripted battery drain, RF dips, interference, mute and transmitter loss.
 
 When `A2_OUTPUT_DEVICE` names an exact output device (for example Dante Virtual
 Soundcard, routed to comms), the worker also renders one shared monitor mix and
-`pulse-device-output` plays it on the listed 1-based channels
-(`A2_OUTPUT_CHANNELS`, default `1`) (ADR 0029). Every Live client that chose
+`pulse-device-output` plays it on 1-based output channels (ADR 0029). The
+channels come from the active production (`hostOutput.outputChannels`, set in
+Manager's Show tab and read with the receiver inventory); a change reopens only
+the output device. Without a saved value, `A2_OUTPUT_CHANNELS` (default `1`)
+applies. Every Live client that chose
 host output controls and sees the same selection, mute, dim and level:
 
 | Request                       | Body                                                                 | Response                                   |

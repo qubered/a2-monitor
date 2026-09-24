@@ -13,9 +13,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: 2525f6c5e3ff67b1917fdb3bb3886ac1b559599c7330a55dc6c0a10f05cc5e30
+// Schema-SHA256: 14711b4c08945918f142d93ab88c78517621595cb6f6d3fdfbf7e980927016cf
 // Generator-SHA256: 7c6c8c3297d1ffee85f78fc29a4b03c3fbf3fa68da597de8be09f1f2e73d4cbf
-// Body-SHA256: f73a9560e187018c9b52107e26f2bd33b3c78837067f433f039773ba7fd0c20d
+// Body-SHA256: 7aacd547c7b9b00dc24dd70924afa91276f463dc246f1c62e0d2d2bff2fdf4f8
 
 export type HealthResponse = {
   status: "ok";
@@ -95,6 +95,9 @@ export type Showfile = {
     silenceAfterSeconds: number;
     clipAlerts: boolean;
     overlayExpiryMinutes: number;
+  };
+  hostOutput?: {
+    outputChannels: Array<number>;
   };
   device: {
     name: string;
@@ -934,6 +937,24 @@ const showfileSchema = {
           type: "integer",
           minimum: 1,
           maximum: 60,
+        },
+      },
+    },
+    hostOutput: {
+      description:
+        "Host monitor output settings for this production (ADR 0029). outputChannels are the 1-based channels of the node's host output device that carry the shared monitor feed: at least one, all distinct. Absent means the node's own default.",
+      type: "object",
+      additionalProperties: false,
+      required: ["outputChannels"],
+      properties: {
+        outputChannels: {
+          type: "array",
+          maxItems: 8,
+          items: {
+            type: "integer",
+            minimum: 1,
+            maximum: 256,
+          },
         },
       },
     },

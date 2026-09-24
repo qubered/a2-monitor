@@ -56,9 +56,16 @@ For the local MVP only:
    touching capture or WebRTC listeners, and the worker re-sends the shared mix
    after its own restart.
 5. **Configuration.** The gateway enables it only when `A2_OUTPUT_DEVICE`
-   names an exact device. `A2_OUTPUT_CHANNELS` (default `1`) lists the
-   channels. The macOS app window gains an output device list (default
-   **None**) and a channels field. The reserved name
+   names an exact device, which stays a per-host choice. The channels are saved
+   per production: the showfile gains an optional `hostOutput.outputChannels`,
+   edited in Manager's Show tab. The gateway reads it with the receiver
+   inventory (every 2 s) and the worker reopens only the output child on the new
+   channels; capture and listeners carry on. At start, capture waits up to 2 s
+   for the showfile so the output opens on the saved channels. Without a saved
+   value, `A2_OUTPUT_CHANNELS` (default `1`) applies. A channel the device does
+   not have is an error with the device's reason, shown in Manager and Live.
+   The macOS app window gains an output device list (default **None**) and a
+   default channels field. The reserved name
    `Pulse simulated output` discards the feed on a wall-clock pace and is
    labelled simulated. `npm run dev:simulate` uses it.
 6. **Unmuted by default.** Device listening now starts unmuted at the stored
@@ -105,7 +112,9 @@ the node gateway, the same trust boundary as ADR 0026's listen signaling.
 
 ## Validation
 
-- Unit tests: output channel parsing, routing, the ring's prime, underrun,
+- Unit tests: the saved channels round-trip through the backend and switch
+  the worker's output without a restart, and startup opens on them; output
+  channel parsing, routing, the ring's prime, underrun,
   skip and overflow handling, sample reassembly, the monitor mix's ramps and
   crossfade, worker argument and control parsing, output event parsing,
   restart backoff, gateway change validation, the shared state, the SSE

@@ -194,6 +194,15 @@ pub fn parse_output_line(line: &str, generation: u64) -> Result<OutputEvent, Str
                 output_channels,
             })
         }
+        Some("failed") if exact_keys(record, &["type", "detail"]) => record
+            .get("detail")
+            .and_then(Value::as_str)
+            .filter(|detail| !detail.is_empty())
+            .map(|detail| OutputEvent::Ended {
+                generation,
+                detail: detail.chars().take(200).collect(),
+            })
+            .ok_or_else(|| "output failed detail is invalid".to_owned()),
         Some("stats")
             if exact_keys(
                 record,
@@ -237,7 +246,10 @@ fn read_output_events(stdout: impl std::io::Read, generation: u64, events: SyncS
                     .and_then(|text| parse_output_line(text, generation))
                 {
                     Ok(event) => {
-                        if events.send(Event::Output(event)).is_err() {
+                        // A reported failure is the end of this child; its EOF must not
+                        // count as a second failure.
+                        let ended = matches!(event, OutputEvent::Ended { .. });
+                        if events.send(Event::Output(event)).is_err() || ended {
                             return;
                         }
                         continue;
@@ -457,6 +469,18 @@ impl HostOutput {
         }
     }
 
+    /// Reopens the output child on other device channels at once, with fresh backoff.
+    /// The same channels are a no-op, so a repeated setting never interrupts the feed.
+    pub fn set_channels(&mut self, channels: String, now: Instant) -> Option<OutputReport> {
+        if self.args.channels == *channels {
+            return None;
+        }
+        self.args.channels = channels.into();
+        self.shutdown();
+        self.attempt = 0;
+        self.start(now)
+    }
+
     pub fn shutdown(&mut self) {
         if let Some(mut running) = self.running.take() {
             let _ = running.child.kill();
@@ -580,6 +604,16 @@ mod tests {
                 overflow_frames: 2,
             })
         );
+        assert_eq!(
+            parse_output_line(
+                r#"{"type":"failed","detail":"output channel 12 is beyond DVS's 2 outputs"}"#,
+                7
+            ),
+            Ok(OutputEvent::Ended {
+                generation: 7,
+                detail: "output channel 12 is beyond DVS's 2 outputs".into(),
+            })
+        );
         for invalid in [
             r#"{"type":"ready","deviceName":"DVS","sampleRateHz":44100,"channelCount":2,"outputChannels":[1]}"#,
             r#"{"type":"ready","deviceName":"DVS","sampleRateHz":48000,"channelCount":2,"outputChannels":[3]}"#,
@@ -590,6 +624,28 @@ mod tests {
         ] {
             assert!(parse_output_line(invalid, 1).is_err(), "{invalid}");
         }
+    }
+
+    #[test]
+    fn new_channels_restart_at_once_with_fresh_backoff() {
+        let (events, _receiver) = mpsc::sync_channel(4);
+        let mut output = HostOutput::new(
+            OutputArgs {
+                binary: "/nonexistent/pulse-device-output".into(),
+                device_name: "DVS".into(),
+                channels: "1".into(),
+            },
+            events,
+        );
+        let now = Instant::now();
+        output.start(now);
+        output.poll(now + Duration::from_secs(1));
+        assert!(output.set_channels("1".into(), now).is_none());
+        assert!(matches!(
+            output.set_channels("12".into(), now),
+            Some(OutputReport::Failed { retry_in, .. }) if retry_in == Duration::from_secs(1)
+        ));
+        assert_eq!(output.args.channels, "12");
     }
 
     #[test]

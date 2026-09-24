@@ -1,6 +1,6 @@
 import { createServer, type AddressInfo, type Socket } from "node:net";
 import type { Showfile } from "@rvlt/pulse-protocol/http";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   applyChannelProperty,
   AXIENT_COMMANDS,
@@ -306,4 +306,37 @@ describe("ShureFleetMonitor against the development AD4Q simulator", () => {
       await new Promise<void>((resolve) => simulator.close(() => resolve()));
     }
   }, 10_000);
+
+  it("hands each showfile it reads to the host output settings", async () => {
+    const showfile = {
+      schemaVersion: "0",
+      revision: 1,
+      updatedAtUtc: null,
+      show: { name: "Show" },
+      hostOutput: { outputChannels: [12] },
+      device: null,
+      shureReceivers: [],
+      channels: [],
+    };
+    const onShowfile = vi.fn();
+    const monitor = new ShureFleetMonitor({
+      backendOrigin: "http://showfile.invalid/",
+      onShowfile,
+      fetch: (async () =>
+        new Response(JSON.stringify(showfile), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })) as typeof fetch,
+    });
+    try {
+      monitor.start();
+      await vi.waitFor(() =>
+        expect(onShowfile).toHaveBeenCalledWith(
+          expect.objectContaining({ hostOutput: { outputChannels: [12] } }),
+        ),
+      );
+    } finally {
+      monitor.close();
+    }
+  });
 });

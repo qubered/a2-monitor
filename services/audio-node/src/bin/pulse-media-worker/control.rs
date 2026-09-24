@@ -12,6 +12,7 @@ use crate::Event;
 use crate::capture::CaptureHeader;
 use crate::host_output::{MAX_MONITOR_GAIN, OutputReport};
 use crate::meters::{METER_INTERVAL_MS, MeterReading};
+use a2_audio_node::monitor_output::parse_output_channels;
 
 const COMMAND_LIMIT_BYTES: usize = 128 * 1024;
 const OFFER_LIMIT_BYTES: usize = 64 * 1024;
@@ -37,6 +38,11 @@ pub enum Command {
     Monitor {
         channel: Option<usize>,
         gain: f32,
+    },
+    /// Reopens the host output on other 1-based device channels, e.g. a production's
+    /// saved channels (ADR 0029). Validated like `--output-channels`.
+    OutputChannels {
+        channels: String,
     },
 }
 
@@ -125,6 +131,22 @@ pub fn parse_command(line: &str) -> Result<Command, String> {
                 .filter(|gain| (0.0..=f64::from(MAX_MONITOR_GAIN)).contains(gain))
                 .ok_or_else(|| "gain is invalid".to_owned())? as f32;
             Ok(Command::Monitor { channel, gain })
+        }
+        Some("output-channels") => {
+            exact_keys(record, &["type", "channels"])?;
+            let channels = record
+                .get("channels")
+                .and_then(Value::as_array)
+                .and_then(|channels| {
+                    channels
+                        .iter()
+                        .map(|channel| channel.as_u64().map(|number| number.to_string()))
+                        .collect::<Option<Vec<String>>>()
+                })
+                .map(|channels| channels.join(","))
+                .filter(|channels| parse_output_channels(channels).is_ok())
+                .ok_or_else(|| "channels are invalid".to_owned())?;
+            Ok(Command::OutputChannels { channels })
         }
         Some("close") => {
             exact_keys(record, &["type", "sessionId"])?;
@@ -310,6 +332,12 @@ mod tests {
             })
         );
         assert_eq!(
+            parse_command(r#"{"type":"output-channels","channels":[12]}"#),
+            Ok(Command::OutputChannels {
+                channels: "12".into()
+            })
+        );
+        assert_eq!(
             parse_command(r#"{"type":"close","sessionId":"a-1"}"#),
             Ok(Command::Close {
                 session_id: "a-1".into()
@@ -330,6 +358,10 @@ mod tests {
             r#"{"type":"monitor","channel":0,"gain":5}"#,
             r#"{"type":"monitor","channel":0,"gain":-0.1}"#,
             r#"{"type":"monitor","channel":0}"#,
+            r#"{"type":"output-channels","channels":[]}"#,
+            r#"{"type":"output-channels","channels":[1,1]}"#,
+            r#"{"type":"output-channels","channels":[0]}"#,
+            r#"{"type":"output-channels","channels":"12"}"#,
             "[]",
         ] {
             assert!(parse_command(line).is_err(), "{line}");

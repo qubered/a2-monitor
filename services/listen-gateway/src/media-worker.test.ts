@@ -422,4 +422,50 @@ describe("parseWorkerEvent", () => {
       expect(() => parseOutputChannels(invalid), invalid).toThrow();
     }
   });
+
+  it("switches the output to a production's channels and back to the default", async () => {
+    const child = new FakeWorkerProcess();
+    const factory = vi.fn(() => child);
+    const media = new MediaWorkerManager({
+      device: "DVS",
+      outputDevice: "DVS",
+      outputChannels: [1],
+      processFactory: factory,
+    });
+    // Set before the worker exists: the spawn already uses it.
+    media.setOutputChannels([12]);
+    media.start();
+    expect(factory.mock.calls[0]?.[1]).toContain("12");
+
+    child.ready(64);
+    await flush();
+    const sent = () =>
+      child.commands.filter(({ type }) => type === "output-channels");
+    expect(sent().at(-1)).toEqual({ type: "output-channels", channels: [12] });
+
+    const before = sent().length;
+    media.setOutputChannels([12]);
+    expect(sent()).toHaveLength(before);
+
+    media.setOutputChannels(undefined);
+    await flush();
+    expect(sent().at(-1)).toEqual({ type: "output-channels", channels: [1] });
+    expect(media.getOutputState()).toMatchObject({
+      status: "starting",
+      outputChannels: [1],
+    });
+
+    child.emit({
+      type: "output-ready",
+      deviceName: "DVS",
+      channelCount: 64,
+      outputChannels: [1],
+    });
+    await flush();
+    expect(media.getOutputState()).toMatchObject({
+      status: "ready",
+      outputChannels: [1],
+    });
+    media.stop();
+  });
 });

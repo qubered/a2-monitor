@@ -267,6 +267,16 @@ impl<W: io::Write> Worker<W> {
                 }
                 Ok(())
             }
+            Command::OutputChannels { channels } => {
+                let report = self
+                    .host_output
+                    .as_mut()
+                    .and_then(|output| output.set_channels(channels, now));
+                match report {
+                    Some(report) => self.output.output(&report),
+                    None => Ok(()),
+                }
+            }
             Command::Close { session_id } => match self.sessions.get_mut(&session_id) {
                 Some(session) => {
                     session.close("requested");
