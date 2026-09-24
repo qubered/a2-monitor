@@ -1072,7 +1072,7 @@ describe("Live channel grid", () => {
     // A remembered feed the production no longer has asks again.
     renderApp(stateWith(), {
       audioDeviceSource: readyDevice,
-      hostOutput: hostDocument(dvsOutput, [feeds[0]]),
+      hostOutput: hostDocument(dvsOutput, feeds.slice(0, 1)),
     });
     expect(
       await screen.findByRole("dialog", { name: "Where should audio play?" }),
