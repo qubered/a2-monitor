@@ -1,9 +1,9 @@
 # Pulse — design language
 
-- **Version:** 2.2.0
+- **Version:** 2.3.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
-- **Last updated:** 2026-09-23
+- **Last updated:** 2026-09-24
 
 This is the whole design language in one document. It is normative: where it and
 anything else disagree, this document is the intent, and the implementation is
@@ -178,9 +178,9 @@ outline and never a hard pixel-offset shadow — see
 
 A MUST: **a component never names a raw hex, px or radius — it references a
 token.** This still matters with exactly one theme: it is what lets the whole
-product be retuned from one file, keeps a component from silently drifting off
-the palette, and is the only reason `--veil`/`--veil-ink` exist as their own
-tokens rather than a value typed straight into the alert overlay. A surface
+product be retuned from one file and keeps a component from silently drifting
+off the palette — the alert band is `--warn`/`--t-out` with `--paper` ink, not
+a colour typed straight into the card. A surface
 this system needs that has no token yet — a pressed control, a recessed well
 behind a trace — gets a token (`--elev-2`, `--well`) rather than an inlined
 colour at the component.
@@ -525,18 +525,25 @@ to _not applicable_ rather than showing false greens.
 
 ### 10.3 Alert overlay
 
-An alert nobody has acknowledged **veils the whole card**.
+An alert nobody has acknowledged **rings the whole card and names itself in a
+band across the photograph**.
 
-**A veil, not a replacement.** The tint covers the card, but the face, the number,
-the meter, the name and the status strip all still read underneath — that is what
-an operator needs to start troubleshooting. The mark is pinned to the
-photograph's box rather than centred on the card, where it would be written
-across the performer's name.
+**A ring and a band, not a veil.** A 2px `--warn` (caution) or `--t-out`
+(critical) ring sits on the card's edge, and a solid band of the same colour
+with `--paper` ink sits across the lower edge of the photograph, just above the
+meter. Nothing is dimmed or tinted: the face, the number, the meter, the name
+and the status strip read exactly as they do without the alert — that is what
+an operator needs to start troubleshooting, and a dimmed card reads as a
+disabled one. A solid band is also the most legible thing on the grid from
+across a wing, which a coloured word on a translucent wash was not. The whole
+card is the press target; it takes the severity's soft tint only under hover
+or keyboard focus.
 
 **It names the problem and nothing else.** One icon, two words — _Low RF_, _No
 audio_, _Low battery_ — and `Press to acknowledge`. No explanation, no timestamp,
 no diagnosis, no action list. The operator troubleshoots; the product's job is to
-say which channel and which kind, fast, from across a wing.
+say which channel and which kind, fast, from across a wing. The words wrap
+rather than truncate; at phone width the icon drops so they fit.
 
 Behaviour:
 
@@ -551,7 +558,8 @@ Behaviour:
    itself after **five minutes** by default, so an unattended screen does not end
    the night as a wall of red. A countdown along the bottom edge shows expiry
    coming; a critical overlay has no countdown, and its absence is the signal
-   that this one is not going away on its own. Both are production policy.
+   that this one is not going away on its own. The countdown is a rule along
+   the band's lower edge. Both are production policy.
 3. **Expiry is not acknowledgement.** A timed-out alert still counts in the
    header's outstanding total. An alert nobody saw must never look like one
    somebody saw.
@@ -906,6 +914,14 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.3.0 — 2026-09-24.** The alert overlay's translucent veil is gone
+([§10.3](#103-alert-overlay)). It darkened the whole card so an alerting card
+read as disabled, and it wrote a coloured label with a text shadow across the
+photograph and the name. Now an unacknowledged alert is a 2px severity ring on
+the card plus a solid severity band across the photograph's lower edge; nothing
+underneath is dimmed. `--veil` and `--veil-ink` are removed. Implemented in
+Live alongside this entry.
 
 **2.2.0 — 2026-09-23.** The A2 grid no longer reorders
 ([§11.1](#111-a2-grid)). Critical sources used to pin to the top, with the

@@ -29,8 +29,6 @@
   --blue: #5b8def;
   --scrim: rgb(14 12 10 / 66%);
   --select: rgb(224 54 61 / 20%);
-  --veil: rgb(20 18 16 / 58%);
-  --veil-ink: #f5efe2;
   --card-outline: var(--line);
   --card-lit: inset 0 var(--size-1) 0 rgb(255 253 248 / 12%);
 

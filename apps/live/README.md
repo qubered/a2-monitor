@@ -73,11 +73,11 @@ Live renders one shared monitoring state from the backend (ADR 0027):
   has one, a 10-second meter trace drawn from the node's 20 Hz meter stream
   (present, silent, gap and stale drawn differently), and the four-cell
   RF · Audio · Battery · Check status strip computed by the backend;
-- the alert veil from backend alerts: pressing it acknowledges that alert as
-  the operator named on this device, for every Live client; caution overlays
-  show an expiry countdown and expire while still counting as outstanding;
-  critical overlays hold until acknowledged, and a cleared fault takes its
-  alert with it;
+- the alert ring and band from backend alerts: pressing the card acknowledges
+  that alert as the operator named on this device, for every Live client;
+  caution overlays show an expiry countdown and expire while still counting as
+  outstanding; critical overlays hold until acknowledged, and a cleared fault
+  takes its alert with it;
 - channels always in showfile order; a channel with an active critical alert
   is shown whatever the filter, in its own place, and no card ever moves;
 - a header counter of outstanding and critical alerts that opens a show-wide
@@ -146,7 +146,7 @@ npm run check --workspace @rvlt/pulse-live
 - [x] local physical-device input selection and muted direct PCM listening MVP
 - [x] external meter store and bounded canvas rendering path
 - [x] shared backend state over server-sent events, backend-owned alerts and
-  acknowledgements, exceptions sheet
+      acknowledgements, exceptions sheet
 - [ ] audio-node WebRTC media/control integration
 - [x] server-synchronized mic check with the A1 captured-audio verdict
 - [x] A1 mix-confidence surface and fault report → A2 task/incident loop

@@ -423,6 +423,9 @@ a:focus-visible {
 .channel-photo {
   position: relative;
   aspect-ratio: 16 / 10;
+  /* An explicit width stops the ratio turning min-height into a minimum
+     width, which overflowed the narrow two-column phone grid. */
+  width: 100%;
   min-height: var(--channel-photo-height);
   display: grid;
   place-items: center;
@@ -651,35 +654,59 @@ a:focus-visible {
   opacity: 0.6;
 }
 
+/* An unacknowledged alert rings the card and names itself in a solid band on
+   the photograph (design system §10.3). The whole card is the acknowledge
+   target; nothing is dimmed, so the face, number, meter, name and status
+   strip keep reading exactly as they do without the alert. */
 .alert-overlay {
   position: absolute;
-  inset: 0;
+  inset: calc(var(--size-1) * -1);
   z-index: 4;
-  display: grid;
-  place-items: start center;
-  padding: var(--space-8) var(--space-3) var(--status-height);
-  border: 0;
+  border: var(--size-2) solid var(--warn);
   border-radius: var(--radius-large);
-  background: var(--veil);
-  color: var(--t-out);
+  background: transparent;
+  transition: background-color var(--transition-control);
 }
 
-.alert-overlay.alert-caution {
-  color: var(--warn);
+.alert-overlay.alert-critical {
+  border-color: var(--t-out);
 }
 
-.alert-mark {
-  display: flex;
-  flex-direction: column;
+.alert-overlay:hover,
+.alert-overlay:focus-visible {
+  background: var(--warn-soft);
+}
+
+.alert-overlay.alert-critical:hover,
+.alert-overlay.alert-critical:focus-visible {
+  background: var(--out-soft);
+}
+
+.alert-band {
+  position: absolute;
+  right: 0;
+  bottom: var(--meter-height);
+  left: 0;
+  z-index: 3;
+  min-height: var(--target);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  padding-top: var(--space-4);
-  text-align: center;
-  text-shadow: 0 var(--size-1) 0 var(--veil-ink);
+  column-gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  background: var(--warn);
+  color: var(--paper);
+  line-height: 1.2;
 }
 
-.alert-mark svg {
-  width: var(--target-primary);
-  height: var(--target-primary);
+.alert-band.alert-critical {
+  background: var(--t-out);
+}
+
+.alert-band svg {
+  grid-row: span 2;
+  width: var(--icon-large);
+  height: var(--icon-large);
   fill: none;
   stroke: currentColor;
   stroke-width: 2.3;
@@ -687,26 +714,31 @@ a:focus-visible {
   stroke-linejoin: round;
 }
 
-.alert-mark strong {
-  font-family: var(--font-display);
-  font-size: var(--font-section);
+/* The label wraps rather than truncating: "Battery crit…" is not an alert. */
+.alert-band strong,
+.alert-band > span:not(.alert-expiry) {
+  overflow-wrap: anywhere;
 }
 
-.alert-mark > span {
-  margin-top: var(--space-2);
-  font-size: var(--font-caption);
+.alert-band strong {
+  font-family: var(--font-display);
+  font-size: var(--font-card);
   font-weight: 700;
 }
 
-/* Non-critical overlays expire (design system §10.3); the rule shrinks toward
-   expiry. A critical overlay has no countdown at all. */
+.alert-band > span:not(.alert-expiry) {
+  font-size: var(--font-badge);
+  font-weight: 600;
+}
+
+/* Non-critical overlays expire (design system §10.3); the rule along the
+   band's lower edge shrinks toward expiry. A critical band has no countdown. */
 .alert-expiry {
   position: absolute;
   bottom: 0;
   left: 0;
   width: calc(var(--expiry-remaining, 1) * 100%);
   height: var(--size-2);
-  border-radius: var(--radius-pill);
   background: currentColor;
 }
 
@@ -1963,6 +1995,16 @@ a:focus-visible {
     display: none;
   }
 
+  /* Two narrow columns leave no room for the band's icon beside its words. */
+  .alert-band {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .alert-band svg {
+    display: none;
+  }
+
   .detail-grid {
     grid-template-columns: 1fr;
   }
@@ -2005,6 +2047,12 @@ a:focus-visible {
   .player-controls {
     width: 100%;
     justify-content: center;
+    gap: var(--space-2);
+  }
+
+  .volume-control {
+    min-width: 0;
+    flex: 1;
   }
 }
 

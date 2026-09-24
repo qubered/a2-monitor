@@ -22,7 +22,7 @@ export function alertsForChannel(
     .sort(byUrgency);
 }
 
-/** Whether an unacknowledged alert still veils its card: critical always, others until the overlay expires. */
+/** Whether an unacknowledged alert still marks its card: critical always, others until the overlay expires. */
 export function overlayVisible(alert: LiveAlert, nowMs: number): boolean {
   if (alert.acknowledgedAtUtc !== null) return false;
   if (alert.overlayExpiresAtUtc === null) return true;

@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.73c5a37b23b99c17",
-  "sourceSha256": "73c5a37b23b99c173eeb2d21560bf1bcfd3bea0e89674e02fe8318014488d80d",
+  "buildId": "a2-0.0.0+sha256.fef61694976afcfb",
+  "sourceSha256": "fef61694976afcfb8995c483c6c4ad2c8b6194749c28b8c35d4af6b0beaa66af",
   "inputCount": 389,
   "inputs": [
     {
@@ -49,7 +49,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "9bfc61e1d2ef3a5fd01b69544de27cf0ffe430d06b4f4da8b3533becaf659446"
+      "sha256": "29b951f49e08bea68fdff74dbd0739d69b854e464a9a48f718ffffa9da949df5"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -73,7 +73,7 @@
     },
     {
       "path": "apps/live/README.md",
-      "sha256": "eddb2bae43e34d560bda5e59b692855cc3446dc300c3938a61106b246fa55ef1"
+      "sha256": "fc12a25d9e666f02cddc38eae737c8b0f2dc0de5b9205bb45e767ab8ff179c5e"
     },
     {
       "path": "apps/live/index.html",
@@ -89,7 +89,7 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "14db8b66c03d6bad684e90ae8a8e5aed2d1a7b5307814c015acd7a464877c5fa"
+      "sha256": "95009b319767f256b0e656e5db2a169bf783a98f6b206c797d5a9d9885dc4e3c"
     },
     {
       "path": "apps/live/src/App.tsx",
@@ -97,7 +97,7 @@
     },
     {
       "path": "apps/live/src/alerts.ts",
-      "sha256": "77fcb3c99b904f76bec075bf53d6dc9c59a436266c76d6ab8dc9cc88e800a350"
+      "sha256": "78cf72666e7d4fb244642b06bd3cea6e45149abdc57ad12bda9499ec8d2b91b4"
     },
     {
       "path": "apps/live/src/audio-device.test.ts",
@@ -117,7 +117,7 @@
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
-      "sha256": "fbb75ab744ae218cf2bca5470a8ca45cb414efe300d00dbd330f00f40583bbe6"
+      "sha256": "baf77a942cfc69655a7584c64c04fe1322349b1df6060afe403494b8ab668270"
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
@@ -185,7 +185,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "d095dfebe06f759e12f090663dcb6ab7b741ffd115097bf0961972d768dd09ca"
+      "sha256": "c47139cc04df9d51f896271760c5737608bb9ea0f1ec0f61a419831f9c2aec22"
     },
     {
       "path": "apps/live/src/useAudioDevice.ts",
@@ -249,7 +249,7 @@
     },
     {
       "path": "apps/manager/src/components/AlertsTab.tsx",
-      "sha256": "afe28f161da6a648afff7e37d2f7db9f02b2f29dbe9b1d4750e1963475516b4c"
+      "sha256": "484ec206cf1b5165ffd356b8c668806e0a21ec57dc7df7fdcb7fbc1cf77cebbd"
     },
     {
       "path": "apps/manager/src/components/ChannelsTab.tsx",
@@ -297,7 +297,7 @@
     },
     {
       "path": "apps/manager/src/components/ui/table.tsx",
-      "sha256": "d78524d1918a42069e43403e8b928b80ddf628ee176eb2e44831087a56cea609"
+      "sha256": "b9196c2ccd6da7807f98cc18fa6097ac149325169f7af5867a5b708ed6d58b5a"
     },
     {
       "path": "apps/manager/src/components/ui/tabs.tsx",
@@ -657,7 +657,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "80539e9241478eeaab6657fd2c59205fe7924d915c09581dd485d60f4a68b285"
+      "sha256": "9992784b472d029b34f0a063b293b2c7c3fac999ebd3cfbef2e418b77dfc17db"
     },
     {
       "path": "docs/design/README.md",
@@ -1205,7 +1205,7 @@
     },
     {
       "path": "packages/ui/tokens.css",
-      "sha256": "128378cf99d4e28715fd6624ffd84b2625a230ba48f1f56f46cb7a3386954667"
+      "sha256": "eb1d583722c04558d0bf0942dec45694d28c4ea625cf44a5cde6db8cf007368e"
     },
     {
       "path": "packages/ui/tsconfig.json",

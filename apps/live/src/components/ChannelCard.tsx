@@ -174,6 +174,22 @@ export function ChannelCard({
             input={channel.input.index}
             stale={metersStale}
           />
+          {alert ? (
+            <span
+              className={`alert-band alert-${alert.severity}`}
+              aria-hidden="true"
+            >
+              <AlertIcon dimension={alert.dimension} />
+              <strong>{alert.label}</strong>
+              <span>Press to acknowledge</span>
+              {remaining !== null ? (
+                <span
+                  className="alert-expiry"
+                  style={{ "--expiry-remaining": remaining } as CSSProperties}
+                />
+              ) : null}
+            </span>
+          ) : null}
         </div>
 
         <div className="channel-identity">
@@ -190,20 +206,7 @@ export function ChannelCard({
           type="button"
           onClick={() => onAcknowledge(alert)}
           aria-label={`${alert.label} on ${channel.name}, channel ${channel.number}. Press to acknowledge.`}
-        >
-          <span className="alert-mark">
-            <AlertIcon dimension={alert.dimension} />
-            <strong>{alert.label}</strong>
-            <span>Press to acknowledge</span>
-          </span>
-          {remaining !== null ? (
-            <span
-              className="alert-expiry"
-              aria-hidden="true"
-              style={{ "--expiry-remaining": remaining } as CSSProperties}
-            />
-          ) : null}
-        </button>
+        />
       ) : null}
     </article>
   );

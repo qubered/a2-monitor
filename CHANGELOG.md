@@ -28,6 +28,14 @@ externally tested release.
 
 ### Changed
 
+- Live alerts no longer veil the card. An unacknowledged alert is a 2px
+  severity ring plus a solid band across the photo's lower edge, so the card
+  underneath is not dimmed and the label reads from across a room
+  (DESIGN.md 2.3.0).
+- Live no longer overflows a phone-width viewport: the channel photo kept a
+  minimum width from its aspect ratio and the player controls clipped. Manager
+  tables no longer widen the page on a phone.
+
 - Manager navigation moved from horizontal tabs to a settings-style sidebar
   (Show, Productions, Receivers, Channels), and the Show and Receivers
   panels moved from stacked cards to data tables, matching the Channels

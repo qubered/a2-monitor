@@ -306,7 +306,7 @@ describe("Live channel grid", () => {
     ).toBe("true");
   });
 
-  it("veils a card with the backend alert and acknowledges it as the named operator", async () => {
+  it("marks a card with the backend alert and acknowledges it as the named operator", async () => {
     const user = userEvent.setup();
     window.localStorage.setItem("pulse-operator-name", "Sam");
     const raised = stateWith({ alerts: [alert()] });
