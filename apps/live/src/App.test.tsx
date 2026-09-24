@@ -1459,14 +1459,35 @@ describe("Rooms", () => {
     ).toBeTruthy();
   });
 
-  it("shows one room per device and remembers it", async () => {
+  it("switches room from the header, shows each room's state, and remembers the choice", async () => {
     const user = userEvent.setup();
-    renderApp(roomed());
-    const picker = await screen.findByRole("navigation", { name: "Rooms" });
-    await user.click(
-      within(picker).getByRole("button", { name: /Breakout B/ }),
-    );
+    const state = roomed();
+    renderApp({
+      ...state,
+      alerts: [alert({ channelId: "ch-talkback" })],
+      summary: { active: 1, outstanding: 1, outstandingCritical: 1 },
+    });
+    const header = await screen.findByRole("button", {
+      name: /^Room: All rooms\. Change room/,
+    });
+    await user.click(header);
 
+    const sheet = screen.getByRole("dialog", { name: "Room" });
+    const rows = within(sheet).getAllByRole("button", { pressed: undefined });
+    const names = rows
+      .filter((row) => row.classList.contains("room-option"))
+      .map((row) => row.querySelector("strong")?.textContent);
+    expect(names).toEqual(["All rooms", "Ballroom", "Breakout B", "No room"]);
+    const row = (name: RegExp) =>
+      within(sheet).getByRole("button", { name }).textContent;
+    expect(row(/^Breakout B/)).toContain("Next: Workshop 09:00");
+    expect(row(/^Breakout B/)).toContain("1 critical");
+    expect(row(/^Ballroom/)).toContain("Clear");
+
+    await user.click(
+      within(sheet).getByRole("button", { name: /^Breakout B/ }),
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
     expect(window.localStorage.getItem("pulse-room")).toBe("room-breakout");
     expect(screen.getByRole("region", { name: "Lectern" })).toBeTruthy();
     expect(screen.queryByText("Marguerite", { selector: "h2" })).toBeNull();
@@ -1474,6 +1495,25 @@ describe("Rooms", () => {
     expect(
       screen.queryByRole("region", { name: /Run of show: Ballroom/ }),
     ).toBeNull();
+    // The header names the room, and says when another one needs someone.
+    expect(
+      screen.getByRole("button", { name: /^Room: Breakout B\. Change room/ }),
+    ).toBeTruthy();
+  });
+
+  it("hints in the header when a room other than the shown one needs someone", async () => {
+    window.localStorage.setItem("pulse-room", "room-ballroom");
+    const state = roomed();
+    renderApp({
+      ...state,
+      alerts: [alert({ channelId: "ch-talkback" })],
+      summary: { active: 1, outstanding: 1, outstandingCritical: 1 },
+    });
+    expect(
+      await screen.findByRole("button", {
+        name: "Room: Ballroom. Change room. Another room needs attention",
+      }),
+    ).toBeTruthy();
   });
 
   it("falls back to every room when the remembered room is gone", async () => {

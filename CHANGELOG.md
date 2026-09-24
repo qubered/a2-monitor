@@ -10,8 +10,11 @@ externally tested release.
 
 ### Changed
 
-- Live: the room and filter chips share one unlabelled band, and the A2 grid
-  drops its title and instruction line (the A1 view keeps its heading).
+- Live: the room chips move into a room switch in the header. It opens a room
+  sheet that shows each room's channel count, run of show and alert state, and
+  a dot on the switch says when another room needs someone.
+- Live: the A2 grid drops its title and instruction line, and the filter chips
+  lose their label (the A1 view keeps its heading).
 
 ### Added
 

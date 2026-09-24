@@ -730,11 +730,16 @@ ready` in `--ok`). The bar is absent when the show has no sessions.
 
 ### 10.10 Rooms and categories
 
-A multi-room show (ADR 0030) gets **room chips** at the left of the filter
-band: `All rooms`, each room, and `No room` when some channels have none, with
-live counts, in the filter chips' language. Room and filter chips share one
-band, on one row where they fit and wrapping where they do not, with no
-labels; the band sits above the run-of-show bars. It is a per-device choice, not a
+A multi-room show (ADR 0030) gets a **room switch in the header**, beside the
+show identity: a pill with a `Room` overline and the room this device shows
+(`All rooms` by default). A dot on it says another room needs someone (amber
+for an unacknowledged alert, red for a critical one); it never shows while
+`All rooms` is chosen, because every room is already on screen. Pressing it
+opens a **room sheet** listing `All rooms`, each room, and `No room` when some
+channels have none. Each row carries its channel count, its run of show (`Now:`
+or `Next:` with the start time), and its own state — `2 critical`, `1 to
+acknowledge`, `3 seen` or `Clear` — so an operator sees where to look before
+switching. Choosing a room closes the sheet; `Esc` or Close leaves it as it was. It is a per-device choice, not a
 permission, and a remembered room the show no longer has falls back to All
 rooms rather than hiding channels.
 
@@ -759,7 +764,7 @@ audio in one press and to a diagnosis in two.
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│ HEADER  show · node · you · [no cue source]   counters         │
+│ HEADER  show · [room ▾] · node · you · [no cue source] counters │
 ├────────────────────────────────────────────────────────────────┤
 │ [All channels 64][Needs someone 4][Wireless][Wired]…           │
 ├────────────────────────────────────────────────────────────────┤

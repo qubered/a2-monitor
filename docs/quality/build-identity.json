@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.53034f097d5a6e86",
-  "sourceSha256": "53034f097d5a6e86e00a25736b22211ce959782c2e1a553b04437d302c868444",
-  "inputCount": 424,
+  "buildId": "a2-0.0.0+sha256.b64d0c4b60778b84",
+  "sourceSha256": "b64d0c4b60778b84f31fa62dc37c70a751f002099981fcb73e96058f556442be",
+  "inputCount": 425,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -41,7 +41,7 @@
     },
     {
       "path": ".gitignore",
-      "sha256": "d3df2a493287e6301f3a9dd9b9a4cf547529dcf3765f9ef639bb400a3a37a552"
+      "sha256": "d41d5071494d74cbe1394dcf3d68b6ccfa0e64056e20abd9d2fdf12c0efb65e6"
     },
     {
       "path": ".node-version",
@@ -53,7 +53,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "2448e2f4ff6eff260941922af784f9059291d4599c9f429d75e72843ae25bca8"
+      "sha256": "5031e2909d0b7e2326c24a8afccda6c85d8c31f3e181945f994c78b263677c56"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "38cf65ba7fc99461a53f9211bd4c1e0a0839126df0e94fe627ed9b9c4fca8804"
+      "sha256": "7c8371baabbccd41245afc582808cdd0b0d2b316a42e31cd985388168f2fc348"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "1172e89d5aaf921386b9b9505b8b2ae64336e602cf1b514be667c9e65eb6ac4d"
+      "sha256": "3084a57f4ec76389dc9d231e6bf7f522b24545d748b10cf1030c6ba2c89e0790"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -160,6 +160,10 @@
       "sha256": "c62254f27c7a9ef4961a3d6c743c93c96023144ff223d4fbff4f74ca602fe513"
     },
     {
+      "path": "apps/live/src/components/RoomSheet.tsx",
+      "sha256": "836532172386b13e4d46fd0909affca0613339dd98f7c336079dd4b90596f450"
+    },
+    {
       "path": "apps/live/src/components/SessionBar.tsx",
       "sha256": "43c53d30c406d41f817e5c5d6f13b3fc298777984013494901ed418d01bd1d3a"
     },
@@ -205,7 +209,7 @@
     },
     {
       "path": "apps/live/src/rooms.ts",
-      "sha256": "a9bb22e3298252eeacd24f05e5ee5ea10cdee4b81cc280c076b6fcfaefd49460"
+      "sha256": "75be44a15c0990e654b7441423aa3ddf55fa178b94caba4d434f9cf1fb8b0907"
     },
     {
       "path": "apps/live/src/sessions.test.ts",
@@ -217,7 +221,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "b12637b4be49bea61f814da5ce44806120f2765955ac2314ff6a237d6ec7861b"
+      "sha256": "271ccad297bddef5482adcf1ff4a38f997993fd287db8aad3c60c72dd674ea83"
     },
     {
       "path": "apps/live/src/trim.ts",
@@ -733,7 +737,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "4e77cfd5a8e0aab7af065ef8231ec8fb9bbc8e34d0566d7e29ccbf4379bd3dd6"
+      "sha256": "6eb902262f5df30bc6657982d2d4f9ed5e4ee8229ca0b150f9ebd8b92b4f44a7"
     },
     {
       "path": "docs/design/README.md",

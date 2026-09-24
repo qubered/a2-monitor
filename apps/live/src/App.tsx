@@ -42,6 +42,7 @@ import { ExceptionsSheet } from "./components/ExceptionsSheet";
 import { MicCheck } from "./components/MicCheck";
 import { OperatorSheet } from "./components/OperatorSheet";
 import { OutputSheet } from "./components/OutputSheet";
+import { RoomSheet } from "./components/RoomSheet";
 import { Player } from "./components/Player";
 import { A1Bar, ReportBanner } from "./components/Reports";
 import { ReportSheet } from "./components/ReportSheet";
@@ -74,11 +75,20 @@ import {
   type OutputDestination,
 } from "./host-output";
 import { MeterStore } from "./meters";
-import { effectiveRoom, groupChannels, inRoom, type RoomChoice } from "./rooms";
+import {
+  effectiveRoom,
+  groupChannels,
+  inRoom,
+  roomTone,
+  type RoomChoice,
+  type RoomOption,
+} from "./rooms";
 import {
   NO_ROOM,
+  formatStartMinute,
   nextSessionMinutes,
   roomKeyOf,
+  sessionById,
   startSession,
   turnoverItems,
   type SessionState,
@@ -735,6 +745,66 @@ export function App({
       ? "No room"
       : (rooms.find(({ id }) => id === roomId)?.name ?? "Room");
 
+  const [roomSheetOpen, setRoomSheetOpen] = useState(false);
+  const roomOptions = useMemo<RoomOption[]>(() => {
+    if (!rooms.length) return [];
+    const roomKeyByChannel = new Map(
+      channels.map(({ id, roomId }) => [id, roomKeyOf(roomId)]),
+    );
+    const entries = [
+      { key: "all", label: "All rooms" },
+      ...rooms.map(({ id, name }) => ({ key: id, label: name })),
+      ...(channels.some(({ roomId }) => !roomId)
+        ? [{ key: NO_ROOM, label: "No room" }]
+        : []),
+    ];
+    return entries.map(({ key, label }) => {
+      const scoped = activeAlerts.filter(
+        ({ channelId }) =>
+          key === "all" ||
+          (channelId !== null && roomKeyByChannel.get(channelId) === key),
+      );
+      const unseen = scoped.filter(
+        ({ acknowledgedAtUtc }) => acknowledgedAtUtc === null,
+      );
+      const run =
+        key === "all"
+          ? undefined
+          : runs.find(({ roomId }) => roomKeyOf(roomId) === key);
+      const now = sessionById(run, run?.activeId ?? null);
+      const next = sessionById(run, run?.nextId ?? null);
+      const start = formatStartMinute(next?.startMinute ?? null);
+      return {
+        key,
+        label,
+        channelCount: channels.filter((channel) => inRoom(channel, key)).length,
+        outstanding: unseen.length,
+        critical: unseen.filter(({ severity }) => severity === "critical")
+          .length,
+        seen: scoped.length - unseen.length,
+        session: now
+          ? `Now: ${now.name}`
+          : next
+            ? `Next: ${next.name}${start ? ` ${start}` : ""}`
+            : null,
+      };
+    });
+  }, [activeAlerts, channels, rooms, runs]);
+  // A room other than the one shown may still need someone: the header hints at it.
+  const otherRoomTone = roomOptions
+    .filter(({ key }) => room !== "all" && key !== "all" && key !== room)
+    .map(roomTone)
+    .reduce<"critical" | "caution" | "clear">(
+      (worst, tone) =>
+        worst === "critical" || tone === "critical"
+          ? "critical"
+          : worst === "caution" || tone === "caution"
+            ? "caution"
+            : "clear",
+      "clear",
+    );
+  const shownRoom = roomOptions.find(({ key }) => key === room);
+
   function chooseRoom(next: RoomChoice) {
     setRoomChoice(next);
     try {
@@ -1030,6 +1100,7 @@ export function App({
         turnoverRoom !== null ||
         micCheckId !== null ||
         outputSheetOpen ||
+        roomSheetOpen ||
         outputPrompt;
       setDetailId(null);
       setExceptionsOpen(false);
@@ -1091,6 +1162,39 @@ export function App({
                 : "Waiting for validated data"}
           </span>
         </div>
+        {rooms.length && shownRoom ? (
+          <button
+            className="room-switch"
+            type="button"
+            aria-haspopup="dialog"
+            aria-label={`Room: ${shownRoom.label}. Change room${otherRoomTone === "clear" ? "" : ". Another room needs attention"}`}
+            onClick={() => setRoomSheetOpen(true)}
+          >
+            <span className="room-switch-text">
+              <span>Room</span>
+              <strong>{shownRoom.label}</strong>
+            </span>
+            {otherRoomTone !== "clear" ? (
+              <i
+                className={`room-dot tone-${otherRoomTone}`}
+                aria-hidden="true"
+              />
+            ) : null}
+            <svg
+              viewBox="0 0 12 12"
+              width="12"
+              height="12"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M2.5 4.5 6 8l3.5-3.5" />
+            </svg>
+          </button>
+        ) : null}
         <div
           className={`node-state node-${
             offline || !liveState
@@ -1197,39 +1301,8 @@ export function App({
         </section>
       ) : null}
 
-      {rooms.length || roomChannels.length ? (
+      {roomChannels.length ? (
         <div className="chip-bands">
-          {rooms.length ? (
-            <nav className="room-bar" aria-label="Rooms">
-              {[
-                { key: "all", label: "All rooms", count: channels.length },
-                ...rooms.map(({ id, name }) => ({
-                  key: id,
-                  label: name,
-                  count: channels.filter(({ roomId }) => roomId === id).length,
-                })),
-                ...(channels.some(({ roomId }) => !roomId)
-                  ? [
-                      {
-                        key: NO_ROOM,
-                        label: "No room",
-                        count: channels.filter(({ roomId }) => !roomId).length,
-                      },
-                    ]
-                  : []),
-              ].map(({ key, label, count }) => (
-                <button
-                  type="button"
-                  className="filter-button"
-                  aria-pressed={room === key}
-                  onClick={() => chooseRoom(key)}
-                  key={key}
-                >
-                  {label} <span>{count}</span>
-                </button>
-              ))}
-            </nav>
-          ) : null}
           {roomChannels.length ? (
             <nav className="filters" aria-label="Channel filters">
               {(Object.keys(filterLabels) as Filter[])
@@ -1469,6 +1542,18 @@ export function App({
             setMicCheckId(detailChannel.id);
             setDetailId(null);
           }}
+        />
+      ) : null}
+
+      {roomSheetOpen && roomOptions.length ? (
+        <RoomSheet
+          options={roomOptions}
+          current={room}
+          onChoose={(next) => {
+            chooseRoom(next);
+            setRoomSheetOpen(false);
+          }}
+          onClose={() => setRoomSheetOpen(false)}
         />
       ) : null}
 
