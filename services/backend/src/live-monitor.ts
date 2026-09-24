@@ -37,7 +37,7 @@ import {
 } from "./reports.js";
 import {
   evaluate,
-  standDownChannel,
+  resetChannelTracker,
   type ChannelTracker,
 } from "./live-model.js";
 import { NodeObserver, type NodeSource } from "./node-observer.js";
@@ -373,7 +373,7 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
       ({ id }, position) => (id ?? `position-${position + 1}`) === channelId,
     );
     if (!known) return null;
-    standDownChannel(this.trackers, channelId);
+    resetChannelTracker(this.trackers, channelId);
     this.book.clearChannel(channelId, this.now());
     this.schedulePersist();
     await this.tick();

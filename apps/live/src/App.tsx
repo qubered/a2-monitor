@@ -1002,11 +1002,11 @@ export function App({
               : hostMonitor.input === null
                 ? {
                     status: "idle",
-                    detail: `Nothing selected in ${hostFeed.name}. Press a card to play it on ${describeOutputChannels(hostFeed.outputChannels)} of ${hostOutputInfo.deviceName}.`,
+                    detail: "",
                   }
                 : {
                     status: "listening",
-                    detail: `${hostFeed.name}: input ${hostMonitor.input + 1} on ${describeOutputChannels(hostFeed.outputChannels)} of ${hostOutputInfo.deviceName}.`,
+                    detail: `Input ${hostMonitor.input + 1} · ${describeOutputChannels(hostFeed.outputChannels)}`,
                   };
   const shownPlayback = hostMode ? hostPlayback : playback;
   const listening =

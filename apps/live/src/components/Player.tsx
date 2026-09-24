@@ -295,20 +295,16 @@ export function Player({
                     ? "Listening"
                     : "Listening error"}
           </strong>
-          <span>{playback.detail}</span>
-          <span>
-            {muted
-              ? `${outputName} is muted`
-              : dimmed
-                ? `${outputName} is dimmed`
-                : `${outputName} is unmuted`}
-          </span>
-          {hostOutput ? (
+          {playback.detail ? <span>{playback.detail}</span> : null}
+          {muted || dimmed ? (
             <span>
-              Shared with everyone in {hostOutput.feedName}.
-              {hostOutput.changedBy && hostOutput.changedAtUtc
-                ? ` Last change: ${hostOutput.changedBy}, ${formatClock(hostOutput.changedAtUtc)}.`
-                : ""}
+              {outputName} is {muted ? "muted" : "dimmed"}
+            </span>
+          ) : null}
+          {hostOutput?.changedBy && hostOutput.changedAtUtc ? (
+            <span>
+              Last change: {hostOutput.changedBy},{" "}
+              {formatClock(hostOutput.changedAtUtc)}
             </span>
           ) : null}
         </p>

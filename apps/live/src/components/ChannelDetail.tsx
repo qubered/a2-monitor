@@ -190,7 +190,7 @@ export function ChannelDetail({
         {onResetChannel &&
         (alerts.length > 0 ||
           Object.values(channel.statuses).some(
-            (status) => status === "fault" || status === "caution",
+            (status) => status === "fault",
           )) ? (
           <section
             className="detail-alerts detail-reset"
@@ -204,10 +204,6 @@ export function ChannelDetail({
             >
               Clear alerts and reset
             </button>
-            <p>
-              For a channel you have switched off. Alerts move to history and
-              the channel re-arms when a transmitter or signal is seen again.
-            </p>
           </section>
         ) : null}
 

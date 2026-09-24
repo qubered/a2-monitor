@@ -369,7 +369,10 @@ describe("Live channel grid", () => {
     const user = userEvent.setup();
     renderApp(stateWith());
 
-    expect(await screen.findByText("Monitor output is unmuted")).toBeTruthy();
+    expect(
+      await screen.findByRole("button", { name: "Mute", pressed: false }),
+    ).toBeTruthy();
+    expect(screen.queryByText(/is muted|is dimmed/)).toBeNull();
     await user.click(
       screen.getByRole("button", { name: "Select Talkback, channel 2" }),
     );
@@ -906,7 +909,7 @@ describe("Live channel grid", () => {
       ),
     );
     expect(setMuted).toHaveBeenCalledWith(false);
-    expect(screen.getByText("Monitor output is unmuted")).toBeTruthy();
+    expect(screen.queryByText(/is muted|is dimmed/)).toBeNull();
     const card = screen
       .getByRole("button", { name: "Select Talkback, channel 2" })
       .closest("article")!;
@@ -925,7 +928,7 @@ describe("Live channel grid", () => {
     expect(setChannel).toHaveBeenLastCalledWith(0);
     expect(playbackFactory).toHaveBeenCalledOnce();
     expect(close).not.toHaveBeenCalled();
-    expect(screen.getByText("Monitor output is unmuted")).toBeTruthy();
+    expect(screen.queryByText(/is muted|is dimmed/)).toBeNull();
   });
 
   it("refuses to listen to a channel that is not patched to an input", async () => {
@@ -1096,6 +1099,8 @@ describe("Live channel grid", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("button", { name: "Audio: Comms A" })).toBeTruthy();
     expect(screen.getByText("Comms A idle")).toBeTruthy();
+    // Nothing else is spelled out when nothing is selected.
+    expect(screen.queryByText(/Nothing selected in/)).toBeNull();
     // Comms B's selection is not shown in Comms A.
     const talkback = screen
       .getByRole("button", { name: "Select Talkback, channel 2" })
@@ -1115,11 +1120,7 @@ describe("Live channel grid", () => {
       expect(talkback.classList.contains("is-listening")).toBe(true),
     );
     expect(screen.getByText("Playing on Comms A")).toBeTruthy();
-    expect(
-      screen.getByText(
-        "Comms A: input 2 on output 1 of Dante Virtual Soundcard.",
-      ),
-    ).toBeTruthy();
+    expect(screen.getByText("Input 2 · output 1")).toBeTruthy();
     // The iPad itself never opens a listen feed in host mode.
     expect(playbackFactory).not.toHaveBeenCalled();
 
@@ -1144,9 +1145,7 @@ describe("Live channel grid", () => {
     expect(marguerite.classList.contains("is-selected")).toBe(true);
     expect(talkback.classList.contains("is-selected")).toBe(false);
     expect(screen.getByText("Comms A is muted")).toBeTruthy();
-    expect(
-      screen.getByText("Shared with everyone in Comms A.", { exact: false }),
-    ).toBeTruthy();
+    expect(screen.queryByText(/Shared with everyone in Comms A/)).toBeNull();
     expect(screen.getByText(/Last change: Alex \(A2\)/)).toBeTruthy();
 
     await user.click(screen.getByRole("button", { name: "Mute" }));

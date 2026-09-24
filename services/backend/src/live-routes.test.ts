@@ -284,7 +284,8 @@ describe("channel reset route", () => {
     expect(reset.statusCode).toBe(200);
     const cleared = parseLiveState(reset.json());
     expect(cleared.alerts).toEqual([]);
-    expect(cleared.channels[0]!.statuses.audio).not.toBe("fault");
+    // Back to the not-yet-used look, not "not applicable".
+    expect(cleared.channels[0]!.statuses.audio).toBe("unknown");
     expect(liveMonitor.alertLog().history[0]).toMatchObject({
       kind: "no-audio",
       clearedAtUtc: expect.any(String),

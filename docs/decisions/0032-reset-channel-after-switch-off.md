@@ -27,15 +27,16 @@ For the local MVP only:
    `404 channel-not-found`. No new contract is needed.
 2. **The channel returns to its unarmed default.** The backend clears what it
    has learned about the channel (audio heard, transmitter seen, silence
-   timing) and marks it stood down. A stood-down channel is judged like one the
-   running session does not use: no RF-lost, no-audio or transmitter-mute
-   findings, and its verdicts read not applicable rather than fault.
-3. **It re-arms by itself.** A stood-down channel is armed again the moment a
-   transmitter is detected or signal above the silence floor is observed. From
-   then on every finding applies as before. Stand-down is in memory and does
-   not survive a backend restart, which also starts channels unarmed.
+   timing), exactly as at backend start. RF-lost and No audio only arm after a
+   transmitter or signal has been seen, so they stay quiet, and the card reads
+   as a channel not yet used: RF caution while no transmitter is detected,
+   Audio and Battery unknown. It is not marked not applicable.
+3. **It re-arms by itself.** The channel arms again the moment a transmitter is
+   detected or signal above the silence floor is observed, and every finding
+   applies as before. Nothing is stored: a backend restart also starts channels
+   unarmed.
 4. **Live offers it in the channel detail.** "Clear alerts and reset" appears
-   in the expanded channel view while the channel has an alert or a caution or
+   in the expanded channel view while the channel has an active alert or a
    fault verdict, and only while the backend is reachable. It is one press with
    no confirmation because the alerts remain in history and the channel
    re-arms on its own.
@@ -47,8 +48,8 @@ For the local MVP only:
 - Risk: resetting a channel that has actually failed hides it until a
   transmitter or signal is seen. If the fault leaves both absent the channel
   stays quiet, exactly as an unused channel does. Alerts remain in history.
-- The reset is not attributed to an operator and stand-down is not shown in
-  the state document. Both are candidates if operators need them.
+- The reset is not attributed to an operator and is not shown in the state
+  document. Both are candidates if operators need them.
 
 ## Validation
 
