@@ -194,6 +194,29 @@ export class AlertBook {
     return changed;
   }
 
+  /**
+   * Clears every active alert on one channel into history, and forgets findings
+   * still counting toward a raise or clear. Returns how many alerts cleared.
+   */
+  clearChannel(channelId: string, nowMs: number): number {
+    let cleared = 0;
+    for (const [key, entry] of [...this.active]) {
+      if (entry.alert.channelId !== channelId) continue;
+      this.active.delete(key);
+      this.history.unshift({ ...entry.alert, clearedAtUtc: iso(nowMs) });
+      cleared += 1;
+    }
+    if (this.history.length > MAX_ALERT_HISTORY) {
+      this.history.length = MAX_ALERT_HISTORY;
+    }
+    for (const map of [this.pending, this.clearing]) {
+      for (const key of [...map.keys()]) {
+        if (key.startsWith(`${channelId}:`)) map.delete(key);
+      }
+    }
+    return cleared;
+  }
+
   acknowledge(id: string, operator: string, nowMs: number): LiveAlert | null {
     for (const entry of this.active.values()) {
       if (entry.alert.id !== id) continue;

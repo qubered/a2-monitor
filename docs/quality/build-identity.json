@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.1add2eb41b9940ce",
-  "sourceSha256": "1add2eb41b9940ced49b6258dc993b0e5b2cd7784572e7c076be3802c99f3ab1",
-  "inputCount": 423,
+  "buildId": "a2-0.0.0+sha256.91acc1e61eb46c91",
+  "sourceSha256": "91acc1e61eb46c9176d0c4cdcef337688494b8a410c70936db778cc3c09f0df2",
+  "inputCount": 424,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -53,7 +53,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "1d060dd974455b62a8403a69f5694f040a5621bf2ddb70b7e66dc78c859debb2"
+      "sha256": "16d32731de149174b2651e562f2443b518701d2519087aa22b9ee34cc6f1c67d"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "a0abe00b6c600895831f75ce5ad094baf9217822777bd5ea5e0d9fc7be776fd6"
+      "sha256": "c3649e7a182652f4087efec9cf52b8de3935396406575af5077058ecbdca85ca"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "8c0bce80e1cbcd3bdd4dfb8d8514771e8ff246f803c35292c7644d41fadf07ad"
+      "sha256": "4b38d3fe0eb0fadc116e5fb5205e92f725bc6e44db8399746246184d377d9ffb"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -125,7 +125,7 @@
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
-      "sha256": "2e118a42ae2dd737aa4b798067975e212c49f5aa389766661488a963d94d4496"
+      "sha256": "3b1a2704bb678ecf77b5f6acb9c9695eb86d0ae82dc718f254c721f2945f9d76"
     },
     {
       "path": "apps/live/src/components/ExceptionsSheet.tsx",
@@ -177,7 +177,7 @@
     },
     {
       "path": "apps/live/src/live-state.ts",
-      "sha256": "c6eb81594e28804dc76978b0ceecee430935f2f9a450dd259bedd3b3b55e5f18"
+      "sha256": "52f7d8a1195dcbd43cf129440dbd4a733530f443b9afc80b5b965501d9edada6"
     },
     {
       "path": "apps/live/src/main.tsx",
@@ -217,7 +217,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "9ad5614facee8ae0371cb764420644a5144a5f303162ac07ff7e0b9f6a7d04de"
+      "sha256": "96cf8a9ed5838340290a7b4d53b0b1698cce02455311a998e09eaf92c954e436"
     },
     {
       "path": "apps/live/src/trim.ts",
@@ -525,7 +525,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256": "64ee2a28d235cdb94844de1d259ab9e39cc87c5bfa3f1f31e2962a10832f5919"
+      "sha256": "877574df2cbcbcad326fa26db8ec68e76a23216a6e4710c798d6bfa23f4a9efd"
     },
     {
       "path": "docs/api/show-management-and-control.md",
@@ -722,6 +722,10 @@
     {
       "path": "docs/decisions/0031-shared-host-monitor-output.md",
       "sha256": "55c788253271b3a5f4eb8ffb27102a81fd69a02a3b29a77b5fc639fe8c6bb1be"
+    },
+    {
+      "path": "docs/decisions/0032-reset-channel-after-switch-off.md",
+      "sha256": "68ec0b8fec21338735fc0d038ade93866df80e0982e7dc5eb65a7c5a58da9585"
     },
     {
       "path": "docs/decisions/0033-channel-monitor-trim.md",
@@ -1465,7 +1469,7 @@
     },
     {
       "path": "services/backend/README.md",
-      "sha256": "5c8fa9e176bb7bfea2facf9f0c698edcaadd26104e0f23c6622b2a585fd8b0a1"
+      "sha256": "b129ee895cf8ab1e7f786d468fb594317df4729abc16009163e3500537bbf0b7"
     },
     {
       "path": "services/backend/package.json",
@@ -1477,11 +1481,11 @@
     },
     {
       "path": "services/backend/src/alerts.test.ts",
-      "sha256": "83b30e98a3f8185396a97c6dd5a385d811bbb18b32a938ae9d46fdeb0fb3007c"
+      "sha256": "0a934c72fe9e2d46b9e921c2d387332ba1e12e4dd85bbfee3f57391a1fb697a7"
     },
     {
       "path": "services/backend/src/alerts.ts",
-      "sha256": "394b974ed38259f99af39f95ce30cf54b20fa97ef272d2dd53991b967caf6ae5"
+      "sha256": "967ab92d12e5547248900fe2952fca3f0cb418b132b499e1c28e31f4909edd3f"
     },
     {
       "path": "services/backend/src/checks.test.ts",
@@ -1509,15 +1513,15 @@
     },
     {
       "path": "services/backend/src/live-model.ts",
-      "sha256": "7d388e9c07d552c8d22ff114b090ef4199ed38050e5ac154453179b2e4c8887e"
+      "sha256": "50394b642ac49b450d7edabfa483b4b9a1de91dda596986024cc0e5e5ef92a4d"
     },
     {
       "path": "services/backend/src/live-monitor.ts",
-      "sha256": "79914ba8cce6d6775e21f7a1c1154deb9c8b21afa9c79341fd8b90d02bc580ea"
+      "sha256": "9218f848733bb2698bb70a0aa5123000d98ca7a27d654e4acd4bb780f28ac04e"
     },
     {
       "path": "services/backend/src/live-routes.test.ts",
-      "sha256": "194cea9988c53a6c4e723db159ac966ff9ffa97d0c856fe569e1d5dd90ea8879"
+      "sha256": "9ef47ab373f7d547e68aa27fb16a28cd977dd767fa4edbe4de97bdd18f4002dd"
     },
     {
       "path": "services/backend/src/monitoring.test-support.ts",
@@ -1557,7 +1561,7 @@
     },
     {
       "path": "services/backend/src/server.ts",
-      "sha256": "93a5d2a6a89cf70b6e766338f7001c8eb084c130e1497ea61091143653a873ec"
+      "sha256": "824246539ad394d292e4ac6bb7b5a9d79432827b84a3cb52902f344a4e62cbd5"
     },
     {
       "path": "services/backend/src/sessions.test.ts",

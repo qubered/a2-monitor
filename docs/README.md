@@ -84,6 +84,7 @@ boundary; production evidence promotion remains deferred.
 - [MVP rooms and categories](decisions/0030-mvp-rooms-and-categories.md)
 - [Shared host monitor output](decisions/0031-shared-host-monitor-output.md)
 - [Per-channel monitor trim](decisions/0033-channel-monitor-trim.md)
+- [Reset a switched-off channel](decisions/0032-reset-channel-after-switch-off.md)
 
 ## Reference
 

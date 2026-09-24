@@ -82,6 +82,9 @@ The running local MVP exposes:
   and 0030);
 - `GET /api/v1/alerts` returns active alerts and bounded cleared history, and
   `POST /api/v1/alerts/:id/acknowledge` records who saw an alert;
+- `POST /api/v1/channels/:channelId/reset` clears one channel's alerts and
+  returns it to its default, unarmed state until a transmitter or signal is
+  seen again (ADR 0032);
 - `GET /api/v1/live/history` returns per-second observed audio, RF, link
   quality and battery samples for one channel;
 - `GET /api/v1/channels/:id/image` serves a channel's showfile photo;

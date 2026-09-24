@@ -91,6 +91,59 @@ describe("AlertBook", () => {
     });
   });
 
+  it("clears one channel's alerts into history and forgets its pending findings", () => {
+    const book = new AlertBook(FIVE_MINUTES);
+    const other = condition({
+      key: "ch-2:battery-low",
+      channelId: "ch-2",
+      channelNumber: 2,
+      raiseAfterMs: 0,
+    });
+    book.apply(
+      [
+        condition({ raiseAfterMs: 0 }),
+        condition({ key: "ch-1:no-audio", kind: "no-audio", raiseAfterMs: 0 }),
+        condition({
+          key: "ch-1:rf-lost",
+          kind: "rf-lost",
+          raiseAfterMs: 60_000,
+        }),
+        other,
+      ],
+      T0,
+    );
+    expect(book.activeAlerts()).toHaveLength(3);
+
+    expect(book.clearChannel("ch-1", T0 + 1_000)).toBe(2);
+    expect(book.activeAlerts().map(({ channelId }) => channelId)).toEqual([
+      "ch-2",
+    ]);
+    const history = book.log(T0 + 1_000).history;
+    expect(history.map(({ kind }) => kind).sort()).toEqual([
+      "battery-low",
+      "no-audio",
+    ]);
+    expect(history.every(({ clearedAtUtc }) => clearedAtUtc !== null)).toBe(
+      true,
+    );
+
+    // The pending rf-lost was forgotten, so it must hold its full delay again.
+    book.apply(
+      [
+        condition({
+          key: "ch-1:rf-lost",
+          kind: "rf-lost",
+          raiseAfterMs: 60_000,
+        }),
+      ],
+      T0 + 61_000,
+    );
+    expect(book.activeAlerts().map(({ kind }) => kind)).not.toContain(
+      "rf-lost",
+    );
+    expect(book.clearChannel("ch-none", T0 + 62_000)).toBe(0);
+  });
+
   it("acknowledges without clearing and records who saw it", () => {
     const book = new AlertBook(FIVE_MINUTES);
     book.apply([condition({ raiseAfterMs: 0 })], T0);

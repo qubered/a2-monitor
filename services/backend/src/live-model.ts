@@ -44,6 +44,11 @@ export type ChannelTracker = {
   heard: boolean;
   receiverKey: string | null;
   transmitterSeen: boolean;
+  /**
+   * An operator reset the channel after switching it off: it is treated as idle
+   * (no RF, mute or silence findings) until a transmitter or signal is seen again.
+   */
+  standDown: boolean;
 };
 
 /** A gap in observation longer than this restarts silence timing instead of counting through it. */
@@ -240,10 +245,28 @@ function trackerFor(
       heard: false,
       receiverKey: null,
       transmitterSeen: false,
+      standDown: false,
     };
     trackers.set(channelId, tracker);
   }
   return tracker;
+}
+
+/**
+ * Returns a channel to its default, unarmed state: nothing heard and no
+ * transmitter seen, and idle until either is observed again.
+ */
+export function standDownChannel(
+  trackers: Map<string, ChannelTracker>,
+  channelId: string,
+): void {
+  const tracker = trackerFor(trackers, channelId);
+  tracker.observingSinceMs = null;
+  tracker.lastObservedAtMs = null;
+  tracker.lastSignalAtMs = null;
+  tracker.heard = false;
+  tracker.transmitterSeen = false;
+  tracker.standDown = true;
 }
 
 type Built = { channel: LiveStateChannel; conditions: AlertCondition[] };
@@ -273,7 +296,7 @@ function buildChannel(
   const nextInUse = inSession(nextSession);
   // A channel the running session does not use is expected to be switched off,
   // muted and silent: none of those is a fault until a session needs it.
-  const idle = inUse === false;
+  const idle = inUse === false || tracker.standDown;
   const performer = sessionPerformer(showChannel, activeSession);
   const condition = (
     kind: AlertKind,
@@ -348,6 +371,7 @@ function buildChannel(
     if (peakDbfs > policy.silenceFloorDbfs) {
       tracker.lastSignalAtMs = nowMs;
       tracker.heard = true;
+      tracker.standDown = false;
     }
     silentForMs = nowMs - (tracker.lastSignalAtMs ?? tracker.observingSinceMs);
   }
@@ -402,7 +426,10 @@ function buildChannel(
         : telemetryChannel.linkStatus === "no-transmitter"
           ? false
           : null;
-  if (transmitterPresent === true) tracker.transmitterSeen = true;
+  if (transmitterPresent === true) {
+    tracker.transmitterSeen = true;
+    tracker.standDown = false;
+  }
 
   const capabilities = telemetryReceiver?.capabilities;
   const linkQualityPercent =
