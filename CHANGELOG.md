@@ -10,6 +10,17 @@ externally tested release.
 
 ### Added
 
+- Sessions and a shared run of show for corporate events (ADR 0029). Manager
+  gains a Sessions section: an ordered agenda with start times, the channels
+  each session uses and a per-session presenter. Live gains a now/next bar and
+  a turnover sheet that lists what each channel in the next session needs —
+  transmitter off, a battery to change (including one whose reported runtime
+  will not last the scheduled session), a presenter change — then starts the
+  session for every client through `PUT /api/v1/live/session`. Channels the
+  running session does not use stop raising RF lost, TX muted and No audio,
+  and a This session filter hides them. A presenter change makes an earlier
+  mic check stale.
+
 - Manager: a Productions section for listing, creating, activating and
   removing named local productions, backed by a new
   `GET/POST /api/v1/productions`, `POST /api/v1/productions/:id/activate`

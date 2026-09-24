@@ -1,6 +1,6 @@
 # Pulse — design language
 
-- **Version:** 2.3.0
+- **Version:** 2.4.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
 - **Last updated:** 2026-09-24
@@ -675,7 +675,8 @@ removes the motion; the amber outline stays.
   editing a personal group is not.
 - **Filter band** — one horizontal row under the header, 42px pill chips with
   live counts, pressed state `--ink` filled. **Default is All channels.**
-  Cue-derived filters appear only when a cue source is connected.
+  Cue-derived filters appear only when a cue source is connected; **This
+  session** appears only while a session runs ([§10.9](#109-run-of-show)).
 - **Exceptions sheet** — a sheet, not a standing rail, opened from the header
   counters. Lists critical exceptions across the whole show including sources not
   in the current filter.
@@ -686,6 +687,28 @@ removes the motion; the amber outline stays.
 There is **no sidebar** in this product. A standing left rail spends permanent
 width on navigation used in bursts; a standing right rail spends it on a list
 that is empty most of the night. The width goes to faces.
+
+### 10.9 Run of show
+
+For shows run by session rather than by cue (ADR 0029), one bar under the
+header says **Now** and **Next**: the running session with who started it and
+when, the next session with its scheduled time and how many of its channels
+still need something (`2 of 5 channels to prepare` in `--warn`, `5 channels
+ready` in `--ok`). The bar is absent when the show has no sessions.
+
+- **Starting is never one press from the bar.** The bar's one button opens the
+  **turnover sheet**: every channel the next session uses, with its presenter
+  change (`Dana Lee → Priya Shah`) and what it is waiting on — _Transmitter off_,
+  _Change battery_ with the reading, or _Battery unknown_ — then the one
+  `Start <session>` action. A pack is _Ready_ only on a current, healthy
+  measurement that also outlasts the next session's scheduled length. Unknown
+  is never ready.
+- **Idle is not failing.** A card the running session does not use keeps its
+  place, says `Not in this session` (with who is on it next), and steps its
+  photo and name back; its status strip and any alert band stay at full
+  strength. A **This session** filter chip appears while a session runs.
+- Nothing starts a session from the clock. Agendas run late; the operator
+  decides when the turnover is done.
 
 ---
 
@@ -914,6 +937,11 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.4.0 — 2026-09-24.** Adds the run of show ([§10.9](#109-run-of-show)):
+a now/next bar, a turnover sheet that starts the next session, idle cards for
+channels the running session does not use, and a This session filter.
+Implemented in Live, Manager and the backend alongside this entry (ADR 0029).
 
 **2.3.0 — 2026-09-24.** The alert overlay's translucent veil is gone
 ([§10.3](#103-alert-overlay)). It darkened the whole card so an alerting card

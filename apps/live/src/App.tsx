@@ -43,6 +43,8 @@ import { OperatorSheet } from "./components/OperatorSheet";
 import { Player } from "./components/Player";
 import { A1Bar, ReportBanner } from "./components/Reports";
 import { ReportSheet } from "./components/ReportSheet";
+import { SessionBar } from "./components/SessionBar";
+import { SessionSheet } from "./components/SessionSheet";
 import type { CardReportState } from "./components/ChannelCard";
 import { recordCheck } from "./mic-check";
 import {
@@ -59,6 +61,12 @@ import {
 } from "./live-state";
 import { MeterStore } from "./meters";
 import {
+  nextSessionMinutes,
+  sessionById,
+  startSession,
+  turnoverItems,
+} from "./sessions";
+import {
   loadOperator,
   operatorLabel,
   saveOperator,
@@ -68,10 +76,11 @@ import { useAudioDevice } from "./useAudioDevice";
 import { useLiveState } from "./useLiveState";
 import { useNow } from "./useNow";
 
-type Filter = "all" | "needs-someone" | "wireless" | "wired";
+type Filter = "all" | "session" | "needs-someone" | "wireless" | "wired";
 
 const filterLabels: Record<Filter, string> = {
   all: "All channels",
+  session: "This session",
   "needs-someone": "Needs someone",
   wireless: "Wireless",
   wired: "Wired",
@@ -354,7 +363,7 @@ export function App({
   const audioDeviceState = useAudioDevice(audioDeviceSource);
   const nowMs = useNow(1000);
   const [operator, setOperator] = useState<Operator>(loadOperator);
-  const [filter, setFilter] = useState<Filter>("all");
+  const [chosenFilter, setFilter] = useState<Filter>("all");
   const [selectedId, setSelectedId] = useState<string | null>(() => {
     try {
       return window.localStorage.getItem("pulse-selected-channel");
@@ -365,6 +374,9 @@ export function App({
   const [detailId, setDetailId] = useState<string | null>(null);
   const [micCheckId, setMicCheckId] = useState<string | null>(null);
   const [exceptionsOpen, setExceptionsOpen] = useState(false);
+  const [sessionOpen, setSessionOpen] = useState(false);
+  const [sessionBusy, setSessionBusy] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const [operatorOpen, setOperatorOpen] = useState(false);
   const [alertHistory, setAlertHistory] = useState<LiveAlert[] | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
@@ -492,6 +504,7 @@ export function App({
       if (event.key === "Escape") {
         setDetailId(null);
         setExceptionsOpen(false);
+        setSessionOpen(false);
       }
     }
     window.addEventListener("keydown", handleKeyboard);
@@ -565,6 +578,41 @@ export function App({
   const reports = useMemo(
     () => (liveState && !offline ? liveState.reports : []),
     [liveState, offline],
+  );
+
+  const session = liveState?.session;
+  const activeSession = offline
+    ? null
+    : sessionById(session, session?.activeId ?? null);
+  const turnover = useMemo(
+    () =>
+      liveState && !offline
+        ? turnoverItems(
+            liveState.channels,
+            nextSessionMinutes(liveState.session),
+          )
+        : [],
+    [liveState, offline],
+  );
+
+  const changeSession = useCallback(
+    async (sessionId: string | null) => {
+      setSessionBusy(true);
+      setSessionError(null);
+      try {
+        apply(await startSession(sessionId, operatorLabel(operator)));
+        setSessionOpen(false);
+      } catch (error) {
+        setSessionError(
+          error instanceof Error
+            ? error.message
+            : "The session did not change.",
+        );
+      } finally {
+        setSessionBusy(false);
+      }
+    },
+    [apply, operator],
   );
   const isA1 = operator.role === "A1";
 
@@ -657,8 +705,13 @@ export function App({
     });
   }
 
+  // "This session" means nothing once the run of show ends; fall back to all.
+  const filter: Filter =
+    chosenFilter === "session" && activeSession === null ? "all" : chosenFilter;
+
   const visibleChannels = useMemo(() => {
     const matches = (channel: LiveStateChannel) => {
+      if (filter === "session") return channel.session?.inUse !== false;
       if (filter === "needs-someone")
         return needsSomeone(channel, activeAlerts);
       if (filter === "wireless" || filter === "wired")
@@ -674,6 +727,7 @@ export function App({
 
   const counts: Record<Filter, number> = {
     all: channels.length,
+    session: channels.filter(({ session }) => session?.inUse !== false).length,
     "needs-someone": channels.filter((channel) =>
       needsSomeone(channel, activeAlerts),
     ).length,
@@ -836,6 +890,18 @@ export function App({
         </section>
       ) : null}
 
+      {session?.sessions.length ? (
+        <SessionBar
+          session={session}
+          turnover={turnover}
+          offline={offline}
+          onOpen={() => {
+            setSessionError(null);
+            setSessionOpen(true);
+          }}
+        />
+      ) : null}
+
       {!isA1 ? (
         <ReportBanner
           reports={reports.filter(
@@ -852,17 +918,22 @@ export function App({
       {channels.length ? (
         <nav className="filters" aria-label="Channel filters">
           <span className="filter-label">Showing</span>
-          {(Object.keys(filterLabels) as Filter[]).map((filterOption) => (
-            <button
-              type="button"
-              className="filter-button"
-              aria-pressed={filter === filterOption}
-              onClick={() => setFilter(filterOption)}
-              key={filterOption}
-            >
-              {filterLabels[filterOption]} <span>{counts[filterOption]}</span>
-            </button>
-          ))}
+          {(Object.keys(filterLabels) as Filter[])
+            .filter(
+              (filterOption) =>
+                filterOption !== "session" || activeSession !== null,
+            )
+            .map((filterOption) => (
+              <button
+                type="button"
+                className="filter-button"
+                aria-pressed={filter === filterOption}
+                onClick={() => setFilter(filterOption)}
+                key={filterOption}
+              >
+                {filterLabels[filterOption]} <span>{counts[filterOption]}</span>
+              </button>
+            ))}
         </nav>
       ) : null}
 
@@ -1004,6 +1075,21 @@ export function App({
           onReportAction={(report, action) => void reportAction(report, action)}
           busy={reportBusy}
           onClose={() => setExceptionsOpen(false)}
+        />
+      ) : null}
+
+      {sessionOpen && session && !offline ? (
+        <SessionSheet
+          session={session}
+          turnover={turnover}
+          busy={sessionBusy}
+          error={sessionError}
+          onStart={(sessionId) => void changeSession(sessionId)}
+          onShowChannel={(channelId) => {
+            setSessionOpen(false);
+            setDetailId(channelId);
+          }}
+          onClose={() => setSessionOpen(false)}
         />
       ) : null}
 

@@ -19,6 +19,7 @@ import { resolveAlertPolicy } from "./alert-policy.js";
 import {
   AlertBook,
   MemoryAlertPersistence,
+  normalizeOperator,
   type AlertPersistence,
 } from "./alerts.js";
 import {
@@ -38,6 +39,15 @@ import { evaluate, type ChannelTracker } from "./live-model.js";
 import { NodeObserver, type NodeSource } from "./node-observer.js";
 import type { ProductionStore } from "./productions.js";
 import { emptyShowfile } from "./showfile.js";
+import {
+  MemorySessionPersistence,
+  NO_SESSION,
+  resolveSessions,
+  sessionPerformer,
+  sessionSummary,
+  type SessionPersistence,
+  type SessionRun,
+} from "./sessions.js";
 
 const DEFAULT_TICK_MS = 1_000;
 const SHOWFILE_REFRESH_MS = 5_000;
@@ -49,6 +59,7 @@ export type LiveMonitorOptions = {
   alertPersistence?: AlertPersistence;
   checkPersistence?: CheckPersistence;
   reportPersistence?: ReportPersistence;
+  sessionPersistence?: SessionPersistence;
   history?: LevelHistoryStore;
   tickMs?: number;
   now?: () => number;
@@ -87,6 +98,8 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
   private readonly reports = new ReportBook();
   private readonly reportPersistence: ReportPersistence;
   private reportPersistTimer: NodeJS.Timeout | undefined;
+  private readonly sessionPersistence: SessionPersistence;
+  private sessionRun: SessionRun = NO_SESSION;
   private showfile: Showfile | null = null;
   private showfileLoadedAtMs = 0;
   private published: PublishedState | null = null;
@@ -106,6 +119,8 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
       options.checkPersistence ?? new MemoryCheckPersistence();
     this.reportPersistence =
       options.reportPersistence ?? new MemoryReportPersistence();
+    this.sessionPersistence =
+      options.sessionPersistence ?? new MemorySessionPersistence();
     this.history = options.history ?? new LevelHistoryStore();
     this.tickMs = options.tickMs ?? DEFAULT_TICK_MS;
     this.now = options.now ?? Date.now;
@@ -127,6 +142,11 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
       }
       try {
         this.reports.restore(await this.reportPersistence.load());
+      } catch (error) {
+        this.onError(error);
+      }
+      try {
+        this.sessionRun = (await this.sessionPersistence.load()) ?? NO_SESSION;
       } catch (error) {
         this.onError(error);
       }
@@ -209,12 +229,61 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
     return this.current();
   }
 
+  /**
+   * Starts a session of the active show, or ends the run with null. Returns
+   * null when the show has no such session. Silence and transmitter-loss
+   * alerting re-arm per session, so a mic switched off at the last turnover
+   * is not a fault until it has been heard or seen in this one.
+   */
+  async startSession(
+    sessionId: string | null,
+    by: string,
+  ): Promise<PublishedState | null> {
+    const showfile = await this.activeShowfile();
+    if (
+      sessionId !== null &&
+      !(showfile.sessions ?? []).some(({ id }) => id === sessionId)
+    ) {
+      return null;
+    }
+    this.sessionRun =
+      sessionId === null
+        ? NO_SESSION
+        : {
+            activeId: sessionId,
+            startedAtUtc: new Date(this.now()).toISOString(),
+            startedBy: normalizeOperator(by),
+          };
+    for (const tracker of this.trackers.values()) {
+      tracker.heard = false;
+      tracker.transmitterSeen = false;
+    }
+    try {
+      await this.sessionPersistence.save(this.sessionRun);
+    } catch (error) {
+      this.onError(error);
+    }
+    await this.tick();
+    return this.current();
+  }
+
   /** Current subjects for every channel in the active show, keyed by channel id. */
   private async subjects(): Promise<Map<string, MicCheckSubject>> {
     const showfile = await this.activeShowfile();
+    const { active } = resolveSessions(showfile, this.sessionRun);
     return new Map(
       showfile.channels.flatMap((channel) =>
-        channel.id ? [[channel.id, subjectOf(channel)] as const] : [],
+        channel.id
+          ? [
+              [
+                channel.id,
+                subjectOf({
+                  ...channel,
+                  performer: sessionPerformer(channel, active),
+                }),
+              ] as const,
+            ]
+          : [],
       ),
     );
   }
@@ -300,6 +369,7 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
         observation: this.nodeSource.current(),
         trackers: this.trackers,
         nowMs,
+        sessions: resolveSessions(showfile, this.sessionRun),
         checks: new Map(
           showfile.channels.flatMap((channel) => {
             const check = channel.id ? this.checks.get(channel.id) : undefined;
@@ -336,6 +406,7 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
         channels: evaluation.channels,
         alerts,
         reports: this.reports.visible(nowMs),
+        session: sessionSummary(showfile, this.sessionRun),
         summary: {
           active: alerts.length,
           outstanding: outstanding.length,

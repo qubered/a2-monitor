@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.fef61694976afcfb",
-  "sourceSha256": "fef61694976afcfb8995c483c6c4ad2c8b6194749c28b8c35d4af6b0beaa66af",
+  "buildId": "a2-0.0.0+sha256.07f30afa163d8db7",
+  "sourceSha256": "07f30afa163d8db7b9fbbdf654843a5162f32ff6bad4b3c9e15034145c4940c8",
   "inputCount": 389,
   "inputs": [
     {
@@ -49,7 +49,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "29b951f49e08bea68fdff74dbd0739d69b854e464a9a48f718ffffa9da949df5"
+      "sha256": "99be3774b588969c6eb471741f79666df481d8dfbdd0536749d2dbc7e58b8971"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -73,7 +73,7 @@
     },
     {
       "path": "apps/live/README.md",
-      "sha256": "fc12a25d9e666f02cddc38eae737c8b0f2dc0de5b9205bb45e767ab8ff179c5e"
+      "sha256": "0f6854c7b2ec3a6054484abe46e501f5616d1b0ebb11ddac6ba2ac13037493f9"
     },
     {
       "path": "apps/live/index.html",
@@ -89,11 +89,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "95009b319767f256b0e656e5db2a169bf783a98f6b206c797d5a9d9885dc4e3c"
+      "sha256": "607ae998e1c61d943a79fc9244e3ac110862848f480f5e7772fa0969daaae3a3"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "09078d71ccb0e6ca50875e61eacfd750dc64ca8549f2957b94de6862149d79ba"
+      "sha256": "a1b25d0380cec7cdfb43035ceab0beef95b38fd861593f65e9fb4c36e1d6a528"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -117,7 +117,7 @@
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
-      "sha256": "baf77a942cfc69655a7584c64c04fe1322349b1df6060afe403494b8ab668270"
+      "sha256": "7df351831efeb8ea218ebba31b8a8a03504006b48b7329265cc80b6fa1b1fa1d"
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
@@ -185,7 +185,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "c47139cc04df9d51f896271760c5737608bb9ea0f1ec0f61a419831f9c2aec22"
+      "sha256": "d8e17cb8c7f41fabea9205c9495e0a631e42b9a8e78e1ac97bb6eab7ab573042"
     },
     {
       "path": "apps/live/src/useAudioDevice.ts",
@@ -241,11 +241,11 @@
     },
     {
       "path": "apps/manager/src/App.test.tsx",
-      "sha256": "048a71d0eafd52378045b08ce6659789e03d1870818f17e3770bd3c035221204"
+      "sha256": "6bd81a07b447fee0b333b2849e3845c8445a8f3ccb45a976689f97fc38e55bc6"
     },
     {
       "path": "apps/manager/src/App.tsx",
-      "sha256": "2165f2c7d6aa5bb7170b42c3bee4507afcee53690cf6fe74df49c928d4718e38"
+      "sha256": "a876dedd8261fa6ec40a06a8e2a295ca1d4ecc5d9fb37fc998d9fbaa3f442189"
     },
     {
       "path": "apps/manager/src/components/AlertsTab.tsx",
@@ -469,7 +469,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256": "a0c1fe887cf7cb271347b148bdad0fcb954bc514bfbf3a30e19836147a0f90ee"
+      "sha256": "489a799a5d7cf25b56eaaf842c3fc5990f762f8c4b890e7e823e062acac337bb"
     },
     {
       "path": "docs/api/show-management-and-control.md",
@@ -657,7 +657,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "9992784b472d029b34f0a063b293b2c7c3fac999ebd3cfbef2e418b77dfc17db"
+      "sha256": "7e36be4b1e3508c777ef3968fc2ddf88024126e6155b2530cff7131d0c879fe6"
     },
     {
       "path": "docs/design/README.md",
@@ -961,7 +961,7 @@
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/live-state.valid.json",
-      "sha256": "6c7602fc2a9b8024ee87e924b2211a4f4cef1cfe805c67f08ed50bd41e8270f4"
+      "sha256": "5d00c6c3251ac67fc4bb3cbef0363bc74a27d620ddc2a9fe7fbd2a8767c7fea8"
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/meter-frame.valid.json",
@@ -981,7 +981,7 @@
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/showfile.valid.json",
-      "sha256": "17cba061a98a9818755b4b6571899699f99410e24f8240dd7cea12f182b16182"
+      "sha256": "3b61e578f3d07aa5455da57883ac5dcf149dabb85e691967da01b2dbd212e982"
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/shure-telemetry.valid.json",
@@ -1101,7 +1101,7 @@
     },
     {
       "path": "packages/protocol/generated/http-contracts.ts",
-      "sha256": "c4e9b1ec2b4acef3f650930ff2b8c17375e78acfc21a9428a2ca7938215511a1"
+      "sha256": "6c05eecf363d5474dfe878f518b7b159e70da27a453fc958b08e696461359bbd"
     },
     {
       "path": "packages/protocol/model/aggregate-transitions.v0.json",
@@ -1137,7 +1137,7 @@
     },
     {
       "path": "packages/protocol/schema/v0/http/live-state.schema.json",
-      "sha256": "180277470365b3dbf55d4287ee9bd6440a861c19d14854ebc3ccc9a034dd832b"
+      "sha256": "995ff4d7214d237efb868c2e6f6c66d4d432dce4f19c910da70bb87f32282b6c"
     },
     {
       "path": "packages/protocol/schema/v0/http/meter-frame.schema.json",
@@ -1157,7 +1157,7 @@
     },
     {
       "path": "packages/protocol/schema/v0/http/showfile.schema.json",
-      "sha256": "9ad5dd3dfe530e0868526264546d14982a3676b99526bdbee2efcb18f5bd2b85"
+      "sha256": "18bfb258259c440d6f49f3bde70f0816e0d4a4c979fe66097422e3928827a777"
     },
     {
       "path": "packages/protocol/schema/v0/http/shure-telemetry.schema.json",
@@ -1261,7 +1261,7 @@
     },
     {
       "path": "scripts/dev.mjs",
-      "sha256": "50fb753fa7c14e8a91922c0e8ab22e363d037bf56905db21e6b035d413c4dd17"
+      "sha256": "87ddfe1ecfa0ab12e5850f8f2a7adc3f0608a4eddefc12bac755f9a90a2c78d9"
     },
     {
       "path": "scripts/generate-build-identity.mjs",
@@ -1353,7 +1353,7 @@
     },
     {
       "path": "services/backend/README.md",
-      "sha256": "5b4da958a6d81cab8c45cfae3185f48cddd57b37dad919c2ea9f97a37a18f0ff"
+      "sha256": "7ce3a99fc49b8ea9ba007d5d175877b39dfe227f3a7900bd7fd12dc437992a3b"
     },
     {
       "path": "services/backend/package.json",
@@ -1397,11 +1397,11 @@
     },
     {
       "path": "services/backend/src/live-model.ts",
-      "sha256": "6dfe6deb9a3a30f054d795317152066c8633454ca73b735e6ac6e2fe0a2e0445"
+      "sha256": "f5415f9dd5af1b48be42924e2639b9b9ba1391e0c94a8759a6deba91c2fca8c7"
     },
     {
       "path": "services/backend/src/live-monitor.ts",
-      "sha256": "202fb4cd2b496556176712d6cf8bf3096975989409b46e7d5ac94d81d3a55ad3"
+      "sha256": "63f30a1d0b2cdb3f38a25562f68e35cb9021fc4abe90e1c94e4baa1a8e76c1d8"
     },
     {
       "path": "services/backend/src/live-routes.test.ts",
@@ -1425,7 +1425,7 @@
     },
     {
       "path": "services/backend/src/productions.ts",
-      "sha256": "1ff506f29f201e2f1d60cf06068842963c3ef572aee8dce4334dc6273b994204"
+      "sha256": "d91bed5bfaec28b7c004a140ce3c60eca254d63ca02a57a96817db18b316390a"
     },
     {
       "path": "services/backend/src/reports.test.ts",
@@ -1441,15 +1441,15 @@
     },
     {
       "path": "services/backend/src/server.ts",
-      "sha256": "b596d9ba6f36d741e8af5854340d87808c3bec944ef72072fb2d26017ff74d74"
+      "sha256": "8f2755d556baf8c9133b0c6a40f65b4a0e3ae96439d4fbfd0bca3919c3d5a02e"
     },
     {
       "path": "services/backend/src/showfile.ts",
-      "sha256": "1ef12378f733c1748e4505fdecb77f20d094c31fb6326b8656796932d5e24c11"
+      "sha256": "54aa135d26b2df414296dad40c4d693692ab92303e36e70ccc061e361062fad5"
     },
     {
       "path": "services/backend/src/start.ts",
-      "sha256": "70b36fdf97a8f5ca9bbd6240aebf0326a0b9d35b6e525a7f7a8c8535434b9508"
+      "sha256": "7476700f72c837fb66970b0ab9ca3458cf3dd1690b63c15116b591b7fb4edacf"
     },
     {
       "path": "services/backend/tsconfig.json",

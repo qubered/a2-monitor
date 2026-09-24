@@ -843,3 +843,119 @@ describe("Live channel grid", () => {
     expect(within(card).getByText("Being worked · Sam (A2)")).toBeTruthy();
   });
 });
+
+describe("Run of show", () => {
+  const session: NonNullable<LiveState["session"]> = {
+    activeId: null,
+    nextId: "ses-keynote",
+    startedAtUtc: null,
+    startedBy: null,
+    sessions: [
+      {
+        id: "ses-keynote",
+        name: "Keynote",
+        startMinute: 540,
+        channelCount: 1,
+      },
+      { id: "ses-panel", name: "Panel", startMinute: 615, channelCount: 2 },
+    ],
+  };
+
+  it("hides the run of show when the showfile has no sessions", async () => {
+    renderApp(stateWith());
+    await screen.findByText("Marguerite");
+    expect(screen.queryByRole("region", { name: "Run of show" })).toBeNull();
+  });
+
+  it("starts the next session from the turnover sheet and filters to it", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem("pulse-operator-name", "Sam");
+    const before = stateWith({
+      session,
+      channels: [
+        channel({
+          session: {
+            inUse: null,
+            nextInUse: true,
+            nextPresenter: "Dana Lee",
+          },
+        }),
+        {
+          ...talkback,
+          session: { inUse: null, nextInUse: false, nextPresenter: null },
+        },
+      ],
+    });
+    const after = stateWith({
+      revision: 11,
+      session: {
+        ...session,
+        activeId: "ses-keynote",
+        nextId: "ses-panel",
+        startedAtUtc: new Date().toISOString(),
+        startedBy: "Sam (A2)",
+      },
+      channels: [
+        channel({
+          performer: "Dana Lee",
+          session: { inUse: true, nextInUse: true, nextPresenter: null },
+        }),
+        {
+          ...talkback,
+          session: { inUse: false, nextInUse: true, nextPresenter: null },
+        },
+      ],
+    });
+    const put = vi.fn(
+      async () =>
+        new Response(JSON.stringify(after), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+    vi.stubGlobal("fetch", put);
+    renderApp(before);
+
+    const bar = await screen.findByRole("region", { name: "Run of show" });
+    expect(within(bar).getByText("No session running")).toBeTruthy();
+    expect(within(bar).getByText("1 channel ready")).toBeTruthy();
+
+    await user.click(within(bar).getByRole("button", { name: "Turnover" }));
+    const sheet = screen.getByRole("dialog", { name: "Turnover to Keynote" });
+    expect(
+      within(sheet).getByRole("button", {
+        name: /Marguerite, channel 1\. Ready: Battery 90 %/,
+      }),
+    ).toBeTruthy();
+    await user.click(
+      within(sheet).getByRole("button", { name: "Start Keynote" }),
+    );
+
+    expect(put).toHaveBeenCalledWith(
+      "/api/v1/live/session",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          sessionId: "ses-keynote",
+          operator: "Sam (A2)",
+        }),
+      }),
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(within(bar).getByText("Keynote")).toBeTruthy();
+
+    const idleCard = screen
+      .getByRole("button", { name: "Select Talkback, channel 2" })
+      .closest("article")!;
+    expect(idleCard.classList.contains("is-idle")).toBe(true);
+    expect(within(idleCard).getByText(/Not in this session/)).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: /This session/ }));
+    expect(
+      screen.queryByRole("button", { name: "Select Talkback, channel 2" }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Select Marguerite, channel 1" }),
+    ).toBeTruthy();
+  });
+});

@@ -10,6 +10,7 @@ import {
   assignChannelIds,
   emptyShowfile,
   migrateShowfile,
+  normalizeSessions,
   ShowfileConflictError,
   trimShowfile,
   validateShowfile,
@@ -67,7 +68,7 @@ function summarizeAll(
 
 function bumpRevision(candidate: Showfile): Showfile {
   return {
-    ...assignChannelIds(trimShowfile(candidate)),
+    ...normalizeSessions(assignChannelIds(trimShowfile(candidate))),
     revision: candidate.revision + 1,
     updatedAtUtc: new Date().toISOString(),
   };

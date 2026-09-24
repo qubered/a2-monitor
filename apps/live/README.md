@@ -80,6 +80,14 @@ Live renders one shared monitoring state from the backend (ADR 0027):
   takes its alert with it;
 - channels always in showfile order; a channel with an active critical alert
   is shown whatever the filter, in its own place, and no card ever moves;
+- a run-of-show bar when the showfile has sessions (ADR 0029): now and next,
+  and a turnover sheet listing each channel the next session uses with its
+  presenter change and what it waits on (transmitter off, a battery to change,
+  including one that will not last the scheduled session, or a battery nobody
+  can measure) before one action starts the session for every client;
+  channels the running session does not use read "Not in this session" and do
+  not alert for silence, mute or transmitter loss, and a "This session" filter
+  shows only the channels in use;
 - a header counter of outstanding and critical alerts that opens a show-wide
   exceptions sheet with recently cleared history, and an assertive live-region
   announcement for each newly raised critical alert;

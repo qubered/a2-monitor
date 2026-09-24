@@ -169,6 +169,43 @@ function demoShowfile(revision) {
       wired("demo-keys", "Keys DI", 5, "instrument"),
       wired("demo-spare", "Spare", 6, "other"),
     ],
+    // A short corporate run of show: presenters change per session and the
+    // channels a session does not list are expected to be switched off.
+    sessions: [
+      {
+        id: "demo-welcome",
+        name: "Welcome and keynote",
+        startMinute: 9 * 60,
+        channels: [
+          { channelId: "demo-host", presenter: "Jordan Ellis" },
+          { channelId: "demo-presenter", presenter: "Dana Lee" },
+          { channelId: "demo-ambient", presenter: null },
+        ],
+      },
+      {
+        id: "demo-panel",
+        name: "Panel: the year ahead",
+        startMinute: 10 * 60 + 15,
+        channels: [
+          { channelId: "demo-host", presenter: "Jordan Ellis" },
+          { channelId: "demo-presenter", presenter: "Priya Shah" },
+          { channelId: "demo-lead-vocal", presenter: "Marcus Webb" },
+          { channelId: "demo-guitar", presenter: "Audience Q&A" },
+          { channelId: "demo-ambient", presenter: null },
+        ],
+      },
+      {
+        id: "demo-close",
+        name: "Awards and close",
+        startMinute: 11 * 60 + 30,
+        channels: [
+          { channelId: "demo-host", presenter: "Jordan Ellis" },
+          { channelId: "demo-presenter", presenter: "Dana Lee" },
+          { channelId: "demo-keys", presenter: null },
+          { channelId: "demo-line-tone", presenter: null },
+        ],
+      },
+    ],
   };
 }
 

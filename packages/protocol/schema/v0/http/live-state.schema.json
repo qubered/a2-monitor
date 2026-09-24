@@ -203,6 +203,58 @@
           "maximum": 512
         }
       }
+    },
+    "session": {
+      "description": "The active production's run of show: which session is live and what is next. Absent from producers that predate sessions.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "activeId",
+        "nextId",
+        "startedAtUtc",
+        "startedBy",
+        "sessions"
+      ],
+      "properties": {
+        "activeId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "nextId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "startedAtUtc": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "startedBy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "sessions": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/sessionSummary"
+          }
+        }
+      }
     }
   },
   "$defs": {
@@ -685,6 +737,40 @@
               "format": "date-time"
             }
           }
+        },
+        "session": {
+          "description": "This channel's part in the active and next session; null when no session is active and none is next.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "inUse",
+            "nextInUse",
+            "nextPresenter"
+          ],
+          "properties": {
+            "inUse": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "nextInUse": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "nextPresenter": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 120
+            }
+          }
         }
       }
     },
@@ -974,6 +1060,41 @@
         "nothing-at-all",
         "other"
       ]
+    },
+    "sessionSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "startMinute",
+        "channelCount"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "startMinute": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1439
+        },
+        "channelCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 128
+        }
+      }
     }
   }
 }

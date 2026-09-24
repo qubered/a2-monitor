@@ -12,9 +12,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: 50ddea44559473413171c8bab6c01d3aa63d760cc3573f890c9629fbb8df9b5a
+// Schema-SHA256: 71094bdb81fe496789ed496785d8062b8728698a1b9bc41356c8ea22b0375a59
 // Generator-SHA256: 1a037c5d886a218624ec27da5ce598a9d0abd5d3c5e4690b1e37bf4b6b235531
-// Body-SHA256: 76c63b481d31a1cb8c48855a5e711483e24f1ed6906f2bcb0298034dd0b9af10
+// Body-SHA256: a5535d176f5b7a24d04f083fe06d999e9d19fd1970dfde175d4dcd9c92247c20
 
 export type HealthResponse = {
   status: "ok";
@@ -145,6 +145,15 @@ export type Showfile = {
       rf: boolean;
       audio: boolean;
     };
+  }>;
+  sessions?: Array<{
+    id?: string;
+    name: string;
+    startMinute: number | null;
+    channels: Array<{
+      channelId: string;
+      presenter: string | null;
+    }>;
   }>;
 };
 
@@ -358,6 +367,11 @@ export type LiveStateChannel = {
     stale: boolean;
     updatedAtUtc: string;
   } | null;
+  session?: {
+    inUse: boolean | null;
+    nextInUse: boolean | null;
+    nextPresenter: string | null;
+  } | null;
 };
 
 export type LiveAlert = {
@@ -424,6 +438,13 @@ export type ReportedFault =
   | "nothing-at-all"
   | "other";
 
+export type SessionSummary = {
+  id: string;
+  name: string;
+  startMinute: number | null;
+  channelCount: number;
+};
+
 export type LiveState = {
   schemaVersion: "0";
   revision: number;
@@ -464,6 +485,13 @@ export type LiveState = {
     active: number;
     outstanding: number;
     outstandingCritical: number;
+  };
+  session?: {
+    activeId: string | null;
+    nextId: string | null;
+    startedAtUtc: string | null;
+    startedBy: string | null;
+    sessions: Array<SessionSummary>;
   };
 };
 
@@ -1049,6 +1077,54 @@ const showfileSchema = {
               },
               audio: {
                 type: "boolean",
+              },
+            },
+          },
+        },
+      },
+    },
+    sessions: {
+      type: "array",
+      maxItems: 100,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["name", "startMinute", "channels"],
+        properties: {
+          id: {
+            type: "string",
+            minLength: 1,
+            maxLength: 64,
+          },
+          name: {
+            type: "string",
+            minLength: 1,
+            maxLength: 120,
+          },
+          startMinute: {
+            description:
+              "Scheduled start as minutes after local midnight at the venue; null when not scheduled.",
+            type: ["integer", "null"],
+            minimum: 0,
+            maximum: 1439,
+          },
+          channels: {
+            type: "array",
+            maxItems: 128,
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["channelId", "presenter"],
+              properties: {
+                channelId: {
+                  type: "string",
+                  minLength: 1,
+                  maxLength: 64,
+                },
+                presenter: {
+                  type: ["string", "null"],
+                  maxLength: 120,
+                },
               },
             },
           },
@@ -1831,6 +1907,41 @@ const liveStateSchema = {
         },
       },
     },
+    session: {
+      description:
+        "The active production's run of show: which session is live and what is next. Absent from producers that predate sessions.",
+      type: "object",
+      additionalProperties: false,
+      required: ["activeId", "nextId", "startedAtUtc", "startedBy", "sessions"],
+      properties: {
+        activeId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        nextId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        startedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        startedBy: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 80,
+        },
+        sessions: {
+          type: "array",
+          maxItems: 100,
+          items: {
+            $ref: "#/$defs/sessionSummary",
+          },
+        },
+      },
+    },
   },
   $defs: {
     verdict: {
@@ -2191,6 +2302,25 @@ const liveStateSchema = {
             },
           },
         },
+        session: {
+          description:
+            "This channel's part in the active and next session; null when no session is active and none is next.",
+          type: ["object", "null"],
+          additionalProperties: false,
+          required: ["inUse", "nextInUse", "nextPresenter"],
+          properties: {
+            inUse: {
+              type: ["boolean", "null"],
+            },
+            nextInUse: {
+              type: ["boolean", "null"],
+            },
+            nextPresenter: {
+              type: ["string", "null"],
+              maxLength: 120,
+            },
+          },
+        },
       },
     },
     alert: {
@@ -2422,6 +2552,33 @@ const liveStateSchema = {
         "nothing-at-all",
         "other",
       ],
+    },
+    sessionSummary: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "name", "startMinute", "channelCount"],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        startMinute: {
+          type: ["integer", "null"],
+          minimum: 0,
+          maximum: 1439,
+        },
+        channelCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 128,
+        },
+      },
     },
   },
 } as const;

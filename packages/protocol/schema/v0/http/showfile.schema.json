@@ -153,6 +153,38 @@
           }
         }
       }
+    },
+    "sessions": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "startMinute", "channels"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+          "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "startMinute": {
+            "description": "Scheduled start as minutes after local midnight at the venue; null when not scheduled.",
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "maximum": 1439
+          },
+          "channels": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["channelId", "presenter"],
+              "properties": {
+                "channelId": { "type": "string", "minLength": 1, "maxLength": 64 },
+                "presenter": { "type": ["string", "null"], "maxLength": 120 }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

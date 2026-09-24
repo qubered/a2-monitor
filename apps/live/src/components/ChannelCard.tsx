@@ -76,6 +76,11 @@ export function AlertIcon({
 
 /** The secondary caption line: the performer when known, otherwise where the signal comes from. */
 function secondaryLine(channel: LiveStateChannel): string {
+  if (channel.session?.inUse === false) {
+    return channel.session.nextInUse
+      ? `Not in this session · next: ${channel.session.nextPresenter ?? "in use"}`
+      : "Not in this session";
+  }
   if (channel.performer) return channel.performer;
   if (channel.receiver) {
     return `${channel.receiver.name} · channel ${channel.receiver.channelIndex + 1}`;
@@ -109,6 +114,7 @@ export function ChannelCard({
     listening ? "is-listening" : "",
     alerting ? "has-alert" : "",
     report && report.unclaimed > 0 ? "is-reported" : "",
+    channel.session?.inUse === false ? "is-idle" : "",
   ]
     .filter(Boolean)
     .join(" ");

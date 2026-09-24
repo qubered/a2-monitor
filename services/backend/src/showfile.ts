@@ -40,6 +40,18 @@ export function trimShowfile(candidate: Showfile): Showfile {
         ? {}
         : { performer: channel.performer?.trim() || null }),
     })),
+    ...(candidate.sessions === undefined
+      ? {}
+      : {
+          sessions: candidate.sessions.map((session) => ({
+            ...session,
+            name: session.name.trim(),
+            channels: session.channels.map((entry) => ({
+              ...entry,
+              presenter: entry.presenter?.trim() || null,
+            })),
+          })),
+        }),
   };
 }
 
@@ -62,6 +74,54 @@ export function assignChannelIds(candidate: Showfile): Showfile {
       return { id, ...channel };
     }),
   };
+}
+
+/**
+ * Gives every session a stable identity, the key the running session is held
+ * under, and drops session entries for channels the show no longer has so a
+ * removed channel cannot linger in a run of show.
+ */
+export function normalizeSessions(candidate: Showfile): Showfile {
+  if (candidate.sessions === undefined) return candidate;
+  const channelIds = new Set(
+    candidate.channels.flatMap(({ id }) => (id === undefined ? [] : [id])),
+  );
+  const used = new Set(
+    candidate.sessions.flatMap(({ id }) => (id === undefined ? [] : [id])),
+  );
+  return {
+    ...candidate,
+    sessions: candidate.sessions.map((session) => {
+      let id = session.id;
+      if (id === undefined) {
+        id = `ses-${randomUUID().slice(0, 8)}`;
+        while (used.has(id)) id = `ses-${randomUUID().slice(0, 8)}`;
+        used.add(id);
+      }
+      return {
+        id,
+        ...session,
+        channels: session.channels.filter(({ channelId }) =>
+          channelIds.has(channelId),
+        ),
+      };
+    }),
+  };
+}
+
+/** Session ids are unique, names are not blank, and no session lists a channel twice. */
+export function hasCoherentSessions(candidate: Showfile): boolean {
+  if (candidate.sessions === undefined) return true;
+  const ids = candidate.sessions.flatMap(({ id }) =>
+    id === undefined ? [] : [id],
+  );
+  if (new Set(ids).size !== ids.length) return false;
+  return candidate.sessions.every(({ name, channels }) => {
+    const channelIds = channels.map(({ channelId }) => channelId);
+    return (
+      name.trim().length > 0 && new Set(channelIds).size === channelIds.length
+    );
+  });
 }
 
 export function hasUniqueChannelIds(candidate: Showfile): boolean {

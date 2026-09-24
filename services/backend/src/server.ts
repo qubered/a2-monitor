@@ -36,10 +36,11 @@ import {
   type ReportAction,
   type ReportPersistence,
 } from "./reports.js";
+import type { SessionPersistence } from "./sessions.js";
 import { fabricatedLiveSnapshot } from "./fixtures/live-snapshot.js";
 import { LiveMonitor, type PublishedState } from "./live-monitor.js";
 import type { NodeSource } from "./node-observer.js";
-import { hasUniqueChannelIds } from "./showfile.js";
+import { hasCoherentSessions, hasUniqueChannelIds } from "./showfile.js";
 import {
   ActiveProductionError,
   MemoryProductionStore,
@@ -96,6 +97,16 @@ const acknowledgeBodySchema = {
   additionalProperties: false,
   required: ["operator"],
   properties: { operator: { type: "string", maxLength: 80 } },
+} as const;
+
+const startSessionBodySchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["sessionId", "operator"],
+  properties: {
+    sessionId: { type: ["string", "null"], minLength: 1, maxLength: 64 },
+    operator: { type: "string", maxLength: 80 },
+  },
 } as const;
 
 const checkParamsSchema = {
@@ -184,6 +195,7 @@ type BuildServerOptions = {
   alertPersistence?: AlertPersistence;
   checkPersistence?: CheckPersistence;
   reportPersistence?: ReportPersistence;
+  sessionPersistence?: SessionPersistence;
   liveMonitor?: LiveMonitor;
   logger?: boolean;
 };
@@ -251,6 +263,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
       alertPersistence: options.alertPersistence,
       checkPersistence: options.checkPersistence,
       reportPersistence: options.reportPersistence,
+      sessionPersistence: options.sessionPersistence,
       onError: (error) => server.log.error(error),
     });
   const eventStreams = new Set<ServerResponse>();
@@ -338,6 +351,30 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
         .header("Cache-Control", "no-store")
         .type("application/json; charset=utf-8")
         .send(json);
+    },
+  );
+
+  server.put(
+    "/api/v1/live/session",
+    {
+      schema: {
+        body: startSessionBodySchema,
+        response: { 200: liveStateSchema, 404: errorResponseSchema },
+      },
+    },
+    async (request, reply) => {
+      const { sessionId, operator } = request.body as {
+        sessionId: string | null;
+        operator: string;
+      };
+      const published = await liveMonitor.startSession(sessionId, operator);
+      if (!published) {
+        return reply.code(404).send({ error: "session-not-found" });
+      }
+      return reply
+        .header("Cache-Control", "no-store")
+        .type("application/json; charset=utf-8")
+        .send(published.json);
     },
   );
 
@@ -616,6 +653,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
           ({ imageUrl }) => imageUrl != null && !isValidImageUrl(imageUrl),
         ) ||
         !hasUniqueChannelIds(candidate) ||
+        !hasCoherentSessions(candidate) ||
         (candidate.alertPolicy !== undefined &&
           !isCoherentAlertPolicy(candidate.alertPolicy));
       if (invalid) {
