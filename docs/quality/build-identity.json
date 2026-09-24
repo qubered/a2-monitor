@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.d493edd2e60610fd",
-  "sourceSha256": "d493edd2e60610fd710c6cd967137accc03bc3930ed61c59cb3f6c03c477c78f",
+  "buildId": "a2-0.0.0+sha256.63af671890ad9866",
+  "sourceSha256": "63af671890ad98667321aa9e08dad7e766ffbb523d30366da31483b26f372631",
   "inputCount": 424,
   "inputs": [
     {
@@ -1425,7 +1425,7 @@
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/host_output.rs",
-      "sha256": "9f7c5c5e3e3f54d17b2a84cbd33c4a1a8de5982d4d45c7b682ea90dc0974cfaa"
+      "sha256": "c6fd8debd00b14303ac77123d44e9c48379332a77883cddd9f504a545e7e098e"
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/main.rs",

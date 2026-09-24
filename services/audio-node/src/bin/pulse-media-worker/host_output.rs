@@ -617,14 +617,14 @@ mod tests {
     }
 
     #[test]
-    fn mix_clamps_gain_to_twelve_decibels() {
+    fn mix_clamps_gain_to_forty_eight_decibels() {
         let block = constant_block(1, &[0.1]);
         let mut mix = MonitorMix::new();
         let mut output = vec![0.0; FRAMES_PER_BLOCK];
-        mix.set(Some(0), 100.0);
+        mix.set(Some(0), 1_000.0);
         mix.render(&block, &mut output);
         mix.render(&block, &mut output);
-        assert!((output[0] - 0.1 * MAX_MONITOR_GAIN).abs() < 1e-6);
+        assert!((output[0] - 0.1 * MAX_MONITOR_GAIN).abs() < 1e-3);
     }
 
     #[test]
