@@ -1,5 +1,9 @@
 name: Repository checks
 
+# Runs on every pull request and push to main on one Linux runner, the
+# cheapest hosted runner. The Windows and macOS portability jobs cost 2x and
+# 10x per minute and live in portability.yml, run by hand.
+
 on:
   pull_request:
   push:
@@ -8,9 +12,15 @@ on:
 permissions:
   contents: read
 
+# A new push to the same pull request cancels its superseded run.
+concurrency:
+  group: repository-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   repository:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
@@ -23,77 +33,15 @@ jobs:
         run: npm ci
       - name: Check application workspaces
         run: npm run check
-
-  scaffold-portability:
-    name: Scaffold portability (${{ matrix.profile }})
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - profile: Windows x64 hosted smoke
-            runner: windows-2025
-            expected_node_arch: x64
-            expected_node_platform: win32
-          - profile: Apple-silicon hosted smoke
-            runner: macos-15
-            expected_node_arch: arm64
-            expected_node_platform: darwin
-    runs-on: ${{ matrix.runner }}
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version-file: .node-version
-          cache: npm
-      - name: Record and verify hosted runner identity
-        env:
-          EXPECTED_NODE_ARCH: ${{ matrix.expected_node_arch }}
-          EXPECTED_NODE_PLATFORM: ${{ matrix.expected_node_platform }}
-        run: |
-          echo "runner.os=$RUNNER_OS"
-          echo "runner.arch=$RUNNER_ARCH"
-          echo "runner.image_os=${ImageOS:-unknown}"
-          echo "runner.image_version=${ImageVersion:-unknown}"
-          node --version
-          node -e 'if (process.arch !== process.env.EXPECTED_NODE_ARCH || process.platform !== process.env.EXPECTED_NODE_PLATFORM) { throw new Error(`unexpected runner ${process.platform}/${process.arch}`); } console.log(`node.platform=${process.platform} node.arch=${process.arch}`);'
-          rustc -vV
-          cargo --version --verbose
-      - name: Install application dependencies
-        run: npm ci
-      - name: Check repository baseline
-        run: ./scripts/check-repo.sh
-      - name: Check application workspaces
-        run: npm run check
+      - name: Install the pinned Rust toolchain
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Check Rust formatting
         run: cargo fmt --all -- --check
       - name: Lint Rust workspace
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: Test Rust workspace
         run: cargo test --workspace --locked
-      - name: Run Cargo-only composition smokes
-        run: |
-          cargo run --locked --bin a2-synthetic-capture
-          cargo run --locked --bin a2-supervisor-smoke
-          cargo run --locked --bin a2-replay-smoke
-      - name: Check portable Windows layout
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: ./infra/appliance/windows/Test-A2WindowsLayout.ps1
-      - name: Check synthetic unsigned macOS package
-        if: runner.os == 'macOS'
-        run: bash infra/appliance/macos/test-unsigned-pkg.sh
-      - name: Compile macOS menu-bar app
-        if: runner.os == 'macOS'
-        run: |
-          xcrun swiftc \
-            -O \
-            -target arm64-apple-macos14.0 \
-            -framework AppKit \
-            infra/appliance/macos/mvp-app/PulseApp.swift \
-            -o "$RUNNER_TEMP/PulseApp-compile-check"
       - name: Require a clean tracked checkout
         run: |
           git diff --exit-code

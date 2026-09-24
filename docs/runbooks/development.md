@@ -84,7 +84,12 @@ must not launch a replacement while the retained handle may be live. Quarantine
 release is always an explicit action. The smoke topology is intentionally
 partial and is not a deployable node profile.
 
-Pull requests also run scaffold-portability jobs on GitHub-hosted
+Every pull request runs one Linux job (`repository.yml`): the repository
+baseline, every npm workspace check, and Rust formatting, Clippy and tests.
+The scaffold-portability jobs (`portability.yml`) run only by hand, because
+hosted Windows and macOS minutes cost 2x and 10x Linux minutes: Actions →
+Portability checks → Run workflow. Run them before a release or after changing
+platform code. They use GitHub-hosted
 `windows-2025` x64 and `macos-15` arm64 runners. These jobs record the hosted
 image identity, repeat the npm and Cargo checks, run the Cargo-only smokes and
 exercise the platform layout/package harnesses. They are portability checks,

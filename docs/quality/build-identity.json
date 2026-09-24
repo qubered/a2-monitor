@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.d3b47e4dd4294a45",
-  "sourceSha256": "d3b47e4dd4294a457040421fc23d2f617e26b24fc548b9f22bb5432a5c659a4a",
-  "inputCount": 419,
+  "buildId": "a2-0.0.0+sha256.a1eaf048d734eb38",
+  "sourceSha256": "a1eaf048d734eb3872968ecb20fd3a35a434a18cbf0fd0b0467e4b4977434206",
+  "inputCount": 420,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -32,8 +32,12 @@
       "sha256": "4aba513a41048c3c3e157bf1c3d488266982fe69c0172a70f5eefdb4714610cc"
     },
     {
+      "path": ".github/workflows/portability.yml",
+      "sha256": "bb5fba8f97ed580b3fc28e54c781ed8a2f281fd712cdc12bdb472c3924ded76e"
+    },
+    {
       "path": ".github/workflows/repository.yml",
-      "sha256": "2c1d754f0f5eaa37222bbcacfa69151eae6b4df49b75af0f39be507e29260927"
+      "sha256": "2a31f6ae3d98753a9c4927a20e7ea734674a2b28df2cfcbb76364e10e230a722"
     },
     {
       "path": ".gitignore",
@@ -889,7 +893,7 @@
     },
     {
       "path": "docs/runbooks/development.md",
-      "sha256": "8053ae56ce7b1221173eae8e582f2b81956caaf57db9602854561dee9f7c1042"
+      "sha256": "ea93cd1e0f0b3738257c063ba5c85b4ec93787a91c6387c8a2ee55b90ccb8328"
     },
     {
       "path": "docs/runbooks/release.md",
