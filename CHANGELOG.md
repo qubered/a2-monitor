@@ -10,6 +10,10 @@ externally tested release.
 
 ### Changed
 
+- Live: the alert count is a bell with a count beside the settings cog instead
+  of a wide pill. It keeps the same tones and opens the same exceptions sheet;
+  its accessible name still spells the state out. On a phone the logo, room,
+  bell and cog share one row.
 - Live: the filter chips list the room's categories after All channels and
   Needs someone (Wireless and Wired only when the show has no categories). The
   row stays on one line, with chips that do not fit under a More dropdown, and

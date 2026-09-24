@@ -113,11 +113,6 @@ a:focus-visible {
   white-space: nowrap;
 }
 
-.alert-count {
-  flex: none;
-  white-space: nowrap;
-}
-
 .show-name span,
 .player-meta {
   color: var(--muted);
@@ -193,42 +188,71 @@ a:focus-visible {
   white-space: nowrap;
 }
 
-.alert-count {
-  min-height: var(--target);
+/* Alerts: a bell with a count, beside the settings cog. The count is what is
+   still to acknowledge, or what is active and seen. */
+.alert-bell {
+  position: relative;
+  width: var(--target);
+  height: var(--target);
+  flex: none;
+  display: grid;
+  place-items: center;
   margin-left: auto;
-  padding: 0 var(--space-4);
-  border: var(--size-1) solid var(--t-out);
-  border-radius: var(--radius-pill);
+  padding: 0;
+  border: var(--size-1) solid var(--line-2);
+  border-radius: 50%;
   background: var(--card);
-  color: var(--t-out);
-  font-size: var(--font-table);
-  font-weight: 700;
+  color: var(--ok);
 }
 
-.alert-count:disabled {
+.alert-bell:disabled {
   cursor: default;
 }
 
-.alert-count.is-critical {
+.alert-bell.is-critical {
   border-color: var(--t-out);
   background: var(--out-soft);
   color: var(--t-out);
 }
 
-.alert-count.is-caution {
+.alert-bell.is-caution {
   border-color: var(--warn);
   background: var(--warn-soft);
   color: var(--warn);
 }
 
-.alert-count.is-clear {
-  border-color: var(--line-2);
-  color: var(--ok);
+.alert-bell.is-seen {
+  color: var(--ink-2);
 }
 
-.alert-count.is-unknown {
-  border-color: var(--line-2);
+.alert-bell.is-unknown {
   color: var(--rep);
+}
+
+.alert-bell-count {
+  position: absolute;
+  top: calc(var(--space-1) * -1);
+  right: calc(var(--space-1) * -1);
+  min-width: var(--space-5);
+  height: var(--space-5);
+  padding: 0 var(--space-1);
+  border: var(--size-1) solid var(--paper-2);
+  border-radius: var(--radius-pill);
+  background: var(--ink-2);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: var(--font-caption);
+  font-weight: 700;
+  line-height: calc(var(--space-5) - 2 * var(--size-1));
+  text-align: center;
+}
+
+.alert-bell.is-critical .alert-bell-count {
+  background: var(--t-out);
+}
+
+.alert-bell.is-caution .alert-bell-count {
+  background: var(--warn);
 }
 
 /* Rooms (design system §10.10): the room this device shows, in the header,
@@ -238,7 +262,8 @@ a:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 0;
   padding: 0 var(--space-4);
   border: var(--size-1) solid var(--line-2);
   border-radius: var(--radius-pill);
@@ -250,7 +275,15 @@ a:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  min-width: 0;
   line-height: 1.3;
+}
+
+.room-switch-text strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .room-switch-text span {
@@ -2518,10 +2551,6 @@ a:focus-visible {
     display: none;
   }
 
-  .alert-count {
-    margin-left: 0;
-  }
-
   .player-transport {
     flex-wrap: wrap;
     gap: var(--space-3);
@@ -2606,15 +2635,23 @@ a:focus-visible {
     display: block;
   }
 
-  /* Brand, room and the menu share the first row; the badges and alert count
-     wrap below it. */
-  .header-menu {
-    order: 1;
-    margin-left: auto;
+  /* Brand, room, the alert bell and the menu share the first row; the
+     simulated badge wraps below it. */
+  .app-header {
+    gap: var(--space-2);
   }
 
-  .simulated-badge,
-  .alert-count {
+  .room-switch {
+    padding: 0 var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .alert-bell,
+  .header-menu {
+    order: 1;
+  }
+
+  .simulated-badge {
     order: 2;
   }
 

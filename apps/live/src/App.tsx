@@ -1175,6 +1175,20 @@ export function App({
     }),
   );
   const summary = liveState?.summary;
+  const alertLabel =
+    !summary || offline
+      ? "Alerts unavailable"
+      : summary.outstanding > 0
+        ? `${summary.outstanding} to acknowledge${summary.outstandingCritical ? ` · ${summary.outstandingCritical} critical` : ""}`
+        : summary.active > 0
+          ? `${summary.active} active · all seen`
+          : "No active alerts";
+  const alertCount =
+    !summary || offline
+      ? 0
+      : summary.outstanding > 0
+        ? summary.outstanding
+        : summary.active;
   const showName = liveState?.show.name ?? "Show state unavailable";
   const nodeDevice = liveState?.node.device ?? null;
 
@@ -1273,26 +1287,40 @@ export function App({
           <span className="simulated-badge">Simulated test signal</span>
         ) : null}
         <button
-          className={`alert-count ${
+          className={`alert-bell ${
             !summary || offline
               ? "is-unknown"
               : summary.outstandingCritical > 0
                 ? "is-critical"
                 : summary.outstanding > 0
                   ? "is-caution"
-                  : "is-clear"
+                  : summary.active > 0
+                    ? "is-seen"
+                    : "is-clear"
           }`}
           type="button"
+          aria-label={alertLabel}
+          title={alertLabel}
           onClick={() => setExceptionsOpen(true)}
           disabled={!liveState}
         >
-          {!summary || offline
-            ? "Alerts unavailable"
-            : summary.outstanding > 0
-              ? `${summary.outstanding} to acknowledge${summary.outstandingCritical ? ` · ${summary.outstandingCritical} critical` : ""}`
-              : summary.active > 0
-                ? `${summary.active} active · all seen`
-                : "No active alerts"}
+          <svg
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M10.268 21a2 2 0 0 0 3.464 0" />
+            <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" />
+          </svg>
+          {alertCount > 0 ? (
+            <span className="alert-bell-count">{alertCount}</span>
+          ) : null}
         </button>
         <HeaderMenu
           items={[

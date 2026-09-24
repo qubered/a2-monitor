@@ -381,9 +381,13 @@ one.
 Interface icons are Lucide, 2px stroke, at 16 / 20 / 24px. Verdict glyphs are
 drawn, not typed, so they hold their weight at 12px. No icon appears without a
 label on a first-use surface; icon-only controls are permitted only in the
-transport and in the header's **settings cog**, which opens a labelled menu
-(audio output, the operator, the Manager link) and carries a dot while one of
-them needs the operator. Each carries an accessible name.
+transport and in two header controls beside each other: the **alert bell**,
+which carries the count still to acknowledge (or the active count once all are
+seen) and takes the alert's tone — red for a critical one, amber for any other
+— and the **settings cog**, which opens a labelled menu (audio output, the
+operator, the Manager link) and carries a dot while one of them needs the
+operator. Each carries an accessible name that says the state in words, such as
+`2 to acknowledge · 1 critical`.
 
 The **brand mark** is a separate thing from interface iconography: five
 vertical bars in a mountain profile — a level meter and an RF signal-strength
