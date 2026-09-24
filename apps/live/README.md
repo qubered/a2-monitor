@@ -71,8 +71,8 @@ Live renders one shared monitoring state from the backend (ADR 0027):
 
 - channel cards from the active showfile with the real headshot when Manager
   has one, a 10-second meter trace drawn from the node's 20 Hz meter stream
-  (present, silent, gap and stale drawn differently), and the four-cell
-  RF · Audio · Battery · Check status strip computed by the backend;
+  (present, silent, gap and stale drawn differently), and the three-cell
+  RF · Audio · Battery status strip computed by the backend;
 - the alert ring and band from backend alerts: pressing the card acknowledges
   that alert as the operator named on this device, for every Live client;
   caution overlays show an expiry countdown and expire while still counting as
@@ -103,7 +103,7 @@ Live renders one shared monitoring state from the backend (ADR 0027):
   backend offline, cards keep last-known identity, every verdict becomes
   unknown and listening continues through the node;
 - the resumable eight-dimension guided mic check, shared through the backend
-  so every device sees the same attributed verdicts and the Check cell is real
+  so every device sees the same attributed verdicts in the channel detail
   (a changed patch or performer makes an old check stale);
 - an A1 role (set per device on the name chip) that turns the grid into the
   mix-confidence surface: no listen control; pressing a channel opens the

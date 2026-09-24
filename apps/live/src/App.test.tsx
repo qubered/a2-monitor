@@ -284,6 +284,35 @@ afterEach(() => {
 });
 
 describe("Live channel grid", () => {
+  it("shows RF, Audio and Battery on the card, with no Check cell", async () => {
+    renderApp(
+      stateWith({
+        channels: [
+          channel({
+            statuses: {
+              rf: "good",
+              audio: "good",
+              battery: "good",
+              check: "fault",
+            },
+          }),
+        ],
+      }),
+    );
+    const card = (
+      await screen.findByText("Marguerite", { selector: "h2" })
+    ).closest("article")!;
+    const strip = within(card).getByRole("group", {
+      name: "Status by dimension",
+    });
+    expect(strip.querySelectorAll(".status-cell")).toHaveLength(3);
+    expect(within(strip).queryByText(/Mic check/)).toBeNull();
+    // A failed check alone is not a card-level problem.
+    expect(
+      screen.getByRole("button", { name: /Needs someone/ }).textContent,
+    ).toContain("0");
+  });
+
   it("starts muted and selecting a channel does not unmute", async () => {
     const user = userEvent.setup();
     renderApp(stateWith());

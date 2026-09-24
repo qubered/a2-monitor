@@ -1,6 +1,6 @@
 # Pulse — design language
 
-- **Version:** 2.4.0
+- **Version:** 2.5.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
 - **Last updated:** 2026-09-24
@@ -509,7 +509,9 @@ as a shape rather than parsed as text.
 | Unknown        | `–` dash     | `--rep` on `--rep-soft`   | Stale, disarmed, or never measured |
 | Not applicable | `∕` slash    | `--rep` 50%               | Dimension does not exist here      |
 
-Default dimensions: **RF · Audio · Battery · Check**. The set is per-deployment,
+Default dimensions: **RF · Audio · Battery**. Mic-check progress is not a
+card cell; it lives in the channel detail and the guided check. The set is
+per-deployment,
 not hard-coded: an in-ears rig adds a cell, a wired-only rig drops RF and battery
 to _not applicable_ rather than showing false greens.
 
@@ -521,7 +523,7 @@ to _not applicable_ rather than showing false greens.
 - A faulted or cautioned cell tints its whole background, so the strip reads from
   across a wing without the glyph being legible.
 - This strip is the mechanism for [§2.5](#2-principles): a channel can be
-  `✕ RF` and `⚠ Check` at once, and both are visible without opening anything.
+  `✕ RF` and `⚠ Battery` at once, and both are visible without opening anything.
 
 ### 10.3 Alert overlay
 
@@ -937,6 +939,11 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.5.0 — 2026-09-24.** The Check cell is removed from the card's status strip
+([§10.2](#102-status-strip)); the strip is RF · Audio · Battery. Mic-check
+progress stays in the channel detail and the guided check, and no longer
+puts a card in Needs someone. Implemented in Live alongside this entry.
 
 **2.4.0 — 2026-09-24.** Adds the run of show ([§10.9](#109-run-of-show)):
 a now/next bar, a turnover sheet that starts the next session, idle cards for

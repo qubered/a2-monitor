@@ -818,7 +818,7 @@ a:focus-visible {
 .status-strip {
   min-height: var(--status-height);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   overflow: hidden;
   border: var(--size-1) solid var(--card-outline);
   border-radius: calc(var(--radius) / 2);

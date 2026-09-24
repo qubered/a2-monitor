@@ -102,10 +102,12 @@ function readMonitorGainDb(): number {
   }
 }
 
+/** A measured problem the card shows: an alert, or a faulted or cautioned strip cell. */
 function needsSomeone(channel: LiveStateChannel, alerts: readonly LiveAlert[]) {
+  const { rf, audio, battery } = channel.statuses;
   return (
     alerts.some(({ channelId }) => channelId === channel.id) ||
-    Object.values(channel.statuses).some(
+    [rf, audio, battery].some(
       (verdict) => verdict === "fault" || verdict === "caution",
     )
   );
