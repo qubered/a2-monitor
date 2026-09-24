@@ -56,6 +56,7 @@ import {
 } from "./reports";
 import {
   acknowledgeAlert,
+  resetChannel,
   createEventSourceLiveState,
   type LiveStateConnection,
   type LiveStateSource,
@@ -688,6 +689,20 @@ export function App({
       }
     },
     [apply, operator],
+  );
+
+  const resetChannelAlerts = useCallback(
+    async (channelId: string) => {
+      setActionError(null);
+      try {
+        apply(await resetChannel(channelId));
+      } catch (error) {
+        setActionError(
+          error instanceof Error ? error.message : "The channel was not reset.",
+        );
+      }
+    },
+    [apply],
   );
 
   const reports = useMemo(
@@ -1384,6 +1399,11 @@ export function App({
           history={alertHistory}
           nowMs={nowMs}
           onAcknowledge={(alert) => void acknowledge(alert)}
+          onResetChannel={
+            offline
+              ? undefined
+              : () => void resetChannelAlerts(detailChannel.id)
+          }
           onClose={() => setDetailId(null)}
           onRunCheck={() => {
             setMicCheckId(detailChannel.id);

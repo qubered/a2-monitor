@@ -102,6 +102,26 @@ export class AcknowledgeError extends Error {
   }
 }
 
+/** Clears one channel's alerts and returns it to its default state; returns the updated shared state. */
+export async function resetChannel(
+  channelId: string,
+  fetchResponse: typeof fetch = fetch,
+): Promise<LiveState> {
+  const response = await fetchResponse(
+    `/api/v1/channels/${encodeURIComponent(channelId)}/reset`,
+    { method: "POST" },
+  );
+  if (response.status === 404) {
+    throw new AcknowledgeError("That channel is no longer in the show.");
+  }
+  if (!response.ok) {
+    throw new AcknowledgeError(
+      `The channel was not reset (HTTP ${response.status}).`,
+    );
+  }
+  return parseLiveState(await response.json());
+}
+
 /** Acknowledges one alert as the named operator and returns the updated shared state. */
 export async function acknowledgeAlert(
   alertId: string,

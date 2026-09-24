@@ -441,6 +441,36 @@ describe("Live channel grid", () => {
     expect(card.classList.contains("is-selected")).toBe(false);
   });
 
+  it("clears a channel's alerts from its detail view and offers it only when something is raised", async () => {
+    const user = userEvent.setup();
+    const cleared = stateWith({ revision: 12, alerts: [] });
+    const post = vi.fn(
+      async () =>
+        new Response(JSON.stringify(cleared), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+    vi.stubGlobal("fetch", post);
+    renderApp(stateWith({ alerts: [alert()] }));
+
+    await user.click(
+      screen.getByRole("button", { name: "Open details for Marguerite" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Clear alerts and reset" }),
+    );
+    expect(post).toHaveBeenCalledWith(
+      "/api/v1/channels/ch-marguerite/reset",
+      expect.objectContaining({ method: "POST" }),
+    );
+    await vi.waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Clear alerts and reset" }),
+      ).toBeNull(),
+    );
+  });
+
   it("lets a caution overlay expire while it still counts as outstanding", () => {
     renderApp(
       stateWith({

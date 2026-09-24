@@ -359,6 +359,27 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     },
   );
 
+  server.post(
+    "/api/v1/channels/:channelId/reset",
+    {
+      schema: {
+        params: checkChannelParamsSchema,
+        response: { 200: liveStateSchema, 404: errorResponseSchema },
+      },
+    },
+    async (request, reply) => {
+      const { channelId } = request.params as { channelId: string };
+      const published = await liveMonitor.resetChannel(channelId);
+      if (!published) {
+        return reply.code(404).send({ error: "channel-not-found" });
+      }
+      return reply
+        .header("Cache-Control", "no-store")
+        .type("application/json; charset=utf-8")
+        .send(published.json);
+    },
+  );
+
   server.put(
     "/api/v1/live/session",
     {

@@ -10,6 +10,10 @@ externally tested release.
 
 ### Added
 
+- Live: "Clear alerts and reset" in a channel's expanded view (ADR 0032). After
+  switching a transmitter off, it moves the channel's alerts to history and
+  returns the channel to its default, unarmed state until a transmitter or
+  signal is seen again.
 - Live: shared host monitor output feeds (ADR 0031). When the node has an
   output device (for example Dante Virtual Soundcard routed to comms), Live
   asks on open whether audio plays on this device or in one of the

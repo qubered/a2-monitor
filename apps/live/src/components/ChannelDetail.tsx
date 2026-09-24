@@ -19,6 +19,8 @@ type ChannelDetailProps = {
   history: readonly LiveAlert[] | null;
   nowMs: number;
   onAcknowledge: (alert: LiveAlert) => void;
+  /** Absent while the backend is unreachable, so the reset is never offered then. */
+  onResetChannel?: () => void;
   onClose: () => void;
   onRunCheck: () => void;
 };
@@ -122,6 +124,7 @@ export function ChannelDetail({
   history,
   nowMs,
   onAcknowledge,
+  onResetChannel,
   onClose,
   onRunCheck,
 }: ChannelDetailProps) {
@@ -180,6 +183,30 @@ export function ChannelDetail({
                 />
               ))}
             </ul>
+          </section>
+        ) : null}
+
+        {onResetChannel &&
+        (alerts.length > 0 ||
+          Object.values(channel.statuses).some(
+            (status) => status === "fault" || status === "caution",
+          )) ? (
+          <section
+            className="detail-alerts detail-reset"
+            aria-label="Reset channel"
+          >
+            <button
+              type="button"
+              className="line-button"
+              disabled={busy}
+              onClick={onResetChannel}
+            >
+              Clear alerts and reset
+            </button>
+            <p>
+              For a channel you have switched off. Alerts move to history and
+              the channel re-arms when a transmitter or signal is seen again.
+            </p>
           </section>
         ) : null}
 
