@@ -441,6 +441,65 @@ describe("Live channel grid", () => {
     expect(card.classList.contains("is-selected")).toBe(false);
   });
 
+  it("stops what is playing when empty space beside the cards is pressed", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem("pulse-selected-channel", "ch-marguerite");
+    const playbackFactory = vi.fn<PlaybackFactory>(() => ({
+      setChannel: vi.fn(),
+      setMuted: vi.fn(async () => undefined),
+      setDimmed: vi.fn(),
+      setGainDb: vi.fn(),
+      close: vi.fn(),
+    }));
+    const { view } = renderApp(stateWith(), {
+      audioDeviceSource: readyDevice,
+      playbackFactory,
+    });
+    const card = screen
+      .getByRole("button", { name: "Select Marguerite, channel 1" })
+      .closest("article")!;
+    expect(card.classList.contains("is-selected")).toBe(true);
+
+    // A press on a card or its heading is not a press on empty space.
+    await user.click(screen.getByRole("heading", { level: 1 }));
+    expect(card.classList.contains("is-selected")).toBe(true);
+
+    await user.click(view.container.querySelector(".channel-grid")!);
+    expect(card.classList.contains("is-selected")).toBe(false);
+    expect(window.localStorage.getItem("pulse-selected-channel")).toBeNull();
+    // The session ends with the selection.
+    expect(playbackFactory.mock.results[0]!.value.close).toHaveBeenCalled();
+  });
+
+  it("clears the selection with Escape, but Escape first closes an open detail", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem("pulse-selected-channel", "ch-marguerite");
+    renderApp(stateWith(), {
+      audioDeviceSource: readyDevice,
+      playbackFactory: vi.fn<PlaybackFactory>(() => ({
+        setChannel: vi.fn(),
+        setMuted: vi.fn(async () => undefined),
+        setDimmed: vi.fn(),
+        setGainDb: vi.fn(),
+        close: vi.fn(),
+      })),
+    });
+    const card = () =>
+      screen
+        .getByRole("button", { name: "Select Marguerite, channel 1" })
+        .closest("article")!;
+
+    await user.click(
+      screen.getByRole("button", { name: "Open details for Marguerite" }),
+    );
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(card().classList.contains("is-selected")).toBe(true);
+
+    await user.keyboard("{Escape}");
+    expect(card().classList.contains("is-selected")).toBe(false);
+  });
+
   it("lets a caution overlay expire while it still counts as outstanding", () => {
     renderApp(
       stateWith({
@@ -1077,6 +1136,30 @@ describe("Live channel grid", () => {
     expect(
       await screen.findByRole("dialog", { name: "Where should audio play?" }),
     ).toBeTruthy();
+  });
+
+  it("clears the feed's selection when empty space is pressed while joined", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem("pulse-operator-name", "Sam");
+    window.localStorage.setItem("pulse-output-destination", "host:feed-a");
+    const { hostOutput, view } = renderApp(stateWith(), {
+      audioDeviceSource: readyDevice,
+      hostOutput: hostDocument(dvsOutput, [
+        hostFeed("feed-a", "Comms A", [1], {
+          channelId: "ch-marguerite",
+          input: 0,
+        }),
+      ]),
+    });
+
+    await screen.findByRole("button", { name: "Audio: Comms A" });
+    await user.click(view.container.querySelector(".channel-grid")!);
+    expect(hostOutput.changes.at(-1)).toEqual({
+      feedId: "feed-a",
+      channelId: null,
+      input: null,
+      changedBy: "Sam (A2)",
+    });
   });
 
   it("plays on this device when chosen, without touching the host output", async () => {

@@ -10,6 +10,9 @@ externally tested release.
 
 ### Added
 
+- Live: pressing empty space beside or between the channel cards stops what
+  is playing. On this device it ends the listen session; joined to a host
+  output feed it clears the feed's shared selection for everyone in it.
 - Live: shared host monitor output feeds (ADR 0031). When the node has an
   output device (for example Dante Virtual Soundcard routed to comms), Live
   asks on open whether audio plays on this device or in one of the

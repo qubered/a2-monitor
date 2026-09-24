@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.ce5467a8e5013a9b",
-  "sourceSha256": "ce5467a8e5013a9b19432e27115e438d60b84cfa3c1773e237b444d24d751e45",
+  "buildId": "a2-0.0.0+sha256.98b96a38b3871992",
+  "sourceSha256": "98b96a38b3871992b5d72e49fb0a4ca571f906421cf925a2d28f6e6f66a97063",
   "inputCount": 420,
   "inputs": [
     {
@@ -53,7 +53,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "c715ac5f583b453a0c3ffd4d78e1423493c36fe19eb92d2017c58f7254aec36d"
+      "sha256": "76ce0a7e197bf562f8d086df74541c4c311a259afe7a5aa9300fb1f3eb959199"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "d1d35c34a3faad75adb1d4690de6171f0ca6c1540fedee0cb6e2289ce788eb36"
+      "sha256": "fa0993d44b3d0b33e0b54b5f5b8fb90a7925814152fdd9a41ce6b2d86265d1f2"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "f4d18d2c1b9bb850b250e4a09b3c445fbc474d96dacfe8db1047aa6481cd3600"
+      "sha256": "08fde2c8be20986659ee7edb97b79cfc2a62dbafd3ba95922c01c6b4782d1bf3"
     },
     {
       "path": "apps/live/src/alerts.ts",
