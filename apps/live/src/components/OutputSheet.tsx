@@ -7,8 +7,8 @@ import {
 
 type OutputSheetProps = {
   output: NonNullable<HostOutput["output"]>;
-  sessions: HostOutput["sessions"];
-  /** What each session is playing now, by session id. */
+  feeds: HostOutput["feeds"];
+  /** What each feed is playing now, by feed id. */
   nowPlaying: Record<string, string>;
   current: OutputDestination | null;
   /** Offered first when it is still available: the last choice on this device. */
@@ -24,11 +24,11 @@ function capitalize(text: string): string {
 
 /**
  * Where this device's monitor audio plays: here, or joined to one of the host
- * output sessions (ADR 0031). Everyone in a session shares its mix.
+ * output feeds (ADR 0031). Everyone in a feed shares its mix.
  */
 export function OutputSheet({
   output,
-  sessions,
+  feeds,
   nowPlaying,
   current,
   suggested,
@@ -47,10 +47,10 @@ export function OutputSheet({
       detail:
         "Only you hear it, on this device's headphones or speaker. Your channel, mute and level are yours.",
     },
-    ...sessions.map((session) => ({
-      destination: hostDestination(session.id),
-      title: session.name,
-      detail: `${capitalize(describeOutputChannels(session.outputChannels))} of ${device}. Shared with everyone in ${session.name}. ${nowPlaying[session.id] ?? "Nothing selected."}${
+    ...feeds.map((feed) => ({
+      destination: hostDestination(feed.id),
+      title: feed.name,
+      detail: `${capitalize(describeOutputChannels(feed.outputChannels))} of ${device}. Shared with everyone in ${feed.name}. ${nowPlaying[feed.id] ?? "Nothing selected."}${
         output.status === "ready" ? "" : ` ${output.detail}`
       }`,
     })),
@@ -82,8 +82,8 @@ export function OutputSheet({
             <span className="detail-overline">Monitor audio</span>
             <h2 id="output-title">Where should audio play?</h2>
             <p>
-              Join a host output session, or listen on this device. You can
-              change this later from the header.
+              Join a host output feed, or listen on this device. You can change
+              this later from the header.
             </p>
           </div>
           {onClose ? (

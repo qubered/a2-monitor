@@ -1,7 +1,7 @@
 //! Host monitor output (ADR 0031): the pieces of `pulse-device-output` that do not touch a
 //! device API, so they are testable on every platform.
 //!
-//! The media worker renders one mono mix per host output session and sends them down a pipe
+//! The media worker renders one mono mix per host output feed and sends them down a pipe
 //! as interleaved 48 kHz frames (one sample per mix). The output process pushes whole frames
 //! into a [`frame_ring`] from a reader thread, and the device callback pulls from it and
 //! copies each mix onto its own output channels. The callback side never allocates, locks
@@ -16,9 +16,9 @@ use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 /// the shared host-output workflow runs in simulation. It is never evidence about hardware.
 pub const SIMULATED_OUTPUT_DEVICE_NAME: &str = "Pulse simulated output";
 pub const OUTPUT_SAMPLE_RATE_HZ: u32 = 48_000;
-/// At most this many device channels may carry one session's mix.
+/// At most this many device channels may carry one feed's mix.
 pub const MAX_OUTPUT_CHANNELS: usize = 8;
-/// At most this many sessions (mixes) share the output device.
+/// At most this many feeds (mixes) share the output device.
 pub const MAX_OUTPUT_ROUTES: usize = 8;
 const MAX_OUTPUT_CHANNEL_NUMBER: u16 = 256;
 
@@ -43,13 +43,13 @@ pub fn parse_output_channels(value: &str) -> Result<Vec<u16>, String> {
     }
     if channels.len() > MAX_OUTPUT_CHANNELS {
         return Err(format!(
-            "at most {MAX_OUTPUT_CHANNELS} output channels can carry one session"
+            "at most {MAX_OUTPUT_CHANNELS} output channels can carry one feed"
         ));
     }
     Ok(channels)
 }
 
-/// Parses one route per session, separated by `;`, e.g. `1;2,3`: mix 0 plays on output 1
+/// Parses one route per feed, separated by `;`, e.g. `1;2,3`: mix 0 plays on output 1
 /// and mix 1 on outputs 2 and 3. A device channel can carry only one mix.
 pub fn parse_output_routes(value: &str) -> Result<Vec<Vec<u16>>, String> {
     let routes = value
@@ -58,15 +58,13 @@ pub fn parse_output_routes(value: &str) -> Result<Vec<Vec<u16>>, String> {
         .collect::<Result<Vec<_>, _>>()?;
     if routes.len() > MAX_OUTPUT_ROUTES {
         return Err(format!(
-            "at most {MAX_OUTPUT_ROUTES} sessions can share the output device"
+            "at most {MAX_OUTPUT_ROUTES} feeds can share the output device"
         ));
     }
     let mut used = Vec::new();
     for channel in routes.iter().flatten() {
         if used.contains(channel) {
-            return Err(format!(
-                "output channel {channel} is in more than one session"
-            ));
+            return Err(format!("output channel {channel} is in more than one feed"));
         }
         used.push(*channel);
     }
@@ -324,7 +322,7 @@ mod tests {
     }
 
     #[test]
-    fn routes_are_sessions_on_distinct_channels() {
+    fn routes_are_feeds_on_distinct_channels() {
         assert_eq!(parse_output_routes("1"), Ok(vec![vec![1]]));
         assert_eq!(parse_output_routes("1;2,3"), Ok(vec![vec![1], vec![2, 3]]));
         assert_eq!(format_output_routes(&[vec![1], vec![2, 3]]), "1;2,3");

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "0",
   "output": null,
-  "sessions": [
+  "feeds": [
     {
       "id": "default",
       "name": "Host output",

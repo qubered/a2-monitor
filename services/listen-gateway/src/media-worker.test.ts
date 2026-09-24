@@ -392,7 +392,7 @@ describe("parseWorkerEvent", () => {
     ]);
     expect(media.getOutputState()).toMatchObject({
       status: "ready",
-      detail: "DVS is open: 1 session on 2 of 64 outputs.",
+      detail: "DVS is open: 1 feed on 2 of 64 outputs.",
       channelCount: 64,
       underruns: 2,
       droppedFrames: 490,
@@ -424,7 +424,7 @@ describe("parseWorkerEvent", () => {
     }
   });
 
-  it("switches the output to a production's sessions and back to the default", async () => {
+  it("switches the output to a production's feeds and back to the default", async () => {
     const child = new FakeWorkerProcess();
     const factory = vi.fn(() => child);
     const media = new MediaWorkerManager({

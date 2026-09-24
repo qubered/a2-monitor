@@ -23,16 +23,16 @@ import {
   TableRow,
 } from "./ui/table";
 
-type Session = NonNullable<Showfile["hostOutput"]>["sessions"][number];
+type Feed = NonNullable<Showfile["hostOutput"]>["feeds"][number];
 
 const HOST_OUTPUT_REFRESH_MS = 2_000;
-const MAX_SESSIONS = 8;
-const MAX_CHANNELS_PER_SESSION = 8;
+const MAX_FEEDS = 8;
+const MAX_CHANNELS_PER_FEED = 8;
 /** Offered when the device has not reported how many outputs it has. */
 const FALLBACK_CHANNEL_COUNT = 64;
 
-function sessionId(): string {
-  return `hs-${globalThis.crypto?.randomUUID?.().slice(0, 8) ?? Date.now()}`;
+function feedId(): string {
+  return `feed-${globalThis.crypto?.randomUUID?.().slice(0, 8) ?? Date.now()}`;
 }
 
 function statusVariant(
@@ -58,26 +58,26 @@ function statusText(state: HostOutput | null | "unavailable"): string {
   return `${state.output.deviceName}${state.output.simulated ? " (simulated)" : ""}: ${state.output.detail}`;
 }
 
-/** What would make the backend refuse these sessions, in operator terms. */
-function problems(sessions: readonly Session[]): string[] {
+/** What would make the backend refuse these feeds, in operator terms. */
+function problems(feeds: readonly Feed[]): string[] {
   const found: string[] = [];
-  const names = sessions.map(({ name }) => name.trim().toLowerCase());
+  const names = feeds.map(({ name }) => name.trim().toLowerCase());
   if (names.some((name) => name.length === 0)) {
-    found.push("Every session needs a name.");
+    found.push("Every feed needs a name.");
   }
   if (new Set(names).size !== names.length) {
-    found.push("Each session needs a different name.");
+    found.push("Each feed needs a different name.");
   }
-  for (const session of sessions) {
-    if (session.outputChannels.length === 0) {
-      found.push(`${session.name.trim() || "A session"} needs an output.`);
+  for (const feed of feeds) {
+    if (feed.outputChannels.length === 0) {
+      found.push(`${feed.name.trim() || "A feed"} needs an output.`);
     }
   }
   return found;
 }
 
 /**
- * Host output sessions for this production (ADR 0031): each is one shared mix
+ * Host output feeds for this production (ADR 0031): each is one shared mix
  * that Live operators join by name, played on its own outputs of the node's
  * host output device (for example DVS outputs routed to comms channels).
  */
@@ -108,39 +108,37 @@ export function HostOutputTab({
     };
   }, []);
 
-  const sessions = showfile.hostOutput?.sessions ?? [];
+  const feeds = showfile.hostOutput?.feeds ?? [];
   const reported =
     hostOutput !== null && hostOutput !== "unavailable"
       ? (hostOutput.output?.channelCount ?? null)
       : null;
   const channelCount = reported ?? FALLBACK_CHANNEL_COUNT;
-  const used = new Set(
-    sessions.flatMap(({ outputChannels }) => outputChannels),
-  );
+  const used = new Set(feeds.flatMap(({ outputChannels }) => outputChannels));
   const free = Array.from(
     { length: channelCount },
     (_, index) => index + 1,
   ).filter((channel) => !used.has(channel));
-  const found = problems(sessions);
+  const found = problems(feeds);
   const nodeDefault =
     hostOutput !== null &&
     hostOutput !== "unavailable" &&
     hostOutput.output &&
-    sessions.length === 0
-      ? hostOutput.sessions[0]
+    feeds.length === 0
+      ? hostOutput.feeds[0]
       : undefined;
 
-  function save(next: Session[]) {
+  function save(next: Feed[]) {
     const updated: Showfile = { ...showfile };
-    if (next.length) updated.hostOutput = { sessions: next };
+    if (next.length) updated.hostOutput = { feeds: next };
     else delete updated.hostOutput;
     onChange(updated);
   }
 
-  function update(position: number, change: Partial<Session>) {
+  function update(position: number, change: Partial<Feed>) {
     save(
-      sessions.map((session, index) =>
-        index === position ? { ...session, ...change } : session,
+      feeds.map((feed, index) =>
+        index === position ? { ...feed, ...change } : feed,
       ),
     );
   }
@@ -151,12 +149,12 @@ export function HostOutputTab({
         <div>
           <CardOverline>Monitor output</CardOverline>
           <h2 className="mt-1 font-display text-section leading-tight text-foreground">
-            Host output sessions
+            Host output feeds
           </h2>
           <p className="mt-1 max-w-xl text-caption text-muted-foreground">
-            Each session is one shared mix. Operators join a session by name in
-            Live and hear it on its outputs, for example DVS output 1 routed to
-            comms A. Everyone in a session shares its channel, mute and level.
+            Each feed is one shared mix. Operators join a feed by name in Live
+            and hear it on its outputs, for example DVS output 1 routed to comms
+            A. Everyone in a feed shares its channel, mute and level.
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <Badge variant={statusVariant(hostOutput)}>
@@ -176,19 +174,19 @@ export function HostOutputTab({
         </div>
         <Button
           variant="outline"
-          disabled={sessions.length >= MAX_SESSIONS || free.length === 0}
+          disabled={feeds.length >= MAX_FEEDS || free.length === 0}
           onClick={() =>
             save([
-              ...sessions,
+              ...feeds,
               {
-                id: sessionId(),
-                name: `Session ${sessions.length + 1}`,
+                id: feedId(),
+                name: `Feed ${feeds.length + 1}`,
                 outputChannels: free.slice(0, 1),
               },
             ])
           }
         >
-          Add session
+          Add feed
         </Button>
       </div>
 
@@ -201,13 +199,13 @@ export function HostOutputTab({
         </div>
       ) : null}
 
-      {sessions.length === 0 ? (
+      {feeds.length === 0 ? (
         <EmptyState
-          title="No sessions for this production."
+          title="No feeds for this production."
           detail={
             nodeDefault
-              ? `The node's default is used: one session, ${nodeDefault.name}, on output ${nodeDefault.outputChannels.join(" + ")}. Add a session to choose outputs here.`
-              : "The node's default single session is used. Add a session to choose outputs here."
+              ? `The node's default is used: one feed, ${nodeDefault.name}, on output ${nodeDefault.outputChannels.join(" + ")}. Add a feed to choose outputs here.`
+              : "The node's default single feed is used. Add a feed to choose outputs here."
           }
         />
       ) : (
@@ -215,7 +213,7 @@ export function HostOutputTab({
           <TableHeader>
             <TableRow>
               <TableHead className="w-10">#</TableHead>
-              <TableHead>Session name</TableHead>
+              <TableHead>Feed name</TableHead>
               <TableHead>Outputs</TableHead>
               <TableHead className="w-16">
                 <span className="sr-only">Remove</span>
@@ -223,15 +221,15 @@ export function HostOutputTab({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sessions.map((session, position) => (
-              <TableRow key={session.id}>
+            {feeds.map((feed, position) => (
+              <TableRow key={feed.id}>
                 <TableCell className="font-mono text-table tabular-nums text-muted-foreground">
                   {position + 1}
                 </TableCell>
                 <TableCell className="min-w-40">
                   <Input
-                    aria-label={`Session ${position + 1} name`}
-                    value={session.name}
+                    aria-label={`Feed ${position + 1} name`}
+                    value={feed.name}
                     maxLength={60}
                     onChange={(event) =>
                       update(position, { name: event.target.value })
@@ -240,7 +238,7 @@ export function HostOutputTab({
                 </TableCell>
                 <TableCell className="min-w-56">
                   <div className="flex flex-wrap items-center gap-2">
-                    {session.outputChannels.map((channel) => (
+                    {feed.outputChannels.map((channel) => (
                       <span
                         key={channel}
                         className="inline-flex items-center gap-1 rounded-full border border-line-2 bg-card py-1 pl-3 pr-1 font-mono text-table tabular-nums text-foreground"
@@ -249,10 +247,10 @@ export function HostOutputTab({
                         <Button
                           variant="ghost"
                           size="icon"
-                          aria-label={`Remove output ${channel} from ${session.name || `session ${position + 1}`}`}
+                          aria-label={`Remove output ${channel} from ${feed.name || `feed ${position + 1}`}`}
                           onClick={() =>
                             update(position, {
-                              outputChannels: session.outputChannels.filter(
+                              outputChannels: feed.outputChannels.filter(
                                 (value) => value !== channel,
                               ),
                             })
@@ -262,14 +260,14 @@ export function HostOutputTab({
                         </Button>
                       </span>
                     ))}
-                    {session.outputChannels.length < MAX_CHANNELS_PER_SESSION &&
+                    {feed.outputChannels.length < MAX_CHANNELS_PER_FEED &&
                     free.length > 0 ? (
                       <Select
                         value=""
                         onValueChange={(value) =>
                           update(position, {
                             outputChannels: [
-                              ...session.outputChannels,
+                              ...feed.outputChannels,
                               Number(value),
                             ],
                           })
@@ -277,7 +275,7 @@ export function HostOutputTab({
                       >
                         <SelectTrigger
                           className="w-40"
-                          aria-label={`Add an output to ${session.name || `session ${position + 1}`}`}
+                          aria-label={`Add an output to ${feed.name || `feed ${position + 1}`}`}
                         >
                           <SelectValue placeholder="Add output" />
                         </SelectTrigger>
@@ -296,9 +294,9 @@ export function HostOutputTab({
                   <Button
                     variant="destructive"
                     size="icon"
-                    aria-label={`Remove session ${position + 1}`}
+                    aria-label={`Remove feed ${position + 1}`}
                     onClick={() =>
-                      save(sessions.filter(({ id }) => id !== session.id))
+                      save(feeds.filter(({ id }) => id !== feed.id))
                     }
                   >
                     <Trash2 aria-hidden="true" />

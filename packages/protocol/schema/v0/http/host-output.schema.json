@@ -2,10 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://pulse.local/schema/v0/http/host-output.schema.json",
   "title": "Audio node host output",
-  "description": "The audio node's host monitor output (ADR 0031), served at GET /audio/v0/output and as `output` events on /audio/v0/output/events. `output` is the output device, or null when the node has none. Each of `sessions` is one shared mix on its own output channels: Live clients join a session, and a change by any client in it is heard on its channels and shown to every client in it. A session's `revision` increases with every change to its monitor.",
+  "description": "The audio node's host monitor output (ADR 0031), served at GET /audio/v0/output and as `output` events on /audio/v0/output/events. `output` is the output device, or null when the node has none. Each of `feeds` is one shared mix on its own output channels: Live clients join a feed, and a change by any client in it is heard on its channels and shown to every client in it. A feed's `revision` increases with every change to its monitor.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "output", "sessions"],
+  "required": ["schemaVersion", "output", "feeds"],
   "properties": {
     "schemaVersion": {
       "const": "0"
@@ -59,7 +59,7 @@
         }
       }
     },
-    "sessions": {
+    "feeds": {
       "type": "array",
       "maxItems": 8,
       "items": {
@@ -78,7 +78,7 @@
             "maxLength": 60
           },
           "outputChannels": {
-            "description": "1-based device output channels that carry this session's mono mix.",
+            "description": "1-based device output channels that carry this feed's mono mix.",
             "type": "array",
             "maxItems": 8,
             "items": {

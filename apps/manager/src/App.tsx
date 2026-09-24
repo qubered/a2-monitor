@@ -352,8 +352,8 @@ export function App() {
               <TabsTrigger value="host-output">
                 <Headphones aria-hidden="true" />
                 Host output
-                {showfile.hostOutput?.sessions.length
-                  ? ` · ${showfile.hostOutput.sessions.length}`
+                {showfile.hostOutput?.feeds.length
+                  ? ` · ${showfile.hostOutput.feeds.length}`
                   : ""}
               </TabsTrigger>
             </TabsList>

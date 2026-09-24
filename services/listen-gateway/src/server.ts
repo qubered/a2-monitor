@@ -17,7 +17,7 @@ import {
   MonitorChangeError,
   monitorCommand,
   parseMonitorChange,
-  HostOutputSessions,
+  HostOutputFeeds,
 } from "./host-output.js";
 import { LEVEL_WINDOW_MS, LevelBank, type MeterReading } from "./levels.js";
 import {
@@ -36,7 +36,7 @@ const SHOWFILE_WAIT_MS = 2_000;
 const MAX_METER_BUFFERED_BYTES = 64 * 1024;
 const METER_KEEPALIVE_MS = 15_000;
 const MAX_DETAIL_LENGTH = 240;
-const SESSION_OUTPUT_PATH = /^\/audio\/v0\/output\/sessions\/([^/]{1,192})$/;
+const FEED_OUTPUT_PATH = /^\/audio\/v0\/output\/feeds\/([^/]{1,192})$/;
 const SESSION_PATH = /^\/audio\/v0\/listen\/sessions\/([0-9a-f-]{36})$/;
 const SESSION_CHANNEL_PATH =
   /^\/audio\/v0\/listen\/sessions\/([0-9a-f-]{36})\/channel$/;
@@ -169,7 +169,7 @@ export class ListenGateway {
   private readonly interfaces: () => NodeJS.Dict<NetworkInterfaceInfo[]>;
   private readonly meterClients = new Set<ServerResponse>();
   private readonly outputClients = new Set<ServerResponse>();
-  readonly hostSessions: HostOutputSessions;
+  readonly hostFeeds: HostOutputFeeds;
   private readonly waitForShowfile: boolean;
   private startMediaOnce: () => void = () => undefined;
   private readonly keepalive: NodeJS.Timeout;
@@ -187,9 +187,7 @@ export class ListenGateway {
         outputBinary: options.outputBinary,
         processFactory: options.processFactory,
       });
-    this.hostSessions = new HostOutputSessions(
-      this.media.getDefaultOutputChannels(),
-    );
+    this.hostFeeds = new HostOutputFeeds(this.media.getDefaultOutputChannels());
     this.waitForShowfile =
       options.shureMonitor === undefined &&
       options.backendOrigin !== undefined &&
@@ -198,20 +196,19 @@ export class ListenGateway {
       this.resetLevels();
       const state = this.media.getState();
       if (state.status === "ready") {
-        this.hostSessions.constrain(state.device.channelCount);
+        this.hostFeeds.constrain(state.device.channelCount);
       }
     });
     this.media.on("output", () => this.broadcastOutput());
-    this.hostSessions.on("monitor", (mix: number) => {
-      const session = this.hostSessions.list()[mix];
-      if (session)
-        this.media.setMonitor(mix, monitorCommand(session.monitor.get()));
+    this.hostFeeds.on("monitor", (mix: number) => {
+      const feed = this.hostFeeds.list()[mix];
+      if (feed) this.media.setMonitor(mix, monitorCommand(feed.monitor.get()));
       this.broadcastOutput();
     });
-    this.hostSessions.on("sessions", () => {
-      // Routes first, so the worker has one mix per session before the mixes.
-      this.media.setOutputRoutes(this.hostSessions.routes());
-      this.hostSessions
+    this.hostFeeds.on("feeds", () => {
+      // Routes first, so the worker has one mix per feed before the mixes.
+      this.media.setOutputRoutes(this.hostFeeds.routes());
+      this.hostFeeds
         .list()
         .forEach(({ monitor }, mix) =>
           this.media.setMonitor(mix, monitorCommand(monitor.get())),
@@ -230,10 +227,10 @@ export class ListenGateway {
       options.shureMonitor ??
       new ShureFleetMonitor({
         backendOrigin: options.backendOrigin,
-        // The active production's host output sessions (ADR 0031).
+        // The active production's host output feeds (ADR 0031).
         onShowfile: (showfile) => {
-          this.hostSessions.configure(
-            showfile.hostOutput?.sessions,
+          this.hostFeeds.configure(
+            showfile.hostOutput?.feeds,
             this.media.getDefaultOutputChannels(),
           );
           this.startMediaOnce();
@@ -255,7 +252,7 @@ export class ListenGateway {
       }
       if (
         request.url === "/audio/v0/output" ||
-        request.url?.startsWith("/audio/v0/output/sessions/")
+        request.url?.startsWith("/audio/v0/output/feeds/")
       ) {
         this.handleOutput(request, response).catch((error: unknown) => {
           if (response.headersSent) return;
@@ -369,14 +366,14 @@ export class ListenGateway {
     throw new HttpError(404, "not-found");
   }
 
-  /** The `host-output` document: output device state plus every session's shared mix. */
+  /** The `host-output` document: output device state plus every feed's shared mix. */
   getOutput(): HostOutput {
-    return hostOutputDocument(this.media.getOutputState(), this.hostSessions);
+    return hostOutputDocument(this.media.getOutputState(), this.hostFeeds);
   }
 
   /**
    * Shared host monitor output (ADR 0031). `GET /audio/v0/output` reads it;
-   * `PATCH /audio/v0/output/sessions/{id}` changes any subset of one session's
+   * `PATCH /audio/v0/output/feeds/{id}` changes any subset of one feed's
    * monitor for everyone in it and returns the new document.
    */
   private async handleOutput(
@@ -391,7 +388,7 @@ export class ListenGateway {
       sendJson(response, 200, this.getOutput());
       return;
     }
-    const match = SESSION_OUTPUT_PATH.exec(path);
+    const match = FEED_OUTPUT_PATH.exec(path);
     if (!match?.[1]) throw new HttpError(404, "not-found");
     if (request.method !== "PATCH") {
       throw new HttpError(405, "method-not-allowed");
@@ -399,12 +396,12 @@ export class ListenGateway {
     if (this.media.getOutputState() === null) {
       throw new HttpError(409, "host-output-not-configured");
     }
-    const session = this.hostSessions.find(decodeURIComponent(match[1]));
-    if (!session) throw new HttpError(404, "unknown-output-session");
+    const feed = this.hostFeeds.find(decodeURIComponent(match[1]));
+    if (!feed) throw new HttpError(404, "unknown-output-feed");
     const body = await readJsonObject(request);
     const state = this.media.getState();
     try {
-      session.monitor.apply(
+      feed.monitor.apply(
         parseMonitorChange(
           body,
           state.status === "ready" ? state.device.channelCount : null,

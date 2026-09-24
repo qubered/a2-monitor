@@ -160,7 +160,7 @@ function demoShowfile(revision) {
     updatedAtUtc: null,
     show: { name: "Pulse demo (simulated)" },
     hostOutput: {
-      sessions: [
+      feeds: [
         { id: "demo-comms-a", name: "Comms A", outputChannels: [1] },
         { id: "demo-comms-b", name: "Comms B", outputChannels: [2] },
       ],

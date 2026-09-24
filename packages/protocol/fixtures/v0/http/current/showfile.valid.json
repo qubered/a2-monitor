@@ -6,9 +6,9 @@
     "name": "The Winter Circus"
   },
   "hostOutput": {
-    "sessions": [
+    "feeds": [
       {
-        "id": "hs-comms-a",
+        "id": "feed-comms-a",
         "name": "Comms A",
         "outputChannels": [12]
       }

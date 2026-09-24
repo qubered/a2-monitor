@@ -34,14 +34,14 @@ pub enum Command {
     Close {
         session_id: String,
     },
-    /// Sets one host output session's shared mix (ADR 0031). `None` fades it to silence.
+    /// Sets one host output feed's shared mix (ADR 0031). `None` fades it to silence.
     Monitor {
         mix: usize,
         channel: Option<usize>,
         gain: f32,
     },
-    /// Reopens the host output with one route of 1-based device channels per session,
-    /// e.g. a production's saved sessions (ADR 0031). Validated like `--output-routes`.
+    /// Reopens the host output with one route of 1-based device channels per feed,
+    /// e.g. a production's saved feeds (ADR 0031). Validated like `--output-routes`.
     OutputRoutes {
         routes: String,
     },

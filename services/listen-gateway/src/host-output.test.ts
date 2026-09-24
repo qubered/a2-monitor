@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseHostOutput } from "@rvlt/pulse-protocol/http";
 import {
-  HostOutputSessions,
+  HostOutputFeeds,
   hostOutputDocument,
   monitorCommand,
   parseMonitorChange,
@@ -77,8 +77,8 @@ describe("shared host monitor", () => {
     expect(monitor.get()).toMatchObject({ channelId: null, input: null });
   });
 
-  it("produces a contract-valid document with every session", () => {
-    const sessions = new HostOutputSessions([1]);
+  it("produces a contract-valid document with every feed", () => {
+    const feeds = new HostOutputFeeds([1]);
     const document = hostOutputDocument(
       {
         status: "error",
@@ -90,60 +90,58 @@ describe("shared host monitor", () => {
         underruns: 3,
         droppedFrames: 480,
       },
-      sessions,
+      feeds,
     );
     expect(parseHostOutput(document)).toEqual(document);
     expect(document.output?.detail).toBe("Host output state is unknown.");
-    expect(document.sessions).toMatchObject([
+    expect(document.feeds).toMatchObject([
       { id: "default", name: "Host output", outputChannels: [1], revision: 0 },
     ]);
-    expect(hostOutputDocument(null, sessions).sessions).toEqual([]);
+    expect(hostOutputDocument(null, feeds).feeds).toEqual([]);
   });
 });
 
-describe("host output sessions", () => {
+describe("host output feeds", () => {
   const comms = (id: string, outputChannels: number[]) => ({
     id,
     name: `Comms ${id}`,
     outputChannels,
   });
 
-  it("keeps each session's shared state by id across reconfiguration", () => {
-    const sessions = new HostOutputSessions([1]);
+  it("keeps each feed's shared state by id across reconfiguration", () => {
+    const feeds = new HostOutputFeeds([1]);
     const changed: string[] = [];
-    sessions.on("sessions", () => changed.push("sessions"));
-    sessions.on("monitor", (mix: number) => changed.push(`monitor ${mix}`));
+    feeds.on("feeds", () => changed.push("feeds"));
+    feeds.on("monitor", (mix: number) => changed.push(`monitor ${mix}`));
 
-    expect(sessions.configure([comms("a", [1]), comms("b", [2])], [1])).toBe(
-      true,
-    );
-    sessions.find("b")!.monitor.apply({ channelId: "ch", input: 3 });
-    expect(changed).toEqual(["sessions", "monitor 1"]);
-    expect(sessions.routes()).toEqual([[1], [2]]);
+    expect(feeds.configure([comms("a", [1]), comms("b", [2])], [1])).toBe(true);
+    feeds.find("b")!.monitor.apply({ channelId: "ch", input: 3 });
+    expect(changed).toEqual(["feeds", "monitor 1"]);
+    expect(feeds.routes()).toEqual([[1], [2]]);
 
-    // Same config: no change. Session b moves to mix 0 and keeps its state.
-    expect(sessions.configure([comms("a", [1]), comms("b", [2])], [1])).toBe(
+    // Same config: no change. Feed b moves to mix 0 and keeps its state.
+    expect(feeds.configure([comms("a", [1]), comms("b", [2])], [1])).toBe(
       false,
     );
-    sessions.configure([comms("b", [2])], [1]);
-    expect(sessions.find("a")).toBeUndefined();
-    expect(sessions.find("b")!.monitor.get().input).toBe(3);
-    sessions.find("b")!.monitor.apply({ muted: true });
+    feeds.configure([comms("b", [2])], [1]);
+    expect(feeds.find("a")).toBeUndefined();
+    expect(feeds.find("b")!.monitor.get().input).toBe(3);
+    feeds.find("b")!.monitor.apply({ muted: true });
     expect(changed.at(-1)).toBe("monitor 0");
 
-    // No sessions: back to the node's default single session.
-    sessions.configure(undefined, [4]);
-    expect(sessions.list().map(({ id }) => id)).toEqual(["default"]);
-    expect(sessions.routes()).toEqual([[4]]);
+    // No feeds: back to the node's default single feed.
+    feeds.configure(undefined, [4]);
+    expect(feeds.list().map(({ id }) => id)).toEqual(["default"]);
+    expect(feeds.routes()).toEqual([[4]]);
   });
 
-  it("clears every session's selection the running device no longer has", () => {
-    const sessions = new HostOutputSessions([1]);
-    sessions.configure([comms("a", [1]), comms("b", [2])], [1]);
-    sessions.find("a")!.monitor.apply({ channelId: "ch-9", input: 9 });
-    sessions.find("b")!.monitor.apply({ channelId: "ch-1", input: 1 });
-    sessions.constrain(8);
-    expect(sessions.find("a")!.monitor.get().input).toBeNull();
-    expect(sessions.find("b")!.monitor.get().input).toBe(1);
+  it("clears every feed's selection the running device no longer has", () => {
+    const feeds = new HostOutputFeeds([1]);
+    feeds.configure([comms("a", [1]), comms("b", [2])], [1]);
+    feeds.find("a")!.monitor.apply({ channelId: "ch-9", input: 9 });
+    feeds.find("b")!.monitor.apply({ channelId: "ch-1", input: 1 });
+    feeds.constrain(8);
+    expect(feeds.find("a")!.monitor.get().input).toBeNull();
+    expect(feeds.find("b")!.monitor.get().input).toBe(1);
   });
 });

@@ -1,7 +1,7 @@
 //! Shared host monitor output (ADR 0031).
 //!
-//! One monitor mix per host output session, each controlled by every Live client that
-//! joined that session, is rendered from captured blocks and piped as interleaved Float32LE
+//! One monitor mix per host output feed, each controlled by every Live client that
+//! joined that feed, is rendered from captured blocks and piped as interleaved Float32LE
 //! (one sample per mix per frame) to a `pulse-device-output` child. The child opens the
 //! host's output device once and plays each mix on its own channels (for example Dante
 //! Virtual Soundcard outputs 1 and 2 routed to two comms channels). The child owns the device callback; this module never blocks the
@@ -42,11 +42,11 @@ const EVENT_LINE_LIMIT_BYTES: usize = 4 * 1024;
 pub struct OutputArgs {
     pub binary: OsString,
     pub device_name: OsString,
-    /// One route per session, e.g. `1;2,3` (see `parse_output_routes`).
+    /// One route per feed, e.g. `1;2,3` (see `parse_output_routes`).
     pub routes: OsString,
 }
 
-/// Sessions (mixes) named by a routes string; an unparseable string is one session, which
+/// Feeds (mixes) named by a routes string; an unparseable string is one feed, which
 /// the output child then rejects with its reason.
 fn route_count(routes: &OsString) -> usize {
     routes
@@ -323,7 +323,7 @@ struct Running {
     ready_at: Option<Instant>,
 }
 
-/// Supervises the output child and renders one shared mix per session into it.
+/// Supervises the output child and renders one shared mix per feed into it.
 pub struct HostOutput {
     args: OutputArgs,
     events: SyncSender<Event>,
@@ -361,8 +361,8 @@ impl HostOutput {
         }
     }
 
-    /// Sets one session's mix. A session beyond the current routes is ignored; the
-    /// gateway re-sends every session's mix after a routes change.
+    /// Sets one feed's mix. A feed beyond the current routes is ignored; the
+    /// gateway re-sends every feed's mix after a routes change.
     pub fn set_monitor(&mut self, mix: usize, channel: Option<usize>, gain: f32) {
         if let Some(target) = self.mixes.get_mut(mix) {
             target.set(channel, gain);
@@ -420,7 +420,7 @@ impl HostOutput {
         }
     }
 
-    /// Renders every session's mix for one captured block, interleaves them and queues
+    /// Renders every feed's mix for one captured block, interleaves them and queues
     /// the result for the child.
     pub fn write_block(&mut self, block: &CaptureBlock) {
         if self.running.is_none() {
@@ -446,7 +446,7 @@ impl HostOutput {
         }
     }
 
-    /// Renders every session's mix into `buffer` as interleaved frames, mix order.
+    /// Renders every feed's mix into `buffer` as interleaved frames, mix order.
     fn render_interleaved(&mut self, block: &CaptureBlock, buffer: &mut Vec<f32>) {
         let width = self.mixes.len();
         buffer.resize(FRAMES_PER_BLOCK * width, 0.0);
@@ -515,7 +515,7 @@ impl HostOutput {
 
     /// Reopens the output child on other routes at once, with fresh backoff. The same
     /// routes are a no-op, so a repeated setting never interrupts the feed. Mixes are kept
-    /// by position; added sessions start silent and removed ones are dropped.
+    /// by position; added feeds start silent and removed ones are dropped.
     pub fn set_routes(&mut self, routes: String, now: Instant) -> Option<OutputReport> {
         if self.args.routes == *routes {
             return None;
@@ -695,12 +695,12 @@ mod tests {
             Some(OutputReport::Failed { retry_in, .. }) if retry_in == Duration::from_secs(1)
         ));
         assert_eq!(output.args.routes, "1;12");
-        assert_eq!(output.mixes.len(), 2, "one mix per session");
+        assert_eq!(output.mixes.len(), 2, "one mix per feed");
         output.set_monitor(5, Some(0), 1.0);
     }
 
     #[test]
-    fn each_session_renders_its_own_input_into_its_own_slot() {
+    fn each_feed_renders_its_own_input_into_its_own_slot() {
         let (events, _receiver) = mpsc::sync_channel(4);
         let mut output = HostOutput::new(
             OutputArgs {

@@ -307,14 +307,14 @@ describe("ShureFleetMonitor against the development AD4Q simulator", () => {
     }
   }, 10_000);
 
-  it("hands each showfile it reads to the host output sessions", async () => {
+  it("hands each showfile it reads to the host output feeds", async () => {
     const showfile = {
       schemaVersion: "0",
       revision: 1,
       updatedAtUtc: null,
       show: { name: "Show" },
       hostOutput: {
-        sessions: [{ id: "hs-a", name: "Comms A", outputChannels: [12] }],
+        feeds: [{ id: "feed-a", name: "Comms A", outputChannels: [12] }],
       },
       device: null,
       shureReceivers: [],
@@ -336,7 +336,7 @@ describe("ShureFleetMonitor against the development AD4Q simulator", () => {
         expect(onShowfile).toHaveBeenCalledWith(
           expect.objectContaining({
             hostOutput: {
-              sessions: [{ id: "hs-a", name: "Comms A", outputChannels: [12] }],
+              feeds: [{ id: "feed-a", name: "Comms A", outputChannels: [12] }],
             },
           }),
         ),

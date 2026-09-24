@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { parseHostOutput, type HostOutput } from "@rvlt/pulse-protocol/http";
 
-export type HostSession = HostOutput["sessions"][number];
-export type HostMonitor = HostSession["monitor"];
+export type HostFeed = HostOutput["feeds"][number];
+export type HostMonitor = HostFeed["monitor"];
 
 /** A partial change to the shared host monitor. Selection changes carry both fields. */
 export type HostMonitorChange = {
@@ -16,16 +16,16 @@ export type HostMonitorChange = {
 
 /**
  * Where this device's monitor audio plays (ADR 0031): here, or joined to one
- * host output session by id.
+ * host output feed by id.
  */
 export type OutputDestination = "device" | `host:${string}`;
 
-export function hostDestination(sessionId: string): OutputDestination {
-  return `host:${sessionId}`;
+export function hostDestination(feedId: string): OutputDestination {
+  return `host:${feedId}`;
 }
 
-/** The session a destination joins, or null for this device. */
-export function sessionIdOf(destination: OutputDestination): string | null {
+/** The feed a destination joins, or null for this device. */
+export function feedIdOf(destination: OutputDestination): string | null {
   return destination === "device" ? null : destination.slice("host:".length);
 }
 
@@ -38,8 +38,8 @@ export type HostOutputListener = {
 
 export interface HostOutputSource {
   subscribe(listener: HostOutputListener): () => void;
-  /** Applies a change for everyone in one session and returns the new document. */
-  change(sessionId: string, change: HostMonitorChange): Promise<HostOutput>;
+  /** Applies a change for everyone in one feed and returns the new document. */
+  change(feedId: string, change: HostMonitorChange): Promise<HostOutput>;
 }
 
 export const HOST_OUTPUT_PATH = "/audio/v0/output";
@@ -53,8 +53,8 @@ const changeErrors: Record<string, string> = {
   "host-output-not-configured": "The audio node has no host output device.",
   "audio-not-ready": "The audio node is not capturing yet.",
   "invalid-channel": "That input is not on the running device.",
-  "unknown-output-session":
-    "That host output session no longer exists. Choose another.",
+  "unknown-output-feed":
+    "That host output feed no longer exists. Choose another.",
 };
 
 export function createHttpHostOutputSource(
@@ -100,11 +100,11 @@ export function createHttpHostOutputSource(
         source.close();
       };
     },
-    async change(sessionId, change) {
+    async change(feedId, change) {
       let response: Response;
       try {
         response = await fetchImpl(
-          `${HOST_OUTPUT_PATH}/sessions/${encodeURIComponent(sessionId)}`,
+          `${HOST_OUTPUT_PATH}/feeds/${encodeURIComponent(feedId)}`,
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -135,12 +135,12 @@ export function createHttpHostOutputSource(
 export function createManualHostOutput(): HostOutputSource & {
   push(document: HostOutput): void;
   setConnection(connection: HostOutputConnection): void;
-  changes: Array<{ sessionId: string } & HostMonitorChange>;
+  changes: Array<{ feedId: string } & HostMonitorChange>;
 } {
   const listeners = new Set<HostOutputListener>();
   let last: HostOutput | null = null;
   let connection: HostOutputConnection = "connecting";
-  const changes: Array<{ sessionId: string } & HostMonitorChange> = [];
+  const changes: Array<{ feedId: string } & HostMonitorChange> = [];
   return {
     changes,
     subscribe(listener) {
@@ -161,28 +161,28 @@ export function createManualHostOutput(): HostOutputSource & {
       connection = next;
       for (const listener of listeners) listener.onConnection(next);
     },
-    async change(sessionId, change) {
-      changes.push({ sessionId, ...change });
+    async change(feedId, change) {
+      changes.push({ feedId, ...change });
       if (!last) throw new Error("The audio node is unreachable.");
-      if (!last.sessions.some(({ id }) => id === sessionId)) {
-        throw new Error(changeErrors["unknown-output-session"]);
+      if (!last.feeds.some(({ id }) => id === feedId)) {
+        throw new Error(changeErrors["unknown-output-feed"]);
       }
       const { changedBy, ...fields } = change;
       const next: HostOutput = {
         ...last,
-        sessions: last.sessions.map((session) =>
-          session.id === sessionId
+        feeds: last.feeds.map((feed) =>
+          feed.id === feedId
             ? {
-                ...session,
-                revision: session.revision + 1,
+                ...feed,
+                revision: feed.revision + 1,
                 monitor: {
-                  ...session.monitor,
+                  ...feed.monitor,
                   ...fields,
                   changedBy: changedBy ?? null,
                   changedAtUtc: new Date().toISOString(),
                 },
               }
-            : session,
+            : feed,
         ),
       };
       this.push(next);
@@ -206,11 +206,11 @@ export function useHostOutput(source: HostOutputSource) {
   }, [source]);
 
   const change = useCallback(
-    async (sessionId: string, next: HostMonitorChange) => {
-      const updated = await source.change(sessionId, next);
+    async (feedId: string, next: HostMonitorChange) => {
+      const updated = await source.change(feedId, next);
       // A response must not undo a newer document the stream already delivered.
       const revision = (document: HostOutput | null) =>
-        document?.sessions.find(({ id }) => id === sessionId)?.revision ?? -1;
+        document?.feeds.find(({ id }) => id === feedId)?.revision ?? -1;
       setDocument((current) =>
         current && revision(updated) < revision(current) ? current : updated,
       );
@@ -236,7 +236,7 @@ export function saveLastDestination(destination: OutputDestination): void {
   try {
     window.localStorage.setItem(DESTINATION_KEY, destination);
   } catch {
-    // The choice still applies for this session.
+    // The choice still applies until the page reloads.
   }
 }
 

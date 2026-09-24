@@ -12,27 +12,35 @@ describe("showfile migration", () => {
     channels: [],
   };
 
-  it("turns one saved host output channel list into one session", () => {
+  it("turns one saved host output channel list into one feed", () => {
     const migrated = migrateShowfile({
       ...base,
       hostOutput: { outputChannels: [12] },
     });
     expect(migrated).toMatchObject({
       hostOutput: {
-        sessions: [
-          { id: "default", name: "Host output", outputChannels: [12] },
-        ],
+        feeds: [{ id: "default", name: "Host output", outputChannels: [12] }],
       },
     });
     expect(validateShowfile(migrated)).toBe(true);
   });
 
-  it("leaves sessions and showfiles without host output as they are", () => {
-    const sessions = {
-      sessions: [{ id: "hs-a", name: "Comms A", outputChannels: [1] }],
+  it("renames saved host output sessions to feeds", () => {
+    const feeds = [{ id: "hs-a", name: "Comms A", outputChannels: [1] }];
+    const migrated = migrateShowfile({
+      ...base,
+      hostOutput: { sessions: feeds },
+    });
+    expect(migrated).toMatchObject({ hostOutput: { feeds } });
+    expect(validateShowfile(migrated)).toBe(true);
+  });
+
+  it("leaves feeds and showfiles without host output as they are", () => {
+    const hostOutput = {
+      feeds: [{ id: "feed-a", name: "Comms A", outputChannels: [1] }],
     };
-    expect(migrateShowfile({ ...base, hostOutput: sessions })).toMatchObject({
-      hostOutput: sessions,
+    expect(migrateShowfile({ ...base, hostOutput })).toMatchObject({
+      hostOutput,
     });
     expect(migrateShowfile(base)).not.toHaveProperty("hostOutput");
   });

@@ -43,26 +43,26 @@ with scripted battery drain, RF dips, interference, mute and transmitter loss.
 
 When `A2_OUTPUT_DEVICE` names an exact output device (for example Dante Virtual
 Soundcard, routed to comms), the worker also renders one shared monitor mix per
-host output **session**, and `pulse-device-output` plays each on its own 1-based
-output channels of that one device (ADR 0031). Sessions come from the active
-production (`hostOutput.sessions`, set in Manager's Host output tab and read
+host output **feed**, and `pulse-device-output` plays each on its own 1-based
+output channels of that one device (ADR 0031). Feeds come from the active
+production (`hostOutput.feeds`, set in Manager's Host output tab and read
 with the receiver inventory); a change reopens only the output device. Without
-saved sessions there is one default session, `Host output`, on
-`A2_OUTPUT_CHANNELS` (default `1`). Every Live client in a session controls and
-sees that session's selection, mute, dim and level:
+saved feeds there is one default feed, `Host output`, on
+`A2_OUTPUT_CHANNELS` (default `1`). Every Live client in a feed controls and
+sees that feed's selection, mute, dim and level:
 
-| Request                                | Body                                                                 | Response                                   |
-| -------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------ |
-| `GET /audio/v0/output`                 | none                                                                 | `host-output` contract, every session      |
-| `GET /audio/v0/output/events`          | none                                                                 | SSE `event: output`, on connect and change |
-| `PATCH /audio/v0/output/sessions/{id}` | any of `channelId`+`input`, `muted`, `dimmed`, `gainDb`, `changedBy` | `200` with the new `host-output`           |
+| Request                             | Body                                                                 | Response                                   |
+| ----------------------------------- | -------------------------------------------------------------------- | ------------------------------------------ |
+| `GET /audio/v0/output`              | none                                                                 | `host-output` contract, every feed         |
+| `GET /audio/v0/output/events`       | none                                                                 | SSE `event: output`, on connect and change |
+| `PATCH /audio/v0/output/feeds/{id}` | any of `channelId`+`input`, `muted`, `dimmed`, `gainDb`, `changedBy` | `200` with the new `host-output`           |
 
 `channelId` and `input` change together; `null` for both clears the selection.
-`gainDb` is −60 to +12. An unknown session returns `404`. Without an output
-device `output` is `null`, `sessions` is empty and `PATCH` returns `409`. State
-is held in memory and each session starts unmuted at 0 dB with nothing
+`gainDb` is −60 to +12. An unknown feed returns `404`. Without an output
+device `output` is `null`, `feeds` is empty and `PATCH` returns `409`. State
+is held in memory and each feed starts unmuted at 0 dB with nothing
 selected. `Pulse simulated output` (8 outputs) discards the feed and is
-labelled simulated; `npm run dev:simulate` uses it with two demo sessions.
+labelled simulated; `npm run dev:simulate` uses it with two demo feeds.
 
 The gateway is deliberately outside the management backend. Signaling has no
 listener authorization and makes no performance claim. It must not be exposed

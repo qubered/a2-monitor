@@ -9,9 +9,9 @@
     "underruns": 0,
     "droppedFrames": 0
   },
-  "sessions": [
+  "feeds": [
     {
-      "id": "hs-comms-a",
+      "id": "feed-comms-a",
       "name": "Comms A",
       "outputChannels": [1],
       "revision": 12,
@@ -26,7 +26,7 @@
       }
     },
     {
-      "id": "hs-comms-b",
+      "id": "feed-comms-b",
       "name": "Comms B",
       "outputChannels": [2, 3],
       "revision": 0,

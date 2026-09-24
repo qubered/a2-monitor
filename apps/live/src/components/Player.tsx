@@ -34,8 +34,8 @@ type PlayerProps = {
   playback: PlaybackUpdate;
   /** Set when controls act on the shared host output (ADR 0031), not this device. */
   hostOutput?: {
-    /** The joined session, e.g. "Comms A". */
-    sessionName: string;
+    /** The joined feed, e.g. "Comms A". */
+    feedName: string;
     changedBy: string | null;
     changedAtUtc: string | null;
   } | null;
@@ -100,7 +100,7 @@ export function Player({
   onGainChange,
 }: PlayerProps) {
   const effectiveGainDb = gainDb + (dimmed ? DIM_ATTENUATION_DB : 0);
-  const outputName = hostOutput ? hostOutput.sessionName : "Monitor output";
+  const outputName = hostOutput ? hostOutput.feedName : "Monitor output";
   const gainLabel = `${effectiveGainDb > 0 ? "+" : ""}${effectiveGainDb}`;
   const reading = useMeterReading(meterStore, channel?.input.index ?? null);
 
@@ -231,7 +231,7 @@ export function Player({
       className="player"
       aria-label={
         hostOutput
-          ? `${hostOutput.sessionName} shared output controls`
+          ? `${hostOutput.feedName} shared output controls`
           : "Monitor output controls"
       }
     >
@@ -281,12 +281,12 @@ export function Player({
           <strong className={`playback-${playback.status}`}>
             {hostOutput
               ? playback.status === "idle"
-                ? `${hostOutput.sessionName} idle`
+                ? `${hostOutput.feedName} idle`
                 : playback.status === "connecting"
-                  ? `${hostOutput.sessionName} starting`
+                  ? `${hostOutput.feedName} starting`
                   : playback.status === "listening"
-                    ? `Playing on ${hostOutput.sessionName}`
-                    : `${hostOutput.sessionName} error`
+                    ? `Playing on ${hostOutput.feedName}`
+                    : `${hostOutput.feedName} error`
               : playback.status === "idle"
                 ? "Not listening"
                 : playback.status === "connecting"
@@ -305,7 +305,7 @@ export function Player({
           </span>
           {hostOutput ? (
             <span>
-              Shared with everyone in {hostOutput.sessionName}.
+              Shared with everyone in {hostOutput.feedName}.
               {hostOutput.changedBy && hostOutput.changedAtUtc
                 ? ` Last change: ${hostOutput.changedBy}, ${formatClock(hostOutput.changedAtUtc)}.`
                 : ""}
@@ -333,9 +333,7 @@ export function Player({
           </button>
           <label className="volume-control">
             <span className="sr-only">
-              {hostOutput
-                ? `${hostOutput.sessionName} level`
-                : "Monitor volume"}
+              {hostOutput ? `${hostOutput.feedName} level` : "Monitor volume"}
             </span>
             <input
               type="range"

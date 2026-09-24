@@ -101,14 +101,14 @@ describe("Manager showfile editor", () => {
           output: {
             status: "ready",
             detail:
-              "Dante Virtual Soundcard is open: 1 session on 1 of 16 outputs.",
+              "Dante Virtual Soundcard is open: 1 feed on 1 of 16 outputs.",
             deviceName: "Dante Virtual Soundcard",
             channelCount: 16,
             simulated: false,
             underruns: 0,
             droppedFrames: 0,
           },
-          sessions: [
+          feeds: [
             {
               id: "default",
               name: "Host output",
@@ -574,18 +574,18 @@ describe("Manager showfile editor", () => {
     expect(saved.channels[1]!.roomId ?? null).toBeNull();
   });
 
-  it("saves host output sessions with their outputs picked from the device", async () => {
+  it("saves host output feeds with their outputs picked from the device", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(await screen.findByRole("tab", { name: /host output/i }));
     expect(
-      await screen.findByText(/one session, Host output, on output 1/),
+      await screen.findByText(/one feed, Host output, on output 1/),
     ).toBeTruthy();
 
-    await user.click(screen.getByRole("button", { name: "Add session" }));
-    await user.click(screen.getByRole("button", { name: "Add session" }));
-    const second = screen.getByLabelText("Session 2 name");
+    await user.click(screen.getByRole("button", { name: "Add feed" }));
+    await user.click(screen.getByRole("button", { name: "Add feed" }));
+    const second = screen.getByLabelText("Feed 2 name");
     await user.clear(second);
     await user.type(second, "Comms B");
     expect(screen.getByText("Output 1")).toBeTruthy();
@@ -599,17 +599,15 @@ describe("Manager showfile editor", () => {
     expect(screen.getAllByRole("option")).toHaveLength(14);
     await user.click(screen.getByRole("option", { name: "Output 12" }));
 
-    // Removing Session 1's only output is flagged before saving.
+    // Removing Feed 1's only output is flagged before saving.
     await user.click(
-      screen.getByRole("button", { name: "Remove output 1 from Session 1" }),
+      screen.getByRole("button", { name: "Remove output 1 from Feed 1" }),
     );
     expect(screen.getByRole("alert").textContent).toContain(
-      "Session 1 needs an output.",
+      "Feed 1 needs an output.",
     );
     // Keyboard operation: focus the dropdown and open it with Enter.
-    screen
-      .getByRole("combobox", { name: "Add an output to Session 1" })
-      .focus();
+    screen.getByRole("combobox", { name: "Add an output to Feed 1" }).focus();
     await user.keyboard("{Enter}");
     await user.click(screen.getByRole("option", { name: "Output 3" }));
     expect(screen.queryByRole("alert")).toBeNull();
@@ -621,7 +619,7 @@ describe("Manager showfile editor", () => {
         String(path) === "/api/v1/showfile" && init?.method === "PUT",
     );
     expect(
-      JSON.parse(String(saveCall?.[1]?.body)).hostOutput.sessions.map(
+      JSON.parse(String(saveCall?.[1]?.body)).hostOutput.feeds.map(
         ({
           name,
           outputChannels,
@@ -631,13 +629,13 @@ describe("Manager showfile editor", () => {
         }) => [name, outputChannels],
       ),
     ).toEqual([
-      ["Session 1", [3]],
+      ["Feed 1", [3]],
       ["Comms B", [2, 12]],
     ]);
 
-    // Removing every session returns the production to the node's default.
-    await user.click(screen.getByRole("button", { name: "Remove session 2" }));
-    await user.click(screen.getByRole("button", { name: "Remove session 1" }));
+    // Removing every feed returns the production to the node's default.
+    await user.click(screen.getByRole("button", { name: "Remove feed 2" }));
+    await user.click(screen.getByRole("button", { name: "Remove feed 1" }));
     await user.click(screen.getByRole("button", { name: "Save showfile" }));
     expect(await screen.findByText("Revision 4")).toBeTruthy();
     const lastSave = fetchMock.mock.calls

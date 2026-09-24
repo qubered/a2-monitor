@@ -2,7 +2,7 @@
 //! (ADR 0031).
 //!
 //! stdin carries raw Float32LE at 48 kHz from `pulse-media-worker`: interleaved frames with
-//! one sample per session mix, in `--routes` order; there is no header. stdout carries JSON
+//! one sample per feed mix, in `--routes` order; there is no header. stdout carries JSON
 //! lines: one `ready` line once the device is open, then a `stats` line every second, or one
 //! `failed` line with the reason before a non-zero exit. The device callback only pulls from
 //! a preallocated ring.
@@ -31,7 +31,7 @@ enum Command {
     List,
     Play {
         device_name: String,
-        /// 1-based device channels for each session mix, in feed order.
+        /// 1-based device channels for each feed's mix, in pipe order.
         routes: Vec<Vec<u16>>,
     },
 }

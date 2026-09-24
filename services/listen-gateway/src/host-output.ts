@@ -10,18 +10,18 @@ export const DEFAULT_HOST_GAIN_DB = 0;
 const MAX_CHANNEL_ID_LENGTH = 128;
 const MAX_CHANGED_BY_LENGTH = 80;
 
-export type HostMonitor = HostOutput["sessions"][number]["monitor"];
+export type HostMonitor = HostOutput["feeds"][number]["monitor"];
 
-/** A host output session as a production defines it (ADR 0031). */
-export type HostSessionConfig = {
+/** A host output feed as a production defines it (ADR 0031). */
+export type HostFeedConfig = {
   id: string;
   name: string;
   outputChannels: number[];
 };
 
-/** The node's own single session, used when the production defines none. */
-export const DEFAULT_SESSION_ID = "default";
-export const DEFAULT_SESSION_NAME = "Host output";
+/** The node's own single feed, used when the production defines none. */
+export const DEFAULT_FEED_ID = "default";
+export const DEFAULT_FEED_NAME = "Host output";
 
 /** A validated partial change from one Live client. */
 export type HostMonitorChange = {
@@ -141,9 +141,9 @@ export function monitorCommand(monitor: HostMonitor): MonitorCommand {
 }
 
 /**
- * The monitor state every Live client in one host output session shares
+ * The monitor state every Live client in one host output feed shares
  * (ADR 0031): whoever changes the selection, mute, dim or level changes it for
- * everyone in the session, and every client sees the change. It is held in
+ * everyone in the feed, and every client sees the change. It is held in
  * memory: a gateway restart starts with nothing selected.
  */
 export class SharedHostMonitor extends EventEmitter {
@@ -191,16 +191,16 @@ export class SharedHostMonitor extends EventEmitter {
   }
 }
 
-type Session = HostSessionConfig & { monitor: SharedHostMonitor };
+type Feed = HostFeedConfig & { monitor: SharedHostMonitor };
 
 /**
- * The host output sessions in effect, in mix order. Reconfiguring keeps each
- * surviving session's shared monitor by id, so renaming a session or adding
+ * The host output feeds in effect, in mix order. Reconfiguring keeps each
+ * surviving feed's shared monitor by id, so renaming a feed or adding
  * another does not interrupt anyone. Emits `monitor` (mix index) when a
- * session's monitor changes and `sessions` when the list changes.
+ * feed's monitor changes and `feeds` when the list changes.
  */
-export class HostOutputSessions extends EventEmitter {
-  private sessions: Session[] = [];
+export class HostOutputFeeds extends EventEmitter {
+  private feeds: Feed[] = [];
 
   constructor(
     defaultChannels: readonly number[],
@@ -210,31 +210,31 @@ export class HostOutputSessions extends EventEmitter {
     this.configure(null, defaultChannels);
   }
 
-  list(): readonly Session[] {
-    return this.sessions;
+  list(): readonly Feed[] {
+    return this.feeds;
   }
 
-  find(id: string): Session | undefined {
-    return this.sessions.find((session) => session.id === id);
+  find(id: string): Feed | undefined {
+    return this.feeds.find((feed) => feed.id === id);
   }
 
   indexOf(id: string): number {
-    return this.sessions.findIndex((session) => session.id === id);
+    return this.feeds.findIndex((feed) => feed.id === id);
   }
 
   routes(): number[][] {
-    return this.sessions.map(({ outputChannels }) => [...outputChannels]);
+    return this.feeds.map(({ outputChannels }) => [...outputChannels]);
   }
 
   /**
-   * Applies a production's sessions, or the default single session when it
+   * Applies a production's feeds, or the default single feed when it
    * defines none. Returns true when anything changed.
    */
   configure(
-    configs: readonly HostSessionConfig[] | null | undefined,
+    configs: readonly HostFeedConfig[] | null | undefined,
     defaultChannels: readonly number[],
   ): boolean {
-    const desired: HostSessionConfig[] = configs?.length
+    const desired: HostFeedConfig[] = configs?.length
       ? configs.map(({ id, name, outputChannels }) => ({
           id,
           name,
@@ -242,26 +242,24 @@ export class HostOutputSessions extends EventEmitter {
         }))
       : [
           {
-            id: DEFAULT_SESSION_ID,
-            name: DEFAULT_SESSION_NAME,
+            id: DEFAULT_FEED_ID,
+            name: DEFAULT_FEED_NAME,
             outputChannels: [...defaultChannels],
           },
         ];
-    const current = this.sessions.map(({ id, name, outputChannels }) => ({
+    const current = this.feeds.map(({ id, name, outputChannels }) => ({
       id,
       name,
       outputChannels,
     }));
     if (JSON.stringify(desired) === JSON.stringify(current)) return false;
-    const previous = new Map(
-      this.sessions.map((session) => [session.id, session]),
-    );
-    for (const session of this.sessions) {
-      if (!desired.some(({ id }) => id === session.id)) {
-        session.monitor.removeAllListeners();
+    const previous = new Map(this.feeds.map((feed) => [feed.id, feed]));
+    for (const feed of this.feeds) {
+      if (!desired.some(({ id }) => id === feed.id)) {
+        feed.monitor.removeAllListeners();
       }
     }
-    this.sessions = desired.map((config) => {
+    this.feeds = desired.map((config) => {
       const monitor =
         previous.get(config.id)?.monitor ?? new SharedHostMonitor(this.now);
       if (!previous.has(config.id)) {
@@ -272,20 +270,20 @@ export class HostOutputSessions extends EventEmitter {
       }
       return { ...config, monitor };
     });
-    this.emit("sessions");
+    this.emit("feeds");
     return true;
   }
 
   /** Clears selections whose input no longer exists on the running device. */
   constrain(channelCount: number): void {
-    for (const { monitor } of this.sessions) monitor.constrain(channelCount);
+    for (const { monitor } of this.feeds) monitor.constrain(channelCount);
   }
 }
 
-/** The `host-output` document: output device state plus every session's shared monitor. */
+/** The `host-output` document: output device state plus every feed's shared monitor. */
 export function hostOutputDocument(
   output: HostOutputState | null,
-  sessions: HostOutputSessions,
+  feeds: HostOutputFeeds,
 ): HostOutput {
   return {
     schemaVersion: "0",
@@ -298,8 +296,8 @@ export function hostOutputDocument(
       underruns: output.underruns,
       droppedFrames: output.droppedFrames,
     },
-    sessions: output
-      ? sessions.list().map(({ id, name, outputChannels, monitor }) => ({
+    feeds: output
+      ? feeds.list().map(({ id, name, outputChannels, monitor }) => ({
           id,
           name,
           outputChannels,

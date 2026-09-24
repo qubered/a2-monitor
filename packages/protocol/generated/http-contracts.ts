@@ -13,9 +13,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: ee8a877de8877fa41512cb5b0f0a0d95529ae423b72e8fd58d6d7eaf68f5493e
+// Schema-SHA256: cccc8d820a9fd33f42d7bac020c68ecddd5245ed336392c10cdfda6f99e7e12e
 // Generator-SHA256: 7c6c8c3297d1ffee85f78fc29a4b03c3fbf3fa68da597de8be09f1f2e73d4cbf
-// Body-SHA256: 404f722489e804b33dc4e0a3a63348ba7e0f11a141b2eb1c5b7938c9a1351489
+// Body-SHA256: a56a271019ab8abadb6e916f5ec1d3bc3a5df9cd45365a7fc6930cd69a3459cc
 
 export type HealthResponse = {
   status: "ok";
@@ -97,7 +97,7 @@ export type Showfile = {
     overlayExpiryMinutes: number;
   };
   hostOutput?: {
-    sessions: Array<{
+    feeds: Array<{
       id: string;
       name: string;
       outputChannels: Array<number>;
@@ -309,7 +309,7 @@ export type HostOutput = {
     underruns: number;
     droppedFrames: number;
   } | null;
-  sessions: Array<{
+  feeds: Array<{
     id: string;
     name: string;
     outputChannels: Array<number>;
@@ -1005,12 +1005,12 @@ const showfileSchema = {
     },
     hostOutput: {
       description:
-        "Host monitor output sessions for this production (ADR 0031). Each session is one shared mix that Live clients join by name; outputChannels are the 1-based channels of the node's host output device that carry it. A device channel belongs to at most one session. Absent means the node's own single default session.",
+        "Host monitor output feeds for this production (ADR 0031). Each feed is one shared mix that Live clients join by name; outputChannels are the 1-based channels of the node's host output device that carry it. A device channel belongs to at most one feed. Absent means the node's own single default feed.",
       type: "object",
       additionalProperties: false,
-      required: ["sessions"],
+      required: ["feeds"],
       properties: {
-        sessions: {
+        feeds: {
           type: "array",
           maxItems: 8,
           items: {
@@ -1892,10 +1892,10 @@ const hostOutputSchema = {
   $id: "https://pulse.local/schema/v0/http/host-output.schema.json",
   title: "Audio node host output",
   description:
-    "The audio node's host monitor output (ADR 0031), served at GET /audio/v0/output and as `output` events on /audio/v0/output/events. `output` is the output device, or null when the node has none. Each of `sessions` is one shared mix on its own output channels: Live clients join a session, and a change by any client in it is heard on its channels and shown to every client in it. A session's `revision` increases with every change to its monitor.",
+    "The audio node's host monitor output (ADR 0031), served at GET /audio/v0/output and as `output` events on /audio/v0/output/events. `output` is the output device, or null when the node has none. Each of `feeds` is one shared mix on its own output channels: Live clients join a feed, and a change by any client in it is heard on its channels and shown to every client in it. A feed's `revision` increases with every change to its monitor.",
   type: "object",
   additionalProperties: false,
-  required: ["schemaVersion", "output", "sessions"],
+  required: ["schemaVersion", "output", "feeds"],
   properties: {
     schemaVersion: {
       const: "0",
@@ -1952,7 +1952,7 @@ const hostOutputSchema = {
         },
       },
     },
-    sessions: {
+    feeds: {
       type: "array",
       maxItems: 8,
       items: {
@@ -1972,7 +1972,7 @@ const hostOutputSchema = {
           },
           outputChannels: {
             description:
-              "1-based device output channels that carry this session's mono mix.",
+              "1-based device output channels that carry this feed's mono mix.",
             type: "array",
             maxItems: 8,
             items: {

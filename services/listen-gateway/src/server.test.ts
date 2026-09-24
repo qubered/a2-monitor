@@ -302,8 +302,8 @@ describe("candidateAddressFor", () => {
 describe("ListenGateway shared host output", () => {
   const output = { outputDevice: "DVS", outputChannels: [3] };
 
-  async function patch(base: string, body: unknown, session = "default") {
-    return fetch(`${base}/audio/v0/output/sessions/${session}`, {
+  async function patch(base: string, body: unknown, feed = "default") {
+    return fetch(`${base}/audio/v0/output/feeds/${feed}`, {
       method: "PATCH",
       headers: json,
       body: JSON.stringify(body),
@@ -320,12 +320,12 @@ describe("ListenGateway shared host output", () => {
     const { base } = await startGateway();
     const state = await readOutput(base);
     expect(state.output).toBeNull();
-    expect(state.sessions).toEqual([]);
+    expect(state.feeds).toEqual([]);
     const refused = await patch(base, { muted: true });
     expect(refused.status).toBe(409);
   });
 
-  it("applies one client's change for everyone in the session and drives its mix", async () => {
+  it("applies one client's change for everyone in the feed and drives its mix", async () => {
     const { worker, base } = await startGateway("Test Device", output);
     worker.emit({
       type: "output-ready",
@@ -356,10 +356,10 @@ describe("ListenGateway shared host output", () => {
       return parseHostOutput(JSON.parse(data));
     };
     const first = await nextDocument();
-    expect(first.sessions).toMatchObject([
+    expect(first.feeds).toMatchObject([
       { id: "default", name: "Host output", outputChannels: [3] },
     ]);
-    expect(first.sessions[0]!.monitor.input).toBeNull();
+    expect(first.feeds[0]!.monitor.input).toBeNull();
 
     const selected = await patch(base, {
       channelId: "ch-lead",
@@ -367,7 +367,7 @@ describe("ListenGateway shared host output", () => {
       changedBy: "Sam (A2)",
     });
     expect(selected.status).toBe(200);
-    const pushed = (await nextDocument()).sessions[0]!;
+    const pushed = (await nextDocument()).feeds[0]!;
     expect(pushed.monitor).toMatchObject({
       channelId: "ch-lead",
       input: 1,
@@ -384,7 +384,7 @@ describe("ListenGateway shared host output", () => {
     });
 
     await patch(base, { dimmed: true, gainDb: -6 });
-    expect((await nextDocument()).sessions[0]!.monitor).toMatchObject({
+    expect((await nextDocument()).feeds[0]!.monitor).toMatchObject({
       input: 1,
       dimmed: true,
       gainDb: -6,
@@ -403,12 +403,12 @@ describe("ListenGateway shared host output", () => {
     await reader.cancel();
   });
 
-  it("keeps sessions independent, each on its own mix and outputs", async () => {
+  it("keeps feeds independent, each on its own mix and outputs", async () => {
     const { worker, base, gateway } = await startGateway("Test Device", output);
-    gateway.hostSessions.configure(
+    gateway.hostFeeds.configure(
       [
-        { id: "hs-a", name: "Comms A", outputChannels: [1] },
-        { id: "hs-b", name: "Comms B", outputChannels: [2] },
+        { id: "feed-a", name: "Comms A", outputChannels: [1] },
+        { id: "feed-b", name: "Comms B", outputChannels: [2] },
       ],
       [3],
     );
@@ -417,24 +417,22 @@ describe("ListenGateway shared host output", () => {
       routes: [[1], [2]],
     });
 
-    await patch(base, { channelId: "ch-a", input: 0 }, "hs-a");
-    await patch(base, { channelId: "ch-b", input: 1, muted: true }, "hs-b");
+    await patch(base, { channelId: "ch-a", input: 0 }, "feed-a");
+    await patch(base, { channelId: "ch-b", input: 1, muted: true }, "feed-b");
     expect(worker.commands.slice(-2)).toEqual([
       { type: "monitor", mix: 0, channel: 0, gain: 1 },
       { type: "monitor", mix: 1, channel: 1, gain: 0 },
     ]);
     const state = await readOutput(base);
     expect(
-      state.sessions.map(({ id, monitor }) => [
-        id,
-        monitor.input,
-        monitor.muted,
-      ]),
+      state.feeds.map(({ id, monitor }) => [id, monitor.input, monitor.muted]),
     ).toEqual([
-      ["hs-a", 0, false],
-      ["hs-b", 1, true],
+      ["feed-a", 0, false],
+      ["feed-b", 1, true],
     ]);
-    expect((await patch(base, { muted: true }, "hs-missing")).status).toBe(404);
+    expect((await patch(base, { muted: true }, "feed-missing")).status).toBe(
+      404,
+    );
   });
 
   it("rejects out-of-range inputs, unpaired selections and unsafe gain", async () => {
@@ -473,7 +471,7 @@ describe("ListenGateway shared host output", () => {
     );
   });
 
-  it("opens the host output on the production's saved sessions at start", async () => {
+  it("opens the host output on the production's saved feeds at start", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () =>
@@ -483,9 +481,9 @@ describe("ListenGateway shared host output", () => {
           updatedAtUtc: null,
           show: { name: "Show" },
           hostOutput: {
-            sessions: [
-              { id: "hs-a", name: "Comms A", outputChannels: [12] },
-              { id: "hs-b", name: "Comms B", outputChannels: [13, 14] },
+            feeds: [
+              { id: "feed-a", name: "Comms A", outputChannels: [12] },
+              { id: "feed-b", name: "Comms B", outputChannels: [13, 14] },
             ],
           },
           device: null,

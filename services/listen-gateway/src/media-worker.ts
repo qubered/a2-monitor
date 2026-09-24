@@ -62,8 +62,8 @@ export type MediaWorkerOptions = {
   captureBinary?: string;
   /**
    * Host monitor output (ADR 0031): all three are set together or not at all.
-   * `outputChannels` are the default single session's channels, used when the
-   * production defines no sessions.
+   * `outputChannels` are the default single feed's channels, used when the
+   * production defines no feeds.
    */
   outputDevice?: string;
   outputChannels?: readonly number[];
@@ -93,14 +93,14 @@ export type HostOutputState = {
   deviceName: string;
   /** Output channels the device has, once it has opened. */
   channelCount: number | null;
-  /** 1-based channels per session mix, in mix order. */
+  /** 1-based channels per feed mix, in mix order. */
   routes: number[][];
   simulated: boolean;
   underruns: number;
   droppedFrames: number;
 };
 
-/** One session's shared mix the worker renders: one input (or none) at one linear gain. */
+/** One feed's shared mix the worker renders: one input (or none) at one linear gain. */
 export type MonitorCommand = { channel: number | null; gain: number };
 
 /** Highest linear monitor gain the worker accepts: +12 dB. */
@@ -122,7 +122,7 @@ export function parseOutputChannels(value: string): number[] {
     throw new Error("Output channels must be distinct.");
   }
   if (channels.length > 8) {
-    throw new Error("At most 8 output channels can carry one session.");
+    throw new Error("At most 8 output channels can carry one feed.");
   }
   return channels;
 }
@@ -431,13 +431,13 @@ export class MediaWorkerManager extends EventEmitter {
   private restartTimer: NodeJS.Timeout | undefined;
   private readyAtMs: number | undefined;
   private readonly outputDevice: string | undefined;
-  /** The app/env channels of the default single session. */
+  /** The app/env channels of the default single feed. */
   private readonly defaultOutputChannels: readonly number[];
-  /** One route per session in effect: the production's, else the default. */
+  /** One route per feed in effect: the production's, else the default. */
   private outputRoutes: number[][];
   private readonly outputBinary: string;
   private outputState: HostOutputState | null;
-  /** Each session's mix, by mix index. */
+  /** Each feed's mix, by mix index. */
   private monitors: MonitorCommand[] = [];
 
   constructor(options: MediaWorkerOptions) {
@@ -498,7 +498,7 @@ export class MediaWorkerManager extends EventEmitter {
   }
 
   /**
-   * Sets one session's shared mix. It is remembered and re-sent whenever the
+   * Sets one feed's shared mix. It is remembered and re-sent whenever the
    * worker or its output restarts, so the output resumes the shared state
    * rather than silence.
    */
@@ -513,21 +513,21 @@ export class MediaWorkerManager extends EventEmitter {
     }
   }
 
-  /** The default single session's channels (app/env). */
+  /** The default single feed's channels (app/env). */
   getDefaultOutputChannels(): number[] {
     return [...this.defaultOutputChannels];
   }
 
-  /** The routes in effect: one list of 1-based channels per session. */
+  /** The routes in effect: one list of 1-based channels per feed. */
   getOutputRoutes(): number[][] {
     return this.outputRoutes.map((route) => [...route]);
   }
 
   /**
-   * Applies the active production's host output sessions as routes, one per
-   * mix (ADR 0031), or the node's default single session when it sets none.
+   * Applies the active production's host output feeds as routes, one per
+   * mix (ADR 0031), or the node's default single feed when it sets none.
    * A change reopens only the output device; capture and listeners carry on.
-   * Callers re-send each session's mix afterwards.
+   * Callers re-send each feed's mix afterwards.
    */
   setOutputRoutes(
     routes: readonly (readonly number[])[] | null | undefined,
@@ -541,7 +541,7 @@ export class MediaWorkerManager extends EventEmitter {
     this.monitors = this.monitors.slice(0, next.length);
     this.setOutputState({
       status: "starting",
-      detail: "Reopening the output on the saved sessions.",
+      detail: "Reopening the output on the saved feeds.",
       routes: next.map((route) => [...route]),
     });
     if (this.child && this.state.status === "ready") {
@@ -549,7 +549,7 @@ export class MediaWorkerManager extends EventEmitter {
     }
   }
 
-  /** Sends the routes, then every session's mix, to a ready worker. */
+  /** Sends the routes, then every feed's mix, to a ready worker. */
   private syncOutput(): void {
     if (!this.outputState) return;
     this.send({ type: "output-routes", routes: this.outputRoutes });
@@ -851,7 +851,7 @@ export class MediaWorkerManager extends EventEmitter {
       case "output-ready":
         this.setOutputState({
           status: "ready",
-          detail: `${event.deviceName} is open: ${event.outputRoutes.length} ${event.outputRoutes.length === 1 ? "session" : "sessions"} on ${event.outputRoutes.flat().length} of ${event.channelCount} outputs.`,
+          detail: `${event.deviceName} is open: ${event.outputRoutes.length} ${event.outputRoutes.length === 1 ? "feed" : "feeds"} on ${event.outputRoutes.flat().length} of ${event.channelCount} outputs.`,
           routes: event.outputRoutes,
           channelCount: event.channelCount,
           underruns: 0,

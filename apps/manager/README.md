@@ -41,7 +41,7 @@ The local MVP implements one narrow management workflow: edit a show name, add
 or remove ordered logical channels, and patch each channel to one observed
 physical input and optional normalized Shure receiver unit/channel. Manager
 owns the multi-unit receiver inventory: name, explicit control IP and channel
-count. The Host output tab defines the production's host output sessions
+count. The Host output tab defines the production's host output feeds
 (ADR 0031): each is a named shared mix on outputs picked from the node's host
 output device (for example Comms A on DVS output 1, Comms B on output 2), with
 what the node's output is doing now. It loads and

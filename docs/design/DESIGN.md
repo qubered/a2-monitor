@@ -630,12 +630,12 @@ permissioned from listening and from marking.
 **Where audio plays.** When the node has a host output
 ([ADR 0031](../decisions/0031-shared-host-monitor-output.md)), Live asks on open
 whether to play on _this device_ or join one of the production's named host
-output _sessions_ (each on its own outputs, with what it is playing now),
-offering the last choice first; a header chip reopens the choice. In a session
-the transport row controls that session's shared mix: the selected card, mute,
-dim and level follow whoever in the session changed them last, the row is
-labelled with the session's name, and it says it is shared and who changed it
-last and when. Other sessions are unaffected, and the device never plays in
+output _feeds_ (each on its own outputs, with what it is playing now),
+offering the last choice first; a header chip reopens the choice. In a feed
+the transport row controls that feed's shared mix: the selected card, mute,
+dim and level follow whoever in the feed changed them last, the row is
+labelled with the feed's name, and it says it is shared and who changed it
+last and when. Other feeds are unaffected, and the device never plays in
 that mode.
 
 ### 10.5 Detail
@@ -973,7 +973,7 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ## 14. Changelog
 
 **2.7.0 — 2026-09-24.** Listen no longer starts muted ([§2.7](#2-principles));
-mute and dim stay one touch away. Live can play in a shared host output session
+mute and dim stay one touch away. Live can play in a shared host output feed
 instead of on the device, chosen on open ([§10.4](#104-the-player), ADR 0031). Implemented in
 Live alongside this entry; not operator-validated.
 

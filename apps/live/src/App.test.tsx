@@ -249,14 +249,14 @@ function liveMeters(): MeterStore {
   return store;
 }
 
-type HostSession = HostOutput["sessions"][number];
+type HostFeed = HostOutput["feeds"][number];
 
-function hostSession(
+function hostFeed(
   id: string,
   name: string,
   outputChannels: number[],
-  monitor: Partial<HostSession["monitor"]> = {},
-): HostSession {
+  monitor: Partial<HostFeed["monitor"]> = {},
+): HostFeed {
   return {
     id,
     name,
@@ -277,16 +277,16 @@ function hostSession(
 
 function hostDocument(
   output: HostOutput["output"] = null,
-  sessions: HostSession[] = output
-    ? [hostSession("hs-a", "Comms A", [1]), hostSession("hs-b", "Comms B", [2])]
+  feeds: HostFeed[] = output
+    ? [hostFeed("feed-a", "Comms A", [1]), hostFeed("feed-b", "Comms B", [2])]
     : [],
 ): HostOutput {
-  return { schemaVersion: "0", output, sessions };
+  return { schemaVersion: "0", output, feeds };
 }
 
 const dvsOutput: NonNullable<HostOutput["output"]> = {
   status: "ready",
-  detail: "Dante Virtual Soundcard is open: 2 sessions on 2 of 64 outputs.",
+  detail: "Dante Virtual Soundcard is open: 2 feeds on 2 of 64 outputs.",
   deviceName: "Dante Virtual Soundcard",
   channelCount: 64,
   simulated: false,
@@ -929,7 +929,7 @@ describe("Live channel grid", () => {
     expect(within(card).getByText("Being worked · Sam (A2)")).toBeTruthy();
   });
 
-  it("asks which session to join and shares that session's selection", async () => {
+  it("asks which feed to join and shares that feed's selection", async () => {
     const user = userEvent.setup();
     window.localStorage.setItem("pulse-operator-name", "Sam");
     const playbackFactory = vi.fn<PlaybackFactory>();
@@ -937,8 +937,8 @@ describe("Live channel grid", () => {
       audioDeviceSource: readyDevice,
       playbackFactory,
       hostOutput: hostDocument(dvsOutput, [
-        hostSession("hs-a", "Comms A", [1]),
-        hostSession("hs-b", "Comms B", [2], {
+        hostFeed("feed-a", "Comms A", [1]),
+        hostFeed("feed-b", "Comms B", [2], {
           channelId: "ch-talkback",
           input: 1,
           muted: true,
@@ -975,7 +975,7 @@ describe("Live channel grid", () => {
       screen.getByRole("button", { name: "Select Talkback, channel 2" }),
     );
     expect(hostOutput.changes.at(-1)).toEqual({
-      sessionId: "hs-a",
+      feedId: "feed-a",
       channelId: "ch-talkback",
       input: 1,
       changedBy: "Sam (A2)",
@@ -989,21 +989,21 @@ describe("Live channel grid", () => {
         "Comms A: input 2 on output 1 of Dante Virtual Soundcard.",
       ),
     ).toBeTruthy();
-    // The iPad itself never opens a listen session in host mode.
+    // The iPad itself never opens a listen feed in host mode.
     expect(playbackFactory).not.toHaveBeenCalled();
 
     // Another operator in Comms A selects a different channel: this device follows.
     act(() =>
       hostOutput.push(
         hostDocument(dvsOutput, [
-          hostSession("hs-a", "Comms A", [1], {
+          hostFeed("feed-a", "Comms A", [1], {
             channelId: "ch-marguerite",
             input: 0,
             muted: true,
             changedBy: "Alex (A2)",
             changedAtUtc: new Date().toISOString(),
           }),
-          hostSession("hs-b", "Comms B", [2]),
+          hostFeed("feed-b", "Comms B", [2]),
         ]),
       ),
     );
@@ -1020,7 +1020,7 @@ describe("Live channel grid", () => {
 
     await user.click(screen.getByRole("button", { name: "Mute" }));
     expect(hostOutput.changes.at(-1)).toEqual({
-      sessionId: "hs-a",
+      feedId: "feed-a",
       muted: false,
       changedBy: "Sam (A2)",
     });
@@ -1028,7 +1028,7 @@ describe("Live channel grid", () => {
     // The production drops Comms A: this device is asked again.
     act(() =>
       hostOutput.push(
-        hostDocument(dvsOutput, [hostSession("hs-b", "Comms B", [2])]),
+        hostDocument(dvsOutput, [hostFeed("feed-b", "Comms B", [2])]),
       ),
     );
     const again = screen.getByRole("dialog", {
@@ -1055,7 +1055,7 @@ describe("Live channel grid", () => {
       audioDeviceSource: readyDevice,
       playbackFactory,
       hostOutput: hostDocument(dvsOutput, [
-        hostSession("hs-a", "Comms A", [1], {
+        hostFeed("feed-a", "Comms A", [1], {
           channelId: "ch-marguerite",
           input: 0,
         }),

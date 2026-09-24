@@ -605,23 +605,23 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
   );
 
   /**
-   * Host output sessions (ADR 0031): at least one, each with a distinct id and
-   * name and at least one output channel, and no channel in two sessions.
+   * Host output feeds (ADR 0031): at least one, each with a distinct id and
+   * name and at least one output channel, and no channel in two feeds.
    */
   function isCoherentHostOutput(
     hostOutput: NonNullable<Showfile["hostOutput"]>,
   ): boolean {
-    const { sessions } = hostOutput;
-    const ids = sessions.map(({ id }) => id.trim());
-    const names = sessions.map(({ name }) => name.trim().toLowerCase());
-    const channels = sessions.flatMap(({ outputChannels }) => outputChannels);
+    const { feeds } = hostOutput;
+    const ids = feeds.map(({ id }) => id.trim());
+    const names = feeds.map(({ name }) => name.trim().toLowerCase());
+    const channels = feeds.flatMap(({ outputChannels }) => outputChannels);
     return (
-      sessions.length > 0 &&
+      feeds.length > 0 &&
       ids.every((id) => id.length > 0) &&
       names.every((name) => name.length > 0) &&
       new Set(ids).size === ids.length &&
       new Set(names).size === names.length &&
-      sessions.every(({ outputChannels }) => outputChannels.length > 0) &&
+      feeds.every(({ outputChannels }) => outputChannels.length > 0) &&
       new Set(channels).size === channels.length
     );
   }

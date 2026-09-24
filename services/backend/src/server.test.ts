@@ -294,48 +294,48 @@ describe("backend health and Live snapshot", () => {
 });
 
 describe("backend showfile host output", () => {
-  const session = (id: string, name: string, outputChannels: number[]) => ({
+  const feed = (id: string, name: string, outputChannels: number[]) => ({
     id,
     name,
     outputChannels,
   });
 
-  it("saves the production's host output sessions and rejects incoherent ones", async () => {
+  it("saves the production's host output feeds and rejects incoherent ones", async () => {
     const server = trackedServer();
     const initial = (
       await server.inject({ method: "GET", url: "/api/v1/showfile" })
     ).json();
-    const sessions = [
-      session("hs-a", "Comms A", [1]),
-      session("hs-b", "Comms B", [2, 12]),
+    const feeds = [
+      feed("feed-a", "Comms A", [1]),
+      feed("feed-b", "Comms B", [2, 12]),
     ];
 
     const saved = await server.inject({
       method: "PUT",
       url: "/api/v1/showfile",
-      payload: { ...initial, hostOutput: { sessions } },
+      payload: { ...initial, hostOutput: { feeds } },
     });
     expect(saved.statusCode).toBe(200);
     const reloaded = await server.inject({
       method: "GET",
       url: "/api/v1/showfile",
     });
-    expect(reloaded.json()).toMatchObject({ hostOutput: { sessions } });
+    expect(reloaded.json()).toMatchObject({ hostOutput: { feeds } });
 
     for (const invalid of [
       [],
-      [session("hs-a", "Comms A", [])],
-      [session("hs-a", "Comms A", [3, 3])],
-      [session("hs-a", "Comms A", [1]), session("hs-b", "Comms B", [1])],
-      [session("hs-a", "Comms A", [1]), session("hs-a", "Comms B", [2])],
-      [session("hs-a", "Comms", [1]), session("hs-b", "comms", [2])],
-      [session("hs-a", "  ", [1])],
-      [session("hs-a", "Comms A", [0])],
+      [feed("feed-a", "Comms A", [])],
+      [feed("feed-a", "Comms A", [3, 3])],
+      [feed("feed-a", "Comms A", [1]), feed("feed-b", "Comms B", [1])],
+      [feed("feed-a", "Comms A", [1]), feed("feed-a", "Comms B", [2])],
+      [feed("feed-a", "Comms", [1]), feed("feed-b", "comms", [2])],
+      [feed("feed-a", "  ", [1])],
+      [feed("feed-a", "Comms A", [0])],
     ]) {
       const refused = await server.inject({
         method: "PUT",
         url: "/api/v1/showfile",
-        payload: { ...saved.json(), hostOutput: { sessions: invalid } },
+        payload: { ...saved.json(), hostOutput: { feeds: invalid } },
       });
       expect(refused.statusCode, JSON.stringify(invalid)).toBe(400);
     }
