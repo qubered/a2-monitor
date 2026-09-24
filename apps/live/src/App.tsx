@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type MouseEvent,
 } from "react";
 import {
   parseAlertLog,
@@ -609,6 +610,8 @@ export function App({
       ? void changeHost({ dimmed: !shownDimmed })
       : setDimmed((value) => !value);
   const keyboardToggles = useRef({ toggleMute, toggleDim });
+  /** Escape closes an open sheet first; with none open it clears the selection. */
+  const escapeAction = useRef<() => void>(() => undefined);
   useEffect(() => {
     keyboardToggles.current = { toggleMute, toggleDim };
   });
@@ -624,11 +627,7 @@ export function App({
       }
       if (event.key.toLowerCase() === "m") keyboardToggles.current.toggleMute();
       if (event.key.toLowerCase() === "d") keyboardToggles.current.toggleDim();
-      if (event.key === "Escape") {
-        setDetailId(null);
-        setExceptionsOpen(false);
-        setTurnoverRoom(null);
-      }
+      if (event.key === "Escape") escapeAction.current();
     }
     window.addEventListener("keydown", handleKeyboard);
     return () => window.removeEventListener("keydown", handleKeyboard);
@@ -951,6 +950,33 @@ export function App({
     // when the new input is flowing, so a source change never shows a reconnect.
   }
 
+  /** Stops what is playing: on this device, or the joined feed's shared selection. */
+  function clearSelection() {
+    if (isA1) return;
+    if (hostMode) {
+      if (hostMonitor?.input == null) return;
+      void changeHost({ channelId: null, input: null });
+      return;
+    }
+    if (selectedId === null) return;
+    setSelectedId(null);
+    setPlayback({
+      status: "idle",
+      detail: "Select a patched channel to listen.",
+    });
+  }
+
+  /** A press on empty space between or beside the cards clears the selection. */
+  function clearOnBlankPress(event: MouseEvent<HTMLElement>) {
+    const target = event.target;
+    if (
+      target instanceof HTMLElement &&
+      target.matches(".channel-main, .channel-group, .channel-grid")
+    ) {
+      clearSelection();
+    }
+  }
+
   const hostOutputInfo = hostDocument?.output ?? null;
   const hostPlayback: PlaybackUpdate =
     hostOutput.connection === "offline" || !hostDocument
@@ -995,6 +1021,22 @@ export function App({
   };
   const outputPrompt =
     !isA1 && hostDocument?.output && chosenDestination === null;
+
+  useEffect(() => {
+    escapeAction.current = () => {
+      const sheetOpen =
+        detailId !== null ||
+        exceptionsOpen ||
+        turnoverRoom !== null ||
+        micCheckId !== null ||
+        outputSheetOpen ||
+        outputPrompt;
+      setDetailId(null);
+      setExceptionsOpen(false);
+      setTurnoverRoom(null);
+      if (!sheetOpen) clearSelection();
+    };
+  });
   // What each feed is playing, for the destination prompt.
   const nowPlaying = Object.fromEntries(
     (hostDocument?.feeds ?? []).map(({ id, monitor }) => {
@@ -1240,7 +1282,7 @@ export function App({
         </nav>
       ) : null}
 
-      <main className="channel-main">
+      <main className="channel-main" onClick={clearOnBlankPress}>
         {channels.length ? (
           <>
             <div className="grid-heading">
