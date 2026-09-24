@@ -151,6 +151,12 @@
             "minLength": 1,
             "maxLength": 64
           },
+          "trimDb": {
+            "description": "Monitor trim in dB, applied to this channel's input before the operator's level and before any host output feed. Absent means 0. It never changes meters, alerts or the captured audio.",
+            "type": "number",
+            "minimum": -24,
+            "maximum": 24
+          },
           "micType": {
             "enum": [
               "lavalier",

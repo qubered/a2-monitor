@@ -120,7 +120,7 @@ Live renders one shared monitoring state from the backend (ADR 0027):
 - listening over WebRTC/Opus directly from the node (ADR 0026), unmuted on
   start (ADR 0031). Changing input switches the node's selection inside the
   same session, so mute, dim and gain carry over; gain runs from `-60 dB` to
-  `+12 dB` and dim adds `-12 dB`; and
+  `+24 dB` (under the channel's showfile trim, ADR 0033) and dim adds `-12 dB`; and
 - shared host output feeds (ADR 0031). When the node has an output device,
   Live asks on open whether audio plays on this device or in one of the
   production's feeds (for example Comms A on DVS output 1). Everyone in a

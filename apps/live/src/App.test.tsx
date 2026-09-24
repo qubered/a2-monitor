@@ -294,6 +294,15 @@ const dvsOutput: NonNullable<HostOutput["output"]> = {
   droppedFrames: 0,
 };
 
+/** Opens the header's settings menu and returns one of its items. */
+async function settingsItem(
+  user: ReturnType<typeof userEvent.setup>,
+  name: RegExp,
+) {
+  await user.click(await screen.findByRole("button", { name: /^Settings/ }));
+  return screen.getByRole("menuitem", { name });
+}
+
 function renderApp(
   state: LiveState | null,
   options: {
@@ -369,7 +378,10 @@ describe("Live channel grid", () => {
     const user = userEvent.setup();
     renderApp(stateWith());
 
-    expect(await screen.findByText("Monitor output is unmuted")).toBeTruthy();
+    expect(
+      await screen.findByRole("button", { name: "Mute", pressed: false }),
+    ).toBeTruthy();
+    expect(screen.queryByText(/is muted|is dimmed/)).toBeNull();
     await user.click(
       screen.getByRole("button", { name: "Select Talkback, channel 2" }),
     );
@@ -410,11 +422,17 @@ describe("Live channel grid", () => {
         }),
     );
     vi.stubGlobal("fetch", post);
-    renderApp(raised);
+    const { view } = renderApp(raised);
 
-    expect(
-      screen.getByRole("button", { name: "1 to acknowledge · 1 critical" }),
-    ).toBeTruthy();
+    const bell = screen.getByRole("button", {
+      name: "1 to acknowledge · 1 critical",
+    });
+    // An unacknowledged critical alert glows around its card and the bell.
+    const alertedCard = view.container.querySelector(
+      '[data-channel-id="ch-marguerite"]',
+    )!;
+    expect(alertedCard.classList.contains("is-critical-alert")).toBe(true);
+    expect(bell.classList.contains("is-pulsing")).toBe(true);
     await user.click(
       screen.getByRole("button", {
         name: "Battery critical on Marguerite, channel 1. Press to acknowledge.",
@@ -428,9 +446,12 @@ describe("Live channel grid", () => {
         body: JSON.stringify({ operator: "Sam (A2)" }),
       }),
     );
-    expect(
-      await screen.findByRole("button", { name: "1 active · all seen" }),
-    ).toBeTruthy();
+    const seen = await screen.findByRole("button", {
+      name: "1 active · all seen",
+    });
+    // Seen is not fixed, but nothing is left to glow.
+    expect(seen.classList.contains("is-pulsing")).toBe(false);
+    expect(alertedCard.classList.contains("is-critical-alert")).toBe(false);
     expect(
       screen.queryByRole("button", { name: /Press to acknowledge/ }),
     ).toBeNull();
@@ -439,6 +460,167 @@ describe("Live channel grid", () => {
       .getByRole("button", { name: "Select Marguerite, channel 1" })
       .closest("article")!;
     expect(card.classList.contains("is-selected")).toBe(false);
+  });
+
+  it("stops what is playing when empty space beside the cards is pressed", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem("pulse-selected-channel", "ch-marguerite");
+    const playbackFactory = vi.fn<PlaybackFactory>(() => ({
+      setChannel: vi.fn(),
+      setMuted: vi.fn(async () => undefined),
+      setDimmed: vi.fn(),
+      setGainDb: vi.fn(),
+      setTrimDb: vi.fn(),
+      close: vi.fn(),
+    }));
+    const { view } = renderApp(stateWith(), {
+      audioDeviceSource: readyDevice,
+      playbackFactory,
+    });
+    const card = screen
+      .getByRole("button", { name: "Select Marguerite, channel 1" })
+      .closest("article")!;
+    expect(card.classList.contains("is-selected")).toBe(true);
+
+    // A press on a card or its heading is not a press on empty space.
+    await user.click(screen.getByRole("heading", { level: 1 }));
+    expect(card.classList.contains("is-selected")).toBe(true);
+
+    await user.click(view.container.querySelector(".channel-grid")!);
+    expect(card.classList.contains("is-selected")).toBe(false);
+    expect(window.localStorage.getItem("pulse-selected-channel")).toBeNull();
+    // The session ends with the selection.
+    expect(playbackFactory.mock.results[0]!.value.close).toHaveBeenCalled();
+  });
+
+  it("clears the selection with Escape, but Escape first closes an open detail", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem("pulse-selected-channel", "ch-marguerite");
+    renderApp(stateWith(), {
+      audioDeviceSource: readyDevice,
+      playbackFactory: vi.fn<PlaybackFactory>(() => ({
+        setChannel: vi.fn(),
+        setMuted: vi.fn(async () => undefined),
+        setDimmed: vi.fn(),
+        setGainDb: vi.fn(),
+        setTrimDb: vi.fn(),
+        close: vi.fn(),
+      })),
+    });
+    const card = () =>
+      screen
+        .getByRole("button", { name: "Select Marguerite, channel 1" })
+        .closest("article")!;
+
+    await user.click(
+      screen.getByRole("button", { name: "Open details for Marguerite" }),
+    );
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(card().classList.contains("is-selected")).toBe(true);
+
+    await user.keyboard("{Escape}");
+    expect(card().classList.contains("is-selected")).toBe(false);
+  });
+
+  it("shows a channel's trim and applies it under the operator's level when listening", async () => {
+    const user = userEvent.setup();
+    const setTrimDb = vi.fn();
+    const playbackFactory = vi.fn<PlaybackFactory>(() => ({
+      setChannel: vi.fn(),
+      setMuted: vi.fn(async () => undefined),
+      setDimmed: vi.fn(),
+      setGainDb: vi.fn(),
+      setTrimDb,
+      close: vi.fn(),
+    }));
+    const base = stateWith();
+    const state = {
+      ...base,
+      channels: base.channels.map((entry, index) =>
+        index === 0 ? { ...entry, trimDb: 6 } : entry,
+      ),
+    };
+    renderApp(state, { audioDeviceSource: readyDevice, playbackFactory });
+
+    const marguerite = screen
+      .getByRole("button", { name: "Select Marguerite, channel 1" })
+      .closest("article")!;
+    expect(within(marguerite).getByText("Trim +6 dB")).toBeTruthy();
+    const talkback = screen
+      .getByRole("button", { name: "Select Talkback, channel 2" })
+      .closest("article")!;
+    expect(within(talkback).queryByText(/^Trim/)).toBeNull();
+
+    await user.click(
+      screen.getByRole("button", { name: "Select Marguerite, channel 1" }),
+    );
+    await vi.waitFor(() => expect(setTrimDb).toHaveBeenLastCalledWith(6));
+    await user.click(
+      screen.getByRole("button", { name: "Select Talkback, channel 2" }),
+    );
+    await vi.waitFor(() => expect(setTrimDb).toHaveBeenLastCalledWith(0));
+  });
+
+  it("clears a channel's alerts from its detail view and offers it only when something is raised", async () => {
+    const user = userEvent.setup();
+    const cleared = stateWith({ revision: 12, alerts: [] });
+    const post = vi.fn(
+      async () =>
+        new Response(JSON.stringify(cleared), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+    vi.stubGlobal("fetch", post);
+    renderApp(stateWith({ alerts: [alert()] }));
+
+    await user.click(
+      screen.getByRole("button", { name: "Open details for Marguerite" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Clear alerts and reset" }),
+    );
+    expect(post).toHaveBeenCalledWith(
+      "/api/v1/channels/ch-marguerite/reset",
+      expect.objectContaining({ method: "POST" }),
+    );
+    await vi.waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Clear alerts and reset" }),
+      ).toBeNull(),
+    );
+  });
+
+  it("keeps the rarely changed settings in one header menu", async () => {
+    const user = userEvent.setup();
+    renderApp(stateWith());
+
+    const cog = await screen.findByRole("button", {
+      name: "Settings. Needs your attention",
+    });
+    expect(cog.getAttribute("aria-expanded")).toBe("false");
+    await user.click(cog);
+    expect(cog.getAttribute("aria-expanded")).toBe("true");
+    const items = screen.getAllByRole("menuitem");
+    // No host output: no audio choice to make, so just the operator and Manager.
+    expect(
+      items.map((item) => item.querySelector("strong")?.textContent),
+    ).toEqual(["You", "Manager"]);
+    expect(items[0]!.textContent).toContain("Set your name");
+    expect(items[1]!.getAttribute("href")).toBe("/manager/");
+    // The first item takes focus and the arrows move through the menu.
+    expect(document.activeElement).toBe(items[0]);
+    await user.keyboard("{ArrowDown}");
+    expect(document.activeElement).toBe(items[1]);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(document.activeElement).toBe(cog);
+
+    await user.click(cog);
+    await user.click(screen.getByRole("menuitem", { name: /^You/ }));
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(screen.getByRole("dialog")).toBeTruthy();
   });
 
   it("lets a caution overlay expire while it still counts as outstanding", () => {
@@ -457,9 +639,9 @@ describe("Live channel grid", () => {
     expect(
       screen.queryByRole("button", { name: /Press to acknowledge/ }),
     ).toBeNull();
-    expect(
-      screen.getByRole("button", { name: "1 to acknowledge" }),
-    ).toBeTruthy();
+    const bell = screen.getByRole("button", { name: "1 to acknowledge" });
+    // Only a critical alert glows.
+    expect(bell.classList.contains("is-pulsing")).toBe(false);
   });
 
   it("keeps showfile order when a channel raises a critical alert", () => {
@@ -753,6 +935,7 @@ describe("Live channel grid", () => {
         setMuted,
         setDimmed: vi.fn(),
         setGainDb: vi.fn(),
+        setTrimDb: vi.fn(),
         close,
       };
     });
@@ -775,7 +958,7 @@ describe("Live channel grid", () => {
       ),
     );
     expect(setMuted).toHaveBeenCalledWith(false);
-    expect(screen.getByText("Monitor output is unmuted")).toBeTruthy();
+    expect(screen.queryByText(/is muted|is dimmed/)).toBeNull();
     const card = screen
       .getByRole("button", { name: "Select Talkback, channel 2" })
       .closest("article")!;
@@ -794,7 +977,7 @@ describe("Live channel grid", () => {
     expect(setChannel).toHaveBeenLastCalledWith(0);
     expect(playbackFactory).toHaveBeenCalledOnce();
     expect(close).not.toHaveBeenCalled();
-    expect(screen.getByText("Monitor output is unmuted")).toBeTruthy();
+    expect(screen.queryByText(/is muted|is dimmed/)).toBeNull();
   });
 
   it("refuses to listen to a channel that is not patched to an input", async () => {
@@ -963,8 +1146,12 @@ describe("Live channel grid", () => {
     );
     await user.click(within(prompt).getByRole("button", { name: /^Comms A/ }));
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(screen.getByRole("button", { name: "Audio: Comms A" })).toBeTruthy();
+    expect(await settingsItem(user, /Audio output\s*Comms A/)).toBeTruthy();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).toBeNull();
     expect(screen.getByText("Comms A idle")).toBeTruthy();
+    // Nothing else is spelled out when nothing is selected.
+    expect(screen.queryByText(/Nothing selected in/)).toBeNull();
     // Comms B's selection is not shown in Comms A.
     const talkback = screen
       .getByRole("button", { name: "Select Talkback, channel 2" })
@@ -984,11 +1171,7 @@ describe("Live channel grid", () => {
       expect(talkback.classList.contains("is-listening")).toBe(true),
     );
     expect(screen.getByText("Playing on Comms A")).toBeTruthy();
-    expect(
-      screen.getByText(
-        "Comms A: input 2 on output 1 of Dante Virtual Soundcard.",
-      ),
-    ).toBeTruthy();
+    expect(screen.getByText("Input 2 · output 1")).toBeTruthy();
     // The iPad itself never opens a listen feed in host mode.
     expect(playbackFactory).not.toHaveBeenCalled();
 
@@ -1013,9 +1196,7 @@ describe("Live channel grid", () => {
     expect(marguerite.classList.contains("is-selected")).toBe(true);
     expect(talkback.classList.contains("is-selected")).toBe(false);
     expect(screen.getByText("Comms A is muted")).toBeTruthy();
-    expect(
-      screen.getByText("Shared with everyone in Comms A.", { exact: false }),
-    ).toBeTruthy();
+    expect(screen.queryByText(/Shared with everyone in Comms A/)).toBeNull();
     expect(screen.getByText(/Last change: Alex \(A2\)/)).toBeTruthy();
 
     await user.click(screen.getByRole("button", { name: "Mute" }));
@@ -1063,9 +1244,7 @@ describe("Live channel grid", () => {
       audioDeviceSource: readyDevice,
       hostOutput: hostDocument(dvsOutput, feeds),
     });
-    expect(
-      await screen.findByRole("button", { name: "Audio: Comms B" }),
-    ).toBeTruthy();
+    expect(await settingsItem(user, /Audio output\s*Comms B/)).toBeTruthy();
     expect(screen.queryByRole("dialog")).toBeNull();
     cleanup();
 
@@ -1079,6 +1258,31 @@ describe("Live channel grid", () => {
     ).toBeTruthy();
   });
 
+  it("clears the feed's selection when empty space is pressed while joined", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem("pulse-operator-name", "Sam");
+    window.localStorage.setItem("pulse-output-destination", "host:feed-a");
+    const { hostOutput, view } = renderApp(stateWith(), {
+      audioDeviceSource: readyDevice,
+      hostOutput: hostDocument(dvsOutput, [
+        hostFeed("feed-a", "Comms A", [1], {
+          channelId: "ch-marguerite",
+          input: 0,
+        }),
+      ]),
+    });
+
+    await settingsItem(user, /Audio output\s*Comms A/);
+    await user.keyboard("{Escape}");
+    await user.click(view.container.querySelector(".channel-grid")!);
+    expect(hostOutput.changes.at(-1)).toEqual({
+      feedId: "feed-a",
+      channelId: null,
+      input: null,
+      changedBy: "Sam (A2)",
+    });
+  });
+
   it("plays on this device when chosen, without touching the host output", async () => {
     const user = userEvent.setup();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
@@ -1086,6 +1290,7 @@ describe("Live channel grid", () => {
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
+      setTrimDb: vi.fn(),
       close: vi.fn(),
     }));
     window.localStorage.setItem("pulse-selected-channel", "ch-talkback");
@@ -1116,9 +1321,7 @@ describe("Live channel grid", () => {
     expect(hostOutput.changes).toEqual([]);
 
     // The choice can be changed from the header.
-    await user.click(
-      screen.getByRole("button", { name: "Audio: this device" }),
-    );
+    await user.click(await settingsItem(user, /Audio output\s*This device/));
     const sheet = screen.getByRole("dialog", {
       name: "Where should audio play?",
     });
@@ -1304,14 +1507,35 @@ describe("Rooms", () => {
     ).toBeTruthy();
   });
 
-  it("shows one room per device and remembers it", async () => {
+  it("switches room from the header, shows each room's state, and remembers the choice", async () => {
     const user = userEvent.setup();
-    renderApp(roomed());
-    const picker = await screen.findByRole("navigation", { name: "Rooms" });
-    await user.click(
-      within(picker).getByRole("button", { name: /Breakout B/ }),
-    );
+    const state = roomed();
+    renderApp({
+      ...state,
+      alerts: [alert({ channelId: "ch-talkback" })],
+      summary: { active: 1, outstanding: 1, outstandingCritical: 1 },
+    });
+    const header = await screen.findByRole("button", {
+      name: /^Room: All rooms\. Change room/,
+    });
+    await user.click(header);
 
+    const sheet = screen.getByRole("dialog", { name: "Room" });
+    const rows = within(sheet).getAllByRole("button", { pressed: undefined });
+    const names = rows
+      .filter((row) => row.classList.contains("room-option"))
+      .map((row) => row.querySelector("strong")?.textContent);
+    expect(names).toEqual(["All rooms", "Ballroom", "Breakout B", "No room"]);
+    const row = (name: RegExp) =>
+      within(sheet).getByRole("button", { name }).textContent;
+    expect(row(/^Breakout B/)).toContain("Next: Workshop 09:00");
+    expect(row(/^Breakout B/)).toContain("1 critical");
+    expect(row(/^Ballroom/)).toContain("Clear");
+
+    await user.click(
+      within(sheet).getByRole("button", { name: /^Breakout B/ }),
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
     expect(window.localStorage.getItem("pulse-room")).toBe("room-breakout");
     expect(screen.getByRole("region", { name: "Lectern" })).toBeTruthy();
     expect(screen.queryByText("Marguerite", { selector: "h2" })).toBeNull();
@@ -1319,6 +1543,115 @@ describe("Rooms", () => {
     expect(
       screen.queryByRole("region", { name: /Run of show: Ballroom/ }),
     ).toBeNull();
+    // The header names the room, and says when another one needs someone.
+    expect(
+      screen.getByRole("button", { name: /^Room: Breakout B\. Change room/ }),
+    ).toBeTruthy();
+  });
+
+  it("hints in the header when a room other than the shown one needs someone", async () => {
+    window.localStorage.setItem("pulse-room", "room-ballroom");
+    const state = roomed();
+    renderApp({
+      ...state,
+      alerts: [alert({ channelId: "ch-talkback" })],
+      summary: { active: 1, outstanding: 1, outstandingCritical: 1 },
+    });
+    expect(
+      await screen.findByRole("button", {
+        name: "Room: Ballroom. Change room. Another room needs attention",
+      }),
+    ).toBeTruthy();
+  });
+
+  it("filters by category instead of Wireless and Wired, and offers the same choices as a dropdown", async () => {
+    const user = userEvent.setup();
+    renderApp(roomed());
+    const nav = await screen.findByRole("navigation", {
+      name: "Channel filters",
+    });
+    const labels = within(nav)
+      .getAllByRole("button")
+      .map((button) => button.childNodes[0]?.textContent?.trim());
+    expect(labels).toEqual([
+      "All channels",
+      "Needs someone",
+      "Ballroom · Stage",
+      "Breakout B · Lectern",
+    ]);
+    const select = screen.getByRole("combobox", { name: "Channel filter" });
+    expect(
+      within(select)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual([
+      "All channels (3)",
+      "Needs someone (0)",
+      "Ballroom · Stage (1)",
+      "Breakout B · Lectern (1)",
+    ]);
+
+    await user.click(
+      within(nav).getByRole("button", { name: /^Breakout B · Lectern/ }),
+    );
+    expect(screen.getByText("Talkback", { selector: "h2" })).toBeTruthy();
+    expect(screen.queryByText("Marguerite", { selector: "h2" })).toBeNull();
+    expect((select as HTMLSelectElement).value).toBe("cat:cat-lectern");
+
+    // The dropdown drives the same filter.
+    await user.selectOptions(select, "cat:cat-stage");
+    expect(screen.getByText("Marguerite", { selector: "h2" })).toBeTruthy();
+    expect(screen.queryByText("Talkback", { selector: "h2" })).toBeNull();
+  });
+
+  it("puts the chips that do not fit into a More dropdown and keeps the active one in the row", async () => {
+    const user = userEvent.setup();
+    // Chips are 100 px and More is 40 px in a 380 px row: three chips and More fit.
+    const widthOf = vi
+      .spyOn(HTMLElement.prototype, "offsetWidth", "get")
+      .mockImplementation(function (this: HTMLElement) {
+        return this.hasAttribute("data-more") ? 40 : 100;
+      });
+    const rowWidth = vi
+      .spyOn(HTMLElement.prototype, "clientWidth", "get")
+      .mockReturnValue(380);
+    try {
+      renderApp(roomed());
+      const nav = await screen.findByRole("navigation", {
+        name: "Channel filters",
+      });
+      const chips = () =>
+        within(nav)
+          .getAllByRole("button")
+          .map((button) => button.childNodes[0]?.textContent?.trim());
+      expect(chips()).toEqual([
+        "All channels",
+        "Needs someone",
+        "Ballroom · Stage",
+        "More",
+      ]);
+
+      await user.click(within(nav).getByRole("button", { name: /^More/ }));
+      const menu = within(nav).getByRole("menu");
+      await user.click(
+        within(menu).getByRole("menuitemradio", {
+          name: /Breakout B · Lectern/,
+        }),
+      );
+      expect(screen.queryByRole("menu")).toBeNull();
+      // The choice moves into the row rather than vanishing into the dropdown.
+      expect(chips()).toEqual([
+        "All channels",
+        "Needs someone",
+        "Breakout B · Lectern",
+        "More",
+      ]);
+      expect(screen.getByText("Talkback", { selector: "h2" })).toBeTruthy();
+      expect(screen.queryByText("Marguerite", { selector: "h2" })).toBeNull();
+    } finally {
+      widthOf.mockRestore();
+      rowWidth.mockRestore();
+    }
   });
 
   it("falls back to every room when the remembered room is gone", async () => {

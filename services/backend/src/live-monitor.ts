@@ -35,7 +35,11 @@ import {
   type ReportAction,
   type ReportPersistence,
 } from "./reports.js";
-import { evaluate, type ChannelTracker } from "./live-model.js";
+import {
+  evaluate,
+  resetChannelTracker,
+  type ChannelTracker,
+} from "./live-model.js";
 import { NodeObserver, type NodeSource } from "./node-observer.js";
 import type { ProductionStore } from "./productions.js";
 import { emptyShowfile } from "./showfile.js";
@@ -356,6 +360,24 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
       await this.tick();
     }
     return alert;
+  }
+
+  /**
+   * Clears one channel's alerts and returns it to its default, unarmed state
+   * after its transmitter was switched off. The channel re-arms by itself when
+   * a transmitter or signal is seen again. Null when the show has no such channel.
+   */
+  async resetChannel(channelId: string): Promise<PublishedState | null> {
+    const showfile = this.showfile ?? (await this.productionStore.loadActive());
+    const known = showfile.channels.some(
+      ({ id }, position) => (id ?? `position-${position + 1}`) === channelId,
+    );
+    if (!known) return null;
+    resetChannelTracker(this.trackers, channelId);
+    this.book.clearChannel(channelId, this.now());
+    this.schedulePersist();
+    await this.tick();
+    return this.current();
   }
 
   /** Queues one evaluation pass after any pass already running; exposed for deterministic tests. */

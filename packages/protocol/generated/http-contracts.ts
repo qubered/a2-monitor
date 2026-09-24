@@ -13,9 +13,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: cccc8d820a9fd33f42d7bac020c68ecddd5245ed336392c10cdfda6f99e7e12e
+// Schema-SHA256: 29102e604cc286017df95fdd1a758d78893f2166bbc549e71a62a020b67fcd6f
 // Generator-SHA256: 7c6c8c3297d1ffee85f78fc29a4b03c3fbf3fa68da597de8be09f1f2e73d4cbf
-// Body-SHA256: a56a271019ab8abadb6e916f5ec1d3bc3a5df9cd45365a7fc6930cd69a3459cc
+// Body-SHA256: 42ba6793a215a6b36f9c176953f9f48cfd186f7461a0148c148bd2614b770dad
 
 export type HealthResponse = {
   status: "ok";
@@ -139,6 +139,7 @@ export type Showfile = {
     performer?: string | null;
     shureChannelIndex?: number | null;
     shureReceiverId?: string | null;
+    trimDb?: number;
     micType?:
       | "lavalier"
       | "headset"
@@ -345,6 +346,7 @@ export type LiveStateChannel = {
   name: string;
   performer: string | null;
   kind: "wireless" | "wired";
+  trimDb?: number;
   micType:
     | "lavalier"
     | "headset"
@@ -1148,6 +1150,13 @@ const showfileSchema = {
             type: ["string", "null"],
             minLength: 1,
             maxLength: 64,
+          },
+          trimDb: {
+            description:
+              "Monitor trim in dB, applied to this channel's input before the operator's level and before any host output feed. Absent means 0. It never changes meters, alerts or the captured audio.",
+            type: "number",
+            minimum: -24,
+            maximum: 24,
           },
           micType: {
             enum: [
@@ -2022,7 +2031,7 @@ const hostOutputSchema = {
               gainDb: {
                 type: "number",
                 minimum: -60,
-                maximum: 12,
+                maximum: 24,
               },
               changedBy: {
                 type: ["string", "null"],
@@ -2319,6 +2328,13 @@ const liveStateSchema = {
         },
         kind: {
           enum: ["wireless", "wired"],
+        },
+        trimDb: {
+          description:
+            "Monitor trim in dB, applied to this channel's input before the operator's level and before any host output feed. Absent means 0. It never changes meters, alerts or the captured audio.",
+          type: "number",
+          minimum: -24,
+          maximum: 24,
         },
         micType: {
           enum: [

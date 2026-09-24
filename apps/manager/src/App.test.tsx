@@ -413,6 +413,45 @@ describe("Manager showfile editor", () => {
     });
   });
 
+  it("sets a channel's monitor trim in half-dB steps, bounded to ±24 dB, and saves it", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /channels/i }));
+    const trim = await screen.findByLabelText("Channel 1 monitor trim in dB");
+    await user.type(trim, "-3.2");
+    await user.tab();
+    expect(
+      (
+        screen.getByLabelText(
+          "Channel 1 monitor trim in dB",
+        ) as HTMLInputElement
+      ).value,
+    ).toBe("-3");
+
+    await user.type(
+      screen.getByLabelText("Channel 2 monitor trim in dB"),
+      "40",
+    );
+    await user.tab();
+    expect(
+      (
+        screen.getByLabelText(
+          "Channel 2 monitor trim in dB",
+        ) as HTMLInputElement
+      ).value,
+    ).toBe("24");
+
+    await user.click(screen.getByRole("button", { name: "Save showfile" }));
+    expect(await screen.findByText("Revision 3")).toBeTruthy();
+    const saveCall = fetchMock.mock.calls.find(
+      ([path, init]) =>
+        String(path) === "/api/v1/showfile" && init?.method === "PUT",
+    );
+    const saved = JSON.parse(String(saveCall?.[1]?.body)) as StoredShowfile;
+    expect(saved.channels.map((channel) => channel.trimDb)).toEqual([-3, 24]);
+  });
+
   it("sets a custom alert policy, refuses incoherent limits, and resets to defaults", async () => {
     const user = userEvent.setup();
     render(<App />);

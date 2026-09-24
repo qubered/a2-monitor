@@ -45,3 +45,24 @@ describe("showfile migration", () => {
     expect(migrateShowfile(base)).not.toHaveProperty("hostOutput");
   });
 });
+
+describe("channel monitor trim", () => {
+  const showfile = (trimDb: unknown) => ({
+    schemaVersion: "0",
+    revision: 1,
+    updatedAtUtc: null,
+    show: { name: "Show" },
+    device: null,
+    shureReceivers: [],
+    channels: [{ inputIndex: 0, name: "Lead", trimDb }],
+  });
+
+  it("accepts trims from -24 to +24 dB and refuses more or non-numbers", () => {
+    expect(validateShowfile(showfile(-24))).toBe(true);
+    expect(validateShowfile(showfile(24))).toBe(true);
+    expect(validateShowfile(showfile(3.5))).toBe(true);
+    expect(validateShowfile(showfile(24.5))).toBe(false);
+    expect(validateShowfile(showfile(-30))).toBe(false);
+    expect(validateShowfile(showfile("3"))).toBe(false);
+  });
+});

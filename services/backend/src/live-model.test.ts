@@ -34,6 +34,22 @@ function kinds(result: ReturnType<typeof run>) {
 }
 
 describe("evaluate", () => {
+  it("publishes each channel's monitor trim, 0 when the showfile sets none", () => {
+    const base = showfileWith();
+    const result = run(
+      observationAt(T0, levelsWith([-12, -30]), telemetryWith([{}])),
+      {
+        showfile: {
+          ...base,
+          channels: base.channels.map((channel, index) =>
+            index === 0 ? { ...channel, trimDb: -4.5 } : channel,
+          ),
+        },
+      },
+    );
+    expect(result.channels.map(({ trimDb }) => trimDb)).toEqual([-4.5, 0]);
+  });
+
   it("maps healthy observations onto honest verdicts and raises nothing", () => {
     const result = run(
       observationAt(

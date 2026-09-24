@@ -233,6 +233,88 @@ describe("live monitoring routes", () => {
   });
 });
 
+describe("channel reset route", () => {
+  it("clears a switched-off channel's alerts and re-arms it when signal returns", async () => {
+    let clock = Date.parse("2026-09-23T01:00:00Z");
+    let peaks: number[] = [-12, -30];
+    const nodeSource = new FakeNodeSource();
+    const productionStore = new MemoryProductionStore();
+    await productionStore.saveActive(showfileWith({ revision: 0 }));
+    const liveMonitor = new LiveMonitor({
+      productionStore,
+      nodeSource,
+      now: () => clock,
+      tickMs: 60_000,
+    });
+    const server = buildServer({ productionStore, liveMonitor });
+    servers.add(server);
+    await server.ready();
+    const advance = async (ms: number) => {
+      clock += ms;
+      nodeSource.observe(
+        clock,
+        levelsWith(peaks),
+        telemetryWith([{ batteryChargePercent: 90 }]),
+      );
+      await liveMonitor.tick();
+    };
+    const state = async () =>
+      parseLiveState(
+        (
+          await server.inject({ method: "GET", url: "/api/v1/live/state" })
+        ).json(),
+      );
+    const silence = async () => {
+      peaks = [-120, -30];
+      for (let step = 0; step < 40; step += 1) await advance(2_000);
+    };
+
+    await advance(1_000);
+    await silence();
+    const faulted = await state();
+    expect(
+      faulted.alerts.map(({ kind, channelId }) => [kind, channelId]),
+    ).toEqual([["no-audio", "ch-marguerite"]]);
+    expect(faulted.channels[0]!.statuses.audio).toBe("fault");
+
+    const reset = await server.inject({
+      method: "POST",
+      url: "/api/v1/channels/ch-marguerite/reset",
+    });
+    expect(reset.statusCode).toBe(200);
+    const cleared = parseLiveState(reset.json());
+    expect(cleared.alerts).toEqual([]);
+    // Back to the not-yet-used look, not "not applicable".
+    expect(cleared.channels[0]!.statuses.audio).toBe("unknown");
+    expect(liveMonitor.alertLog().history[0]).toMatchObject({
+      kind: "no-audio",
+      clearedAtUtc: expect.any(String),
+    });
+
+    // Still switched off: nothing comes back.
+    for (let step = 0; step < 40; step += 1) await advance(2_000);
+    expect((await state()).alerts).toEqual([]);
+
+    // Signal returns, then goes silent again: the channel is armed once more.
+    peaks = [-12, -30];
+    await advance(1_000);
+    await silence();
+    expect((await state()).alerts.map(({ kind }) => kind)).toEqual([
+      "no-audio",
+    ]);
+  });
+
+  it("refuses a channel the show does not have", async () => {
+    const { server } = await monitoredServer();
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/channels/ch-missing/reset",
+    });
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({ error: "channel-not-found" });
+  });
+});
+
 describe("showfile validation for monitoring", () => {
   it("rejects duplicate channel ids and an incoherent alert policy", async () => {
     const server = buildServer();

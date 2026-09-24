@@ -10,12 +10,15 @@ export interface PlaybackSession {
   setMuted(muted: boolean): Promise<void>;
   setDimmed(dimmed: boolean): void;
   setGainDb(gainDb: number): void;
+  /** The channel's showfile trim: first in the chain, under the operator's level. */
+  setTrimDb(trimDb: number): void;
   close(): void;
 }
 
 export const MIN_MONITOR_GAIN_DB = -60;
-export const MAX_MONITOR_GAIN_DB = 12;
+export const MAX_MONITOR_GAIN_DB = 24;
 export const DEFAULT_MONITOR_GAIN_DB = -18;
+export const MAX_TRIM_DB = 24;
 export const DIM_ATTENUATION_DB = -12;
 
 /** Retry spacing after a lost connection, e.g. a Wi-Fi roam or a sleeping phone. */
@@ -137,6 +140,7 @@ export function createWebRtcPlaybackFactory(
     let muted = false;
     let dimmed = false;
     let gainDb = DEFAULT_MONITOR_GAIN_DB;
+    let trimDb = 0;
     let closed = false;
     let generation = 0;
     let attempt = 0;
@@ -149,7 +153,8 @@ export function createWebRtcPlaybackFactory(
     let listening = false;
 
     function applyGain() {
-      const effectiveGainDb = gainDb + (dimmed ? DIM_ATTENUATION_DB : 0);
+      const effectiveGainDb =
+        trimDb + gainDb + (dimmed ? DIM_ATTENUATION_DB : 0);
       gain.gain.value = muted ? 0 : 10 ** (effectiveGainDb / 20);
     }
 
@@ -386,6 +391,10 @@ export function createWebRtcPlaybackFactory(
       },
       setGainDb(nextGainDb) {
         gainDb = clampMonitorGainDb(nextGainDb);
+        applyGain();
+      },
+      setTrimDb(nextTrimDb) {
+        trimDb = Math.min(MAX_TRIM_DB, Math.max(-MAX_TRIM_DB, nextTrimDb));
         applyGain();
       },
       close() {

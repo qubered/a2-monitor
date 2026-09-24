@@ -246,6 +246,23 @@ function trackerFor(
   return tracker;
 }
 
+/**
+ * Returns a channel to its default, unarmed state, as if the backend had just
+ * started: nothing heard and no transmitter seen, so RF-lost and No audio stay
+ * quiet until the channel is seen alive again.
+ */
+export function resetChannelTracker(
+  trackers: Map<string, ChannelTracker>,
+  channelId: string,
+): void {
+  const tracker = trackerFor(trackers, channelId);
+  tracker.observingSinceMs = null;
+  tracker.lastObservedAtMs = null;
+  tracker.lastSignalAtMs = null;
+  tracker.heard = false;
+  tracker.transmitterSeen = false;
+}
+
 type Built = { channel: LiveStateChannel; conditions: AlertCondition[] };
 
 function buildChannel(
@@ -639,6 +656,7 @@ function buildChannel(
       performer,
       kind: wireless ? "wireless" : "wired",
       micType: showChannel.micType ?? null,
+      trimDb: showChannel.trimDb ?? 0,
       roomId: showChannel.roomId ?? null,
       categoryId: showChannel.categoryId ?? null,
       hasImage: Boolean(showChannel.imageUrl),

@@ -58,7 +58,7 @@ sees that feed's selection, mute, dim and level:
 | `PATCH /audio/v0/output/feeds/{id}` | any of `channelId`+`input`, `muted`, `dimmed`, `gainDb`, `changedBy` | `200` with the new `host-output`           |
 
 `channelId` and `input` change together; `null` for both clears the selection.
-`gainDb` is −60 to +12. An unknown feed returns `404`. Without an output
+`gainDb` is −60 to +24 and is each operator's level; the showfile's per-channel trim (ADR 0033) is added to it before the worker renders the feed. An unknown feed returns `404`. Without an output
 device `output` is `null`, `feeds` is empty and `PATCH` returns `409`. State
 is held in memory and each feed starts unmuted at 0 dB with nothing
 selected. `Pulse simulated output` (8 outputs) discards the feed and is

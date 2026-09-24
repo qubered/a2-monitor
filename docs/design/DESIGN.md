@@ -138,7 +138,9 @@ console that happens to be dark.
 
 - No gradients, anywhere, for any purpose.
 - No glow, halo, bloom or coloured drop shadow. Elevation comes from a soft
-  neutral shadow and a lighter surface, never a colour-tinted one.
+  neutral shadow and a lighter surface, never a colour-tinted one. The one
+  exception is the [attention pulse](#6-motion): a soft glow that breathes
+  around an element that needs someone, and nowhere else.
 - No glassmorphism or backdrop blur.
 - No emoji as a status icon.
 - No sparkle, wand or brain iconography.
@@ -370,8 +372,14 @@ remains legible because it is carried by colour, glyph and word, not by movement
 
 Pulse allows itself **at most two signature loops** — restraint here is a
 choice, not a limitation. This product spends both: the live dot's
-`pulse 1.7s`, and the report pulse on an unclaimed fault report
-([§10.7](#107-reported-state)). There is no third, and adding one means removing
+`pulse 1.7s`, and the **attention pulse**. The attention pulse is one motion
+in two tones: a soft glow in the alert's colour that breathes in and out around
+the element over 2s. It is the product's only glow. Amber marks an unclaimed
+fault report
+([§10.7](#107-reported-state)); red marks a critical alert nobody has
+acknowledged, on its card and on the header's alert bell
+([§10.3](#103-alert-overlay)). A caution alert never pulses, and acknowledging
+or claiming stops it. There is no third loop, and adding one means removing
 one.
 
 ---
@@ -381,8 +389,13 @@ one.
 Interface icons are Lucide, 2px stroke, at 16 / 20 / 24px. Verdict glyphs are
 drawn, not typed, so they hold their weight at 12px. No icon appears without a
 label on a first-use surface; icon-only controls are permitted only in the
-transport, where they are learned within one performance, and each carries an
-accessible name.
+transport and in two header controls beside each other: the **alert bell**,
+which carries the count still to acknowledge (or the active count once all are
+seen) and takes the alert's tone — red for a critical one, amber for any other
+— and the **settings cog**, which opens a labelled menu (audio output, the
+operator, the Manager link) and carries a dot while one of them needs the
+operator. Each carries an accessible name that says the state in words, such as
+`2 to acknowledge · 1 critical`.
 
 The **brand mark** is a separate thing from interface iconography: five
 vertical bars in a mountain profile — a level meter and an RF signal-strength
@@ -541,7 +554,11 @@ an operator needs to start troubleshooting, and a dimmed card reads as a
 disabled one. A solid band is also the most legible thing on the grid from
 across a wing, which a coloured word on a translucent wash was not. The whole
 card is the press target; it takes the severity's soft tint only under hover
-or keyboard focus.
+or keyboard focus. An unacknowledged **critical** alert also makes the card
+glow red — the attention pulse ([§6](#6-motion)) — and so does the header's
+alert bell, until someone acknowledges it; a caution alert never glows. The
+glow is a second cue, never the only one, and reduced motion removes the
+movement.
 
 **It names the problem and nothing else.** One icon, two words — _Low RF_, _No
 audio_, _Low battery_ — and `Press to acknowledge`. No explanation, no timestamp,
@@ -666,12 +683,13 @@ The A1's whole job, in one thumb. Specified with its surface in
 
 ### 10.7 Reported state
 
-A channel with an unclaimed fault report **pulses its outline**, on the A1 grid
+A channel with an unclaimed fault report **glows amber with the attention pulse**
+([§6](#6-motion)), on the A1 grid
 and on the A2 grid, and shows a `Reported` badge with a count when more than one
 issue went. It stops on claim, when the card reads `Being worked` with the
 claimant.
 
-This is the only ambient motion in the product and it earns the exception: it
+This is one of two ambient motions in the product and it earns the exception: it
 marks work that has been handed over and not yet picked up, which is precisely
 the state nobody should be able to sit in unnoticed. `prefers-reduced-motion`
 removes the motion; the amber outline stays.
@@ -730,9 +748,16 @@ ready` in `--ok`). The bar is absent when the show has no sessions.
 
 ### 10.10 Rooms and categories
 
-A multi-room show (ADR 0030) gets a **room bar** above the run-of-show bars:
-`All rooms`, each room, and `No room` when some channels have none, with live
-counts, in the filter band's chip language. It is a per-device choice, not a
+A multi-room show (ADR 0030) gets a **room switch in the header**, beside the
+show identity: a pill with a `Room` overline and the room this device shows
+(`All rooms` by default). A dot on it says another room needs someone (amber
+for an unacknowledged alert, red for a critical one); it never shows while
+`All rooms` is chosen, because every room is already on screen. Pressing it
+opens a **room sheet** listing `All rooms`, each room, and `No room` when some
+channels have none. Each row carries its channel count, its run of show (`Now:`
+or `Next:` with the start time), and its own state — `2 critical`, `1 to
+acknowledge`, `3 seen` or `Clear` — so an operator sees where to look before
+switching. Choosing a room closes the sheet; `Esc` or Close leaves it as it was. It is a per-device choice, not a
 permission, and a remembered room the show no longer has falls back to All
 rooms rather than hiding channels.
 
@@ -757,9 +782,9 @@ audio in one press and to a diagnosis in two.
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│ HEADER  show · node · you · [no cue source]   counters         │
+│ HEADER  show · [room ▾] · node · you · [no cue source] counters │
 ├────────────────────────────────────────────────────────────────┤
-│ SHOWING [All channels 64][Needs someone 4][Wireless][Wired]…   │
+│ [All channels 64][Needs someone 4][Wireless][Wired]…           │
 ├────────────────────────────────────────────────────────────────┤
 │ CHANNEL GRID — full width, photographs                         │
 ├────────────────────────────────────────────────────────────────┤
@@ -768,6 +793,16 @@ audio in one press and to a diagnosis in two.
 ```
 
 Default is **all channels** ([§1.5](#15-two-product-decisions-this-rests-on)).
+The filter band lists `All channels`, `Needs someone` (and `This session`
+while a run is on), then the shown room's **categories** with counts — prefixed
+by the room's name under `All rooms`, plus `No category` inside one room when
+some channels have none. `Wireless` and `Wired` stand in only when the show has
+no categories. The band is one row: chips that do not fit collect under a `More` dropdown
+(with a count), and the active chip always stays in the row. On a phone the
+band is one dropdown with the same choices. The
+grid has no visible title or instructions: the active chip says what is shown
+and the counts say how many. A note appears only when a filter is
+hiding cards while a critical fault is still shown.
 The grid is always in showfile order. Pulse never reorders cards — not by
 severity, not by alert, not for a moment — because an operator finds a person
 by where their card lives. A source with a critical exception stays visible

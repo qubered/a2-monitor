@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type MouseEvent,
 } from "react";
 import {
   parseAlertLog,
@@ -40,7 +41,10 @@ import { ChannelDetail } from "./components/ChannelDetail";
 import { ExceptionsSheet } from "./components/ExceptionsSheet";
 import { MicCheck } from "./components/MicCheck";
 import { OperatorSheet } from "./components/OperatorSheet";
+import { FilterBar, type FilterOption } from "./components/FilterBar";
+import { HeaderMenu } from "./components/HeaderMenu";
 import { OutputSheet } from "./components/OutputSheet";
+import { RoomSheet } from "./components/RoomSheet";
 import { Player } from "./components/Player";
 import { A1Bar, ReportBanner } from "./components/Reports";
 import { ReportSheet } from "./components/ReportSheet";
@@ -56,6 +60,7 @@ import {
 } from "./reports";
 import {
   acknowledgeAlert,
+  resetChannel,
   createEventSourceLiveState,
   type LiveStateConnection,
   type LiveStateSource,
@@ -72,11 +77,20 @@ import {
   type OutputDestination,
 } from "./host-output";
 import { MeterStore } from "./meters";
-import { effectiveRoom, groupChannels, inRoom, type RoomChoice } from "./rooms";
+import {
+  effectiveRoom,
+  groupChannels,
+  inRoom,
+  roomTone,
+  type RoomChoice,
+  type RoomOption,
+} from "./rooms";
 import {
   NO_ROOM,
+  formatStartMinute,
   nextSessionMinutes,
   roomKeyOf,
+  sessionById,
   startSession,
   turnoverItems,
   type SessionState,
@@ -92,15 +106,11 @@ import { useAudioDevice } from "./useAudioDevice";
 import { useLiveState } from "./useLiveState";
 import { useNow } from "./useNow";
 
-type Filter = "all" | "session" | "needs-someone" | "wireless" | "wired";
-
-const filterLabels: Record<Filter, string> = {
-  all: "All channels",
-  session: "This session",
-  "needs-someone": "Needs someone",
-  wireless: "Wireless",
-  wired: "Wired",
-};
+/**
+ * "all", "session", "needs-someone", "wireless", "wired", or a category
+ * (`cat:<id>`, `cat:none` for channels without one).
+ */
+type Filter = string;
 
 const ALERT_LOG_REFRESH_MS = 5_000;
 const defaultLiveStateSource = createEventSourceLiveState();
@@ -515,6 +525,12 @@ export function App({
   const micCheckChannel =
     channels.find((channel) => channel.id === micCheckId) ?? null;
   const selectedInput = device ? (selectedChannel?.input.index ?? null) : null;
+  const selectedTrimDb = selectedChannel?.trimDb ?? 0;
+  const selectedTrimRef = useRef(selectedTrimDb);
+  useEffect(() => {
+    selectedTrimRef.current = selectedTrimDb;
+    playbackSession.current?.setTrimDb(selectedTrimDb);
+  }, [selectedTrimDb]);
 
   useEffect(() => {
     try {
@@ -543,6 +559,7 @@ export function App({
       onUpdate: setPlayback,
     });
     session.setGainDb(outputState.current.gainDb);
+    session.setTrimDb(selectedTrimRef.current);
     session.setDimmed(outputState.current.dimmed);
     void session.setMuted(outputState.current.muted);
     playbackSession.current = session;
@@ -601,6 +618,8 @@ export function App({
       ? void changeHost({ dimmed: !shownDimmed })
       : setDimmed((value) => !value);
   const keyboardToggles = useRef({ toggleMute, toggleDim });
+  /** Escape closes an open sheet first; with none open it clears the selection. */
+  const escapeAction = useRef<() => void>(() => undefined);
   useEffect(() => {
     keyboardToggles.current = { toggleMute, toggleDim };
   });
@@ -616,11 +635,7 @@ export function App({
       }
       if (event.key.toLowerCase() === "m") keyboardToggles.current.toggleMute();
       if (event.key.toLowerCase() === "d") keyboardToggles.current.toggleDim();
-      if (event.key === "Escape") {
-        setDetailId(null);
-        setExceptionsOpen(false);
-        setTurnoverRoom(null);
-      }
+      if (event.key === "Escape") escapeAction.current();
     }
     window.addEventListener("keydown", handleKeyboard);
     return () => window.removeEventListener("keydown", handleKeyboard);
@@ -690,6 +705,20 @@ export function App({
     [apply, operator],
   );
 
+  const resetChannelAlerts = useCallback(
+    async (channelId: string) => {
+      setActionError(null);
+      try {
+        apply(await resetChannel(channelId));
+      } catch (error) {
+        setActionError(
+          error instanceof Error ? error.message : "The channel was not reset.",
+        );
+      }
+    },
+    [apply],
+  );
+
   const reports = useMemo(
     () => (liveState && !offline ? liveState.reports : []),
     [liveState, offline],
@@ -713,6 +742,66 @@ export function App({
     roomId === null
       ? "No room"
       : (rooms.find(({ id }) => id === roomId)?.name ?? "Room");
+
+  const [roomSheetOpen, setRoomSheetOpen] = useState(false);
+  const roomOptions = useMemo<RoomOption[]>(() => {
+    if (!rooms.length) return [];
+    const roomKeyByChannel = new Map(
+      channels.map(({ id, roomId }) => [id, roomKeyOf(roomId)]),
+    );
+    const entries = [
+      { key: "all", label: "All rooms" },
+      ...rooms.map(({ id, name }) => ({ key: id, label: name })),
+      ...(channels.some(({ roomId }) => !roomId)
+        ? [{ key: NO_ROOM, label: "No room" }]
+        : []),
+    ];
+    return entries.map(({ key, label }) => {
+      const scoped = activeAlerts.filter(
+        ({ channelId }) =>
+          key === "all" ||
+          (channelId !== null && roomKeyByChannel.get(channelId) === key),
+      );
+      const unseen = scoped.filter(
+        ({ acknowledgedAtUtc }) => acknowledgedAtUtc === null,
+      );
+      const run =
+        key === "all"
+          ? undefined
+          : runs.find(({ roomId }) => roomKeyOf(roomId) === key);
+      const now = sessionById(run, run?.activeId ?? null);
+      const next = sessionById(run, run?.nextId ?? null);
+      const start = formatStartMinute(next?.startMinute ?? null);
+      return {
+        key,
+        label,
+        channelCount: channels.filter((channel) => inRoom(channel, key)).length,
+        outstanding: unseen.length,
+        critical: unseen.filter(({ severity }) => severity === "critical")
+          .length,
+        seen: scoped.length - unseen.length,
+        session: now
+          ? `Now: ${now.name}`
+          : next
+            ? `Next: ${next.name}${start ? ` ${start}` : ""}`
+            : null,
+      };
+    });
+  }, [activeAlerts, channels, rooms, runs]);
+  // A room other than the one shown may still need someone: the header hints at it.
+  const otherRoomTone = roomOptions
+    .filter(({ key }) => room !== "all" && key !== "all" && key !== room)
+    .map(roomTone)
+    .reduce<"critical" | "caution" | "clear">(
+      (worst, tone) =>
+        worst === "critical" || tone === "critical"
+          ? "critical"
+          : worst === "caution" || tone === "caution"
+            ? "caution"
+            : "clear",
+      "clear",
+    );
+  const shownRoom = roomOptions.find(({ key }) => key === room);
 
   function chooseRoom(next: RoomChoice) {
     setRoomChoice(next);
@@ -858,9 +947,68 @@ export function App({
     });
   }
 
-  // "This session" means nothing once the run of show ends; fall back to all.
-  const filter: Filter =
-    chosenFilter === "session" && !sessionRunning ? "all" : chosenFilter;
+  // The filter row: everything, what needs someone, then the room's categories
+  // (Wireless and Wired stand in when the show has none).
+  const filterOptions = useMemo<FilterOption[]>(() => {
+    const count = (matches: (channel: LiveStateChannel) => boolean) =>
+      roomChannels.filter(matches).length;
+    const categories = rooms.flatMap((entry) =>
+      room !== "all" && room !== entry.id
+        ? []
+        : entry.categories.map((category) => ({
+            key: `cat:${category.id}`,
+            label:
+              room === "all" && rooms.length > 1
+                ? `${entry.name} · ${category.name}`
+                : category.name,
+            count: count(({ categoryId }) => categoryId === category.id),
+          })),
+    );
+    const uncategorised = count(({ categoryId }) => !categoryId);
+    const byCategory: FilterOption[] = [
+      ...categories.filter(({ count: members }) => members > 0),
+      ...(categories.length && room !== "all" && uncategorised > 0
+        ? [{ key: "cat:none", label: "No category", count: uncategorised }]
+        : []),
+    ];
+    return [
+      { key: "all", label: "All channels", count: roomChannels.length },
+      ...(sessionRunning
+        ? [
+            {
+              key: "session",
+              label: "This session",
+              count: count(({ session }) => session?.inUse !== false),
+            },
+          ]
+        : []),
+      {
+        key: "needs-someone",
+        label: "Needs someone",
+        count: count((channel) => needsSomeone(channel, activeAlerts)),
+      },
+      ...(byCategory.length
+        ? byCategory
+        : [
+            {
+              key: "wireless",
+              label: "Wireless",
+              count: count(({ kind }) => kind === "wireless"),
+            },
+            {
+              key: "wired",
+              label: "Wired",
+              count: count(({ kind }) => kind === "wired"),
+            },
+          ]),
+    ];
+  }, [activeAlerts, room, roomChannels, rooms, sessionRunning]);
+  // A filter that no longer exists (the run ended, another room) falls back to all.
+  const filter: Filter = filterOptions.some(({ key }) => key === chosenFilter)
+    ? chosenFilter
+    : "all";
+  const filterLabel =
+    filterOptions.find(({ key }) => key === filter)?.label ?? "All channels";
 
   const visibleChannels = useMemo(() => {
     const matches = (channel: LiveStateChannel) => {
@@ -869,6 +1017,9 @@ export function App({
         return needsSomeone(channel, activeAlerts);
       if (filter === "wireless" || filter === "wired")
         return channel.kind === filter;
+      if (filter === "cat:none") return !channel.categoryId;
+      if (filter.startsWith("cat:"))
+        return channel.categoryId === filter.slice("cat:".length);
       return true;
     };
     // Showfile order, always: a critical channel stays visible whatever the
@@ -883,17 +1034,6 @@ export function App({
     () => groupChannels(visibleChannels, rooms, room),
     [visibleChannels, rooms, room],
   );
-
-  const counts: Record<Filter, number> = {
-    all: roomChannels.length,
-    session: roomChannels.filter(({ session }) => session?.inUse !== false)
-      .length,
-    "needs-someone": roomChannels.filter((channel) =>
-      needsSomeone(channel, activeAlerts),
-    ).length,
-    wireless: roomChannels.filter(({ kind }) => kind === "wireless").length,
-    wired: roomChannels.filter(({ kind }) => kind === "wired").length,
-  };
 
   function selectChannel(channel: LiveStateChannel) {
     if (hostMode) {
@@ -929,6 +1069,33 @@ export function App({
     // when the new input is flowing, so a source change never shows a reconnect.
   }
 
+  /** Stops what is playing: on this device, or the joined feed's shared selection. */
+  function clearSelection() {
+    if (isA1) return;
+    if (hostMode) {
+      if (hostMonitor?.input == null) return;
+      void changeHost({ channelId: null, input: null });
+      return;
+    }
+    if (selectedId === null) return;
+    setSelectedId(null);
+    setPlayback({
+      status: "idle",
+      detail: "Select a patched channel to listen.",
+    });
+  }
+
+  /** A press on empty space between or beside the cards clears the selection. */
+  function clearOnBlankPress(event: MouseEvent<HTMLElement>) {
+    const target = event.target;
+    if (
+      target instanceof HTMLElement &&
+      target.matches(".channel-main, .channel-group, .channel-grid")
+    ) {
+      clearSelection();
+    }
+  }
+
   const hostOutputInfo = hostDocument?.output ?? null;
   const hostPlayback: PlaybackUpdate =
     hostOutput.connection === "offline" || !hostDocument
@@ -954,11 +1121,11 @@ export function App({
               : hostMonitor.input === null
                 ? {
                     status: "idle",
-                    detail: `Nothing selected in ${hostFeed.name}. Press a card to play it on ${describeOutputChannels(hostFeed.outputChannels)} of ${hostOutputInfo.deviceName}.`,
+                    detail: "",
                   }
                 : {
                     status: "listening",
-                    detail: `${hostFeed.name}: input ${hostMonitor.input + 1} on ${describeOutputChannels(hostFeed.outputChannels)} of ${hostOutputInfo.deviceName}.`,
+                    detail: `Input ${hostMonitor.input + 1} · ${describeOutputChannels(hostFeed.outputChannels)}`,
                   };
   const shownPlayback = hostMode ? hostPlayback : playback;
   const listening =
@@ -973,6 +1140,23 @@ export function App({
   };
   const outputPrompt =
     !isA1 && hostDocument?.output && chosenDestination === null;
+
+  useEffect(() => {
+    escapeAction.current = () => {
+      const sheetOpen =
+        detailId !== null ||
+        exceptionsOpen ||
+        turnoverRoom !== null ||
+        micCheckId !== null ||
+        outputSheetOpen ||
+        roomSheetOpen ||
+        outputPrompt;
+      setDetailId(null);
+      setExceptionsOpen(false);
+      setTurnoverRoom(null);
+      if (!sheetOpen) clearSelection();
+    };
+  });
   // What each feed is playing, for the destination prompt.
   const nowPlaying = Object.fromEntries(
     (hostDocument?.feeds ?? []).map(({ id, monitor }) => {
@@ -991,6 +1175,20 @@ export function App({
     }),
   );
   const summary = liveState?.summary;
+  const alertLabel =
+    !summary || offline
+      ? "Alerts unavailable"
+      : summary.outstanding > 0
+        ? `${summary.outstanding} to acknowledge${summary.outstandingCritical ? ` · ${summary.outstandingCritical} critical` : ""}`
+        : summary.active > 0
+          ? `${summary.active} active · all seen`
+          : "No active alerts";
+  const alertCount =
+    !summary || offline
+      ? 0
+      : summary.outstanding > 0
+        ? summary.outstanding
+        : summary.active;
   const showName = liveState?.show.name ?? "Show state unavailable";
   const nodeDevice = liveState?.node.device ?? null;
 
@@ -1027,6 +1225,39 @@ export function App({
                 : "Waiting for validated data"}
           </span>
         </div>
+        {rooms.length && shownRoom ? (
+          <button
+            className="room-switch"
+            type="button"
+            aria-haspopup="dialog"
+            aria-label={`Room: ${shownRoom.label}. Change room${otherRoomTone === "clear" ? "" : ". Another room needs attention"}`}
+            onClick={() => setRoomSheetOpen(true)}
+          >
+            <span className="room-switch-text">
+              <span>Room</span>
+              <strong>{shownRoom.label}</strong>
+            </span>
+            {otherRoomTone !== "clear" ? (
+              <i
+                className={`room-dot tone-${otherRoomTone}`}
+                aria-hidden="true"
+              />
+            ) : null}
+            <svg
+              viewBox="0 0 12 12"
+              width="12"
+              height="12"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M2.5 4.5 6 8l3.5-3.5" />
+            </svg>
+          </button>
+        ) : null}
         <div
           className={`node-state node-${
             offline || !liveState
@@ -1056,50 +1287,75 @@ export function App({
           <span className="simulated-badge">Simulated test signal</span>
         ) : null}
         <button
-          className={`alert-count ${
+          className={`alert-bell ${
             !summary || offline
               ? "is-unknown"
               : summary.outstandingCritical > 0
                 ? "is-critical"
                 : summary.outstanding > 0
                   ? "is-caution"
-                  : "is-clear"
-          }`}
+                  : summary.active > 0
+                    ? "is-seen"
+                    : "is-clear"
+          } ${summary && !offline && summary.outstandingCritical > 0 ? "is-pulsing" : ""}`}
           type="button"
+          aria-label={alertLabel}
+          title={alertLabel}
           onClick={() => setExceptionsOpen(true)}
           disabled={!liveState}
         >
-          {!summary || offline
-            ? "Alerts unavailable"
-            : summary.outstanding > 0
-              ? `${summary.outstanding} to acknowledge${summary.outstandingCritical ? ` · ${summary.outstandingCritical} critical` : ""}`
-              : summary.active > 0
-                ? `${summary.active} active · all seen`
-                : "No active alerts"}
-        </button>
-        {!isA1 && hostDocument?.output ? (
-          <button
-            className={`operator-chip output-chip ${hostMode ? "is-host" : ""}`}
-            type="button"
-            onClick={() => setOutputSheetOpen(true)}
+          <svg
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            {hostMode
-              ? `Audio: ${hostFeed?.name ?? "host output"}`
-              : deviceMode
-                ? "Audio: this device"
-                : "Audio: choose"}
-          </button>
-        ) : null}
-        <button
-          className="operator-chip"
-          type="button"
-          onClick={() => setOperatorOpen(true)}
-        >
-          {operator.name ? operatorLabel(operator) : "Set your name"}
+            <path d="M10.268 21a2 2 0 0 0 3.464 0" />
+            <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" />
+          </svg>
+          {alertCount > 0 ? (
+            <span className="alert-bell-count">{alertCount}</span>
+          ) : null}
         </button>
-        <a className="manager-link" href="/manager/">
-          Manager
-        </a>
+        <HeaderMenu
+          items={[
+            ...(!isA1 && hostDocument?.output
+              ? [
+                  {
+                    key: "audio",
+                    icon: "audio" as const,
+                    label: "Audio output",
+                    value: hostMode
+                      ? (hostFeed?.name ?? "Host output")
+                      : deviceMode
+                        ? "This device"
+                        : "Choose",
+                    attention: !hostMode && !deviceMode,
+                    onSelect: () => setOutputSheetOpen(true),
+                  },
+                ]
+              : []),
+            {
+              key: "operator",
+              icon: "user" as const,
+              label: "You",
+              value: operator.name ? operatorLabel(operator) : "Set your name",
+              attention: !operator.name,
+              onSelect: () => setOperatorOpen(true),
+            },
+            {
+              key: "manager",
+              icon: "manager" as const,
+              label: "Manager",
+              href: "/manager/",
+            },
+          ]}
+        />
       </header>
 
       <ConnectionNotice
@@ -1133,37 +1389,14 @@ export function App({
         </section>
       ) : null}
 
-      {rooms.length ? (
-        <nav className="room-bar" aria-label="Rooms">
-          <span className="filter-label">Room</span>
-          {[
-            { key: "all", label: "All rooms", count: channels.length },
-            ...rooms.map(({ id, name }) => ({
-              key: id,
-              label: name,
-              count: channels.filter(({ roomId }) => roomId === id).length,
-            })),
-            ...(channels.some(({ roomId }) => !roomId)
-              ? [
-                  {
-                    key: NO_ROOM,
-                    label: "No room",
-                    count: channels.filter(({ roomId }) => !roomId).length,
-                  },
-                ]
-              : []),
-          ].map(({ key, label, count }) => (
-            <button
-              type="button"
-              className="filter-button"
-              aria-pressed={room === key}
-              onClick={() => chooseRoom(key)}
-              key={key}
-            >
-              {label} <span>{count}</span>
-            </button>
-          ))}
-        </nav>
+      {roomChannels.length ? (
+        <div className="chip-bands">
+          <FilterBar
+            options={filterOptions}
+            active={filter}
+            onChoose={setFilter}
+          />
+        </div>
       ) : null}
 
       {runs.map((run) => (
@@ -1197,44 +1430,31 @@ export function App({
         />
       ) : null}
 
-      {roomChannels.length ? (
-        <nav className="filters" aria-label="Channel filters">
-          <span className="filter-label">Showing</span>
-          {(Object.keys(filterLabels) as Filter[])
-            .filter(
-              (filterOption) => filterOption !== "session" || sessionRunning,
-            )
-            .map((filterOption) => (
-              <button
-                type="button"
-                className="filter-button"
-                aria-pressed={filter === filterOption}
-                onClick={() => setFilter(filterOption)}
-                key={filterOption}
-              >
-                {filterLabels[filterOption]} <span>{counts[filterOption]}</span>
-              </button>
-            ))}
-        </nav>
-      ) : null}
-
-      <main className="channel-main">
+      <main className="channel-main" onClick={clearOnBlankPress}>
         {channels.length ? (
           <>
-            <div className="grid-heading">
-              <h1>
-                {room !== "all"
-                  ? `${room === NO_ROOM ? "No room" : roomName(room)} · `
-                  : ""}
-                {isA1 ? "Mix confidence" : filterLabels[filter]}
-              </h1>
-              <p>
-                {isA1
-                  ? `${visibleChannels.length} sources · press a channel to report what you hear · expand opens detail`
-                  : `${visibleChannels.length} sources · press a card to select · expand opens detail`}
-                {criticalIds.size ? " · critical faults always shown" : ""}
-              </p>
-            </div>
+            {isA1 ? (
+              <div className="grid-heading">
+                <h1>Mix confidence</h1>
+                <p>
+                  {visibleChannels.length} sources · press a channel to report
+                  what you hear · expand opens detail
+                  {criticalIds.size ? " · critical faults always shown" : ""}
+                </p>
+              </div>
+            ) : (
+              <>
+                <h1 className="sr-only">
+                  {room !== "all"
+                    ? `${room === NO_ROOM ? "No room" : roomName(room)} · `
+                    : ""}
+                  {filterLabel}
+                </h1>
+                {criticalIds.size && filter !== "all" ? (
+                  <p className="grid-note">Critical faults always shown</p>
+                ) : null}
+              </>
+            )}
             {groups.map((group) => (
               <section
                 className="channel-group"
@@ -1384,11 +1604,28 @@ export function App({
           history={alertHistory}
           nowMs={nowMs}
           onAcknowledge={(alert) => void acknowledge(alert)}
+          onResetChannel={
+            offline
+              ? undefined
+              : () => void resetChannelAlerts(detailChannel.id)
+          }
           onClose={() => setDetailId(null)}
           onRunCheck={() => {
             setMicCheckId(detailChannel.id);
             setDetailId(null);
           }}
+        />
+      ) : null}
+
+      {roomSheetOpen && roomOptions.length ? (
+        <RoomSheet
+          options={roomOptions}
+          current={room}
+          onChoose={(next) => {
+            chooseRoom(next);
+            setRoomSheetOpen(false);
+          }}
+          onClose={() => setRoomSheetOpen(false)}
         />
       ) : null}
 

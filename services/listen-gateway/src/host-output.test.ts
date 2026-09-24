@@ -63,6 +63,30 @@ describe("shared host monitor", () => {
     );
   });
 
+  it("adds an input's trim under the operators' level and dim", () => {
+    const monitor = new SharedHostMonitor();
+    monitor.apply(
+      parseMonitorChange({ channelId: "ch-1", input: 0, gainDb: -6 }, 8),
+    );
+    const state = monitor.get();
+    // -6 dB level with +6 dB trim is unity; a -3 dB trim is -9 dB overall.
+    expect(monitorCommand(state, 6).gain).toBeCloseTo(1, 6);
+    expect(monitorCommand(state, -3).gain).toBeCloseTo(10 ** (-9 / 20), 6);
+    expect(monitorCommand(state).gain).toBeCloseTo(10 ** (-6 / 20), 6);
+    expect(monitorCommand({ ...state, muted: true }, 24).gain).toBe(0);
+    expect(monitorCommand({ ...state, input: null }, 24)).toEqual({
+      channel: null,
+      gain: 0,
+    });
+  });
+
+  it("accepts gain up to +24 dB and refuses more", () => {
+    expect(parseMonitorChange({ gainDb: 24 }, null)).toEqual({ gainDb: 24 });
+    expect(() => parseMonitorChange({ gainDb: 24.1 }, null)).toThrow(
+      "invalid-gainDb",
+    );
+  });
+
   it("refuses a selection while capture is not ready", () => {
     expect(() =>
       parseMonitorChange({ channelId: "ch-1", input: 0 }, null),

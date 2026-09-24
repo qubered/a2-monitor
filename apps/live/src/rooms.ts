@@ -87,3 +87,24 @@ export function groupChannels(
   }
   return groups;
 }
+
+export type RoomOption = {
+  key: RoomChoice;
+  label: string;
+  channelCount: number;
+  /** Unacknowledged alerts on this room's channels. */
+  outstanding: number;
+  critical: number;
+  /** Alerts on this room's channels that someone has seen. */
+  seen: number;
+  /** "Now: Keynote" or "Next: Panel 10:15"; null when the room runs no sessions. */
+  session: string | null;
+};
+
+export function roomTone(option: RoomOption): "critical" | "caution" | "clear" {
+  return option.critical > 0
+    ? "critical"
+    : option.outstanding > 0
+      ? "caution"
+      : "clear";
+}

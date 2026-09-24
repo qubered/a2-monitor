@@ -93,14 +93,24 @@ a:focus-visible {
 .show-name {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   padding-left: var(--space-5);
   border-left: var(--size-1) solid var(--line-2);
   line-height: 1.25;
 }
 
 .show-name strong {
+  overflow: hidden;
   font-family: var(--font-display);
   font-size: var(--font-card);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.show-name > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .show-name span,
@@ -178,91 +188,373 @@ a:focus-visible {
   white-space: nowrap;
 }
 
-.alert-count {
-  min-height: var(--target);
+/* Alerts: a bell with a count, beside the settings cog. The count is what is
+   still to acknowledge, or what is active and seen. */
+.alert-bell {
+  position: relative;
+  width: var(--target);
+  height: var(--target);
+  flex: none;
+  display: grid;
+  place-items: center;
   margin-left: auto;
-  padding: 0 var(--space-4);
-  border: var(--size-1) solid var(--t-out);
-  border-radius: var(--radius-pill);
+  padding: 0;
+  border: var(--size-1) solid var(--line-2);
+  border-radius: 50%;
   background: var(--card);
-  color: var(--t-out);
-  font-size: var(--font-table);
-  font-weight: 700;
+  color: var(--ok);
 }
 
-.alert-count:disabled {
+.alert-bell:disabled {
   cursor: default;
 }
 
-.alert-count.is-critical {
+.alert-bell.is-critical {
   border-color: var(--t-out);
   background: var(--out-soft);
   color: var(--t-out);
 }
 
-.alert-count.is-caution {
+.alert-bell.is-caution {
   border-color: var(--warn);
   background: var(--warn-soft);
   color: var(--warn);
 }
 
-.alert-count.is-clear {
-  border-color: var(--line-2);
-  color: var(--ok);
+.alert-bell.is-seen {
+  color: var(--ink-2);
 }
 
-.alert-count.is-unknown {
-  border-color: var(--line-2);
+.alert-bell.is-unknown {
   color: var(--rep);
 }
 
-.operator-chip {
-  min-height: var(--target);
-  padding: 0 var(--space-4);
-  border: var(--size-1) solid var(--line-2);
+.alert-bell-count {
+  position: absolute;
+  top: calc(var(--space-1) * -1);
+  right: calc(var(--space-1) * -1);
+  min-width: var(--space-5);
+  height: var(--space-5);
+  padding: 0 var(--space-1);
+  border: var(--size-1) solid var(--paper-2);
   border-radius: var(--radius-pill);
-  background: var(--card);
-  color: var(--ink-2);
-  font-size: var(--font-ui);
-  font-weight: 600;
+  background: var(--ink-2);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: var(--font-caption);
+  font-weight: 700;
+  line-height: calc(var(--space-5) - 2 * var(--size-1));
+  text-align: center;
 }
 
-.manager-link {
+.alert-bell.is-critical .alert-bell-count {
+  background: var(--t-out);
+}
+
+.alert-bell.is-caution .alert-bell-count {
+  background: var(--warn);
+}
+
+/* Rooms (design system §10.10): the room this device shows, in the header,
+   with a hint when another room needs someone. */
+.room-switch {
   min-height: var(--target);
   display: inline-flex;
   align-items: center;
+  gap: var(--space-3);
+  flex: 0 1 auto;
+  min-width: 0;
   padding: 0 var(--space-4);
   border: var(--size-1) solid var(--line-2);
   border-radius: var(--radius-pill);
   background: var(--card);
   color: var(--ink);
+}
+
+.room-switch-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.room-switch-text strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-switch-text span {
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: var(--font-badge);
+}
+
+.room-switch-text strong {
   font-size: var(--font-ui);
-  font-weight: 600;
+}
+
+.room-dot {
+  width: var(--space-3);
+  height: var(--space-3);
+  flex: none;
+  border-radius: 50%;
+  background: var(--ok);
+}
+
+.room-dot.tone-critical {
+  background: var(--t-out);
+}
+
+.room-dot.tone-caution {
+  background: var(--warn);
+}
+
+.room-options {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-5);
+}
+
+.room-option {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: var(--target-primary);
+  padding: var(--space-3) var(--space-4);
+  border: var(--size-1) solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--ink);
+  text-align: left;
+}
+
+.room-option-main {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.room-option-main strong {
+  font-size: var(--font-section);
+}
+
+.room-option-main span {
+  color: var(--ink-2);
+  font-size: var(--font-table);
+}
+
+.room-attention {
+  color: var(--ok);
+  font-family: var(--font-mono);
+  font-size: var(--font-table);
+  white-space: nowrap;
+}
+
+.room-attention.tone-critical {
+  color: var(--t-out);
+}
+
+.room-attention.tone-caution {
+  color: var(--warn);
+}
+
+.room-option[aria-pressed="true"] {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+}
+
+.room-option:active {
+  background: var(--elev);
+}
+
+/* The header's one menu: audio output, operator and the Manager link. */
+.header-menu {
+  position: relative;
+  flex: none;
+}
+
+.header-menu-toggle {
+  position: relative;
+  width: var(--target);
+  height: var(--target);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: var(--size-1) solid var(--line-2);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--ink-2);
+}
+
+.header-menu-toggle[aria-expanded="true"] {
+  border-color: var(--ink-2);
+  color: var(--ink);
+}
+
+.header-menu-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--space-3);
+  height: var(--space-3);
+  border: var(--size-1) solid var(--paper-2);
+  border-radius: 50%;
+  background: var(--warn);
+}
+
+.header-menu-list {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 20;
+  display: grid;
+  min-width: 15rem;
+  padding: var(--space-2);
+  border: var(--size-1) solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-hover);
+}
+
+.header-menu-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: var(--target);
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
   text-decoration: none;
 }
 
-.filters {
-  min-height: var(--filter-height);
+.header-menu-item:hover,
+.header-menu-item:focus-visible {
+  background: var(--elev);
+}
+
+.header-menu-item > svg {
+  color: var(--ink-2);
+}
+
+.header-menu-text {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.header-menu-item strong {
+  font-size: var(--font-ui);
+}
+
+.header-menu-text > span {
+  color: var(--muted);
+  font-size: var(--font-table);
+}
+
+.header-menu-text > span.is-attention {
+  color: var(--warn);
+}
+
+/* The channel filters: one row, with what does not fit under "More". */
+.chip-bands {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-2) var(--space-6);
   padding: var(--space-2) var(--space-6);
-  overflow-x: auto;
   border-bottom: var(--size-1) solid var(--line-2);
   background: var(--paper);
 }
 
-/* Rooms (design system §10.10): which room this device shows. Same chip
-   language as the filter band, one row above it. */
-.room-bar {
-  min-height: var(--filter-height);
+.filters {
   display: flex;
+  flex: 1;
+  min-width: 0;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-6);
-  overflow-x: auto;
-  border-bottom: var(--size-1) solid var(--line-2);
-  background: var(--paper-2);
+}
+
+/* Chips that do not fit collect under "More"; the row stays one line. */
+.filter-more {
+  position: relative;
+  flex: none;
+}
+
+.filter-more .filter-button svg {
+  margin-left: var(--space-2);
+  vertical-align: middle;
+}
+
+.filter-more-list {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  z-index: 20;
+  display: grid;
+  min-width: 14rem;
+  padding: var(--space-2);
+  border: var(--size-1) solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-hover);
+}
+
+.filter-more-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  min-height: var(--target);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--font-ui);
+  text-align: left;
+}
+
+.filter-more-item:hover,
+.filter-more-item:focus-visible {
+  background: var(--elev);
+}
+
+.filter-more-item[aria-checked="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.filter-more-item span {
+  font-family: var(--font-mono);
+  font-size: var(--font-caption);
+  opacity: 0.65;
+}
+
+/* Every chip at its natural width, out of sight, so the row can be fitted. */
+.filter-ruler {
+  position: absolute;
+  height: 0;
+  display: flex;
+  gap: var(--space-2);
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.filter-ruler .filter-button {
+  display: inline-flex;
+  align-items: center;
 }
 
 .channel-group + .channel-group {
@@ -575,6 +867,36 @@ a:focus-visible {
     background var(--transition-control);
 }
 
+/* On a phone the filter row is one dropdown. */
+.filter-select {
+  position: relative;
+  display: none;
+  flex: 1;
+}
+
+.filter-select select {
+  width: 100%;
+  min-height: var(--target);
+  padding: 0 var(--space-6) 0 var(--space-4);
+  appearance: none;
+  border: var(--size-1) solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--font-ui);
+  font-weight: 600;
+}
+
+.filter-select svg {
+  position: absolute;
+  top: 50%;
+  right: var(--space-4);
+  translate: 0 -50%;
+  color: var(--ink-2);
+  pointer-events: none;
+}
+
 .filter-button > span {
   margin-left: var(--space-1);
   color: var(--faint);
@@ -611,6 +933,12 @@ a:focus-visible {
   gap: var(--space-3);
   margin-bottom: var(--space-4);
   flex-wrap: wrap;
+}
+
+.grid-note {
+  margin: 0 0 var(--space-4);
+  color: var(--muted);
+  font-size: var(--font-ui);
 }
 
 .grid-heading h1 {
@@ -856,6 +1184,13 @@ a:focus-visible {
   font-size: var(--font-caption);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.trim-badge {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-size: var(--font-caption);
 }
 
 .status-strip {
@@ -1653,6 +1988,17 @@ a:focus-visible {
   list-style: none;
 }
 
+.detail-reset {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.detail-reset .line-button {
+  flex: none;
+  white-space: nowrap;
+}
+
 .alert-row {
   display: flex;
   align-items: center;
@@ -1830,17 +2176,57 @@ a:focus-visible {
   color: var(--paper);
 }
 
-/* Reported state (design system §10.7): the product's second and last
-   ambient loop marks work handed over and not yet picked up. */
+/* The attention pulse (design system §6): the product's second and last
+   ambient loop, and its only glow. A soft glow in the alert's colour breathes
+   around a card with work handed over and not yet picked up (amber), a card
+   whose critical alert nobody has acknowledged (red), and the alert bell while
+   one is outstanding. Reduced motion removes the movement and leaves the
+   static ring. */
 .channel-card.is-reported {
-  outline: var(--size-2) solid var(--warn);
+  --pulse: var(--warn);
+  outline: var(--size-2) solid var(--pulse);
   outline-offset: var(--size-2);
-  animation: report-pulse 1.6s ease-in-out infinite;
+  animation: glow-card 2s ease-in-out infinite;
 }
 
-@keyframes report-pulse {
+.channel-card.has-alert.is-critical-alert {
+  --pulse: var(--t-out);
+  animation: glow-card 2s ease-in-out infinite;
+}
+
+.alert-bell.is-pulsing {
+  --pulse: var(--t-out);
+  animation: glow-bell 2s ease-in-out infinite;
+}
+
+@keyframes glow-card {
+  0%,
+  100% {
+    box-shadow:
+      var(--shadow-card),
+      var(--card-lit),
+      0 0 var(--space-2) 0 color-mix(in srgb, var(--pulse) 30%, transparent);
+  }
+
   50% {
-    outline-color: var(--warn-soft);
+    box-shadow:
+      var(--shadow-card),
+      var(--card-lit),
+      0 0 var(--space-6) var(--space-1)
+        color-mix(in srgb, var(--pulse) 75%, transparent);
+  }
+}
+
+@keyframes glow-bell {
+  0%,
+  100% {
+    box-shadow: 0 0 var(--space-2) 0
+      color-mix(in srgb, var(--pulse) 30%, transparent);
+  }
+
+  50% {
+    box-shadow: 0 0 var(--space-5) var(--space-1)
+      color-mix(in srgb, var(--pulse) 75%, transparent);
   }
 }
 
@@ -2205,10 +2591,6 @@ a:focus-visible {
     display: none;
   }
 
-  .alert-count {
-    margin-left: 0;
-  }
-
   .player-transport {
     flex-wrap: wrap;
     gap: var(--space-3);
@@ -2234,7 +2616,7 @@ a:focus-visible {
 
   .app-header,
   .snapshot-notice,
-  .filters,
+  .chip-bands,
   .channel-main,
   .player-transport {
     padding-right: var(--space-4);
@@ -2280,9 +2662,37 @@ a:focus-visible {
     grid-column: 1 / -1;
   }
 
-  .room-bar {
+  .chip-bands {
     padding-right: var(--space-4);
     padding-left: var(--space-4);
+  }
+
+  .filters {
+    display: none;
+  }
+
+  .filter-select {
+    display: block;
+  }
+
+  /* Brand, room, the alert bell and the menu share the first row; the
+     simulated badge wraps below it. */
+  .app-header {
+    gap: var(--space-2);
+  }
+
+  .room-switch {
+    padding: 0 var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .alert-bell,
+  .header-menu {
+    order: 1;
+  }
+
+  .simulated-badge {
+    order: 2;
   }
 
   .turnover-row {
@@ -2406,9 +2816,4 @@ a:focus-visible {
 
 .output-option:active {
   background: var(--elev);
-}
-
-.output-chip.is-host {
-  border-color: var(--blue);
-  color: var(--ink);
 }

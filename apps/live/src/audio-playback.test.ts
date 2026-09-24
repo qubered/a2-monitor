@@ -192,6 +192,16 @@ describe("WebRTC Opus playback", () => {
     session.setGainDb(6);
     expect(FakeAudioContext.latest.gain.gain.value).toBeCloseTo(1.995, 3);
 
+    // Trim sits first in the chain, so it adds to the operator's level and is bounded.
+    session.setTrimDb(-6);
+    expect(FakeAudioContext.latest.gain.gain.value).toBeCloseTo(1, 3);
+    session.setTrimDb(99);
+    expect(FakeAudioContext.latest.gain.gain.value).toBeCloseTo(
+      10 ** ((6 + 24) / 20),
+      3,
+    );
+    session.setTrimDb(0);
+
     session.close();
     expect(peer?.close).toHaveBeenCalledOnce();
     expect(calls.at(-1)).toMatchObject({

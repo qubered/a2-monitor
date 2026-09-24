@@ -39,6 +39,7 @@
       "performer": "Eleanor Vance",
       "kind": "wireless",
       "micType": "headset",
+      "trimDb": -3.5,
       "hasImage": true,
       "input": {
         "index": 0,

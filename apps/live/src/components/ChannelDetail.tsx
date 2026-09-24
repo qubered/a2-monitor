@@ -7,6 +7,7 @@ import type {
 import { formatClock, formatDuration } from "../alerts";
 import type { OperatorRole } from "../operator";
 import type { ReportAction } from "../reports";
+import { formatTrim } from "../trim";
 import { ReportList } from "./Reports";
 
 type ChannelDetailProps = {
@@ -19,6 +20,8 @@ type ChannelDetailProps = {
   history: readonly LiveAlert[] | null;
   nowMs: number;
   onAcknowledge: (alert: LiveAlert) => void;
+  /** Absent while the backend is unreachable, so the reset is never offered then. */
+  onResetChannel?: () => void;
   onClose: () => void;
   onRunCheck: () => void;
 };
@@ -122,6 +125,7 @@ export function ChannelDetail({
   history,
   nowMs,
   onAcknowledge,
+  onResetChannel,
   onClose,
   onRunCheck,
 }: ChannelDetailProps) {
@@ -183,6 +187,26 @@ export function ChannelDetail({
           </section>
         ) : null}
 
+        {onResetChannel &&
+        (alerts.length > 0 ||
+          Object.values(channel.statuses).some(
+            (status) => status === "fault",
+          )) ? (
+          <section
+            className="detail-alerts detail-reset"
+            aria-label="Reset channel"
+          >
+            <button
+              type="button"
+              className="line-button"
+              disabled={busy}
+              onClick={onResetChannel}
+            >
+              Clear alerts and reset
+            </button>
+          </section>
+        ) : null}
+
         <div className="detail-grid">
           <Readings
             title="Audio"
@@ -216,6 +240,10 @@ export function ChannelDetail({
                       : "None in the last second"
                     : null,
                 mono: false,
+              },
+              {
+                label: "Monitor trim",
+                value: `${formatTrim(channel.trimDb ?? 0)} dB`,
               },
               {
                 label: "Transmitter mute",

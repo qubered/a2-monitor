@@ -126,7 +126,7 @@
               "gainDb": {
                 "type": "number",
                 "minimum": -60,
-                "maximum": 12
+                "maximum": 24
               },
               "changedBy": {
                 "type": ["string", "null"],

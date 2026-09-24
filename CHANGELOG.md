@@ -8,8 +8,45 @@ externally tested release.
 
 ## Unreleased
 
+### Changed
+
+- Live: an unacknowledged critical alert now gives off a breathing red glow
+  around its card and the alert bell, and the amber outline on a card with an
+  unclaimed fault report uses the same glow. It stops on acknowledge or claim,
+  caution alerts never glow, and reduced motion removes the movement.
+- Live: the alert count is a bell with a count beside the settings cog instead
+  of a wide pill. It keeps the same tones and opens the same exceptions sheet;
+  its accessible name still spells the state out. On a phone the logo, room,
+  bell and cog share one row.
+- Live: the filter chips list the room's categories after All channels and
+  Needs someone (Wireless and Wired only when the show has no categories). The
+  row stays on one line, with chips that do not fit under a More dropdown, and
+  is a dropdown on a phone.
+- Live: audio output, your name and the Manager link move into one settings
+  menu (a cog) in the header, leaving the room switch, node state and alert
+  count. Each item has an icon, and on a phone the cog sits on the top row with
+  the logo. The cog shows a dot while your name is unset or audio has no
+  destination.
+- Live: the room chips move into a room switch in the header. It opens a room
+  sheet that shows each room's channel count, run of show and alert state, and
+  a dot on the switch says when another room needs someone.
+- Live: the A2 grid drops its title and instruction line, and the filter chips
+  lose their label (the A1 view keeps its heading).
+
 ### Added
 
+- Per-channel monitor trim (ADR 0033). Manager's Channels tab sets a trim of
+  −24 to +24 dB per channel, first in the chain under each operator's level, on
+  this device and on host output feeds. Live shows the trim on the card and in
+  the channel detail. The worker's gain ceiling rises to +48 dB to cover a
+  +24 dB trim under a +24 dB level.
+- Live: "Clear alerts and reset" in a channel's expanded view (ADR 0032). After
+  switching a transmitter off, it moves the channel's alerts to history and
+  returns the channel to its default, unarmed state until a transmitter or
+  signal is seen again.
+- Live: pressing empty space beside or between the channel cards stops what
+  is playing. On this device it ends the listen session; joined to a host
+  output feed it clears the feed's shared selection for everyone in it.
 - Live: shared host monitor output feeds (ADR 0031). When the node has an
   output device (for example Dante Virtual Soundcard routed to comms), Live
   asks on open whether audio plays on this device or in one of the
