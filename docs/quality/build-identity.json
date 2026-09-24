@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.73c5a37b23b99c17",
-  "sourceSha256": "73c5a37b23b99c173eeb2d21560bf1bcfd3bea0e89674e02fe8318014488d80d",
-  "inputCount": 389,
+  "buildId": "a2-0.0.0+sha256.563b89748dc89f1b",
+  "sourceSha256": "563b89748dc89f1b53598389009bbb2008fc2a922ee663473b0dae21755a520b",
+  "inputCount": 403,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -49,7 +49,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "9bfc61e1d2ef3a5fd01b69544de27cf0ffe430d06b4f4da8b3533becaf659446"
+      "sha256": "f6e1b736fc41fe8dbb44148e30b2cd9417a9048b8c3605d1ebf6a5bff36011a0"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -73,7 +73,7 @@
     },
     {
       "path": "apps/live/README.md",
-      "sha256": "eddb2bae43e34d560bda5e59b692855cc3446dc300c3938a61106b246fa55ef1"
+      "sha256": "4b7d34dea457aecf150a10ba153f4b94d2a0d130d3e00dbb7a1ff49e83c4d6e8"
     },
     {
       "path": "apps/live/index.html",
@@ -89,15 +89,15 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "14db8b66c03d6bad684e90ae8a8e5aed2d1a7b5307814c015acd7a464877c5fa"
+      "sha256": "f26033827e750a046de93dc97237e39bc02bd9b7f25a167b71c54ae7fcf30cd6"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "09078d71ccb0e6ca50875e61eacfd750dc64ca8549f2957b94de6862149d79ba"
+      "sha256": "2c6c5becd3207795670f7168b3e9e1679bc63ef4a42ff245ff54c558fcbd6120"
     },
     {
       "path": "apps/live/src/alerts.ts",
-      "sha256": "77fcb3c99b904f76bec075bf53d6dc9c59a436266c76d6ab8dc9cc88e800a350"
+      "sha256": "78cf72666e7d4fb244642b06bd3cea6e45149abdc57ad12bda9499ec8d2b91b4"
     },
     {
       "path": "apps/live/src/audio-device.test.ts",
@@ -117,7 +117,7 @@
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
-      "sha256": "fbb75ab744ae218cf2bca5470a8ca45cb414efe300d00dbd330f00f40583bbe6"
+      "sha256": "7df351831efeb8ea218ebba31b8a8a03504006b48b7329265cc80b6fa1b1fa1d"
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
@@ -152,8 +152,16 @@
       "sha256": "c62254f27c7a9ef4961a3d6c743c93c96023144ff223d4fbff4f74ca602fe513"
     },
     {
+      "path": "apps/live/src/components/SessionBar.tsx",
+      "sha256": "43c53d30c406d41f817e5c5d6f13b3fc298777984013494901ed418d01bd1d3a"
+    },
+    {
+      "path": "apps/live/src/components/SessionSheet.tsx",
+      "sha256": "75ccb6ba562337fb2ad85c9a5cac87e84c0be9c5e1fffbc974a936aae020b1f6"
+    },
+    {
       "path": "apps/live/src/components/StatusStrip.tsx",
-      "sha256": "4e0797993d261969c6271bedb3624932a71d13cb69c3498cdfb751926079fc2f"
+      "sha256": "c09477741f1f1f0d239e906888a90c6749ee6665e7fd9da6ddd68e29f1300211"
     },
     {
       "path": "apps/live/src/live-state.ts",
@@ -184,8 +192,20 @@
       "sha256": "3c64293f0492d1c182ba644abd4f44ef3bc1f9bb44cc897402d9e04c63e25cfd"
     },
     {
+      "path": "apps/live/src/rooms.ts",
+      "sha256": "a9bb22e3298252eeacd24f05e5ee5ea10cdee4b81cc280c076b6fcfaefd49460"
+    },
+    {
+      "path": "apps/live/src/sessions.test.ts",
+      "sha256": "f3a1556a547415290a286dd96c7057fefa2888e1b191ad61a8e2011f8f02b7a1"
+    },
+    {
+      "path": "apps/live/src/sessions.ts",
+      "sha256": "c8bac35facc34f71c55e55133bb07bcbb074df4fd2d428da329b8826bc04ac94"
+    },
+    {
       "path": "apps/live/src/styles.css",
-      "sha256": "d095dfebe06f759e12f090663dcb6ab7b741ffd115097bf0961972d768dd09ca"
+      "sha256": "8c45669f7e46b1da12ec6628615d6c236f2384006ce80651805efe83a0b04444"
     },
     {
       "path": "apps/live/src/useAudioDevice.ts",
@@ -241,19 +261,19 @@
     },
     {
       "path": "apps/manager/src/App.test.tsx",
-      "sha256": "048a71d0eafd52378045b08ce6659789e03d1870818f17e3770bd3c035221204"
+      "sha256": "f4babcc3bb47a977c6de7d461979c0c3ce693a72a5c154b3f4c14208623a407f"
     },
     {
       "path": "apps/manager/src/App.tsx",
-      "sha256": "2165f2c7d6aa5bb7170b42c3bee4507afcee53690cf6fe74df49c928d4718e38"
+      "sha256": "0ca6f03584810638aefa877dfaf285093362b9c50c72bddfd81aa439de85b7c0"
     },
     {
       "path": "apps/manager/src/components/AlertsTab.tsx",
-      "sha256": "afe28f161da6a648afff7e37d2f7db9f02b2f29dbe9b1d4750e1963475516b4c"
+      "sha256": "484ec206cf1b5165ffd356b8c668806e0a21ec57dc7df7fdcb7fbc1cf77cebbd"
     },
     {
       "path": "apps/manager/src/components/ChannelsTab.tsx",
-      "sha256": "ac1d6843b7bca78548fa3b295a0ddb5096eb8fdfc51d5ed08a9655b5f51e86ec"
+      "sha256": "3a4d403f126d43462bce83684e3062d009b347105a3195241aa794ffaf4762b3"
     },
     {
       "path": "apps/manager/src/components/EmptyState.tsx",
@@ -266,6 +286,14 @@
     {
       "path": "apps/manager/src/components/ReceiversTab.tsx",
       "sha256": "c8a323e39305207252a8f89ba370e9da60b1e9d0db9ec1ac42db4415e9f1f575"
+    },
+    {
+      "path": "apps/manager/src/components/RoomsTab.tsx",
+      "sha256": "f332fa41e11fdbe95c4f1dcc5ff18c63b117b91c3a8d61f51ded5ee033891540"
+    },
+    {
+      "path": "apps/manager/src/components/SessionsTab.tsx",
+      "sha256": "40832eeff086a4b0dcc1969799d656bc045ecfb3e60deb7bfb7f71265ec94357"
     },
     {
       "path": "apps/manager/src/components/ShowTab.tsx",
@@ -297,11 +325,19 @@
     },
     {
       "path": "apps/manager/src/components/ui/table.tsx",
-      "sha256": "d78524d1918a42069e43403e8b928b80ddf628ee176eb2e44831087a56cea609"
+      "sha256": "b9196c2ccd6da7807f98cc18fa6097ac149325169f7af5867a5b708ed6d58b5a"
     },
     {
       "path": "apps/manager/src/components/ui/tabs.tsx",
       "sha256": "0ea28cd94a91eadcc4a6dec089f93111f7ba8dc5f64c653642c885a73c4827d8"
+    },
+    {
+      "path": "apps/manager/src/lib/group-id.ts",
+      "sha256": "c64217d7e5d18714ba6763f73853604e6c8c2c847cab9695ac86e64d9d348d00"
+    },
+    {
+      "path": "apps/manager/src/lib/session-time.ts",
+      "sha256": "3dda47aa9dcd958976e7fa3263831354d0ceef48057ed1cc151ee76aa90e1a0a"
     },
     {
       "path": "apps/manager/src/lib/utils.ts",
@@ -469,7 +505,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256": "a0c1fe887cf7cb271347b148bdad0fcb954bc514bfbf3a30e19836147a0f90ee"
+      "sha256": "1f596be83de79a5b82a3475f1f291da05fbc67296b209c92650af54fb98b815d"
     },
     {
       "path": "docs/api/show-management-and-control.md",
@@ -656,8 +692,16 @@
       "sha256": "b76d5200d229dda752daebf7abcff08201f0514e72c77a76d5694b32a3314ecc"
     },
     {
+      "path": "docs/decisions/0029-mvp-sessions-and-run-of-show.md",
+      "sha256": "3f4a39dfc11d0c3785ff66ec61524dfe9b23840b1e83f716e9c88fca719323c7"
+    },
+    {
+      "path": "docs/decisions/0030-mvp-rooms-and-categories.md",
+      "sha256": "329bf64f3c31f477f2f031d5c7acf2908f44fd96179857d1d41939dfae32c06c"
+    },
+    {
       "path": "docs/design/DESIGN.md",
-      "sha256": "80539e9241478eeaab6657fd2c59205fe7924d915c09581dd485d60f4a68b285"
+      "sha256": "4adbc9976a2465514c0dcc2f6729a13d6e54927d0269ec4b9e735e7e16e55f79"
     },
     {
       "path": "docs/design/README.md",
@@ -961,7 +1005,7 @@
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/live-state.valid.json",
-      "sha256": "6c7602fc2a9b8024ee87e924b2211a4f4cef1cfe805c67f08ed50bd41e8270f4"
+      "sha256": "6aaa2cdec7353413bcfbe7451a29dd221649ae2ea5d366d0605ebc49210dd133"
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/meter-frame.valid.json",
@@ -981,7 +1025,7 @@
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/showfile.valid.json",
-      "sha256": "17cba061a98a9818755b4b6571899699f99410e24f8240dd7cea12f182b16182"
+      "sha256": "5d5ec807d91502540595d1a4ba1c51563e360905c85b6fcf96f8309c50cf1012"
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/shure-telemetry.valid.json",
@@ -1101,7 +1145,7 @@
     },
     {
       "path": "packages/protocol/generated/http-contracts.ts",
-      "sha256": "c4e9b1ec2b4acef3f650930ff2b8c17375e78acfc21a9428a2ca7938215511a1"
+      "sha256": "b0fcea0fa138079b4257d949d29a837310edfe6f26e3dfe5a3781641d0bdef27"
     },
     {
       "path": "packages/protocol/model/aggregate-transitions.v0.json",
@@ -1137,7 +1181,7 @@
     },
     {
       "path": "packages/protocol/schema/v0/http/live-state.schema.json",
-      "sha256": "180277470365b3dbf55d4287ee9bd6440a861c19d14854ebc3ccc9a034dd832b"
+      "sha256": "0f23a122115000bbbd3a99909c6acae89011b01a7f246c9c1752ba700f2115c8"
     },
     {
       "path": "packages/protocol/schema/v0/http/meter-frame.schema.json",
@@ -1157,7 +1201,7 @@
     },
     {
       "path": "packages/protocol/schema/v0/http/showfile.schema.json",
-      "sha256": "9ad5dd3dfe530e0868526264546d14982a3676b99526bdbee2efcb18f5bd2b85"
+      "sha256": "ddd890fc221d5f3c91e4564c66b6bf9eeeec5e9c893ae01e774cedd1ba6c4b0e"
     },
     {
       "path": "packages/protocol/schema/v0/http/shure-telemetry.schema.json",
@@ -1205,7 +1249,7 @@
     },
     {
       "path": "packages/ui/tokens.css",
-      "sha256": "128378cf99d4e28715fd6624ffd84b2625a230ba48f1f56f46cb7a3386954667"
+      "sha256": "eb1d583722c04558d0bf0942dec45694d28c4ea625cf44a5cde6db8cf007368e"
     },
     {
       "path": "packages/ui/tsconfig.json",
@@ -1261,7 +1305,7 @@
     },
     {
       "path": "scripts/dev.mjs",
-      "sha256": "50fb753fa7c14e8a91922c0e8ab22e363d037bf56905db21e6b035d413c4dd17"
+      "sha256": "954bd194a695157deead09fe3dc618d82a032ddd98ecd86c4bc69898ea89fa18"
     },
     {
       "path": "scripts/generate-build-identity.mjs",
@@ -1353,7 +1397,7 @@
     },
     {
       "path": "services/backend/README.md",
-      "sha256": "5b4da958a6d81cab8c45cfae3185f48cddd57b37dad919c2ea9f97a37a18f0ff"
+      "sha256": "5c8fa9e176bb7bfea2facf9f0c698edcaadd26104e0f23c6622b2a585fd8b0a1"
     },
     {
       "path": "services/backend/package.json",
@@ -1397,11 +1441,11 @@
     },
     {
       "path": "services/backend/src/live-model.ts",
-      "sha256": "6dfe6deb9a3a30f054d795317152066c8633454ca73b735e6ac6e2fe0a2e0445"
+      "sha256": "b847c594210650405fc30584de15350477c39c7e350a64343b1d0c56dd11c7b9"
     },
     {
       "path": "services/backend/src/live-monitor.ts",
-      "sha256": "202fb4cd2b496556176712d6cf8bf3096975989409b46e7d5ac94d81d3a55ad3"
+      "sha256": "79914ba8cce6d6775e21f7a1c1154deb9c8b21afa9c79341fd8b90d02bc580ea"
     },
     {
       "path": "services/backend/src/live-routes.test.ts",
@@ -1425,7 +1469,7 @@
     },
     {
       "path": "services/backend/src/productions.ts",
-      "sha256": "1ff506f29f201e2f1d60cf06068842963c3ef572aee8dce4334dc6273b994204"
+      "sha256": "c1703c3a07f461d4bb92e17a504dc52a3d8b8e9cf3c2734b8db104589dff0dc2"
     },
     {
       "path": "services/backend/src/reports.test.ts",
@@ -1436,20 +1480,32 @@
       "sha256": "7e369e7c3a0600798381f010d92bb679337d40191583efc8acee7285a607e693"
     },
     {
+      "path": "services/backend/src/rooms.test.ts",
+      "sha256": "f1326413e02f4134ee9289f4204bad80b7da6a572e2321f691c2091120dd192d"
+    },
+    {
       "path": "services/backend/src/server.test.ts",
       "sha256": "cb271de0c4eafa8320d1850c6bb49cb3c39ce64632f28a3849e9566f13283d1e"
     },
     {
       "path": "services/backend/src/server.ts",
-      "sha256": "b596d9ba6f36d741e8af5854340d87808c3bec944ef72072fb2d26017ff74d74"
+      "sha256": "0d730a01236b36728c85c2afb43c2ff2308e6c3430831a60cff9a61b73462ba6"
+    },
+    {
+      "path": "services/backend/src/sessions.test.ts",
+      "sha256": "5deb90113c3f03ce4fbb7e30e83d89a16d4cfc6f220487393c0fd37d9fffe27a"
+    },
+    {
+      "path": "services/backend/src/sessions.ts",
+      "sha256": "f75890f43c83d143f43fabe8c198a1447f2ece6f8c1aec480f367c3bff420c1d"
     },
     {
       "path": "services/backend/src/showfile.ts",
-      "sha256": "1ef12378f733c1748e4505fdecb77f20d094c31fb6326b8656796932d5e24c11"
+      "sha256": "feae109159f006fdc5c18257902bf8ed200827986dd77839c085bf47bd5e8a2f"
     },
     {
       "path": "services/backend/src/start.ts",
-      "sha256": "70b36fdf97a8f5ca9bbd6240aebf0326a0b9d35b6e525a7f7a8c8535434b9508"
+      "sha256": "7476700f72c837fb66970b0ab9ca3458cf3dd1690b63c15116b591b7fb4edacf"
     },
     {
       "path": "services/backend/tsconfig.json",

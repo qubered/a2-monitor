@@ -421,4 +421,124 @@ describe("Manager showfile editor", () => {
     await user.click(screen.getByRole("button", { name: "Reset to defaults" }));
     expect(screen.getByText("Using defaults")).toBeTruthy();
   });
+
+  it("builds a run of show: sessions, start times, channels and presenters", async () => {
+    const user = userEvent.setup();
+    showfiles.p1 = {
+      ...storedShowfile,
+      shureReceivers: [],
+      channels: [
+        { id: "ch-alice", inputIndex: 0, name: "Alice", performer: "Alice Ng" },
+        { id: "ch-bob", inputIndex: 1, name: "Bob" },
+      ],
+    };
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /sessions/i }));
+    expect(screen.getByText("No sessions.")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Add session" }));
+    const name = screen.getByLabelText("Session 1 name");
+    await user.clear(name);
+    await user.type(name, "Keynote");
+    await user.type(screen.getByLabelText("Session 1 start time"), "09:30");
+    await user.click(screen.getByLabelText("Use Alice in Keynote"));
+    expect(
+      (screen.getByLabelText("Bob presenter in Keynote") as HTMLInputElement)
+        .disabled,
+    ).toBe(true);
+    await user.type(
+      screen.getByLabelText("Alice presenter in Keynote"),
+      "Dana Lee",
+    );
+
+    // A new session starts from the previous one's channels.
+    await user.click(screen.getByRole("button", { name: "Add session" }));
+    await user.click(screen.getByLabelText("Use Bob in Session 2"));
+    await user.click(
+      screen.getByRole("button", { name: "Move session 2 earlier" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Save showfile" }));
+    expect(await screen.findByText("Revision 3")).toBeTruthy();
+    const saveCall = fetchMock.mock.calls.find(
+      ([path, init]) =>
+        String(path) === "/api/v1/showfile" && init?.method === "PUT",
+    );
+    expect(JSON.parse(String(saveCall?.[1]?.body)).sessions).toEqual([
+      {
+        name: "Session 2",
+        startMinute: null,
+        channels: [
+          { channelId: "ch-alice", presenter: "Dana Lee" },
+          { channelId: "ch-bob", presenter: null },
+        ],
+      },
+      {
+        name: "Keynote",
+        startMinute: 570,
+        channels: [{ channelId: "ch-alice", presenter: "Dana Lee" }],
+      },
+    ]);
+  });
+
+  it("organises channels into rooms and categories", async () => {
+    const user = userEvent.setup();
+    showfiles.p1 = {
+      ...storedShowfile,
+      shureReceivers: [],
+      channels: [
+        { id: "ch-alice", inputIndex: 0, name: "Alice" },
+        { id: "ch-bob", inputIndex: 1, name: "Bob" },
+      ],
+    };
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /rooms/i }));
+    expect(screen.getByText("No rooms.")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Add room" }));
+    const name = screen.getByLabelText("Room 1 name");
+    await user.clear(name);
+    await user.type(name, "Ballroom");
+    await user.click(
+      screen.getByRole("button", { name: "Add category to Ballroom" }),
+    );
+    const category = screen.getByLabelText("Ballroom category 1 name");
+    await user.clear(category);
+    await user.type(category, "Stage");
+
+    await user.click(screen.getByRole("tab", { name: /channels/i }));
+    await user.click(
+      screen.getByRole("combobox", { name: "Channel 1 room and category" }),
+    );
+    await user.click(
+      await screen.findByRole("option", { name: "Ballroom · Stage" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Save showfile" }));
+    expect(await screen.findByText("Revision 3")).toBeTruthy();
+    const saveCall = fetchMock.mock.calls.find(
+      ([path, init]) =>
+        String(path) === "/api/v1/showfile" && init?.method === "PUT",
+    );
+    const saved = JSON.parse(String(saveCall?.[1]?.body)) as {
+      rooms: Array<{
+        id: string;
+        name: string;
+        categories: Array<{ id: string; name: string }>;
+      }>;
+      channels: Array<{ roomId?: string | null; categoryId?: string | null }>;
+    };
+    expect(saved.rooms).toEqual([
+      {
+        id: expect.stringMatching(/^room-/),
+        name: "Ballroom",
+        categories: [{ id: expect.stringMatching(/^cat-/), name: "Stage" }],
+      },
+    ]);
+    expect(saved.channels[0]).toMatchObject({
+      roomId: saved.rooms[0]!.id,
+      categoryId: saved.rooms[0]!.categories[0]!.id,
+    });
+    expect(saved.channels[1]!.roomId ?? null).toBeNull();
+  });
 });

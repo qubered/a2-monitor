@@ -119,7 +119,7 @@ const SECTIONS: Array<{ title: string; detail: string; fields: FieldSpec[] }> =
     {
       title: "Card overlay",
       detail:
-        "A critical alert veils its card until acknowledged. Caution overlays expire; the alert still counts as outstanding.",
+        "A critical alert holds its card until acknowledged. Caution overlays expire; the alert still counts as outstanding.",
       fields: [
         {
           key: "overlayExpiryMinutes",

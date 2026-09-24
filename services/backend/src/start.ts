@@ -3,6 +3,7 @@ import { startBackendProcess } from "./process-lifecycle.js";
 import { FileAlertPersistence } from "./alerts.js";
 import { FileCheckPersistence } from "./checks.js";
 import { FileReportPersistence } from "./reports.js";
+import { FileSessionPersistence } from "./sessions.js";
 import { NodeObserver } from "./node-observer.js";
 import { FileProductionStore } from "./productions.js";
 import { resolve } from "node:path";
@@ -19,6 +20,7 @@ const server = buildServer({
   alertPersistence: new FileAlertPersistence(dataDirectory),
   checkPersistence: new FileCheckPersistence(dataDirectory),
   reportPersistence: new FileReportPersistence(dataDirectory),
+  sessionPersistence: new FileSessionPersistence(dataDirectory),
   nodeSource: new NodeObserver({ origin: nodeOrigin }),
 });
 

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import {
   BellRing,
+  CalendarClock,
+  DoorOpen,
   FolderKanban,
   Radio,
   SlidersHorizontal,
@@ -28,6 +30,8 @@ import { ChannelsTab } from "./components/ChannelsTab";
 import { EmptyState } from "./components/EmptyState";
 import { ProductionsTab } from "./components/ProductionsTab";
 import { ReceiversTab } from "./components/ReceiversTab";
+import { RoomsTab } from "./components/RoomsTab";
+import { SessionsTab } from "./components/SessionsTab";
 import { ShowTab } from "./components/ShowTab";
 import { Button } from "./components/ui/button";
 import {
@@ -326,6 +330,18 @@ export function App() {
                   ? ` · ${showfile.channels.length}`
                   : ""}
               </TabsTrigger>
+              <TabsTrigger value="rooms">
+                <DoorOpen aria-hidden="true" />
+                Rooms
+                {showfile.rooms?.length ? ` · ${showfile.rooms.length}` : ""}
+              </TabsTrigger>
+              <TabsTrigger value="sessions">
+                <CalendarClock aria-hidden="true" />
+                Sessions
+                {showfile.sessions?.length
+                  ? ` · ${showfile.sessions.length}`
+                  : ""}
+              </TabsTrigger>
               <TabsTrigger value="alerts">
                 <BellRing aria-hidden="true" />
                 Alerts
@@ -365,6 +381,12 @@ export function App() {
                   device={device}
                   onChange={update}
                 />
+              </TabsContent>
+              <TabsContent value="rooms">
+                <RoomsTab showfile={showfile} onChange={update} />
+              </TabsContent>
+              <TabsContent value="sessions">
+                <SessionsTab showfile={showfile} onChange={update} />
               </TabsContent>
               <TabsContent value="alerts">
                 <AlertsTab showfile={showfile} onChange={update} />

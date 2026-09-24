@@ -71,10 +71,15 @@ The running local MVP exposes:
 - `GET /healthz` reports the backend process health contract;
 - `GET /api/v1/showfile` and `PUT /api/v1/showfile` read and save one
   revisioned local MVP showfile with optimistic conflict detection; saves mint
-  stable channel ids and reject duplicate ids or an incoherent alert policy;
+  stable channel, session, room and category ids, clear references to rooms,
+  categories and channels the show no longer has, and reject duplicate ids or
+  an incoherent alert policy;
 - `GET/POST/DELETE /api/v1/productions…` manage the local production library;
 - `GET /api/v1/live/state` returns the shared monitoring state and
   `GET /api/v1/live/events` streams it as server-sent `state` events;
+- `PUT /api/v1/live/session` starts a session in its room for every client,
+  or ends one room's run with `sessionId: null` and its `roomId` (ADRs 0029
+  and 0030);
 - `GET /api/v1/alerts` returns active alerts and bounded cleared history, and
   `POST /api/v1/alerts/:id/acknowledge` records who saw an alert;
 - `GET /api/v1/live/history` returns per-second observed audio, RF, link
@@ -93,8 +98,9 @@ The live monitor (ADR 0027) polls the audio node's `GET /audio/v0/levels` and
 the alert lifecycle and publishes one validated state. It never receives PCM.
 Active alerts and 1,000 cleared alerts persist to `alerts.json` in
 `A2_DATA_DIR`; mic checks and fault reports persist beside them in
-`checks.json` and `reports.json`. A request that fails its body or parameter
-schema answers `400 { "error": "invalid-request" }`.
+`checks.json` and `reports.json`, and each room's running session in `session.json`. A
+request that fails its body or parameter schema answers
+`400 { "error": "invalid-request" }`.
 
 All responses use the Draft 2020-12 schemas and shared validator runtime in
 `packages/protocol`. Fastify validates both the supplied response object and the

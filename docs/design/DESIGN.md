@@ -1,9 +1,9 @@
 # Pulse — design language
 
-- **Version:** 2.2.0
+- **Version:** 2.6.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
-- **Last updated:** 2026-09-23
+- **Last updated:** 2026-09-24
 
 This is the whole design language in one document. It is normative: where it and
 anything else disagree, this document is the intent, and the implementation is
@@ -178,9 +178,9 @@ outline and never a hard pixel-offset shadow — see
 
 A MUST: **a component never names a raw hex, px or radius — it references a
 token.** This still matters with exactly one theme: it is what lets the whole
-product be retuned from one file, keeps a component from silently drifting off
-the palette, and is the only reason `--veil`/`--veil-ink` exist as their own
-tokens rather than a value typed straight into the alert overlay. A surface
+product be retuned from one file and keeps a component from silently drifting
+off the palette — the alert band is `--warn`/`--t-out` with `--paper` ink, not
+a colour typed straight into the card. A surface
 this system needs that has no token yet — a pressed control, a recessed well
 behind a trace — gets a token (`--elev-2`, `--well`) rather than an inlined
 colour at the component.
@@ -509,7 +509,9 @@ as a shape rather than parsed as text.
 | Unknown        | `–` dash     | `--rep` on `--rep-soft`   | Stale, disarmed, or never measured |
 | Not applicable | `∕` slash    | `--rep` 50%               | Dimension does not exist here      |
 
-Default dimensions: **RF · Audio · Battery · Check**. The set is per-deployment,
+Default dimensions: **RF · Audio · Battery**. Mic-check progress is not a
+card cell; it lives in the channel detail and the guided check. The set is
+per-deployment,
 not hard-coded: an in-ears rig adds a cell, a wired-only rig drops RF and battery
 to _not applicable_ rather than showing false greens.
 
@@ -521,22 +523,29 @@ to _not applicable_ rather than showing false greens.
 - A faulted or cautioned cell tints its whole background, so the strip reads from
   across a wing without the glyph being legible.
 - This strip is the mechanism for [§2.5](#2-principles): a channel can be
-  `✕ RF` and `⚠ Check` at once, and both are visible without opening anything.
+  `✕ RF` and `⚠ Battery` at once, and both are visible without opening anything.
 
 ### 10.3 Alert overlay
 
-An alert nobody has acknowledged **veils the whole card**.
+An alert nobody has acknowledged **rings the whole card and names itself in a
+band across the photograph**.
 
-**A veil, not a replacement.** The tint covers the card, but the face, the number,
-the meter, the name and the status strip all still read underneath — that is what
-an operator needs to start troubleshooting. The mark is pinned to the
-photograph's box rather than centred on the card, where it would be written
-across the performer's name.
+**A ring and a band, not a veil.** A 2px `--warn` (caution) or `--t-out`
+(critical) ring sits on the card's edge, and a solid band of the same colour
+with `--paper` ink sits across the lower edge of the photograph, just above the
+meter. Nothing is dimmed or tinted: the face, the number, the meter, the name
+and the status strip read exactly as they do without the alert — that is what
+an operator needs to start troubleshooting, and a dimmed card reads as a
+disabled one. A solid band is also the most legible thing on the grid from
+across a wing, which a coloured word on a translucent wash was not. The whole
+card is the press target; it takes the severity's soft tint only under hover
+or keyboard focus.
 
 **It names the problem and nothing else.** One icon, two words — _Low RF_, _No
 audio_, _Low battery_ — and `Press to acknowledge`. No explanation, no timestamp,
 no diagnosis, no action list. The operator troubleshoots; the product's job is to
-say which channel and which kind, fast, from across a wing.
+say which channel and which kind, fast, from across a wing. The words wrap
+rather than truncate; at phone width the icon drops so they fit.
 
 Behaviour:
 
@@ -551,7 +560,8 @@ Behaviour:
    itself after **five minutes** by default, so an unattended screen does not end
    the night as a wall of red. A countdown along the bottom edge shows expiry
    coming; a critical overlay has no countdown, and its absence is the signal
-   that this one is not going away on its own. Both are production policy.
+   that this one is not going away on its own. The countdown is a rule along
+   the band's lower edge. Both are production policy.
 3. **Expiry is not acknowledgement.** A timed-out alert still counts in the
    header's outstanding total. An alert nobody saw must never look like one
    somebody saw.
@@ -667,7 +677,8 @@ removes the motion; the amber outline stays.
   editing a personal group is not.
 - **Filter band** — one horizontal row under the header, 42px pill chips with
   live counts, pressed state `--ink` filled. **Default is All channels.**
-  Cue-derived filters appear only when a cue source is connected.
+  Cue-derived filters appear only when a cue source is connected; **This
+  session** appears only while a session runs ([§10.9](#109-run-of-show)).
 - **Exceptions sheet** — a sheet, not a standing rail, opened from the header
   counters. Lists critical exceptions across the whole show including sources not
   in the current filter.
@@ -678,6 +689,47 @@ removes the motion; the amber outline stays.
 There is **no sidebar** in this product. A standing left rail spends permanent
 width on navigation used in bursts; a standing right rail spends it on a list
 that is empty most of the night. The width goes to faces.
+
+### 10.9 Run of show
+
+For shows run by session rather than by cue (ADR 0029), one bar under the
+header says **Now** and **Next**: the running session with who started it and
+when, the next session with its scheduled time and how many of its channels
+still need something (`2 of 5 channels to prepare` in `--warn`, `5 channels
+ready` in `--ok`). The bar is absent when the show has no sessions.
+
+- **Starting is never one press from the bar.** The bar's one button opens the
+  **turnover sheet**: every channel the next session uses, with its presenter
+  change (`Dana Lee → Priya Shah`) and what it is waiting on — _Transmitter off_,
+  _Change battery_ with the reading, or _Battery unknown_ — then the one
+  `Start <session>` action. A pack is _Ready_ only on a current, healthy
+  measurement that also outlasts the next session's scheduled length. Unknown
+  is never ready.
+- **Idle is not failing.** A card the running session does not use keeps its
+  place, says `Not in this session` (with who is on it next), and steps its
+  photo and name back; its status strip and any alert band stay at full
+  strength. A **This session** filter chip appears while a session runs.
+- Nothing starts a session from the clock. Agendas run late; the operator
+  decides when the turnover is done.
+- With rooms ([§10.10](#1010-rooms-and-categories)) there is one bar per room
+  in view, each labelled with its room.
+
+### 10.10 Rooms and categories
+
+A multi-room show (ADR 0030) gets a **room bar** above the run-of-show bars:
+`All rooms`, each room, and `No room` when some channels have none, with live
+counts, in the filter band's chip language. It is a per-device choice, not a
+permission, and a remembered room the show no longer has falls back to All
+rooms rather than hiding channels.
+
+- The grid groups cards under **category headings** — `Ballroom · Stage` when
+  showing all rooms, `Stage` inside one — in showfile order, with a mono count.
+  Channels without a category follow their room's categories under
+  `No category`. Cards never move between groups on their own.
+- The header's alert count and the exceptions sheet stay **show-wide**: a
+  critical fault in another room still counts. The grid does not pull another
+  room's card in; the header is how that room reaches this device.
+- A show without rooms keeps the single ungrouped grid.
 
 ---
 
@@ -906,6 +958,29 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.6.0 — 2026-09-24.** Adds rooms and categories
+([§10.10](#1010-rooms-and-categories)): a per-device room bar, category
+headings in the grid, and one run-of-show bar per room. Implemented in Live,
+Manager and the backend alongside this entry (ADR 0030).
+
+**2.5.0 — 2026-09-24.** The Check cell is removed from the card's status strip
+([§10.2](#102-status-strip)); the strip is RF · Audio · Battery. Mic-check
+progress stays in the channel detail and the guided check, and no longer
+puts a card in Needs someone. Implemented in Live alongside this entry.
+
+**2.4.0 — 2026-09-24.** Adds the run of show ([§10.9](#109-run-of-show)):
+a now/next bar, a turnover sheet that starts the next session, idle cards for
+channels the running session does not use, and a This session filter.
+Implemented in Live, Manager and the backend alongside this entry (ADR 0029).
+
+**2.3.0 — 2026-09-24.** The alert overlay's translucent veil is gone
+([§10.3](#103-alert-overlay)). It darkened the whole card so an alerting card
+read as disabled, and it wrote a coloured label with a text shadow across the
+photograph and the name. Now an unacknowledged alert is a 2px severity ring on
+the card plus a solid severity band across the photograph's lower edge; nothing
+underneath is dimmed. `--veil` and `--veil-ink` are removed. Implemented in
+Live alongside this entry.
 
 **2.2.0 — 2026-09-23.** The A2 grid no longer reorders
 ([§11.1](#111-a2-grid)). Critical sources used to pin to the top, with the

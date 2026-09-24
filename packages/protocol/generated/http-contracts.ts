@@ -12,9 +12,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: 50ddea44559473413171c8bab6c01d3aa63d760cc3573f890c9629fbb8df9b5a
+// Schema-SHA256: c707f6651b6e7dfc2b0d033f943ea692ed1576f64238aa6febbfd05804fa00c5
 // Generator-SHA256: 1a037c5d886a218624ec27da5ce598a9d0abd5d3c5e4690b1e37bf4b6b235531
-// Body-SHA256: 76c63b481d31a1cb8c48855a5e711483e24f1ed6906f2bcb0298034dd0b9af10
+// Body-SHA256: f63c8e3c13fe322c3db811e339ea2813312eb4a410ca62caf8abe60b2033568b
 
 export type HealthResponse = {
   status: "ok";
@@ -140,11 +140,31 @@ export type Showfile = {
       | "other"
       | null;
     imageUrl?: string | null;
+    roomId?: string | null;
+    categoryId?: string | null;
     monitor?: {
       battery: boolean;
       rf: boolean;
       audio: boolean;
     };
+  }>;
+  rooms?: Array<{
+    id?: string;
+    name: string;
+    categories: Array<{
+      id?: string;
+      name: string;
+    }>;
+  }>;
+  sessions?: Array<{
+    id?: string;
+    name: string;
+    roomId?: string | null;
+    startMinute: number | null;
+    channels: Array<{
+      channelId: string;
+      presenter: string | null;
+    }>;
   }>;
 };
 
@@ -358,6 +378,13 @@ export type LiveStateChannel = {
     stale: boolean;
     updatedAtUtc: string;
   } | null;
+  session?: {
+    inUse: boolean | null;
+    nextInUse: boolean | null;
+    nextPresenter: string | null;
+  } | null;
+  roomId?: string | null;
+  categoryId?: string | null;
 };
 
 export type LiveAlert = {
@@ -424,6 +451,31 @@ export type ReportedFault =
   | "nothing-at-all"
   | "other";
 
+export type SessionSummary = {
+  id: string;
+  name: string;
+  startMinute: number | null;
+  channelCount: number;
+};
+
+export type SessionRun = {
+  roomId: string | null;
+  activeId: string | null;
+  nextId: string | null;
+  startedAtUtc: string | null;
+  startedBy: string | null;
+  sessions: Array<SessionSummary>;
+};
+
+export type Room = {
+  id: string;
+  name: string;
+  categories: Array<{
+    id: string;
+    name: string;
+  }>;
+};
+
 export type LiveState = {
   schemaVersion: "0";
   revision: number;
@@ -465,6 +517,8 @@ export type LiveState = {
     outstanding: number;
     outstandingCritical: number;
   };
+  rooms?: Array<Room>;
+  runs?: Array<SessionRun>;
 };
 
 export type LoggedAlert = {
@@ -1036,6 +1090,16 @@ const showfileSchema = {
             minLength: 1,
             maxLength: 300000,
           },
+          roomId: {
+            type: ["string", "null"],
+            minLength: 1,
+            maxLength: 64,
+          },
+          categoryId: {
+            type: ["string", "null"],
+            minLength: 1,
+            maxLength: 64,
+          },
           monitor: {
             type: "object",
             additionalProperties: false,
@@ -1049,6 +1113,103 @@ const showfileSchema = {
               },
               audio: {
                 type: "boolean",
+              },
+            },
+          },
+        },
+      },
+    },
+    rooms: {
+      type: "array",
+      maxItems: 32,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["name", "categories"],
+        properties: {
+          id: {
+            type: "string",
+            minLength: 1,
+            maxLength: 64,
+          },
+          name: {
+            type: "string",
+            minLength: 1,
+            maxLength: 120,
+          },
+          categories: {
+            type: "array",
+            maxItems: 32,
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["name"],
+              properties: {
+                id: {
+                  type: "string",
+                  minLength: 1,
+                  maxLength: 64,
+                },
+                name: {
+                  type: "string",
+                  minLength: 1,
+                  maxLength: 120,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    sessions: {
+      type: "array",
+      maxItems: 100,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["name", "startMinute", "channels"],
+        properties: {
+          id: {
+            type: "string",
+            minLength: 1,
+            maxLength: 64,
+          },
+          name: {
+            type: "string",
+            minLength: 1,
+            maxLength: 120,
+          },
+          roomId: {
+            description:
+              "The room this session runs in; null or absent for channels not in any room.",
+            type: ["string", "null"],
+            minLength: 1,
+            maxLength: 64,
+          },
+          startMinute: {
+            description:
+              "Scheduled start as minutes after local midnight at the venue; null when not scheduled.",
+            type: ["integer", "null"],
+            minimum: 0,
+            maximum: 1439,
+          },
+          channels: {
+            type: "array",
+            maxItems: 128,
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["channelId", "presenter"],
+              properties: {
+                channelId: {
+                  type: "string",
+                  minLength: 1,
+                  maxLength: 64,
+                },
+                presenter: {
+                  type: ["string", "null"],
+                  maxLength: 120,
+                },
               },
             },
           },
@@ -1831,6 +1992,24 @@ const liveStateSchema = {
         },
       },
     },
+    rooms: {
+      description:
+        "Rooms and their categories, in showfile order. Absent from producers that predate rooms.",
+      type: "array",
+      maxItems: 32,
+      items: {
+        $ref: "#/$defs/room",
+      },
+    },
+    runs: {
+      description:
+        "One run of show per room that has sessions: which session is running there and what is next. Absent from producers that predate sessions.",
+      type: "array",
+      maxItems: 33,
+      items: {
+        $ref: "#/$defs/sessionRun",
+      },
+    },
   },
   $defs: {
     verdict: {
@@ -2191,6 +2370,35 @@ const liveStateSchema = {
             },
           },
         },
+        session: {
+          description:
+            "This channel's part in the active and next session; null when no session is active and none is next.",
+          type: ["object", "null"],
+          additionalProperties: false,
+          required: ["inUse", "nextInUse", "nextPresenter"],
+          properties: {
+            inUse: {
+              type: ["boolean", "null"],
+            },
+            nextInUse: {
+              type: ["boolean", "null"],
+            },
+            nextPresenter: {
+              type: ["string", "null"],
+              maxLength: 120,
+            },
+          },
+        },
+        roomId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        categoryId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
       },
     },
     alert: {
@@ -2422,6 +2630,118 @@ const liveStateSchema = {
         "nothing-at-all",
         "other",
       ],
+    },
+    sessionSummary: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "name", "startMinute", "channelCount"],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        startMinute: {
+          type: ["integer", "null"],
+          minimum: 0,
+          maximum: 1439,
+        },
+        channelCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 128,
+        },
+      },
+    },
+    sessionRun: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "roomId",
+        "activeId",
+        "nextId",
+        "startedAtUtc",
+        "startedBy",
+        "sessions",
+      ],
+      properties: {
+        roomId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+          description:
+            "The room this run of show belongs to; null for channels in no room.",
+        },
+        activeId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        nextId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        startedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        startedBy: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 80,
+        },
+        sessions: {
+          type: "array",
+          maxItems: 100,
+          items: {
+            $ref: "#/$defs/sessionSummary",
+          },
+        },
+      },
+    },
+    room: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "name", "categories"],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        categories: {
+          type: "array",
+          maxItems: 32,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["id", "name"],
+            properties: {
+              id: {
+                type: "string",
+                minLength: 1,
+                maxLength: 64,
+              },
+              name: {
+                type: "string",
+                minLength: 1,
+                maxLength: 120,
+              },
+            },
+          },
+        },
+      },
     },
   },
 } as const;
