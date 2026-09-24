@@ -11,9 +11,11 @@ import type {
   HostOutput,
   MeterFrame,
   NodeLevels,
+  Showfile,
 } from "@rvlt/pulse-protocol/http";
 import {
   hostOutputDocument,
+  type HostMonitor,
   MonitorChangeError,
   monitorCommand,
   parseMonitorChange,
@@ -174,6 +176,32 @@ export class ListenGateway {
   private startMediaOnce: () => void = () => undefined;
   private readonly keepalive: NodeJS.Timeout;
   private levels: LevelBank | undefined;
+  /** Monitor trim in dB by patched input index, from the active showfile (ADR 0033). */
+  private inputTrimDb = new Map<number, number>();
+
+  private sendMonitor(mix: number, monitor: HostMonitor): void {
+    const trimDb =
+      monitor.input === null ? 0 : (this.inputTrimDb.get(monitor.input) ?? 0);
+    this.media.setMonitor(mix, monitorCommand(monitor, trimDb));
+  }
+
+  /** Follows the showfile's per-channel trims and re-renders every feed when one changes. */
+  private setInputTrims(showfile: Showfile): void {
+    const next = new Map<number, number>();
+    for (const { inputIndex, trimDb } of showfile.channels) {
+      if (inputIndex !== null && trimDb && !next.has(inputIndex)) {
+        next.set(inputIndex, trimDb);
+      }
+    }
+    const same =
+      next.size === this.inputTrimDb.size &&
+      [...next].every(([input, db]) => this.inputTrimDb.get(input) === db);
+    if (same) return;
+    this.inputTrimDb = next;
+    this.hostFeeds
+      .list()
+      .forEach(({ monitor }, mix) => this.sendMonitor(mix, monitor.get()));
+  }
 
   constructor(options: ListenGatewayOptions = {}) {
     this.media =
@@ -202,7 +230,7 @@ export class ListenGateway {
     this.media.on("output", () => this.broadcastOutput());
     this.hostFeeds.on("monitor", (mix: number) => {
       const feed = this.hostFeeds.list()[mix];
-      if (feed) this.media.setMonitor(mix, monitorCommand(feed.monitor.get()));
+      if (feed) this.sendMonitor(mix, feed.monitor.get());
       this.broadcastOutput();
     });
     this.hostFeeds.on("feeds", () => {
@@ -210,9 +238,7 @@ export class ListenGateway {
       this.media.setOutputRoutes(this.hostFeeds.routes());
       this.hostFeeds
         .list()
-        .forEach(({ monitor }, mix) =>
-          this.media.setMonitor(mix, monitorCommand(monitor.get())),
-        );
+        .forEach(({ monitor }, mix) => this.sendMonitor(mix, monitor.get()));
       this.broadcastOutput();
     });
     this.media.on("meters", (reading: MeterReading) =>
@@ -229,6 +255,7 @@ export class ListenGateway {
         backendOrigin: options.backendOrigin,
         // The active production's host output feeds (ADR 0031).
         onShowfile: (showfile) => {
+          this.setInputTrims(showfile);
           this.hostFeeds.configure(
             showfile.hostOutput?.feeds,
             this.media.getDefaultOutputChannels(),

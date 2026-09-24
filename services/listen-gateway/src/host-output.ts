@@ -130,10 +130,17 @@ export function parseMonitorChange(
   return change;
 }
 
-/** The linear gain and input the worker renders for a monitor state. */
-export function monitorCommand(monitor: HostMonitor): MonitorCommand {
+/**
+ * The linear gain and input the worker renders for a monitor state. The
+ * input's trim (ADR 0033) sits first in the chain, under the operators' level.
+ */
+export function monitorCommand(
+  monitor: HostMonitor,
+  trimDb = 0,
+): MonitorCommand {
   if (monitor.input === null) return { channel: null, gain: 0 };
-  const gainDb = monitor.gainDb + (monitor.dimmed ? DIM_ATTENUATION_DB : 0);
+  const gainDb =
+    trimDb + monitor.gainDb + (monitor.dimmed ? DIM_ATTENUATION_DB : 0);
   return {
     channel: monitor.input,
     gain: monitor.muted ? 0 : 10 ** (gainDb / 20),

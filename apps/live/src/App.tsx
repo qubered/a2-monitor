@@ -515,6 +515,12 @@ export function App({
   const micCheckChannel =
     channels.find((channel) => channel.id === micCheckId) ?? null;
   const selectedInput = device ? (selectedChannel?.input.index ?? null) : null;
+  const selectedTrimDb = selectedChannel?.trimDb ?? 0;
+  const selectedTrimRef = useRef(selectedTrimDb);
+  useEffect(() => {
+    selectedTrimRef.current = selectedTrimDb;
+    playbackSession.current?.setTrimDb(selectedTrimDb);
+  }, [selectedTrimDb]);
 
   useEffect(() => {
     try {
@@ -543,6 +549,7 @@ export function App({
       onUpdate: setPlayback,
     });
     session.setGainDb(outputState.current.gainDb);
+    session.setTrimDb(selectedTrimRef.current);
     session.setDimmed(outputState.current.dimmed);
     void session.setMuted(outputState.current.muted);
     playbackSession.current = session;

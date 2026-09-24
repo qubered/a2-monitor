@@ -370,7 +370,7 @@ mod tests {
             r#"{"type":"open","sessionId":"a","channel":0,"offer":"v=0","candidateAddress":"0.0.0.0"}"#,
             r#"{"type":"open","sessionId":"a","channel":0,"offer":"","candidateAddress":"127.0.0.1"}"#,
             r#"{"type":"restart"}"#,
-            r#"{"type":"monitor","mix":0,"channel":0,"gain":16}"#,
+            r#"{"type":"monitor","mix":0,"channel":0,"gain":300}"#,
             r#"{"type":"monitor","mix":0,"channel":0,"gain":-0.1}"#,
             r#"{"type":"monitor","mix":8,"channel":0,"gain":1}"#,
             r#"{"type":"monitor","channel":0,"gain":1}"#,

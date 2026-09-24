@@ -441,6 +441,45 @@ describe("Live channel grid", () => {
     expect(card.classList.contains("is-selected")).toBe(false);
   });
 
+  it("shows a channel's trim and applies it under the operator's level when listening", async () => {
+    const user = userEvent.setup();
+    const setTrimDb = vi.fn();
+    const playbackFactory = vi.fn<PlaybackFactory>(() => ({
+      setChannel: vi.fn(),
+      setMuted: vi.fn(async () => undefined),
+      setDimmed: vi.fn(),
+      setGainDb: vi.fn(),
+      setTrimDb,
+      close: vi.fn(),
+    }));
+    const base = stateWith();
+    const state = {
+      ...base,
+      channels: base.channels.map((entry, index) =>
+        index === 0 ? { ...entry, trimDb: 6 } : entry,
+      ),
+    };
+    renderApp(state, { audioDeviceSource: readyDevice, playbackFactory });
+
+    const marguerite = screen
+      .getByRole("button", { name: "Select Marguerite, channel 1" })
+      .closest("article")!;
+    expect(within(marguerite).getByText("Trim +6 dB")).toBeTruthy();
+    const talkback = screen
+      .getByRole("button", { name: "Select Talkback, channel 2" })
+      .closest("article")!;
+    expect(within(talkback).queryByText(/^Trim/)).toBeNull();
+
+    await user.click(
+      screen.getByRole("button", { name: "Select Marguerite, channel 1" }),
+    );
+    await vi.waitFor(() => expect(setTrimDb).toHaveBeenLastCalledWith(6));
+    await user.click(
+      screen.getByRole("button", { name: "Select Talkback, channel 2" }),
+    );
+    await vi.waitFor(() => expect(setTrimDb).toHaveBeenLastCalledWith(0));
+  });
+
   it("lets a caution overlay expire while it still counts as outstanding", () => {
     renderApp(
       stateWith({
@@ -753,6 +792,7 @@ describe("Live channel grid", () => {
         setMuted,
         setDimmed: vi.fn(),
         setGainDb: vi.fn(),
+        setTrimDb: vi.fn(),
         close,
       };
     });
@@ -1086,6 +1126,7 @@ describe("Live channel grid", () => {
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
+      setTrimDb: vi.fn(),
       close: vi.fn(),
     }));
     window.localStorage.setItem("pulse-selected-channel", "ch-talkback");

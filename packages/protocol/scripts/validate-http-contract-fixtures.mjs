@@ -45,6 +45,7 @@ const contracts = [
     rejected: [
       "fixtures/v0/http/incompatible/showfile.unknown-field.json",
       "fixtures/v0/http/incompatible/showfile.host-output-channel-zero.json",
+      "fixtures/v0/http/incompatible/showfile.trim-out-of-range.json",
     ],
   },
   {

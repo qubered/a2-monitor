@@ -30,6 +30,8 @@ import {
 } from "./ui/table";
 
 const NONE = "none";
+const MIN_TRIM_DB = -24;
+const MAX_TRIM_DB = 24;
 
 const MIC_TYPES = [
   { value: "lavalier", label: "Lavalier" },
@@ -198,6 +200,24 @@ export function ChannelsTab({
   device: ObservedDevice | null;
   onChange: (next: Showfile) => void;
 }) {
+  /** Saves a channel's monitor trim in 0.5 dB steps; empty or 0 means no trim. */
+  function commitTrim(position: number, text: string) {
+    const parsed = Number(text);
+    const trimDb =
+      text.trim() === "" || !Number.isFinite(parsed)
+        ? 0
+        : Math.min(
+            MAX_TRIM_DB,
+            Math.max(MIN_TRIM_DB, Math.round(parsed * 2) / 2),
+          );
+    const channels = [...showfile.channels];
+    const next = { ...channels[position]! };
+    if (trimDb === 0) delete next.trimDb;
+    else next.trimDb = trimDb;
+    channels[position] = next;
+    onChange({ ...showfile, channels });
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -257,6 +277,7 @@ export function ChannelsTab({
               ) : null}
               <TableHead>Mic type</TableHead>
               <TableHead>Audio input</TableHead>
+              <TableHead className="min-w-24">Trim (dB)</TableHead>
               <TableHead>Shure channel</TableHead>
               <TableHead>Monitor</TableHead>
               <TableHead className="w-16">
@@ -427,6 +448,24 @@ export function ChannelsTab({
                       ))}
                     </SelectContent>
                   </Select>
+                </TableCell>
+                <TableCell className="min-w-24">
+                  <Input
+                    className="min-w-20"
+                    key={`${channel.id ?? position}:${channel.trimDb ?? ""}`}
+                    aria-label={`Channel ${position + 1} monitor trim in dB`}
+                    type="number"
+                    inputMode="decimal"
+                    min={MIN_TRIM_DB}
+                    max={MAX_TRIM_DB}
+                    step={0.5}
+                    placeholder="0"
+                    defaultValue={channel.trimDb ?? ""}
+                    onBlur={(event) => commitTrim(position, event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") event.currentTarget.blur();
+                    }}
+                  />
                 </TableCell>
                 <TableCell className="min-w-44">
                   <Select

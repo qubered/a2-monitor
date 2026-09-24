@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { LiveAlert, LiveStateChannel } from "@rvlt/pulse-protocol/http";
 import { overlayRemaining } from "../alerts";
 import type { MeterStore } from "../meters";
+import { formatTrim } from "../trim";
 import { MeterTrace } from "./MeterTrace";
 import { StatusStrip } from "./StatusStrip";
 
@@ -201,6 +202,11 @@ export function ChannelCard({
         <div className="channel-identity">
           <h2>{channel.name}</h2>
           <p>{secondaryLine(channel)}</p>
+          {channel.trimDb ? (
+            <span className="trim-badge mono">
+              Trim {formatTrim(channel.trimDb)} dB
+            </span>
+          ) : null}
         </div>
       </div>
 

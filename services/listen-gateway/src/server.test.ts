@@ -511,4 +511,75 @@ describe("ListenGateway shared host output", () => {
     expect(args[args.indexOf("--output-routes") + 1]).toBe("12;13,14");
     vi.unstubAllGlobals();
   });
+  it("applies a channel's showfile trim under the operators' level on a host feed", async () => {
+    const realFetch = fetch;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          schemaVersion: "0",
+          revision: 1,
+          updatedAtUtc: null,
+          show: { name: "Show" },
+          hostOutput: {
+            feeds: [{ id: "feed-a", name: "Comms A", outputChannels: [3] }],
+          },
+          device: null,
+          shureReceivers: [],
+          channels: [
+            { id: "ch", inputIndex: 0, name: "Lead", trimDb: 6 },
+            { id: "ch2", inputIndex: 1, name: "Talkback" },
+          ],
+        }),
+      ),
+    );
+    const worker = new ScriptedWorker();
+    const factory = vi.fn(() => worker);
+    const gateway = new ListenGateway({
+      device: "Test Device",
+      outputDevice: "DVS",
+      outputChannels: [1],
+      processFactory: factory,
+      backendOrigin: "http://backend.invalid/",
+    });
+    gateways.add(gateway);
+    gateway.server.listen(0, "127.0.0.1");
+    await once(gateway.server, "listening");
+    gateway.startCapture();
+    await vi.waitFor(() => expect(factory).toHaveBeenCalledOnce());
+    worker.emit({
+      type: "ready",
+      deviceName: "Test Device",
+      sampleRateHz: 48_000,
+      channelCount: 2,
+    });
+    const port = (gateway.server.address() as AddressInfo).port;
+    const send = (body: unknown) =>
+      realFetch(`http://127.0.0.1:${port}/audio/v0/output/feeds/feed-a`, {
+        method: "PATCH",
+        headers: json,
+        body: JSON.stringify(body),
+      });
+
+    // -6 dB level under a +6 dB trim is unity; an untrimmed input is not.
+    expect((await send({ channelId: "ch", input: 0, gainDb: -6 })).status).toBe(
+      200,
+    );
+    await vi.waitFor(() =>
+      expect(worker.commands.at(-1)).toMatchObject({
+        type: "monitor",
+        channel: 0,
+        gain: expect.closeTo(1, 5),
+      }),
+    );
+    expect((await send({ channelId: "ch2", input: 1 })).status).toBe(200);
+    await vi.waitFor(() =>
+      expect(worker.commands.at(-1)).toMatchObject({
+        type: "monitor",
+        channel: 1,
+        gain: expect.closeTo(10 ** (-6 / 20), 5),
+      }),
+    );
+    vi.unstubAllGlobals();
+  });
 });

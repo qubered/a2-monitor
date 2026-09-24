@@ -7,6 +7,7 @@ import type {
 import { formatClock, formatDuration } from "../alerts";
 import type { OperatorRole } from "../operator";
 import type { ReportAction } from "../reports";
+import { formatTrim } from "../trim";
 import { ReportList } from "./Reports";
 
 type ChannelDetailProps = {
@@ -216,6 +217,10 @@ export function ChannelDetail({
                       : "None in the last second"
                     : null,
                 mono: false,
+              },
+              {
+                label: "Monitor trim",
+                value: `${formatTrim(channel.trimDb ?? 0)} dB`,
               },
               {
                 label: "Transmitter mute",

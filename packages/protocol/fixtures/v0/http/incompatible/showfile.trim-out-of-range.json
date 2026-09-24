@@ -35,7 +35,7 @@
       "shureReceiverId": "receiver-a",
       "shureChannelIndex": 0,
       "micType": "headset",
-      "trimDb": -3.5,
+      "trimDb": 30,
       "imageUrl": "https://example.com/headshots/marguerite.jpg",
       "monitor": {
         "battery": true,

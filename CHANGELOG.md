@@ -10,6 +10,11 @@ externally tested release.
 
 ### Added
 
+- Per-channel monitor trim (ADR 0033). Manager's Channels tab sets a trim of
+  −24 to +24 dB per channel, first in the chain under each operator's level, on
+  this device and on host output feeds. Live shows the trim on the card and in
+  the channel detail. The worker's gain ceiling rises to +48 dB to cover a
+  +24 dB trim under a +24 dB level.
 - Live: shared host monitor output feeds (ADR 0031). When the node has an
   output device (for example Dante Virtual Soundcard routed to comms), Live
   asks on open whether audio plays on this device or in one of the

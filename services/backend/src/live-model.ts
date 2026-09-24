@@ -639,6 +639,7 @@ function buildChannel(
       performer,
       kind: wireless ? "wireless" : "wired",
       micType: showChannel.micType ?? null,
+      trimDb: showChannel.trimDb ?? 0,
       roomId: showChannel.roomId ?? null,
       categoryId: showChannel.categoryId ?? null,
       hasImage: Boolean(showChannel.imageUrl),

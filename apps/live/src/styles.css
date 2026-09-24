@@ -858,6 +858,13 @@ a:focus-visible {
   white-space: nowrap;
 }
 
+.trim-badge {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-size: var(--font-caption);
+}
+
 .status-strip {
   min-height: var(--status-height);
   display: grid;

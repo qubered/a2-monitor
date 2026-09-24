@@ -13,9 +13,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: 2e08ec88356aecd66eb8a2033094e70f791eaf0256246008522c1396c11cf6ec
+// Schema-SHA256: 29102e604cc286017df95fdd1a758d78893f2166bbc549e71a62a020b67fcd6f
 // Generator-SHA256: 7c6c8c3297d1ffee85f78fc29a4b03c3fbf3fa68da597de8be09f1f2e73d4cbf
-// Body-SHA256: 5f15b5cb93139c820d7a0a173086861833e51c44dbc3f587e4ffb8604b1cb657
+// Body-SHA256: 42ba6793a215a6b36f9c176953f9f48cfd186f7461a0148c148bd2614b770dad
 
 export type HealthResponse = {
   status: "ok";
@@ -139,6 +139,7 @@ export type Showfile = {
     performer?: string | null;
     shureChannelIndex?: number | null;
     shureReceiverId?: string | null;
+    trimDb?: number;
     micType?:
       | "lavalier"
       | "headset"
@@ -345,6 +346,7 @@ export type LiveStateChannel = {
   name: string;
   performer: string | null;
   kind: "wireless" | "wired";
+  trimDb?: number;
   micType:
     | "lavalier"
     | "headset"
@@ -1148,6 +1150,13 @@ const showfileSchema = {
             type: ["string", "null"],
             minLength: 1,
             maxLength: 64,
+          },
+          trimDb: {
+            description:
+              "Monitor trim in dB, applied to this channel's input before the operator's level and before any host output feed. Absent means 0. It never changes meters, alerts or the captured audio.",
+            type: "number",
+            minimum: -24,
+            maximum: 24,
           },
           micType: {
             enum: [
@@ -2319,6 +2328,13 @@ const liveStateSchema = {
         },
         kind: {
           enum: ["wireless", "wired"],
+        },
+        trimDb: {
+          description:
+            "Monitor trim in dB, applied to this channel's input before the operator's level and before any host output feed. Absent means 0. It never changes meters, alerts or the captured audio.",
+          type: "number",
+          minimum: -24,
+          maximum: 24,
         },
         micType: {
           enum: [
