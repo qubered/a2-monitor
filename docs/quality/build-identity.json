@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.07f30afa163d8db7",
-  "sourceSha256": "07f30afa163d8db7b9fbbdf654843a5162f32ff6bad4b3c9e15034145c4940c8",
-  "inputCount": 389,
+  "buildId": "a2-0.0.0+sha256.ab2e864054f0a9b5",
+  "sourceSha256": "ab2e864054f0a9b5914f984d5b98e6d28e96366be6fa53748026178077247f5b",
+  "inputCount": 398,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -152,6 +152,14 @@
       "sha256": "c62254f27c7a9ef4961a3d6c743c93c96023144ff223d4fbff4f74ca602fe513"
     },
     {
+      "path": "apps/live/src/components/SessionBar.tsx",
+      "sha256": "5b108fb340f33fca628d4d12622c4aad03345b1fc004320fd718bf27a4ee615d"
+    },
+    {
+      "path": "apps/live/src/components/SessionSheet.tsx",
+      "sha256": "6ad06340d5d8b7279bb7bb363ecc2d51a3911f944ddff8eb4cacd9859606df7d"
+    },
+    {
       "path": "apps/live/src/components/StatusStrip.tsx",
       "sha256": "4e0797993d261969c6271bedb3624932a71d13cb69c3498cdfb751926079fc2f"
     },
@@ -182,6 +190,14 @@
     {
       "path": "apps/live/src/reports.ts",
       "sha256": "3c64293f0492d1c182ba644abd4f44ef3bc1f9bb44cc897402d9e04c63e25cfd"
+    },
+    {
+      "path": "apps/live/src/sessions.test.ts",
+      "sha256": "b95e463b3260352c9f57a2fd7183e1c10fc6743d6ee1b336c1496abb774e8f7e"
+    },
+    {
+      "path": "apps/live/src/sessions.ts",
+      "sha256": "4af01b4ef567bf006014aafb75640c654f51748ad2e843dbf920d80537a57e63"
     },
     {
       "path": "apps/live/src/styles.css",
@@ -268,6 +284,10 @@
       "sha256": "c8a323e39305207252a8f89ba370e9da60b1e9d0db9ec1ac42db4415e9f1f575"
     },
     {
+      "path": "apps/manager/src/components/SessionsTab.tsx",
+      "sha256": "55da96ea462be9eedb6171fa2f7530cd5eaa5ac99df935fe17d24f578b6b37f9"
+    },
+    {
       "path": "apps/manager/src/components/ShowTab.tsx",
       "sha256": "1929f02853defcf685129b3967d91315c972122b2e6958c193c52a5a12a3f7db"
     },
@@ -302,6 +322,10 @@
     {
       "path": "apps/manager/src/components/ui/tabs.tsx",
       "sha256": "0ea28cd94a91eadcc4a6dec089f93111f7ba8dc5f64c653642c885a73c4827d8"
+    },
+    {
+      "path": "apps/manager/src/lib/session-time.ts",
+      "sha256": "3dda47aa9dcd958976e7fa3263831354d0ceef48057ed1cc151ee76aa90e1a0a"
     },
     {
       "path": "apps/manager/src/lib/utils.ts",
@@ -654,6 +678,10 @@
     {
       "path": "docs/decisions/0028-mvp-shared-checks-and-fault-reports.md",
       "sha256": "b76d5200d229dda752daebf7abcff08201f0514e72c77a76d5694b32a3314ecc"
+    },
+    {
+      "path": "docs/decisions/0029-mvp-sessions-and-run-of-show.md",
+      "sha256": "c5279b8ad0d1e44ac6d8707aa763835d2351017b008bf410bb4fb44ca692f7ad"
     },
     {
       "path": "docs/design/DESIGN.md",
@@ -1442,6 +1470,14 @@
     {
       "path": "services/backend/src/server.ts",
       "sha256": "8f2755d556baf8c9133b0c6a40f65b4a0e3ae96439d4fbfd0bca3919c3d5a02e"
+    },
+    {
+      "path": "services/backend/src/sessions.test.ts",
+      "sha256": "efd4cb32a94fdd25b715f902885e99b881e0ec22c9a3ebb0ee33aa16b89754ee"
+    },
+    {
+      "path": "services/backend/src/sessions.ts",
+      "sha256": "b35117f8ba15cd28609bb7905b8f11841ec250bad5818bd67156ba3425f765d1"
     },
     {
       "path": "services/backend/src/showfile.ts",
