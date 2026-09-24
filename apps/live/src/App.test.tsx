@@ -249,14 +249,19 @@ function liveMeters(): MeterStore {
   return store;
 }
 
-function hostDocument(
-  output: HostOutput["output"] = null,
-  monitor: Partial<HostOutput["monitor"]> = {},
-): HostOutput {
+type HostSession = HostOutput["sessions"][number];
+
+function hostSession(
+  id: string,
+  name: string,
+  outputChannels: number[],
+  monitor: Partial<HostSession["monitor"]> = {},
+): HostSession {
   return {
-    schemaVersion: "0",
+    id,
+    name,
+    outputChannels,
     revision: 0,
-    output,
     monitor: {
       channelId: null,
       input: null,
@@ -270,11 +275,20 @@ function hostDocument(
   };
 }
 
+function hostDocument(
+  output: HostOutput["output"] = null,
+  sessions: HostSession[] = output
+    ? [hostSession("hs-a", "Comms A", [1]), hostSession("hs-b", "Comms B", [2])]
+    : [],
+): HostOutput {
+  return { schemaVersion: "0", output, sessions };
+}
+
 const dvsOutput: NonNullable<HostOutput["output"]> = {
   status: "ready",
-  detail: "Ready on output 3 of Dante Virtual Soundcard.",
+  detail: "Dante Virtual Soundcard is open: 2 sessions on 2 of 64 outputs.",
   deviceName: "Dante Virtual Soundcard",
-  outputChannels: [3],
+  channelCount: 64,
   simulated: false,
   underruns: 0,
   droppedFrames: 0,
@@ -886,14 +900,21 @@ describe("Live channel grid", () => {
     expect(within(card).getByText("Being worked · Sam (A2)")).toBeTruthy();
   });
 
-  it("asks where audio plays and shares one selection on the host output", async () => {
+  it("asks which session to join and shares that session's selection", async () => {
     const user = userEvent.setup();
     window.localStorage.setItem("pulse-operator-name", "Sam");
     const playbackFactory = vi.fn<PlaybackFactory>();
     const { hostOutput } = renderApp(stateWith(), {
       audioDeviceSource: readyDevice,
       playbackFactory,
-      hostOutput: hostDocument(dvsOutput),
+      hostOutput: hostDocument(dvsOutput, [
+        hostSession("hs-a", "Comms A", [1]),
+        hostSession("hs-b", "Comms B", [2], {
+          channelId: "ch-talkback",
+          input: 1,
+          muted: true,
+        }),
+      ]),
     });
 
     const prompt = await screen.findByRole("dialog", {
@@ -901,46 +922,60 @@ describe("Live channel grid", () => {
     });
     // The opening prompt needs an answer; it has no Cancel.
     expect(within(prompt).queryByRole("button", { name: "Cancel" })).toBeNull();
-    await user.click(
-      within(prompt).getByRole("button", { name: /^Host output/ }),
-    );
-    expect(screen.queryByRole("dialog")).toBeNull();
     expect(
-      screen.getByRole("button", { name: "Audio: host output" }),
-    ).toBeTruthy();
-    expect(screen.getByText("Host output idle")).toBeTruthy();
+      within(prompt)
+        .getAllByRole("button")
+        .map((button) => button.querySelector("strong")?.textContent),
+    ).toEqual(["This device", "Comms A", "Comms B"]);
+    expect(
+      within(prompt).getByRole("button", { name: /^Comms B/ }).textContent,
+    ).toContain(
+      "Output 2 of Dante Virtual Soundcard. Shared with everyone in Comms B. Now: Talkback, muted.",
+    );
+    await user.click(within(prompt).getByRole("button", { name: /^Comms A/ }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByRole("button", { name: "Audio: Comms A" })).toBeTruthy();
+    expect(screen.getByText("Comms A idle")).toBeTruthy();
+    // Comms B's selection is not shown in Comms A.
+    const talkback = screen
+      .getByRole("button", { name: "Select Talkback, channel 2" })
+      .closest("article")!;
+    expect(talkback.classList.contains("is-selected")).toBe(false);
 
     await user.click(
       screen.getByRole("button", { name: "Select Talkback, channel 2" }),
     );
     expect(hostOutput.changes.at(-1)).toEqual({
+      sessionId: "hs-a",
       channelId: "ch-talkback",
       input: 1,
       changedBy: "Sam (A2)",
     });
-    const talkback = screen
-      .getByRole("button", { name: "Select Talkback, channel 2" })
-      .closest("article")!;
     await vi.waitFor(() =>
       expect(talkback.classList.contains("is-listening")).toBe(true),
     );
-    expect(screen.getByText("Playing on host output")).toBeTruthy();
+    expect(screen.getByText("Playing on Comms A")).toBeTruthy();
     expect(
-      screen.getByText("Input 2 on output 3 of Dante Virtual Soundcard."),
+      screen.getByText(
+        "Comms A: input 2 on output 1 of Dante Virtual Soundcard.",
+      ),
     ).toBeTruthy();
     // The iPad itself never opens a listen session in host mode.
     expect(playbackFactory).not.toHaveBeenCalled();
 
-    // Another operator selects a different channel: this device follows.
+    // Another operator in Comms A selects a different channel: this device follows.
     act(() =>
       hostOutput.push(
-        hostDocument(dvsOutput, {
-          channelId: "ch-marguerite",
-          input: 0,
-          muted: true,
-          changedBy: "Alex (A2)",
-          changedAtUtc: new Date().toISOString(),
-        }),
+        hostDocument(dvsOutput, [
+          hostSession("hs-a", "Comms A", [1], {
+            channelId: "ch-marguerite",
+            input: 0,
+            muted: true,
+            changedBy: "Alex (A2)",
+            changedAtUtc: new Date().toISOString(),
+          }),
+          hostSession("hs-b", "Comms B", [2]),
+        ]),
       ),
     );
     const marguerite = screen
@@ -948,14 +983,33 @@ describe("Live channel grid", () => {
       .closest("article")!;
     expect(marguerite.classList.contains("is-selected")).toBe(true);
     expect(talkback.classList.contains("is-selected")).toBe(false);
-    expect(screen.getByText("Host output is muted")).toBeTruthy();
+    expect(screen.getByText("Comms A is muted")).toBeTruthy();
+    expect(
+      screen.getByText("Shared with everyone in Comms A.", { exact: false }),
+    ).toBeTruthy();
     expect(screen.getByText(/Last change: Alex \(A2\)/)).toBeTruthy();
 
     await user.click(screen.getByRole("button", { name: "Mute" }));
     expect(hostOutput.changes.at(-1)).toEqual({
+      sessionId: "hs-a",
       muted: false,
       changedBy: "Sam (A2)",
     });
+
+    // The production drops Comms A: this device is asked again.
+    act(() =>
+      hostOutput.push(
+        hostDocument(dvsOutput, [hostSession("hs-b", "Comms B", [2])]),
+      ),
+    );
+    const again = screen.getByRole("dialog", {
+      name: "Where should audio play?",
+    });
+    expect(
+      within(again)
+        .getAllByRole("button")
+        .map((button) => button.querySelector("strong")?.textContent),
+    ).toEqual(["This device", "Comms B"]);
   });
 
   it("plays on this device when chosen, without touching the host output", async () => {
@@ -971,10 +1025,12 @@ describe("Live channel grid", () => {
     const { hostOutput } = renderApp(stateWith(), {
       audioDeviceSource: readyDevice,
       playbackFactory,
-      hostOutput: hostDocument(dvsOutput, {
-        channelId: "ch-marguerite",
-        input: 0,
-      }),
+      hostOutput: hostDocument(dvsOutput, [
+        hostSession("hs-a", "Comms A", [1], {
+          channelId: "ch-marguerite",
+          input: 0,
+        }),
+      ]),
     });
 
     const prompt = await screen.findByRole("dialog", {

@@ -73,6 +73,33 @@ export function hasUniqueChannelIds(candidate: Showfile): boolean {
 
 const DEFAULT_MONITOR = { battery: true, rf: true, audio: true };
 
+/**
+ * An unreleased build saved one list of host output channels; it becomes one
+ * session so a saved channel (for example output 12) keeps playing.
+ */
+function migrateHostOutput(hostOutput: unknown): Record<string, unknown> {
+  if (
+    typeof hostOutput !== "object" ||
+    hostOutput === null ||
+    !("outputChannels" in hostOutput) ||
+    "sessions" in hostOutput
+  ) {
+    return {};
+  }
+  return {
+    hostOutput: {
+      sessions: [
+        {
+          id: "default",
+          name: "Host output",
+          outputChannels: (hostOutput as { outputChannels: unknown })
+            .outputChannels,
+        },
+      ],
+    },
+  };
+}
+
 export function migrateShowfile(value: unknown): unknown {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return value;
@@ -81,6 +108,7 @@ export function migrateShowfile(value: unknown): unknown {
   const needsReceivers = record.shureReceivers === undefined;
   return {
     ...record,
+    ...migrateHostOutput(record.hostOutput),
     shureReceivers: needsReceivers ? [] : record.shureReceivers,
     channels: Array.isArray(record.channels)
       ? record.channels.map((channel, position) => {

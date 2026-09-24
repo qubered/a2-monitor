@@ -1,14 +1,21 @@
 {
   "schemaVersion": "0",
-  "revision": 1,
   "output": null,
-  "monitor": {
-    "channelId": "ch-1",
-    "input": 0,
-    "muted": false,
-    "dimmed": false,
-    "gainDb": 18,
-    "changedBy": null,
-    "changedAtUtc": "2026-09-24T09:15:00.000Z"
-  }
+  "sessions": [
+    {
+      "id": "default",
+      "name": "Host output",
+      "outputChannels": [1],
+      "revision": 1,
+      "monitor": {
+        "channelId": "ch-1",
+        "input": 0,
+        "muted": false,
+        "dimmed": false,
+        "gainDb": 18,
+        "changedBy": null,
+        "changedAtUtc": "2026-09-24T09:15:00.000Z"
+      }
+    }
+  ]
 }

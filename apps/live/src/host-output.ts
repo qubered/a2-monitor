@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { parseHostOutput, type HostOutput } from "@rvlt/pulse-protocol/http";
 
-export type HostMonitor = HostOutput["monitor"];
+export type HostSession = HostOutput["sessions"][number];
+export type HostMonitor = HostSession["monitor"];
 
 /** A partial change to the shared host monitor. Selection changes carry both fields. */
 export type HostMonitorChange = {
@@ -13,8 +14,20 @@ export type HostMonitorChange = {
   changedBy?: string;
 };
 
-/** Where this device's monitor audio plays (ADR 0029). */
-export type OutputDestination = "device" | "host";
+/**
+ * Where this device's monitor audio plays (ADR 0029): here, or joined to one
+ * host output session by id.
+ */
+export type OutputDestination = "device" | `host:${string}`;
+
+export function hostDestination(sessionId: string): OutputDestination {
+  return `host:${sessionId}`;
+}
+
+/** The session a destination joins, or null for this device. */
+export function sessionIdOf(destination: OutputDestination): string | null {
+  return destination === "device" ? null : destination.slice("host:".length);
+}
 
 export type HostOutputConnection = "connecting" | "live" | "offline";
 
@@ -25,8 +38,8 @@ export type HostOutputListener = {
 
 export interface HostOutputSource {
   subscribe(listener: HostOutputListener): () => void;
-  /** Applies a change for every host-output client and returns the new document. */
-  change(change: HostMonitorChange): Promise<HostOutput>;
+  /** Applies a change for everyone in one session and returns the new document. */
+  change(sessionId: string, change: HostMonitorChange): Promise<HostOutput>;
 }
 
 export const HOST_OUTPUT_PATH = "/audio/v0/output";
@@ -40,6 +53,8 @@ const changeErrors: Record<string, string> = {
   "host-output-not-configured": "The audio node has no host output device.",
   "audio-not-ready": "The audio node is not capturing yet.",
   "invalid-channel": "That input is not on the running device.",
+  "unknown-output-session":
+    "That host output session no longer exists. Choose another.",
 };
 
 export function createHttpHostOutputSource(
@@ -85,14 +100,17 @@ export function createHttpHostOutputSource(
         source.close();
       };
     },
-    async change(change) {
+    async change(sessionId, change) {
       let response: Response;
       try {
-        response = await fetchImpl(HOST_OUTPUT_PATH, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(change),
-        });
+        response = await fetchImpl(
+          `${HOST_OUTPUT_PATH}/sessions/${encodeURIComponent(sessionId)}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(change),
+          },
+        );
       } catch {
         throw new Error("The audio node is unreachable.");
       }
@@ -117,12 +135,12 @@ export function createHttpHostOutputSource(
 export function createManualHostOutput(): HostOutputSource & {
   push(document: HostOutput): void;
   setConnection(connection: HostOutputConnection): void;
-  changes: HostMonitorChange[];
+  changes: Array<{ sessionId: string } & HostMonitorChange>;
 } {
   const listeners = new Set<HostOutputListener>();
   let last: HostOutput | null = null;
   let connection: HostOutputConnection = "connecting";
-  const changes: HostMonitorChange[] = [];
+  const changes: Array<{ sessionId: string } & HostMonitorChange> = [];
   return {
     changes,
     subscribe(listener) {
@@ -143,19 +161,29 @@ export function createManualHostOutput(): HostOutputSource & {
       connection = next;
       for (const listener of listeners) listener.onConnection(next);
     },
-    async change(change) {
-      changes.push(change);
+    async change(sessionId, change) {
+      changes.push({ sessionId, ...change });
       if (!last) throw new Error("The audio node is unreachable.");
+      if (!last.sessions.some(({ id }) => id === sessionId)) {
+        throw new Error(changeErrors["unknown-output-session"]);
+      }
       const { changedBy, ...fields } = change;
       const next: HostOutput = {
         ...last,
-        revision: last.revision + 1,
-        monitor: {
-          ...last.monitor,
-          ...fields,
-          changedBy: changedBy ?? null,
-          changedAtUtc: new Date().toISOString(),
-        },
+        sessions: last.sessions.map((session) =>
+          session.id === sessionId
+            ? {
+                ...session,
+                revision: session.revision + 1,
+                monitor: {
+                  ...session.monitor,
+                  ...fields,
+                  changedBy: changedBy ?? null,
+                  changedAtUtc: new Date().toISOString(),
+                },
+              }
+            : session,
+        ),
       };
       this.push(next);
       return next;
@@ -178,11 +206,13 @@ export function useHostOutput(source: HostOutputSource) {
   }, [source]);
 
   const change = useCallback(
-    async (next: HostMonitorChange) => {
-      const updated = await source.change(next);
+    async (sessionId: string, next: HostMonitorChange) => {
+      const updated = await source.change(sessionId, next);
       // A response must not undo a newer document the stream already delivered.
+      const revision = (document: HostOutput | null) =>
+        document?.sessions.find(({ id }) => id === sessionId)?.revision ?? -1;
       setDocument((current) =>
-        current && updated.revision < current.revision ? current : updated,
+        current && revision(updated) < revision(current) ? current : updated,
       );
     },
     [source],
@@ -194,7 +224,9 @@ export function useHostOutput(source: HostOutputSource) {
 export function readLastDestination(): OutputDestination | null {
   try {
     const stored = window.localStorage.getItem(DESTINATION_KEY);
-    return stored === "device" || stored === "host" ? stored : null;
+    return stored === "device" || stored?.startsWith("host:")
+      ? (stored as OutputDestination)
+      : null;
   } catch {
     return null;
   }

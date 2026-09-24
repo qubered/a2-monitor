@@ -557,6 +557,28 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     async (): Promise<Showfile> => productionStore.loadActive(),
   );
 
+  /**
+   * Host output sessions (ADR 0029): at least one, each with a distinct id and
+   * name and at least one output channel, and no channel in two sessions.
+   */
+  function isCoherentHostOutput(
+    hostOutput: NonNullable<Showfile["hostOutput"]>,
+  ): boolean {
+    const { sessions } = hostOutput;
+    const ids = sessions.map(({ id }) => id.trim());
+    const names = sessions.map(({ name }) => name.trim().toLowerCase());
+    const channels = sessions.flatMap(({ outputChannels }) => outputChannels);
+    return (
+      sessions.length > 0 &&
+      ids.every((id) => id.length > 0) &&
+      names.every((name) => name.length > 0) &&
+      new Set(ids).size === ids.length &&
+      new Set(names).size === names.length &&
+      sessions.every(({ outputChannels }) => outputChannels.length > 0) &&
+      new Set(channels).size === channels.length
+    );
+  }
+
   server.put(
     "/api/v1/showfile",
     {
@@ -619,9 +641,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
         (candidate.alertPolicy !== undefined &&
           !isCoherentAlertPolicy(candidate.alertPolicy)) ||
         (candidate.hostOutput !== undefined &&
-          (candidate.hostOutput.outputChannels.length === 0 ||
-            new Set(candidate.hostOutput.outputChannels).size !==
-              candidate.hostOutput.outputChannels.length));
+          !isCoherentHostOutput(candidate.hostOutput));
       if (invalid) {
         await reply.code(400).send({ error: "invalid-showfile" });
         return undefined;

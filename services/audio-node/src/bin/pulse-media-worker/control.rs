@@ -12,7 +12,7 @@ use crate::Event;
 use crate::capture::CaptureHeader;
 use crate::host_output::{MAX_MONITOR_GAIN, OutputReport};
 use crate::meters::{METER_INTERVAL_MS, MeterReading};
-use a2_audio_node::monitor_output::parse_output_channels;
+use a2_audio_node::monitor_output::{MAX_OUTPUT_ROUTES, parse_output_routes};
 
 const COMMAND_LIMIT_BYTES: usize = 128 * 1024;
 const OFFER_LIMIT_BYTES: usize = 64 * 1024;
@@ -34,15 +34,16 @@ pub enum Command {
     Close {
         session_id: String,
     },
-    /// Sets the shared host monitor mix (ADR 0029). `None` fades the output to silence.
+    /// Sets one host output session's shared mix (ADR 0029). `None` fades it to silence.
     Monitor {
+        mix: usize,
         channel: Option<usize>,
         gain: f32,
     },
-    /// Reopens the host output on other 1-based device channels, e.g. a production's
-    /// saved channels (ADR 0029). Validated like `--output-channels`.
-    OutputChannels {
-        channels: String,
+    /// Reopens the host output with one route of 1-based device channels per session,
+    /// e.g. a production's saved sessions (ADR 0029). Validated like `--output-routes`.
+    OutputRoutes {
+        routes: String,
     },
 }
 
@@ -120,7 +121,12 @@ pub fn parse_command(line: &str) -> Result<Command, String> {
             })
         }
         Some("monitor") => {
-            exact_keys(record, &["type", "channel", "gain"])?;
+            exact_keys(record, &["type", "mix", "channel", "gain"])?;
+            let mix = record
+                .get("mix")
+                .and_then(Value::as_u64)
+                .filter(|mix| *mix < MAX_OUTPUT_ROUTES as u64)
+                .ok_or_else(|| "mix is invalid".to_owned())? as usize;
             let channel = match record.get("channel") {
                 Some(Value::Null) => None,
                 _ => Some(channel(record)?),
@@ -130,23 +136,30 @@ pub fn parse_command(line: &str) -> Result<Command, String> {
                 .and_then(Value::as_f64)
                 .filter(|gain| (0.0..=f64::from(MAX_MONITOR_GAIN)).contains(gain))
                 .ok_or_else(|| "gain is invalid".to_owned())? as f32;
-            Ok(Command::Monitor { channel, gain })
+            Ok(Command::Monitor { mix, channel, gain })
         }
-        Some("output-channels") => {
-            exact_keys(record, &["type", "channels"])?;
-            let channels = record
-                .get("channels")
+        Some("output-routes") => {
+            exact_keys(record, &["type", "routes"])?;
+            let routes = record
+                .get("routes")
                 .and_then(Value::as_array)
-                .and_then(|channels| {
-                    channels
+                .and_then(|routes| {
+                    routes
                         .iter()
-                        .map(|channel| channel.as_u64().map(|number| number.to_string()))
+                        .map(|route| {
+                            route
+                                .as_array()?
+                                .iter()
+                                .map(|channel| channel.as_u64().map(|number| number.to_string()))
+                                .collect::<Option<Vec<String>>>()
+                                .map(|channels| channels.join(","))
+                        })
                         .collect::<Option<Vec<String>>>()
                 })
-                .map(|channels| channels.join(","))
-                .filter(|channels| parse_output_channels(channels).is_ok())
-                .ok_or_else(|| "channels are invalid".to_owned())?;
-            Ok(Command::OutputChannels { channels })
+                .map(|routes| routes.join(";"))
+                .filter(|routes| parse_output_routes(routes).is_ok())
+                .ok_or_else(|| "routes are invalid".to_owned())?;
+            Ok(Command::OutputRoutes { routes })
         }
         Some("close") => {
             exact_keys(record, &["type", "sessionId"])?;
@@ -257,12 +270,12 @@ impl<W: Write> EventWriter<W> {
             OutputReport::Ready {
                 device_name,
                 channel_count,
-                output_channels,
+                output_routes,
             } => json!({
                 "type": "output-ready",
                 "deviceName": device_name,
                 "channelCount": channel_count,
-                "outputChannels": output_channels,
+                "outputRoutes": output_routes,
             }),
             OutputReport::Stats {
                 underruns,
@@ -318,23 +331,25 @@ mod tests {
             })
         );
         assert_eq!(
-            parse_command(r#"{"type":"monitor","channel":2,"gain":0.5}"#),
+            parse_command(r#"{"type":"monitor","mix":1,"channel":2,"gain":0.5}"#),
             Ok(Command::Monitor {
+                mix: 1,
                 channel: Some(2),
                 gain: 0.5
             })
         );
         assert_eq!(
-            parse_command(r#"{"type":"monitor","channel":null,"gain":0}"#),
+            parse_command(r#"{"type":"monitor","mix":0,"channel":null,"gain":0}"#),
             Ok(Command::Monitor {
+                mix: 0,
                 channel: None,
                 gain: 0.0
             })
         );
         assert_eq!(
-            parse_command(r#"{"type":"output-channels","channels":[12]}"#),
-            Ok(Command::OutputChannels {
-                channels: "12".into()
+            parse_command(r#"{"type":"output-routes","routes":[[1],[2,12]]}"#),
+            Ok(Command::OutputRoutes {
+                routes: "1;2,12".into()
             })
         );
         assert_eq!(
@@ -355,13 +370,15 @@ mod tests {
             r#"{"type":"open","sessionId":"a","channel":0,"offer":"v=0","candidateAddress":"0.0.0.0"}"#,
             r#"{"type":"open","sessionId":"a","channel":0,"offer":"","candidateAddress":"127.0.0.1"}"#,
             r#"{"type":"restart"}"#,
-            r#"{"type":"monitor","channel":0,"gain":5}"#,
-            r#"{"type":"monitor","channel":0,"gain":-0.1}"#,
-            r#"{"type":"monitor","channel":0}"#,
-            r#"{"type":"output-channels","channels":[]}"#,
-            r#"{"type":"output-channels","channels":[1,1]}"#,
-            r#"{"type":"output-channels","channels":[0]}"#,
-            r#"{"type":"output-channels","channels":"12"}"#,
+            r#"{"type":"monitor","mix":0,"channel":0,"gain":5}"#,
+            r#"{"type":"monitor","mix":0,"channel":0,"gain":-0.1}"#,
+            r#"{"type":"monitor","mix":8,"channel":0,"gain":1}"#,
+            r#"{"type":"monitor","channel":0,"gain":1}"#,
+            r#"{"type":"output-routes","routes":[]}"#,
+            r#"{"type":"output-routes","routes":[[]]}"#,
+            r#"{"type":"output-routes","routes":[[1],[1]]}"#,
+            r#"{"type":"output-routes","routes":[[0]]}"#,
+            r#"{"type":"output-routes","routes":[12]}"#,
             "[]",
         ] {
             assert!(parse_command(line).is_err(), "{line}");

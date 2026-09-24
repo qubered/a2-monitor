@@ -88,31 +88,6 @@ export async function loadHostOutput(
   return parseHostOutput(await response.json());
 }
 
-/**
- * Parses "12" or "1, 2" into distinct 1-based output channels. Empty means
- * the node's default (null). Returns an error message for anything else.
- */
-export function parseOutputChannelsText(
-  text: string,
-): { channels: number[] | null } | { error: string } {
-  if (text.trim() === "") return { channels: null };
-  const parts = text.split(",").map((part) => part.trim());
-  const channels = parts.map(Number);
-  if (
-    parts.some((part) => !/^\d+$/.test(part)) ||
-    channels.some((channel) => channel < 1 || channel > 256)
-  ) {
-    return { error: "Use channel numbers from 1 to 256, e.g. 12 or 1, 2." };
-  }
-  if (new Set(channels).size !== channels.length) {
-    return { error: "Each output channel can be listed once." };
-  }
-  if (channels.length > 8) {
-    return { error: "At most 8 output channels can carry the monitor feed." };
-  }
-  return { channels };
-}
-
 export async function saveShowfile(showfile: Showfile): Promise<Showfile> {
   const response = await fetch("/api/v1/showfile", {
     method: "PUT",

@@ -62,6 +62,7 @@ import {
   createHttpHostOutputSource,
   describeOutputChannels,
   readLastDestination,
+  sessionIdOf,
   saveLastDestination,
   useHostOutput,
   type HostMonitorChange,
@@ -406,7 +407,8 @@ export function App({
     audioDeviceState.status === "ready" ? audioDeviceState.device : null;
 
   // Where monitor audio plays (ADR 0029). The choice is asked each time Live
-  // opens when the node has a host output; without one, this device plays.
+  // opens when the node has a host output: this device, or one of its shared
+  // sessions. Without a host output, this device plays.
   const hostOutput = useHostOutput(hostOutputSource);
   const hostDocument = hostOutput.document;
   const hostAvailability: "unknown" | "absent" | "present" = hostDocument
@@ -420,11 +422,20 @@ export function App({
     null,
   );
   const [outputSheetOpen, setOutputSheetOpen] = useState(false);
-  const chosenDestination: OutputDestination | null =
-    destination ?? (hostAvailability === "absent" ? "device" : null);
-  const hostMode = chosenDestination === "host";
+  const hostSessionId = destination ? sessionIdOf(destination) : null;
+  const hostSession =
+    hostSessionId === null
+      ? null
+      : (hostDocument?.sessions.find(({ id }) => id === hostSessionId) ?? null);
+  // A joined session that the production no longer has asks again.
+  const sessionGone =
+    hostSessionId !== null && hostDocument?.output != null && !hostSession;
+  const chosenDestination: OutputDestination | null = sessionGone
+    ? null
+    : (destination ?? (hostAvailability === "absent" ? "device" : null));
+  const hostMode = chosenDestination !== null && chosenDestination !== "device";
   const deviceMode = chosenDestination === "device";
-  const hostMonitor = hostMode ? (hostDocument?.monitor ?? null) : null;
+  const hostMonitor = hostMode ? (hostSession?.monitor ?? null) : null;
 
   const channels = useMemo<LiveStateChannel[]>(() => {
     if (liveState && !offline) return liveState.channels;
@@ -526,8 +537,9 @@ export function App({
   const changeHost = useCallback(
     async (change: Omit<HostMonitorChange, "changedBy">) => {
       setActionError(null);
+      if (hostSessionId === null) return;
       try {
-        await hostOutput.change({
+        await hostOutput.change(hostSessionId, {
           ...change,
           changedBy: operatorLabel(operator),
         });
@@ -539,7 +551,7 @@ export function App({
         );
       }
     },
-    [hostOutput, operator],
+    [hostOutput, hostSessionId, operator],
   );
 
   const shownMuted = hostMode ? (hostMonitor?.muted ?? false) : muted;
@@ -812,15 +824,20 @@ export function App({
           ? { status: "connecting", detail: hostOutputInfo.detail }
           : hostOutputInfo.status === "error"
             ? { status: "error", detail: hostOutputInfo.detail }
-            : hostMonitor?.input === null || hostMonitor === null
+            : !hostSession || !hostMonitor
               ? {
-                  status: "idle",
-                  detail: `Nothing selected. Press a card to play it on ${describeOutputChannels(hostOutputInfo.outputChannels)} of ${hostOutputInfo.deviceName}.`,
+                  status: "error",
+                  detail: "This host output session is not available.",
                 }
-              : {
-                  status: "listening",
-                  detail: `Input ${hostMonitor.input + 1} on ${describeOutputChannels(hostOutputInfo.outputChannels)} of ${hostOutputInfo.deviceName}.`,
-                };
+              : hostMonitor.input === null
+                ? {
+                    status: "idle",
+                    detail: `Nothing selected in ${hostSession.name}. Press a card to play it on ${describeOutputChannels(hostSession.outputChannels)} of ${hostOutputInfo.deviceName}.`,
+                  }
+                : {
+                    status: "listening",
+                    detail: `${hostSession.name}: input ${hostMonitor.input + 1} on ${describeOutputChannels(hostSession.outputChannels)} of ${hostOutputInfo.deviceName}.`,
+                  };
   const shownPlayback = hostMode ? hostPlayback : playback;
   const listening =
     shownPlayback.status === "listening" &&
@@ -834,6 +851,23 @@ export function App({
   };
   const outputPrompt =
     !isA1 && hostDocument?.output && chosenDestination === null;
+  // What each session is playing, for the destination prompt.
+  const nowPlaying = Object.fromEntries(
+    (hostDocument?.sessions ?? []).map(({ id, monitor }) => {
+      const playing =
+        channels.find(
+          (channel) =>
+            channel.id === monitor.channelId &&
+            channel.input.index === monitor.input,
+        ) ?? channels.find(({ input }) => input.index === monitor.input);
+      return [
+        id,
+        monitor.input === null
+          ? "Nothing selected."
+          : `Now: ${playing?.name ?? `input ${monitor.input + 1}`}${monitor.muted ? ", muted" : ""}.`,
+      ];
+    }),
+  );
   const summary = liveState?.summary;
   const showName = liveState?.show.name ?? "Show state unavailable";
   const nodeDevice = liveState?.node.device ?? null;
@@ -928,7 +962,7 @@ export function App({
             onClick={() => setOutputSheetOpen(true)}
           >
             {hostMode
-              ? "Audio: host output"
+              ? `Audio: ${hostSession?.name ?? "host output"}`
               : deviceMode
                 ? "Audio: this device"
                 : "Audio: choose"}
@@ -1087,6 +1121,7 @@ export function App({
           hostOutput={
             hostMode
               ? {
+                  sessionName: hostSession?.name ?? "host output",
                   changedBy: hostMonitor?.changedBy ?? null,
                   changedAtUtc: hostMonitor?.changedAtUtc ?? null,
                 }
@@ -1214,8 +1249,10 @@ export function App({
       {(outputPrompt || outputSheetOpen) && hostDocument?.output ? (
         <OutputSheet
           output={hostDocument.output}
+          sessions={hostDocument.sessions}
+          nowPlaying={nowPlaying}
           current={chosenDestination}
-          suggested={lastDestination ?? "device"}
+          suggested={lastDestination}
           onChoose={chooseDestination}
           onClose={outputPrompt ? undefined : () => setOutputSheetOpen(false)}
         />

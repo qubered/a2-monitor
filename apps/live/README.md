@@ -110,10 +110,11 @@ Live renders one shared monitoring state from the backend (ADR 0027):
   start (ADR 0029). Changing input switches the node's selection inside the
   same session, so mute, dim and gain carry over; gain runs from `-60 dB` to
   `+12 dB` and dim adds `-12 dB`; and
-- a shared host output (ADR 0029). When the node has an output device, Live
-  asks on open whether audio plays on this device or the host output (for
-  example DVS into comms). On host output every client shares one selection,
-  mute, dim and level, and the player names who changed it last.
+- shared host output sessions (ADR 0029). When the node has an output device,
+  Live asks on open whether audio plays on this device or in one of the
+  production's sessions (for example Comms A on DVS output 1). Everyone in a
+  session shares its selection, mute, dim and level, and the player names who
+  changed it last.
 
 A simulated test signal is labelled `Simulated test signal` in the header at
 every width. No support, performance or operator claim follows from this build.
@@ -143,7 +144,7 @@ npm run check --workspace @rvlt/pulse-live
 - [x] shared Paper/dark design tokens and offline font assets
 - [x] A2 channel grid, filters, alert acknowledgement and detail surface
 - [x] source selection with visible mute and dim controls (unmuted on start)
-- [x] shared host output chosen on open (ADR 0029)
+- [x] shared host output sessions chosen on open (ADR 0029)
 - [x] interaction tests and desktop/iPad visual checks
 - [x] backend health and fabricated snapshot endpoint
 - [x] Live snapshot loading, explicit waiting/offline/error states and reconnect

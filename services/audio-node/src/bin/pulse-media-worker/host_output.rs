@@ -1,9 +1,10 @@
 //! Shared host monitor output (ADR 0029).
 //!
-//! One monitor mix, controlled by every Live client that chose host output, is rendered
-//! from captured blocks and piped as mono Float32LE to a `pulse-device-output` child that
-//! plays it on the host's output device (for example Dante Virtual Soundcard outputs routed
-//! to a comms system). The child owns the device callback; this module never blocks the
+//! One monitor mix per host output session, each controlled by every Live client that
+//! joined that session, is rendered from captured blocks and piped as interleaved Float32LE
+//! (one sample per mix per frame) to a `pulse-device-output` child. The child opens the
+//! host's output device once and plays each mix on its own channels (for example Dante
+//! Virtual Soundcard outputs 1 and 2 routed to two comms channels). The child owns the device callback; this module never blocks the
 //! event loop on it: blocks go through a bounded queue to a writer thread and are dropped,
 //! and counted, when the child falls behind. A failed child is restarted with backoff.
 
@@ -20,6 +21,7 @@ use std::time::{Duration, Instant};
 use crate::Event;
 use crate::capture::{CaptureBlock, FRAMES_PER_BLOCK};
 use crate::session::mix_block;
+use a2_audio_node::monitor_output::parse_output_routes;
 
 /// Highest accepted linear gain: +12 dB.
 pub const MAX_MONITOR_GAIN: f32 = 3.981_072;
@@ -40,7 +42,17 @@ const EVENT_LINE_LIMIT_BYTES: usize = 4 * 1024;
 pub struct OutputArgs {
     pub binary: OsString,
     pub device_name: OsString,
-    pub channels: OsString,
+    /// One route per session, e.g. `1;2,3` (see `parse_output_routes`).
+    pub routes: OsString,
+}
+
+/// Sessions (mixes) named by a routes string; an unparseable string is one session, which
+/// the output child then rejects with its reason.
+fn route_count(routes: &OsString) -> usize {
+    routes
+        .to_str()
+        .and_then(|routes| parse_output_routes(routes).ok())
+        .map_or(1, |routes| routes.len())
 }
 
 /// Events from the output child, forwarded through the worker event loop.
@@ -50,7 +62,7 @@ pub enum OutputEvent {
         generation: u64,
         device_name: String,
         channel_count: usize,
-        output_channels: Vec<u64>,
+        output_routes: Vec<Vec<u64>>,
     },
     Stats {
         generation: u64,
@@ -156,7 +168,7 @@ pub fn parse_output_line(line: &str, generation: u64) -> Result<OutputEvent, Str
                     "deviceName",
                     "sampleRateHz",
                     "channelCount",
-                    "outputChannels",
+                    "outputRoutes",
                 ],
             ) =>
         {
@@ -172,26 +184,33 @@ pub fn parse_output_line(line: &str, generation: u64) -> Result<OutputEvent, Str
                 .filter(|count| (1..=256).contains(count))
                 .ok_or_else(|| "output ready channelCount is invalid".to_owned())?
                 as usize;
-            let output_channels = record
-                .get("outputChannels")
+            let output_routes = record
+                .get("outputRoutes")
                 .and_then(Value::as_array)
-                .filter(|channels| (1..=8).contains(&channels.len()))
-                .and_then(|channels| {
-                    channels
+                .filter(|routes| (1..=8).contains(&routes.len()))
+                .and_then(|routes| {
+                    routes
                         .iter()
-                        .map(|channel| {
-                            channel
-                                .as_u64()
-                                .filter(|number| (1..=channel_count as u64).contains(number))
+                        .map(|route| {
+                            route
+                                .as_array()
+                                .filter(|channels| (1..=8).contains(&channels.len()))?
+                                .iter()
+                                .map(|channel| {
+                                    channel.as_u64().filter(|number| {
+                                        (1..=channel_count as u64).contains(number)
+                                    })
+                                })
+                                .collect::<Option<Vec<u64>>>()
                         })
-                        .collect::<Option<Vec<u64>>>()
+                        .collect::<Option<Vec<Vec<u64>>>>()
                 })
-                .ok_or_else(|| "output ready outputChannels is invalid".to_owned())?;
+                .ok_or_else(|| "output ready outputRoutes is invalid".to_owned())?;
             Ok(OutputEvent::Ready {
                 generation,
                 device_name: device_name.to_owned(),
                 channel_count,
-                output_channels,
+                output_routes,
             })
         }
         Some("failed") if exact_keys(record, &["type", "detail"]) => record
@@ -263,9 +282,9 @@ fn read_output_events(stdout: impl std::io::Read, generation: u64, events: SyncS
     }
 }
 
-/// Writes queued mono blocks to the child's stdin until the queue or the pipe closes.
+/// Writes queued interleaved blocks to the child's stdin until the queue or the pipe closes.
 fn write_feed(mut stdin: ChildStdin, blocks: Receiver<Vec<f32>>, recycle: Sender<Vec<f32>>) {
-    let mut bytes = Vec::with_capacity(FRAMES_PER_BLOCK * size_of::<f32>());
+    let mut bytes = Vec::new();
     while let Ok(block) = blocks.recv() {
         bytes.clear();
         for sample in &block {
@@ -284,7 +303,7 @@ pub enum OutputReport {
     Ready {
         device_name: String,
         channel_count: usize,
-        output_channels: Vec<u64>,
+        output_routes: Vec<Vec<u64>>,
     },
     Stats {
         underruns: u64,
@@ -304,11 +323,12 @@ struct Running {
     ready_at: Option<Instant>,
 }
 
-/// Supervises the output child and renders the shared mix into it.
+/// Supervises the output child and renders one shared mix per session into it.
 pub struct HostOutput {
     args: OutputArgs,
     events: SyncSender<Event>,
-    mix: MonitorMix,
+    mixes: Vec<MonitorMix>,
+    scratch: Vec<f32>,
     running: Option<Running>,
     generation: u64,
     attempt: usize,
@@ -322,10 +342,14 @@ pub struct HostOutput {
 impl HostOutput {
     pub fn new(args: OutputArgs, events: SyncSender<Event>) -> Self {
         let (recycle_tx, recycle_rx) = mpsc::channel();
+        let mixes = (0..route_count(&args.routes))
+            .map(|_| MonitorMix::new())
+            .collect();
         Self {
             args,
             events,
-            mix: MonitorMix::new(),
+            mixes,
+            scratch: vec![0.0; FRAMES_PER_BLOCK],
             running: None,
             generation: 0,
             attempt: 0,
@@ -337,8 +361,12 @@ impl HostOutput {
         }
     }
 
-    pub fn set_monitor(&mut self, channel: Option<usize>, gain: f32) {
-        self.mix.set(channel, gain);
+    /// Sets one session's mix. A session beyond the current routes is ignored; the
+    /// gateway re-sends every session's mix after a routes change.
+    pub fn set_monitor(&mut self, mix: usize, channel: Option<usize>, gain: f32) {
+        if let Some(target) = self.mixes.get_mut(mix) {
+            target.set(channel, gain);
+        }
     }
 
     /// Starts the child. A spawn failure is reported like any other failure.
@@ -350,8 +378,8 @@ impl HostOutput {
         let spawned = ProcessCommand::new(&self.args.binary)
             .arg("--device")
             .arg(&self.args.device_name)
-            .arg("--channels")
-            .arg(&self.args.channels)
+            .arg("--routes")
+            .arg(&self.args.routes)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
@@ -392,17 +420,21 @@ impl HostOutput {
         }
     }
 
-    /// Renders the shared mix for one captured block and queues it for the child.
+    /// Renders every session's mix for one captured block, interleaves them and queues
+    /// the result for the child.
     pub fn write_block(&mut self, block: &CaptureBlock) {
-        let Some(running) = &self.running else {
+        if self.running.is_none() {
             return;
-        };
+        }
+        let width = self.mixes.len();
         let mut buffer = self
             .recycle_rx
             .try_recv()
-            .unwrap_or_else(|_| vec![0.0; FRAMES_PER_BLOCK]);
-        buffer.resize(FRAMES_PER_BLOCK, 0.0);
-        self.mix.render(block, &mut buffer);
+            .unwrap_or_else(|_| Vec::with_capacity(FRAMES_PER_BLOCK * width));
+        self.render_interleaved(block, &mut buffer);
+        let Some(running) = &self.running else {
+            return;
+        };
         match running.feed.try_send(buffer) {
             Ok(()) => {}
             Err(TrySendError::Full(buffer)) => {
@@ -414,13 +446,25 @@ impl HostOutput {
         }
     }
 
+    /// Renders every session's mix into `buffer` as interleaved frames, mix order.
+    fn render_interleaved(&mut self, block: &CaptureBlock, buffer: &mut Vec<f32>) {
+        let width = self.mixes.len();
+        buffer.resize(FRAMES_PER_BLOCK * width, 0.0);
+        for (index, mix) in self.mixes.iter_mut().enumerate() {
+            mix.render(block, &mut self.scratch);
+            for (frame, sample) in self.scratch.iter().enumerate() {
+                buffer[frame * width + index] = *sample;
+            }
+        }
+    }
+
     pub fn handle_event(&mut self, event: OutputEvent, now: Instant) -> Option<OutputReport> {
         match event {
             OutputEvent::Ready {
                 generation,
                 device_name,
                 channel_count,
-                output_channels,
+                output_routes,
             } if generation == self.generation => {
                 if let Some(running) = &mut self.running {
                     running.ready_at = Some(now);
@@ -428,7 +472,7 @@ impl HostOutput {
                 Some(OutputReport::Ready {
                     device_name,
                     channel_count,
-                    output_channels,
+                    output_routes,
                 })
             }
             OutputEvent::Stats {
@@ -469,13 +513,18 @@ impl HostOutput {
         }
     }
 
-    /// Reopens the output child on other device channels at once, with fresh backoff.
-    /// The same channels are a no-op, so a repeated setting never interrupts the feed.
-    pub fn set_channels(&mut self, channels: String, now: Instant) -> Option<OutputReport> {
-        if self.args.channels == *channels {
+    /// Reopens the output child on other routes at once, with fresh backoff. The same
+    /// routes are a no-op, so a repeated setting never interrupts the feed. Mixes are kept
+    /// by position; added sessions start silent and removed ones are dropped.
+    pub fn set_routes(&mut self, routes: String, now: Instant) -> Option<OutputReport> {
+        if self.args.routes == *routes {
             return None;
         }
-        self.args.channels = channels.into();
+        self.args.routes = routes.into();
+        self.mixes
+            .resize_with(route_count(&self.args.routes), MonitorMix::new);
+        // Blocks of the old width must not reach the new child.
+        while self.recycle_rx.try_recv().is_ok() {}
         self.shutdown();
         self.attempt = 0;
         self.start(now)
@@ -582,14 +631,14 @@ mod tests {
     fn parses_ready_and_stats_lines_strictly() {
         assert_eq!(
             parse_output_line(
-                r#"{"type":"ready","deviceName":"DVS","sampleRateHz":48000,"channelCount":64,"outputChannels":[3,4]}"#,
+                r#"{"type":"ready","deviceName":"DVS","sampleRateHz":48000,"channelCount":64,"outputRoutes":[[3,4],[5]]}"#,
                 7
             ),
             Ok(OutputEvent::Ready {
                 generation: 7,
                 device_name: "DVS".into(),
                 channel_count: 64,
-                output_channels: vec![3, 4],
+                output_routes: vec![vec![3, 4], vec![5]],
             })
         );
         assert_eq!(
@@ -615,9 +664,9 @@ mod tests {
             })
         );
         for invalid in [
-            r#"{"type":"ready","deviceName":"DVS","sampleRateHz":44100,"channelCount":2,"outputChannels":[1]}"#,
-            r#"{"type":"ready","deviceName":"DVS","sampleRateHz":48000,"channelCount":2,"outputChannels":[3]}"#,
-            r#"{"type":"ready","deviceName":"DVS","sampleRateHz":48000,"channelCount":2,"outputChannels":[]}"#,
+            r#"{"type":"ready","deviceName":"DVS","sampleRateHz":44100,"channelCount":2,"outputRoutes":[[1]]}"#,
+            r#"{"type":"ready","deviceName":"DVS","sampleRateHz":48000,"channelCount":2,"outputRoutes":[[3]]}"#,
+            r#"{"type":"ready","deviceName":"DVS","sampleRateHz":48000,"channelCount":2,"outputRoutes":[[]]}"#,
             r#"{"type":"stats","underruns":1,"skippedFrames":0}"#,
             r#"{"type":"stats","underruns":-1,"skippedFrames":0,"overflowFrames":0}"#,
             "[]",
@@ -627,25 +676,55 @@ mod tests {
     }
 
     #[test]
-    fn new_channels_restart_at_once_with_fresh_backoff() {
+    fn new_routes_restart_at_once_with_fresh_backoff() {
         let (events, _receiver) = mpsc::sync_channel(4);
         let mut output = HostOutput::new(
             OutputArgs {
                 binary: "/nonexistent/pulse-device-output".into(),
                 device_name: "DVS".into(),
-                channels: "1".into(),
+                routes: "1".into(),
             },
             events,
         );
         let now = Instant::now();
         output.start(now);
         output.poll(now + Duration::from_secs(1));
-        assert!(output.set_channels("1".into(), now).is_none());
+        assert!(output.set_routes("1".into(), now).is_none());
         assert!(matches!(
-            output.set_channels("12".into(), now),
+            output.set_routes("1;12".into(), now),
             Some(OutputReport::Failed { retry_in, .. }) if retry_in == Duration::from_secs(1)
         ));
-        assert_eq!(output.args.channels, "12");
+        assert_eq!(output.args.routes, "1;12");
+        assert_eq!(output.mixes.len(), 2, "one mix per session");
+        output.set_monitor(5, Some(0), 1.0);
+    }
+
+    #[test]
+    fn each_session_renders_its_own_input_into_its_own_slot() {
+        let (events, _receiver) = mpsc::sync_channel(4);
+        let mut output = HostOutput::new(
+            OutputArgs {
+                binary: "/nonexistent/pulse-device-output".into(),
+                device_name: "DVS".into(),
+                routes: "1;2".into(),
+            },
+            events,
+        );
+        output.set_monitor(0, Some(1), 1.0);
+        output.set_monitor(1, Some(0), 0.5);
+        let block = constant_block(2, &[0.5, -0.5]);
+        let mut buffer = Vec::new();
+        // The first block ramps in from silence; the second is at the set gain.
+        output.render_interleaved(&block, &mut buffer);
+        output.render_interleaved(&block, &mut buffer);
+        assert_eq!(buffer.len(), FRAMES_PER_BLOCK * 2);
+        assert!(
+            buffer
+                .as_chunks::<2>()
+                .0
+                .iter()
+                .all(|frame| { (frame[0] + 0.5).abs() < 1e-6 && (frame[1] - 0.25).abs() < 1e-6 })
+        );
     }
 
     #[test]
@@ -655,7 +734,7 @@ mod tests {
             OutputArgs {
                 binary: "/nonexistent/pulse-device-output".into(),
                 device_name: "DVS".into(),
-                channels: "1".into(),
+                routes: "1".into(),
             },
             events,
         );

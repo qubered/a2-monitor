@@ -2,16 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://pulse.local/schema/v0/http/host-output.schema.json",
   "title": "Audio node host output",
-  "description": "The audio node's shared host monitor output (ADR 0029), served at GET /audio/v0/output and as `output` events on /audio/v0/output/events. `output` is null when the node has no output device configured. `monitor` is the one mix every Live client in host-output mode shares: a change by any client is heard on the host output and shown to every client. `revision` increases with every monitor change.",
+  "description": "The audio node's host monitor output (ADR 0029), served at GET /audio/v0/output and as `output` events on /audio/v0/output/events. `output` is the output device, or null when the node has none. Each of `sessions` is one shared mix on its own output channels: Live clients join a session, and a change by any client in it is heard on its channels and shown to every client in it. A session's `revision` increases with every change to its monitor.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "revision", "output", "monitor"],
+  "required": ["schemaVersion", "output", "sessions"],
   "properties": {
-    "schemaVersion": { "const": "0" },
-    "revision": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 9007199254740991
+    "schemaVersion": {
+      "const": "0"
     },
     "output": {
       "type": ["object", "null"],
@@ -20,22 +17,34 @@
         "status",
         "detail",
         "deviceName",
-        "outputChannels",
+        "channelCount",
         "simulated",
         "underruns",
         "droppedFrames"
       ],
       "properties": {
-        "status": { "enum": ["starting", "ready", "error"] },
-        "detail": { "type": "string", "minLength": 1, "maxLength": 240 },
-        "deviceName": { "type": "string", "minLength": 1, "maxLength": 512 },
-        "outputChannels": {
-          "description": "1-based device output channels that carry the mono monitor feed.",
-          "type": "array",
-          "maxItems": 8,
-          "items": { "type": "integer", "minimum": 1, "maximum": 256 }
+        "status": {
+          "enum": ["starting", "ready", "error"]
         },
-        "simulated": { "type": "boolean" },
+        "detail": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "deviceName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "channelCount": {
+          "description": "Output channels the device has, once it has opened; null before.",
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 256
+        },
+        "simulated": {
+          "type": "boolean"
+        },
         "underruns": {
           "description": "Device callbacks that found no audio queued since the output last started.",
           "type": "integer",
@@ -50,40 +59,87 @@
         }
       }
     },
-    "monitor": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "channelId",
-        "input",
-        "muted",
-        "dimmed",
-        "gainDb",
-        "changedBy",
-        "changedAtUtc"
-      ],
-      "properties": {
-        "channelId": {
-          "description": "The show channel whose input is selected, as the selecting client named it. Null when nothing is selected.",
-          "type": ["string", "null"],
-          "minLength": 1,
-          "maxLength": 128
-        },
-        "input": {
-          "description": "0-based captured input that is playing. Null when nothing is selected.",
-          "type": ["integer", "null"],
-          "minimum": 0,
-          "maximum": 255
-        },
-        "muted": { "type": "boolean" },
-        "dimmed": { "type": "boolean" },
-        "gainDb": { "type": "number", "minimum": -60, "maximum": 12 },
-        "changedBy": {
-          "type": ["string", "null"],
-          "minLength": 1,
-          "maxLength": 80
-        },
-        "changedAtUtc": { "type": ["string", "null"], "format": "date-time" }
+    "sessions": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "outputChannels", "revision", "monitor"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "outputChannels": {
+            "description": "1-based device output channels that carry this session's mono mix.",
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 256
+            }
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "monitor": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "channelId",
+              "input",
+              "muted",
+              "dimmed",
+              "gainDb",
+              "changedBy",
+              "changedAtUtc"
+            ],
+            "properties": {
+              "channelId": {
+                "description": "The show channel whose input is selected, as the selecting client named it. Null when nothing is selected.",
+                "type": ["string", "null"],
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "input": {
+                "description": "0-based captured input that is playing. Null when nothing is selected.",
+                "type": ["integer", "null"],
+                "minimum": 0,
+                "maximum": 255
+              },
+              "muted": {
+                "type": "boolean"
+              },
+              "dimmed": {
+                "type": "boolean"
+              },
+              "gainDb": {
+                "type": "number",
+                "minimum": -60,
+                "maximum": 12
+              },
+              "changedBy": {
+                "type": ["string", "null"],
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "changedAtUtc": {
+                "type": ["string", "null"],
+                "format": "date-time"
+              }
+            }
+          }
+        }
       }
     }
   }

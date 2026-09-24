@@ -294,36 +294,50 @@ describe("backend health and Live snapshot", () => {
 });
 
 describe("backend showfile host output", () => {
-  it("saves the production's host output channels and rejects empty or repeated ones", async () => {
+  const session = (id: string, name: string, outputChannels: number[]) => ({
+    id,
+    name,
+    outputChannels,
+  });
+
+  it("saves the production's host output sessions and rejects incoherent ones", async () => {
     const server = trackedServer();
     const initial = (
       await server.inject({ method: "GET", url: "/api/v1/showfile" })
     ).json();
+    const sessions = [
+      session("hs-a", "Comms A", [1]),
+      session("hs-b", "Comms B", [2, 12]),
+    ];
 
     const saved = await server.inject({
       method: "PUT",
       url: "/api/v1/showfile",
-      payload: { ...initial, hostOutput: { outputChannels: [12] } },
+      payload: { ...initial, hostOutput: { sessions } },
     });
     expect(saved.statusCode).toBe(200);
-    expect(saved.json()).toMatchObject({
-      hostOutput: { outputChannels: [12] },
-    });
     const reloaded = await server.inject({
       method: "GET",
       url: "/api/v1/showfile",
     });
-    expect(reloaded.json()).toMatchObject({
-      hostOutput: { outputChannels: [12] },
-    });
+    expect(reloaded.json()).toMatchObject({ hostOutput: { sessions } });
 
-    for (const outputChannels of [[], [3, 3], [0], [257]]) {
+    for (const invalid of [
+      [],
+      [session("hs-a", "Comms A", [])],
+      [session("hs-a", "Comms A", [3, 3])],
+      [session("hs-a", "Comms A", [1]), session("hs-b", "Comms B", [1])],
+      [session("hs-a", "Comms A", [1]), session("hs-a", "Comms B", [2])],
+      [session("hs-a", "Comms", [1]), session("hs-b", "comms", [2])],
+      [session("hs-a", "  ", [1])],
+      [session("hs-a", "Comms A", [0])],
+    ]) {
       const refused = await server.inject({
         method: "PUT",
         url: "/api/v1/showfile",
-        payload: { ...saved.json(), hostOutput: { outputChannels } },
+        payload: { ...saved.json(), hostOutput: { sessions: invalid } },
       });
-      expect(refused.statusCode, JSON.stringify(outputChannels)).toBe(400);
+      expect(refused.statusCode, JSON.stringify(invalid)).toBe(400);
     }
   });
 });

@@ -17,7 +17,7 @@ import {
   MonitorChangeError,
   monitorCommand,
   parseMonitorChange,
-  SharedHostMonitor,
+  HostOutputSessions,
 } from "./host-output.js";
 import { LEVEL_WINDOW_MS, LevelBank, type MeterReading } from "./levels.js";
 import {
@@ -36,6 +36,7 @@ const SHOWFILE_WAIT_MS = 2_000;
 const MAX_METER_BUFFERED_BYTES = 64 * 1024;
 const METER_KEEPALIVE_MS = 15_000;
 const MAX_DETAIL_LENGTH = 240;
+const SESSION_OUTPUT_PATH = /^\/audio\/v0\/output\/sessions\/([^/]{1,192})$/;
 const SESSION_PATH = /^\/audio\/v0\/listen\/sessions\/([0-9a-f-]{36})$/;
 const SESSION_CHANNEL_PATH =
   /^\/audio\/v0\/listen\/sessions\/([0-9a-f-]{36})\/channel$/;
@@ -43,7 +44,7 @@ const SESSION_CHANNEL_PATH =
 export type ListenGatewayOptions = MediaWorkerOptions &
   WebHostOptions & {
     mediaWorker?: MediaWorkerManager;
-    hostMonitor?: SharedHostMonitor;
+
     shureMonitor?: ShureFleetMonitor;
     interfaces?: () => NodeJS.Dict<NetworkInterfaceInfo[]>;
   };
@@ -168,7 +169,7 @@ export class ListenGateway {
   private readonly interfaces: () => NodeJS.Dict<NetworkInterfaceInfo[]>;
   private readonly meterClients = new Set<ServerResponse>();
   private readonly outputClients = new Set<ServerResponse>();
-  readonly hostMonitor: SharedHostMonitor;
+  readonly hostSessions: HostOutputSessions;
   private readonly waitForShowfile: boolean;
   private startMediaOnce: () => void = () => undefined;
   private readonly keepalive: NodeJS.Timeout;
@@ -186,7 +187,9 @@ export class ListenGateway {
         outputBinary: options.outputBinary,
         processFactory: options.processFactory,
       });
-    this.hostMonitor = options.hostMonitor ?? new SharedHostMonitor();
+    this.hostSessions = new HostOutputSessions(
+      this.media.getDefaultOutputChannels(),
+    );
     this.waitForShowfile =
       options.shureMonitor === undefined &&
       options.backendOrigin !== undefined &&
@@ -195,12 +198,24 @@ export class ListenGateway {
       this.resetLevels();
       const state = this.media.getState();
       if (state.status === "ready") {
-        this.hostMonitor.constrain(state.device.channelCount);
+        this.hostSessions.constrain(state.device.channelCount);
       }
     });
     this.media.on("output", () => this.broadcastOutput());
-    this.hostMonitor.on("change", () => {
-      this.media.setMonitor(monitorCommand(this.hostMonitor.get()));
+    this.hostSessions.on("monitor", (mix: number) => {
+      const session = this.hostSessions.list()[mix];
+      if (session)
+        this.media.setMonitor(mix, monitorCommand(session.monitor.get()));
+      this.broadcastOutput();
+    });
+    this.hostSessions.on("sessions", () => {
+      // Routes first, so the worker has one mix per session before the mixes.
+      this.media.setOutputRoutes(this.hostSessions.routes());
+      this.hostSessions
+        .list()
+        .forEach(({ monitor }, mix) =>
+          this.media.setMonitor(mix, monitorCommand(monitor.get())),
+        );
       this.broadcastOutput();
     });
     this.media.on("meters", (reading: MeterReading) =>
@@ -215,9 +230,12 @@ export class ListenGateway {
       options.shureMonitor ??
       new ShureFleetMonitor({
         backendOrigin: options.backendOrigin,
-        // The active production's host output channels (ADR 0029).
+        // The active production's host output sessions (ADR 0029).
         onShowfile: (showfile) => {
-          this.media.setOutputChannels(showfile.hostOutput?.outputChannels);
+          this.hostSessions.configure(
+            showfile.hostOutput?.sessions,
+            this.media.getDefaultOutputChannels(),
+          );
           this.startMediaOnce();
         },
       });
@@ -235,7 +253,10 @@ export class ListenGateway {
         this.openMeterStream(response);
         return;
       }
-      if (request.url === "/audio/v0/output") {
+      if (
+        request.url === "/audio/v0/output" ||
+        request.url?.startsWith("/audio/v0/output/sessions/")
+      ) {
         this.handleOutput(request, response).catch((error: unknown) => {
           if (response.headersSent) return;
           if (error instanceof HttpError) {
@@ -348,32 +369,42 @@ export class ListenGateway {
     throw new HttpError(404, "not-found");
   }
 
-  /** The `host-output` document: output device state plus the shared monitor mix. */
+  /** The `host-output` document: output device state plus every session's shared mix. */
   getOutput(): HostOutput {
-    return hostOutputDocument(this.media.getOutputState(), this.hostMonitor);
+    return hostOutputDocument(this.media.getOutputState(), this.hostSessions);
   }
 
   /**
-   * Shared host monitor output (ADR 0029). `GET` reads it; `PATCH` changes any
-   * subset of the monitor for every client at once and returns the new document.
+   * Shared host monitor output (ADR 0029). `GET /audio/v0/output` reads it;
+   * `PATCH /audio/v0/output/sessions/{id}` changes any subset of one session's
+   * monitor for everyone in it and returns the new document.
    */
   private async handleOutput(
     request: IncomingMessage,
     response: ServerResponse,
   ): Promise<void> {
-    if (request.method === "GET") {
+    const path = request.url ?? "";
+    if (path === "/audio/v0/output") {
+      if (request.method !== "GET") {
+        throw new HttpError(405, "method-not-allowed");
+      }
       sendJson(response, 200, this.getOutput());
       return;
     }
-    if (request.method !== "PATCH")
+    const match = SESSION_OUTPUT_PATH.exec(path);
+    if (!match?.[1]) throw new HttpError(404, "not-found");
+    if (request.method !== "PATCH") {
       throw new HttpError(405, "method-not-allowed");
+    }
     if (this.media.getOutputState() === null) {
       throw new HttpError(409, "host-output-not-configured");
     }
+    const session = this.hostSessions.find(decodeURIComponent(match[1]));
+    if (!session) throw new HttpError(404, "unknown-output-session");
     const body = await readJsonObject(request);
     const state = this.media.getState();
     try {
-      this.hostMonitor.apply(
+      session.monitor.apply(
         parseMonitorChange(
           body,
           state.status === "ready" ? state.device.channelCount : null,

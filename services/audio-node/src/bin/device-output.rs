@@ -1,13 +1,15 @@
 //! `pulse-device-output`: plays the host monitor feed on one explicitly named output device
 //! (ADR 0029).
 //!
-//! stdin carries raw mono Float32LE at 48 kHz from `pulse-media-worker`; there is no header.
-//! stdout carries JSON lines: one `ready` line once the device is open, then a `stats` line
-//! every second, or one `failed` line with the reason before a non-zero exit. The device callback only pulls from a preallocated ring.
+//! stdin carries raw Float32LE at 48 kHz from `pulse-media-worker`: interleaved frames with
+//! one sample per session mix, in `--routes` order; there is no header. stdout carries JSON
+//! lines: one `ready` line once the device is open, then a `stats` line every second, or one
+//! `failed` line with the reason before a non-zero exit. The device callback only pulls from
+//! a preallocated ring.
 
 use a2_audio_node::monitor_output::{
     DEFAULT_RING_TARGETS, OUTPUT_SAMPLE_RATE_HZ, RingCounters, RingProducer,
-    SIMULATED_OUTPUT_DEVICE_NAME, mono_ring, parse_output_channels,
+    SIMULATED_OUTPUT_DEVICE_NAME, frame_ring, parse_output_routes,
 };
 use serde_json::json;
 use std::ffi::OsString;
@@ -17,19 +19,20 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
 
-/// One second of mono audio: far above the ceiling, so the reader never waits on the ring.
+/// One second of audio: far above the ceiling, so the reader never waits on the ring.
 const RING_CAPACITY_FRAMES: usize = OUTPUT_SAMPLE_RATE_HZ as usize;
 const READ_BUFFER_BYTES: usize = 16 * 1024;
 const STATS_INTERVAL: Duration = Duration::from_secs(1);
 /// The channel count reported for the simulated output.
-const SIMULATED_CHANNEL_COUNT: usize = 2;
+const SIMULATED_CHANNEL_COUNT: usize = 8;
 
 #[derive(Debug, Eq, PartialEq)]
 enum Command {
     List,
     Play {
         device_name: String,
-        channels: Vec<u16>,
+        /// 1-based device channels for each session mix, in feed order.
+        routes: Vec<Vec<u16>>,
     },
 }
 
@@ -37,8 +40,7 @@ fn parse_args<I>(mut args: I) -> Result<Command, String>
 where
     I: Iterator<Item = OsString>,
 {
-    const USAGE: &str =
-        "usage: pulse-device-output --list | --device <exact-device-name> --channels <n[,n…]>";
+    const USAGE: &str = "usage: pulse-device-output --list | --device <exact-device-name> --routes <n[,n…][;n[,n…]…]>";
     match (
         args.next(),
         args.next(),
@@ -47,8 +49,8 @@ where
         args.next(),
     ) {
         (Some(flag), None, None, None, None) if flag == "--list" => Ok(Command::List),
-        (Some(device_flag), Some(device_name), Some(channels_flag), Some(channels), None)
-            if device_flag == "--device" && channels_flag == "--channels" =>
+        (Some(device_flag), Some(device_name), Some(routes_flag), Some(routes), None)
+            if device_flag == "--device" && routes_flag == "--routes" =>
         {
             let device_name = device_name
                 .into_string()
@@ -56,13 +58,13 @@ where
             if device_name.is_empty() {
                 return Err("device name must not be empty".to_owned());
             }
-            let channels = channels
+            let routes = routes
                 .to_str()
-                .ok_or_else(|| "output channels must be valid UTF-8".to_owned())
-                .and_then(parse_output_channels)?;
+                .ok_or_else(|| "output routes must be valid UTF-8".to_owned())
+                .and_then(parse_output_routes)?;
             Ok(Command::Play {
                 device_name,
-                channels,
+                routes,
             })
         }
         _ => Err(USAGE.to_owned()),
@@ -78,20 +80,42 @@ fn emit(value: &serde_json::Value) -> io::Result<()> {
     output.flush()
 }
 
-fn ready_line(device_name: &str, channel_count: usize, channels: &[u16]) -> serde_json::Value {
+fn ready_line(device_name: &str, channel_count: usize, routes: &[Vec<u16>]) -> serde_json::Value {
     json!({
         "type": "ready",
         "deviceName": device_name,
         "sampleRateHz": OUTPUT_SAMPLE_RATE_HZ,
         "channelCount": channel_count,
-        "outputChannels": channels,
+        "outputRoutes": routes,
     })
 }
 
-/// Reads the worker's feed into the ring until stdin closes. Runs on its own thread.
+/// The first route channel the device does not have, as an error.
+fn check_routes(
+    device_name: &str,
+    channel_count: usize,
+    routes: &[Vec<u16>],
+) -> Result<(), String> {
+    match routes
+        .iter()
+        .flatten()
+        .find(|channel| usize::from(**channel) > channel_count)
+    {
+        Some(channel) => Err(format!(
+            "output channel {channel} is beyond {device_name:?}'s {channel_count} outputs"
+        )),
+        None => Ok(()),
+    }
+}
+
+/// Reads the worker's feed into the ring until stdin closes. Runs on its own thread. Samples
+/// split across reads and frames split across reads are carried to the next read.
 fn feed_ring(mut input: impl Read, mut producer: RingProducer, ended: &AtomicBool) {
+    let width = producer.width();
     let mut bytes = vec![0_u8; READ_BUFFER_BYTES];
-    let mut samples = vec![0.0_f32; READ_BUFFER_BYTES / size_of::<f32>()];
+    // Room for one read's samples plus a carried partial frame.
+    let mut samples = vec![0.0_f32; READ_BUFFER_BYTES / size_of::<f32>() + width];
+    let mut carried = 0;
     let mut partial = [0_u8; 4];
     let mut partial_len = 0;
     loop {
@@ -102,7 +126,7 @@ fn feed_ring(mut input: impl Read, mut producer: RingProducer, ended: &AtomicBoo
             Err(_) => break,
         };
         let mut data = &bytes[..count];
-        let mut sample_count = 0;
+        let mut sample_count = carried;
         if partial_len > 0 {
             let take = (4 - partial_len).min(data.len());
             partial[partial_len..partial_len + take].copy_from_slice(&data[..take]);
@@ -122,7 +146,10 @@ fn feed_ring(mut input: impl Read, mut producer: RingProducer, ended: &AtomicBoo
         }
         partial[..remainder.len()].copy_from_slice(remainder);
         partial_len = remainder.len();
-        producer.push(&samples[..sample_count]);
+        let whole_samples = sample_count - sample_count % width;
+        producer.push(&samples[..whole_samples]);
+        carried = sample_count - whole_samples;
+        samples.copy_within(whole_samples..sample_count, 0);
     }
     ended.store(true, Ordering::Release);
 }
@@ -136,19 +163,17 @@ fn stats_line(counters: &RingCounters) -> serde_json::Value {
     })
 }
 
-/// The reserved simulated output: validates the channels against a two-channel device,
-/// drains the feed through the same ring and plays nothing.
-fn run_simulated(channels: &[u16]) -> Result<(), String> {
-    if channels
-        .iter()
-        .any(|channel| usize::from(*channel) > SIMULATED_CHANNEL_COUNT)
-    {
-        return Err(format!(
-            "{SIMULATED_OUTPUT_DEVICE_NAME:?} has {SIMULATED_CHANNEL_COUNT} output channels"
-        ));
-    }
+/// The reserved simulated output: validates the routes against a device with
+/// `SIMULATED_CHANNEL_COUNT` outputs, drains the feed through the same ring and plays nothing.
+fn run_simulated(routes: &[Vec<u16>]) -> Result<(), String> {
+    check_routes(
+        SIMULATED_OUTPUT_DEVICE_NAME,
+        SIMULATED_CHANNEL_COUNT,
+        routes,
+    )?;
+    let width = routes.len();
     let (producer, mut consumer, counters) =
-        mono_ring(RING_CAPACITY_FRAMES, DEFAULT_RING_TARGETS).map_err(str::to_owned)?;
+        frame_ring(RING_CAPACITY_FRAMES, width, DEFAULT_RING_TARGETS).map_err(str::to_owned)?;
     let feed_ended = Arc::new(AtomicBool::new(false));
     {
         let ended = Arc::clone(&feed_ended);
@@ -160,19 +185,20 @@ fn run_simulated(channels: &[u16]) -> Result<(), String> {
     emit(&ready_line(
         SIMULATED_OUTPUT_DEVICE_NAME,
         SIMULATED_CHANNEL_COUNT,
-        channels,
+        routes,
     ))
     .map_err(|error| error.to_string())?;
     // Stand in for a device clock: every 10 ms, pull the frames the wall clock says are due.
     let started = std::time::Instant::now();
     let mut pulled_frames = 0_u64;
-    let mut block = vec![0.0_f32; OUTPUT_SAMPLE_RATE_HZ as usize / 10];
+    let max_frames = OUTPUT_SAMPLE_RATE_HZ as usize / 10;
+    let mut block = vec![0.0_f32; max_frames * width];
     let mut next_report = started + STATS_INTERVAL;
     loop {
         thread::sleep(Duration::from_millis(10));
         let due = (started.elapsed().as_secs_f64() * f64::from(OUTPUT_SAMPLE_RATE_HZ)) as u64;
-        let frames = (due.saturating_sub(pulled_frames) as usize).min(block.len());
-        consumer.pull(&mut block[..frames]);
+        let frames = (due.saturating_sub(pulled_frames) as usize).min(max_frames);
+        consumer.pull(&mut block[..frames * width]);
         pulled_frames += frames as u64;
         if feed_ended.load(Ordering::Acquire) {
             return Ok(());
@@ -190,9 +216,9 @@ fn run_simulated(channels: &[u16]) -> Result<(), String> {
 mod supported {
     use super::{
         Command, DEFAULT_RING_TARGETS, OUTPUT_SAMPLE_RATE_HZ, RING_CAPACITY_FRAMES, STATS_INTERVAL,
-        emit, feed_ring, mono_ring, ready_line, stats_line,
+        check_routes, emit, feed_ring, frame_ring, ready_line, stats_line,
     };
-    use a2_audio_node::monitor_output::{RingConsumer, RingCounters, route_mono};
+    use a2_audio_node::monitor_output::{RingConsumer, RingCounters, route_mixes};
     use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
     use cpal::{
         Device, SampleFormat, SampleRate, StreamConfig, SupportedBufferSize,
@@ -215,8 +241,8 @@ mod supported {
             Command::List => list_devices().map_err(|error| error.to_string()),
             Command::Play {
                 device_name,
-                channels,
-            } => play(&device_name, &channels),
+                routes,
+            } => play(&device_name, &routes),
         }
     }
 
@@ -331,9 +357,11 @@ mod supported {
     /// Callback state: all buffers allocated before the stream starts.
     struct Renderer {
         consumer: RingConsumer,
-        selected: Vec<usize>,
+        /// `(mix, 0-based device channel)` pairs.
+        routes: Vec<(usize, usize)>,
+        mix_count: usize,
         channel_count: usize,
-        mono: Vec<f32>,
+        mixes: Vec<f32>,
         interleaved: Vec<f32>,
     }
 
@@ -342,10 +370,12 @@ mod supported {
         fn render(&mut self, samples: usize) -> &[f32] {
             let samples = samples.min(self.interleaved.len());
             let frames = samples / self.channel_count;
-            self.consumer.pull(&mut self.mono[..frames]);
-            route_mono(
-                &self.mono[..frames],
-                &self.selected,
+            let mix_samples = frames * self.mix_count;
+            self.consumer.pull(&mut self.mixes[..mix_samples]);
+            route_mixes(
+                &self.mixes[..mix_samples],
+                self.mix_count,
+                &self.routes,
                 self.channel_count,
                 &mut self.interleaved[..samples],
             );
@@ -353,21 +383,15 @@ mod supported {
         }
     }
 
-    fn play(device_name: &str, channels: &[u16]) -> Result<(), String> {
+    fn play(device_name: &str, routes: &[Vec<u16>]) -> Result<(), String> {
         let host = cpal::default_host();
         let device = find_exact_device(&host, device_name)?;
         let selected = select_config(&device)?.ok_or_else(|| {
             format!("device {device_name:?} has no 48 kHz f32, i16, or u16 output configuration")
         })?;
         let channel_count = usize::from(selected.channels());
-        if let Some(channel) = channels
-            .iter()
-            .find(|channel| usize::from(**channel) > channel_count)
-        {
-            return Err(format!(
-                "output channel {channel} is beyond {device_name:?}'s {channel_count} outputs"
-            ));
-        }
+        check_routes(device_name, channel_count, routes)?;
+        let mix_count = routes.len();
         let format = selected.sample_format();
         let device_failed = Arc::new(AtomicBool::new(false));
         let feed_ended = Arc::new(AtomicBool::new(false));
@@ -390,15 +414,22 @@ mod supported {
                 buffer_size,
             };
             let (producer, consumer, counters) =
-                mono_ring(RING_CAPACITY_FRAMES, DEFAULT_RING_TARGETS).map_err(str::to_owned)?;
+                frame_ring(RING_CAPACITY_FRAMES, mix_count, DEFAULT_RING_TARGETS)
+                    .map_err(str::to_owned)?;
             let renderer = Renderer {
                 consumer,
-                selected: channels
+                routes: routes
                     .iter()
-                    .map(|channel| usize::from(*channel) - 1)
+                    .enumerate()
+                    .flat_map(|(mix, channels)| {
+                        channels
+                            .iter()
+                            .map(move |channel| (mix, usize::from(*channel) - 1))
+                    })
                     .collect(),
+                mix_count,
                 channel_count,
-                mono: vec![0.0; MAX_CALLBACK_FRAMES],
+                mixes: vec![0.0; MAX_CALLBACK_FRAMES * mix_count],
                 interleaved: vec![0.0; MAX_CALLBACK_FRAMES * channel_count],
             };
             let failed = Arc::clone(&device_failed);
@@ -424,8 +455,7 @@ mod supported {
                 .map_err(|error| error.to_string())?;
         }
         stream.play().map_err(|error| error.to_string())?;
-        emit(&ready_line(device_name, channel_count, channels))
-            .map_err(|error| error.to_string())?;
+        emit(&ready_line(device_name, channel_count, routes)).map_err(|error| error.to_string())?;
         report_until_done(&counters, &feed_ended, &device_failed)
     }
 
@@ -493,8 +523,8 @@ fn main() {
     let result = parse_args(std::env::args_os().skip(1)).and_then(|command| match command {
         Command::Play {
             device_name,
-            channels,
-        } if device_name == SIMULATED_OUTPUT_DEVICE_NAME => run_simulated(&channels),
+            routes,
+        } if device_name == SIMULATED_OUTPUT_DEVICE_NAME => run_simulated(&routes),
         command => supported::run(command),
     });
     if let Err(error) = result {
@@ -515,23 +545,24 @@ mod tests {
     }
 
     #[test]
-    fn playback_requires_an_exact_device_and_explicit_channels() {
+    fn playback_requires_an_exact_device_and_explicit_routes() {
         assert_eq!(
-            args(&["--device", "Dante Virtual Soundcard", "--channels", "1,2"]),
+            args(&["--device", "Dante Virtual Soundcard", "--routes", "1;2,3"]),
             Ok(Command::Play {
                 device_name: "Dante Virtual Soundcard".into(),
-                channels: vec![1, 2],
+                routes: vec![vec![1], vec![2, 3]],
             })
         );
         assert_eq!(args(&["--list"]), Ok(Command::List));
         assert!(args(&["--device", "DVS"]).is_err());
-        assert!(args(&["--device", "", "--channels", "1"]).is_err());
-        assert!(args(&["--device", "DVS", "--channels", "0"]).is_err());
+        assert!(args(&["--device", "", "--routes", "1"]).is_err());
+        assert!(args(&["--device", "DVS", "--routes", "0"]).is_err());
+        assert!(args(&["--device", "DVS", "--routes", "1;1"]).is_err());
         assert!(args(&["--list", "extra"]).is_err());
     }
 
     #[test]
-    fn feed_reassembles_samples_split_across_reads() {
+    fn feed_reassembles_samples_and_frames_split_across_reads() {
         struct Chunked(Vec<u8>, usize);
         impl Read for Chunked {
             fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
@@ -542,11 +573,14 @@ mod tests {
             }
         }
         let mut bytes = Vec::new();
-        for value in [0.25_f32, -0.5, 0.75, 1.0] {
+        let values = [0.25_f32, -0.5, 0.75, 1.0, -0.25, 0.5, 0.125, -0.125];
+        for value in values {
             bytes.extend_from_slice(&value.to_le_bytes());
         }
-        let (producer, mut consumer, _counters) = mono_ring(
+        // Two mixes per frame; 3-byte reads split samples and frames.
+        let (producer, mut consumer, _counters) = frame_ring(
             16,
+            2,
             RingTargets {
                 prime: 4,
                 ceiling: 8,
@@ -554,10 +588,10 @@ mod tests {
         )
         .unwrap();
         let ended = AtomicBool::new(false);
-        feed_ring(Chunked(bytes, 1), producer, &ended);
+        feed_ring(Chunked(bytes, 3), producer, &ended);
         assert!(ended.load(Ordering::Acquire));
-        let mut output = [0.0; 4];
+        let mut output = [0.0; 8];
         consumer.pull(&mut output);
-        assert_eq!(output, [0.25, -0.5, 0.75, 1.0]);
+        assert_eq!(output, values);
     }
 }

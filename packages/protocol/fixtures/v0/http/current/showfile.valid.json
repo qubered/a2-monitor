@@ -6,7 +6,13 @@
     "name": "The Winter Circus"
   },
   "hostOutput": {
-    "outputChannels": [12]
+    "sessions": [
+      {
+        "id": "hs-comms-a",
+        "name": "Comms A",
+        "outputChannels": [12]
+      }
+    ]
   },
   "device": {
     "name": "USB Interface",

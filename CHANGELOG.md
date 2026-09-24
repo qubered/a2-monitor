@@ -10,13 +10,14 @@ externally tested release.
 
 ### Added
 
-- Live: shared host monitor output (ADR 0029). When the node has an output
-  device (for example Dante Virtual Soundcard routed to comms), Live asks on
-  open whether audio plays on this device or the host output. Everyone on host
-  output shares one selection, mute, dim and level and sees who changed it
-  last. The macOS app window gains an output device and default channel
-  choice; Manager's Show tab saves the output channel (e.g. 12) with each
-  production, and the node switches to it without a restart.
+- Live: shared host monitor output sessions (ADR 0029). When the node has an
+  output device (for example Dante Virtual Soundcard routed to comms), Live
+  asks on open whether audio plays on this device or in one of the
+  production's sessions, e.g. Comms A on output 1 or Comms B on output 2.
+  Everyone in a session shares its selection, mute, dim and level and sees who
+  changed it last. Manager's Host output tab defines the sessions and picks
+  their outputs from the device; the node applies changes without a restart.
+  The macOS app window gains an output device and default channel choice.
 
 - Manager: a Productions section for listing, creating, activating and
   removing named local productions, backed by a new

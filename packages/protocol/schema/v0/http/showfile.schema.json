@@ -54,15 +54,28 @@
       }
     },
     "hostOutput": {
-      "description": "Host monitor output settings for this production (ADR 0029). outputChannels are the 1-based channels of the node's host output device that carry the shared monitor feed: at least one, all distinct. Absent means the node's own default.",
+      "description": "Host monitor output sessions for this production (ADR 0029). Each session is one shared mix that Live clients join by name; outputChannels are the 1-based channels of the node's host output device that carry it. A device channel belongs to at most one session. Absent means the node's own single default session.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["outputChannels"],
+      "required": ["sessions"],
       "properties": {
-        "outputChannels": {
+        "sessions": {
           "type": "array",
           "maxItems": 8,
-          "items": { "type": "integer", "minimum": 1, "maximum": 256 }
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name", "outputChannels"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 60 },
+              "outputChannels": {
+                "type": "array",
+                "maxItems": 8,
+                "items": { "type": "integer", "minimum": 1, "maximum": 256 }
+              }
+            }
+          }
         }
       }
     },

@@ -619,12 +619,14 @@ permissioned from listening and from marking.
 
 **Where audio plays.** When the node has a host output
 ([ADR 0029](../decisions/0029-shared-host-monitor-output.md)), Live asks on open
-whether to play on _this device_ or the _host output_, offering the last choice
-first; a header chip reopens the choice. On host output the transport row
-controls one mix shared by everyone on host output: the selected card, mute,
-dim and level follow whoever changed them last, the row is labelled _host
-output_, and it says it is shared and who changed it last and when. The
-device never plays in that mode.
+whether to play on _this device_ or join one of the production's named host
+output _sessions_ (each on its own outputs, with what it is playing now),
+offering the last choice first; a header chip reopens the choice. In a session
+the transport row controls that session's shared mix: the selected card, mute,
+dim and level follow whoever in the session changed them last, the row is
+labelled with the session's name, and it says it is shared and who changed it
+last and when. Other sessions are unaffected, and the device never plays in
+that mode.
 
 ### 10.5 Detail
 

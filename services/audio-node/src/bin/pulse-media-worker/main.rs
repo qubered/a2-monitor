@@ -66,7 +66,7 @@ where
     I: Iterator<Item = OsString>,
 {
     const USAGE: &str = "usage: pulse-media-worker --capture-bin <path> --device <exact-device-name> \
-         [--output-bin <path> --output-device <exact-device-name> --output-channels <n[,n…]>]";
+         [--output-bin <path> --output-device <exact-device-name> --output-routes <n[,n…][;…]>]";
     let args: Vec<OsString> = args.collect();
     if !args.len().is_multiple_of(2) {
         return Err(USAGE);
@@ -77,7 +77,7 @@ where
         "--device",
         "--output-bin",
         "--output-device",
-        "--output-channels",
+        "--output-routes",
     ];
     for pair in args.as_chunks::<2>().0 {
         let index = FLAGS
@@ -94,17 +94,17 @@ where
         device_name,
         output_binary,
         output_device,
-        output_channels,
+        output_routes,
     ] = values;
     let (Some(capture_binary), Some(device_name)) = (capture_binary, device_name) else {
         return Err(USAGE);
     };
-    let output = match (output_binary, output_device, output_channels) {
+    let output = match (output_binary, output_device, output_routes) {
         (None, None, None) => None,
-        (Some(binary), Some(device_name), Some(channels)) => Some(OutputArgs {
+        (Some(binary), Some(device_name), Some(routes)) => Some(OutputArgs {
             binary,
             device_name,
-            channels,
+            routes,
         }),
         _ => return Err(USAGE),
     };
@@ -257,21 +257,21 @@ impl<W: io::Write> Worker<W> {
                 }
                 None => self.output.closed(&session_id, "unknown-session"),
             },
-            Command::Monitor { channel, gain } => {
+            Command::Monitor { mix, channel, gain } => {
                 // Before capture is ready the input is held; an input beyond the device
                 // renders as silence (`mix_block`).
                 let channel = channel
                     .filter(|channel| self.channel_count.is_none_or(|count| *channel < count));
                 if let Some(output) = &mut self.host_output {
-                    output.set_monitor(channel, gain);
+                    output.set_monitor(mix, channel, gain);
                 }
                 Ok(())
             }
-            Command::OutputChannels { channels } => {
+            Command::OutputRoutes { routes } => {
                 let report = self
                     .host_output
                     .as_mut()
-                    .and_then(|output| output.set_channels(channels, now));
+                    .and_then(|output| output.set_routes(routes, now));
                 match report {
                     Some(report) => self.output.output(&report),
                     None => Ok(()),
@@ -540,8 +540,8 @@ mod tests {
             args(&[
                 "--device",
                 "DVS",
-                "--output-channels",
-                "3,4",
+                "--output-routes",
+                "3,4;5",
                 "--capture-bin",
                 "/bin/capture",
                 "--output-device",
@@ -555,7 +555,7 @@ mod tests {
                 output: Some(OutputArgs {
                     binary: "/bin/output".into(),
                     device_name: "DVS".into(),
-                    channels: "3,4".into(),
+                    routes: "3,4;5".into(),
                 }),
             })
         );

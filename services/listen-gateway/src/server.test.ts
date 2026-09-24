@@ -90,7 +90,7 @@ async function startGateway(
   gateway.server.listen(0, "127.0.0.1");
   await once(gateway.server, "listening");
   const { port } = gateway.server.address() as AddressInfo;
-  return { worker, base: `http://127.0.0.1:${port}` };
+  return { worker, gateway, base: `http://127.0.0.1:${port}` };
 }
 
 const json = { "Content-Type": "application/json" };
@@ -302,37 +302,40 @@ describe("candidateAddressFor", () => {
 describe("ListenGateway shared host output", () => {
   const output = { outputDevice: "DVS", outputChannels: [3] };
 
-  async function patch(base: string, body: unknown) {
-    return fetch(`${base}/audio/v0/output`, {
+  async function patch(base: string, body: unknown, session = "default") {
+    return fetch(`${base}/audio/v0/output/sessions/${session}`, {
       method: "PATCH",
       headers: json,
       body: JSON.stringify(body),
     });
   }
 
-  it("reports no output when no output device is configured and refuses changes", async () => {
-    const { base } = await startGateway();
-    const state = parseHostOutput(
+  async function readOutput(base: string) {
+    return parseHostOutput(
       await (await fetch(`${base}/audio/v0/output`)).json(),
     );
+  }
+
+  it("reports no output when no output device is configured and refuses changes", async () => {
+    const { base } = await startGateway();
+    const state = await readOutput(base);
     expect(state.output).toBeNull();
+    expect(state.sessions).toEqual([]);
     const refused = await patch(base, { muted: true });
     expect(refused.status).toBe(409);
   });
 
-  it("applies one client's change for everyone and drives the worker mix", async () => {
+  it("applies one client's change for everyone in the session and drives its mix", async () => {
     const { worker, base } = await startGateway("Test Device", output);
     worker.emit({
       type: "output-ready",
       deviceName: "DVS",
       channelCount: 64,
-      outputChannels: [3],
+      outputRoutes: [[3]],
     });
     await vi.waitFor(async () => {
-      const state = parseHostOutput(
-        await (await fetch(`${base}/audio/v0/output`)).json(),
-      );
-      expect(state.output?.status).toBe("ready");
+      const state = await readOutput(base);
+      expect(state.output).toMatchObject({ status: "ready", channelCount: 64 });
     });
 
     const events = await fetch(`${base}/audio/v0/output/events`);
@@ -352,7 +355,11 @@ describe("ListenGateway shared host output", () => {
         .slice(6);
       return parseHostOutput(JSON.parse(data));
     };
-    expect((await nextDocument()).monitor.input).toBeNull();
+    const first = await nextDocument();
+    expect(first.sessions).toMatchObject([
+      { id: "default", name: "Host output", outputChannels: [3] },
+    ]);
+    expect(first.sessions[0]!.monitor.input).toBeNull();
 
     const selected = await patch(base, {
       channelId: "ch-lead",
@@ -360,7 +367,7 @@ describe("ListenGateway shared host output", () => {
       changedBy: "Sam (A2)",
     });
     expect(selected.status).toBe(200);
-    const pushed = await nextDocument();
+    const pushed = (await nextDocument()).sessions[0]!;
     expect(pushed.monitor).toMatchObject({
       channelId: "ch-lead",
       input: 1,
@@ -371,27 +378,63 @@ describe("ListenGateway shared host output", () => {
     expect(pushed.revision).toBe(1);
     expect(worker.commands.at(-1)).toEqual({
       type: "monitor",
+      mix: 0,
       channel: 1,
       gain: 1,
     });
 
     await patch(base, { dimmed: true, gainDb: -6 });
-    expect((await nextDocument()).monitor).toMatchObject({
+    expect((await nextDocument()).sessions[0]!.monitor).toMatchObject({
       input: 1,
       dimmed: true,
       gainDb: -6,
       changedBy: null,
     });
-    expect(worker.commands.at(-1)).toMatchObject({ channel: 1 });
+    expect(worker.commands.at(-1)).toMatchObject({ mix: 0, channel: 1 });
     expect(worker.commands.at(-1)?.gain).toBeCloseTo(10 ** (-18 / 20), 6);
 
     await patch(base, { muted: true });
     expect(worker.commands.at(-1)).toEqual({
       type: "monitor",
+      mix: 0,
       channel: 1,
       gain: 0,
     });
     await reader.cancel();
+  });
+
+  it("keeps sessions independent, each on its own mix and outputs", async () => {
+    const { worker, base, gateway } = await startGateway("Test Device", output);
+    gateway.hostSessions.configure(
+      [
+        { id: "hs-a", name: "Comms A", outputChannels: [1] },
+        { id: "hs-b", name: "Comms B", outputChannels: [2] },
+      ],
+      [3],
+    );
+    expect(worker.commands).toContainEqual({
+      type: "output-routes",
+      routes: [[1], [2]],
+    });
+
+    await patch(base, { channelId: "ch-a", input: 0 }, "hs-a");
+    await patch(base, { channelId: "ch-b", input: 1, muted: true }, "hs-b");
+    expect(worker.commands.slice(-2)).toEqual([
+      { type: "monitor", mix: 0, channel: 0, gain: 1 },
+      { type: "monitor", mix: 1, channel: 1, gain: 0 },
+    ]);
+    const state = await readOutput(base);
+    expect(
+      state.sessions.map(({ id, monitor }) => [
+        id,
+        monitor.input,
+        monitor.muted,
+      ]),
+    ).toEqual([
+      ["hs-a", 0, false],
+      ["hs-b", 1, true],
+    ]);
+    expect((await patch(base, { muted: true }, "hs-missing")).status).toBe(404);
   });
 
   it("rejects out-of-range inputs, unpaired selections and unsafe gain", async () => {
@@ -412,7 +455,7 @@ describe("ListenGateway shared host output", () => {
     expect(cleared.status).toBe(200);
   });
 
-  it("re-sends the shared mix after the worker restarts", async () => {
+  it("re-sends the routes and every shared mix after the worker restarts", async () => {
     const { worker, base } = await startGateway("Test Device", output);
     await patch(base, { channelId: "ch", input: 0 });
     worker.commands.length = 0;
@@ -423,15 +466,14 @@ describe("ListenGateway shared host output", () => {
       channelCount: 2,
     });
     await vi.waitFor(() =>
-      expect(worker.commands).toContainEqual({
-        type: "monitor",
-        channel: 0,
-        gain: 1,
-      }),
+      expect(worker.commands).toEqual([
+        { type: "output-routes", routes: [[3]] },
+        { type: "monitor", mix: 0, channel: 0, gain: 1 },
+      ]),
     );
   });
 
-  it("opens the host output on the production's saved channels at start", async () => {
+  it("opens the host output on the production's saved sessions at start", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () =>
@@ -440,7 +482,12 @@ describe("ListenGateway shared host output", () => {
           revision: 1,
           updatedAtUtc: null,
           show: { name: "Show" },
-          hostOutput: { outputChannels: [12] },
+          hostOutput: {
+            sessions: [
+              { id: "hs-a", name: "Comms A", outputChannels: [12] },
+              { id: "hs-b", name: "Comms B", outputChannels: [13, 14] },
+            ],
+          },
           device: null,
           shureReceivers: [],
           channels: [],
@@ -463,7 +510,7 @@ describe("ListenGateway shared host output", () => {
     expect(factory).not.toHaveBeenCalled();
     await vi.waitFor(() => expect(factory).toHaveBeenCalledOnce());
     const args = factory.mock.calls[0]![1] as string[];
-    expect(args[args.indexOf("--output-channels") + 1]).toBe("12");
+    expect(args[args.indexOf("--output-routes") + 1]).toBe("12;13,14");
     vi.unstubAllGlobals();
   });
 });

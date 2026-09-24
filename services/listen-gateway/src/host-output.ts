@@ -10,7 +10,18 @@ export const DEFAULT_HOST_GAIN_DB = 0;
 const MAX_CHANNEL_ID_LENGTH = 128;
 const MAX_CHANGED_BY_LENGTH = 80;
 
-export type HostMonitor = HostOutput["monitor"];
+export type HostMonitor = HostOutput["sessions"][number]["monitor"];
+
+/** A host output session as a production defines it (ADR 0029). */
+export type HostSessionConfig = {
+  id: string;
+  name: string;
+  outputChannels: number[];
+};
+
+/** The node's own single session, used when the production defines none. */
+export const DEFAULT_SESSION_ID = "default";
+export const DEFAULT_SESSION_NAME = "Host output";
 
 /** A validated partial change from one Live client. */
 export type HostMonitorChange = {
@@ -130,10 +141,10 @@ export function monitorCommand(monitor: HostMonitor): MonitorCommand {
 }
 
 /**
- * The one monitor state every Live client in host-output mode shares (ADR 0029):
- * whoever changes the selection, mute, dim or level changes it for everyone, and
- * every client sees the change. It is held in memory: a gateway restart starts
- * with nothing selected.
+ * The monitor state every Live client in one host output session shares
+ * (ADR 0029): whoever changes the selection, mute, dim or level changes it for
+ * everyone in the session, and every client sees the change. It is held in
+ * memory: a gateway restart starts with nothing selected.
  */
 export class SharedHostMonitor extends EventEmitter {
   private monitor: HostMonitor = {
@@ -180,23 +191,121 @@ export class SharedHostMonitor extends EventEmitter {
   }
 }
 
-/** The `host-output` document: output device state plus the shared monitor. */
+type Session = HostSessionConfig & { monitor: SharedHostMonitor };
+
+/**
+ * The host output sessions in effect, in mix order. Reconfiguring keeps each
+ * surviving session's shared monitor by id, so renaming a session or adding
+ * another does not interrupt anyone. Emits `monitor` (mix index) when a
+ * session's monitor changes and `sessions` when the list changes.
+ */
+export class HostOutputSessions extends EventEmitter {
+  private sessions: Session[] = [];
+
+  constructor(
+    defaultChannels: readonly number[],
+    private readonly now: () => Date = () => new Date(),
+  ) {
+    super();
+    this.configure(null, defaultChannels);
+  }
+
+  list(): readonly Session[] {
+    return this.sessions;
+  }
+
+  find(id: string): Session | undefined {
+    return this.sessions.find((session) => session.id === id);
+  }
+
+  indexOf(id: string): number {
+    return this.sessions.findIndex((session) => session.id === id);
+  }
+
+  routes(): number[][] {
+    return this.sessions.map(({ outputChannels }) => [...outputChannels]);
+  }
+
+  /**
+   * Applies a production's sessions, or the default single session when it
+   * defines none. Returns true when anything changed.
+   */
+  configure(
+    configs: readonly HostSessionConfig[] | null | undefined,
+    defaultChannels: readonly number[],
+  ): boolean {
+    const desired: HostSessionConfig[] = configs?.length
+      ? configs.map(({ id, name, outputChannels }) => ({
+          id,
+          name,
+          outputChannels: [...outputChannels],
+        }))
+      : [
+          {
+            id: DEFAULT_SESSION_ID,
+            name: DEFAULT_SESSION_NAME,
+            outputChannels: [...defaultChannels],
+          },
+        ];
+    const current = this.sessions.map(({ id, name, outputChannels }) => ({
+      id,
+      name,
+      outputChannels,
+    }));
+    if (JSON.stringify(desired) === JSON.stringify(current)) return false;
+    const previous = new Map(
+      this.sessions.map((session) => [session.id, session]),
+    );
+    for (const session of this.sessions) {
+      if (!desired.some(({ id }) => id === session.id)) {
+        session.monitor.removeAllListeners();
+      }
+    }
+    this.sessions = desired.map((config) => {
+      const monitor =
+        previous.get(config.id)?.monitor ?? new SharedHostMonitor(this.now);
+      if (!previous.has(config.id)) {
+        monitor.on("change", () => {
+          const index = this.indexOf(config.id);
+          if (index >= 0) this.emit("monitor", index);
+        });
+      }
+      return { ...config, monitor };
+    });
+    this.emit("sessions");
+    return true;
+  }
+
+  /** Clears selections whose input no longer exists on the running device. */
+  constrain(channelCount: number): void {
+    for (const { monitor } of this.sessions) monitor.constrain(channelCount);
+  }
+}
+
+/** The `host-output` document: output device state plus every session's shared monitor. */
 export function hostOutputDocument(
   output: HostOutputState | null,
-  monitor: SharedHostMonitor,
+  sessions: HostOutputSessions,
 ): HostOutput {
   return {
     schemaVersion: "0",
-    revision: monitor.getRevision(),
     output: output && {
       status: output.status,
       detail: output.detail.slice(0, 240) || "Host output state is unknown.",
       deviceName: output.deviceName.slice(0, 512),
-      outputChannels: output.outputChannels,
+      channelCount: output.channelCount,
       simulated: output.simulated,
       underruns: output.underruns,
       droppedFrames: output.droppedFrames,
     },
-    monitor: monitor.get(),
+    sessions: output
+      ? sessions.list().map(({ id, name, outputChannels, monitor }) => ({
+          id,
+          name,
+          outputChannels,
+          revision: monitor.getRevision(),
+          monitor: monitor.get(),
+        }))
+      : [],
   };
 }

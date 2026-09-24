@@ -13,9 +13,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: 14711b4c08945918f142d93ab88c78517621595cb6f6d3fdfbf7e980927016cf
+// Schema-SHA256: 7f3b9cb9e1a1f11bb0e5ed9da2db2c2777f801f2d65ee61c3a65cc1de8344a07
 // Generator-SHA256: 7c6c8c3297d1ffee85f78fc29a4b03c3fbf3fa68da597de8be09f1f2e73d4cbf
-// Body-SHA256: 7aacd547c7b9b00dc24dd70924afa91276f463dc246f1c62e0d2d2bff2fdf4f8
+// Body-SHA256: 16abb780bae94eab8ce2f3210f7602080fabf07997424a58d151704b9475a3e8
 
 export type HealthResponse = {
   status: "ok";
@@ -97,7 +97,11 @@ export type Showfile = {
     overlayExpiryMinutes: number;
   };
   hostOutput?: {
-    outputChannels: Array<number>;
+    sessions: Array<{
+      id: string;
+      name: string;
+      outputChannels: Array<number>;
+    }>;
   };
   device: {
     name: string;
@@ -276,25 +280,30 @@ export type MeterFrame = {
 
 export type HostOutput = {
   schemaVersion: "0";
-  revision: number;
   output: {
     status: "starting" | "ready" | "error";
     detail: string;
     deviceName: string;
-    outputChannels: Array<number>;
+    channelCount: number | null;
     simulated: boolean;
     underruns: number;
     droppedFrames: number;
   } | null;
-  monitor: {
-    channelId: string | null;
-    input: number | null;
-    muted: boolean;
-    dimmed: boolean;
-    gainDb: number;
-    changedBy: string | null;
-    changedAtUtc: string | null;
-  };
+  sessions: Array<{
+    id: string;
+    name: string;
+    outputChannels: Array<number>;
+    revision: number;
+    monitor: {
+      channelId: string | null;
+      input: number | null;
+      muted: boolean;
+      dimmed: boolean;
+      gainDb: number;
+      changedBy: string | null;
+      changedAtUtc: string | null;
+    };
+  }>;
 };
 
 export type LiveStateVerdict =
@@ -942,18 +951,39 @@ const showfileSchema = {
     },
     hostOutput: {
       description:
-        "Host monitor output settings for this production (ADR 0029). outputChannels are the 1-based channels of the node's host output device that carry the shared monitor feed: at least one, all distinct. Absent means the node's own default.",
+        "Host monitor output sessions for this production (ADR 0029). Each session is one shared mix that Live clients join by name; outputChannels are the 1-based channels of the node's host output device that carry it. A device channel belongs to at most one session. Absent means the node's own single default session.",
       type: "object",
       additionalProperties: false,
-      required: ["outputChannels"],
+      required: ["sessions"],
       properties: {
-        outputChannels: {
+        sessions: {
           type: "array",
           maxItems: 8,
           items: {
-            type: "integer",
-            minimum: 1,
-            maximum: 256,
+            type: "object",
+            additionalProperties: false,
+            required: ["id", "name", "outputChannels"],
+            properties: {
+              id: {
+                type: "string",
+                minLength: 1,
+                maxLength: 64,
+              },
+              name: {
+                type: "string",
+                minLength: 1,
+                maxLength: 60,
+              },
+              outputChannels: {
+                type: "array",
+                maxItems: 8,
+                items: {
+                  type: "integer",
+                  minimum: 1,
+                  maximum: 256,
+                },
+              },
+            },
           },
         },
       },
@@ -1701,18 +1731,13 @@ const hostOutputSchema = {
   $id: "https://pulse.local/schema/v0/http/host-output.schema.json",
   title: "Audio node host output",
   description:
-    "The audio node's shared host monitor output (ADR 0029), served at GET /audio/v0/output and as `output` events on /audio/v0/output/events. `output` is null when the node has no output device configured. `monitor` is the one mix every Live client in host-output mode shares: a change by any client is heard on the host output and shown to every client. `revision` increases with every monitor change.",
+    "The audio node's host monitor output (ADR 0029), served at GET /audio/v0/output and as `output` events on /audio/v0/output/events. `output` is the output device, or null when the node has none. Each of `sessions` is one shared mix on its own output channels: Live clients join a session, and a change by any client in it is heard on its channels and shown to every client in it. A session's `revision` increases with every change to its monitor.",
   type: "object",
   additionalProperties: false,
-  required: ["schemaVersion", "revision", "output", "monitor"],
+  required: ["schemaVersion", "output", "sessions"],
   properties: {
     schemaVersion: {
       const: "0",
-    },
-    revision: {
-      type: "integer",
-      minimum: 0,
-      maximum: 9007199254740991,
     },
     output: {
       type: ["object", "null"],
@@ -1721,7 +1746,7 @@ const hostOutputSchema = {
         "status",
         "detail",
         "deviceName",
-        "outputChannels",
+        "channelCount",
         "simulated",
         "underruns",
         "droppedFrames",
@@ -1740,16 +1765,12 @@ const hostOutputSchema = {
           minLength: 1,
           maxLength: 512,
         },
-        outputChannels: {
+        channelCount: {
           description:
-            "1-based device output channels that carry the mono monitor feed.",
-          type: "array",
-          maxItems: 8,
-          items: {
-            type: "integer",
-            minimum: 1,
-            maximum: 256,
-          },
+            "Output channels the device has, once it has opened; null before.",
+          type: ["integer", "null"],
+          minimum: 1,
+          maximum: 256,
         },
         simulated: {
           type: "boolean",
@@ -1770,52 +1791,89 @@ const hostOutputSchema = {
         },
       },
     },
-    monitor: {
-      type: "object",
-      additionalProperties: false,
-      required: [
-        "channelId",
-        "input",
-        "muted",
-        "dimmed",
-        "gainDb",
-        "changedBy",
-        "changedAtUtc",
-      ],
-      properties: {
-        channelId: {
-          description:
-            "The show channel whose input is selected, as the selecting client named it. Null when nothing is selected.",
-          type: ["string", "null"],
-          minLength: 1,
-          maxLength: 128,
-        },
-        input: {
-          description:
-            "0-based captured input that is playing. Null when nothing is selected.",
-          type: ["integer", "null"],
-          minimum: 0,
-          maximum: 255,
-        },
-        muted: {
-          type: "boolean",
-        },
-        dimmed: {
-          type: "boolean",
-        },
-        gainDb: {
-          type: "number",
-          minimum: -60,
-          maximum: 12,
-        },
-        changedBy: {
-          type: ["string", "null"],
-          minLength: 1,
-          maxLength: 80,
-        },
-        changedAtUtc: {
-          type: ["string", "null"],
-          format: "date-time",
+    sessions: {
+      type: "array",
+      maxItems: 8,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["id", "name", "outputChannels", "revision", "monitor"],
+        properties: {
+          id: {
+            type: "string",
+            minLength: 1,
+            maxLength: 64,
+          },
+          name: {
+            type: "string",
+            minLength: 1,
+            maxLength: 60,
+          },
+          outputChannels: {
+            description:
+              "1-based device output channels that carry this session's mono mix.",
+            type: "array",
+            maxItems: 8,
+            items: {
+              type: "integer",
+              minimum: 1,
+              maximum: 256,
+            },
+          },
+          revision: {
+            type: "integer",
+            minimum: 0,
+            maximum: 9007199254740991,
+          },
+          monitor: {
+            type: "object",
+            additionalProperties: false,
+            required: [
+              "channelId",
+              "input",
+              "muted",
+              "dimmed",
+              "gainDb",
+              "changedBy",
+              "changedAtUtc",
+            ],
+            properties: {
+              channelId: {
+                description:
+                  "The show channel whose input is selected, as the selecting client named it. Null when nothing is selected.",
+                type: ["string", "null"],
+                minLength: 1,
+                maxLength: 128,
+              },
+              input: {
+                description:
+                  "0-based captured input that is playing. Null when nothing is selected.",
+                type: ["integer", "null"],
+                minimum: 0,
+                maximum: 255,
+              },
+              muted: {
+                type: "boolean",
+              },
+              dimmed: {
+                type: "boolean",
+              },
+              gainDb: {
+                type: "number",
+                minimum: -60,
+                maximum: 12,
+              },
+              changedBy: {
+                type: ["string", "null"],
+                minLength: 1,
+                maxLength: 80,
+              },
+              changedAtUtc: {
+                type: ["string", "null"],
+                format: "date-time",
+              },
+            },
+          },
         },
       },
     },

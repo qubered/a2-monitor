@@ -41,9 +41,10 @@ The local MVP implements one narrow management workflow: edit a show name, add
 or remove ordered logical channels, and patch each channel to one observed
 physical input and optional normalized Shure receiver unit/channel. Manager
 owns the multi-unit receiver inventory: name, explicit control IP and channel
-count. The Show tab also sets the production's host output channels
-(ADR 0029), for example DVS output 12, and shows what the node's host output is
-doing. It loads and
+count. The Host output tab defines the production's host output sessions
+(ADR 0029): each is a named shared mix on outputs picked from the node's host
+output device (for example Comms A on DVS output 1, Comms B on output 2), with
+what the node's output is doing now. It loads and
 saves the versioned `/api/v1/showfile` contract and remains separate from Live
 and its media code. This mutable local showfile is not an activated production
 revision, hardware manifest, validation result or audit history.

@@ -155,6 +155,12 @@ function demoShowfile(revision) {
     revision,
     updatedAtUtc: null,
     show: { name: "Pulse demo (simulated)" },
+    hostOutput: {
+      sessions: [
+        { id: "demo-comms-a", name: "Comms A", outputChannels: [1] },
+        { id: "demo-comms-b", name: "Comms B", outputChannels: [2] },
+      ],
+    },
     device: { name: SIMULATED_DEVICE, channelCount: 8 },
     shureReceivers: [
       {

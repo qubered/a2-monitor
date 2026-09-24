@@ -1,11 +1,18 @@
 import type { HostOutput } from "@rvlt/pulse-protocol/http";
-import { describeOutputChannels, type OutputDestination } from "../host-output";
+import {
+  describeOutputChannels,
+  hostDestination,
+  type OutputDestination,
+} from "../host-output";
 
 type OutputSheetProps = {
   output: NonNullable<HostOutput["output"]>;
+  sessions: HostOutput["sessions"];
+  /** What each session is playing now, by session id. */
+  nowPlaying: Record<string, string>;
   current: OutputDestination | null;
-  /** Offered first: the last choice on this device, or this device. */
-  suggested: OutputDestination;
+  /** Offered first when it is still available: the last choice on this device. */
+  suggested: OutputDestination | null;
   onChoose: (destination: OutputDestination) => void;
   /** Absent on the opening prompt: a choice is required before listening. */
   onClose?: () => void;
@@ -15,14 +22,20 @@ function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-/** Where this device's monitor audio plays: here, or on the shared host output (ADR 0029). */
+/**
+ * Where this device's monitor audio plays: here, or joined to one of the host
+ * output sessions (ADR 0029). Everyone in a session shares its mix.
+ */
 export function OutputSheet({
   output,
+  sessions,
+  nowPlaying,
   current,
   suggested,
   onChoose,
   onClose,
 }: OutputSheetProps) {
+  const device = `${output.deviceName}${output.simulated ? " (simulated)" : ""}`;
   const options: Array<{
     destination: OutputDestination;
     title: string;
@@ -34,15 +47,20 @@ export function OutputSheet({
       detail:
         "Only you hear it, on this device's headphones or speaker. Your channel, mute and level are yours.",
     },
-    {
-      destination: "host",
-      title: "Host output",
-      detail: `${capitalize(describeOutputChannels(output.outputChannels))} of ${output.deviceName}${output.simulated ? " (simulated)" : ""}. Shared: everyone on host output hears and controls the same channel, mute and level.${
+    ...sessions.map((session) => ({
+      destination: hostDestination(session.id),
+      title: session.name,
+      detail: `${capitalize(describeOutputChannels(session.outputChannels))} of ${device}. Shared with everyone in ${session.name}. ${nowPlaying[session.id] ?? "Nothing selected."}${
         output.status === "ready" ? "" : ` ${output.detail}`
       }`,
-    },
+    })),
   ];
-  if (suggested === "host") options.reverse();
+  const suggestedIndex = options.findIndex(
+    ({ destination }) => destination === suggested,
+  );
+  if (suggestedIndex > 0) {
+    options.unshift(...options.splice(suggestedIndex, 1));
+  }
 
   return (
     <div className="detail-backdrop" role="presentation" onMouseDown={onClose}>
@@ -63,7 +81,10 @@ export function OutputSheet({
           <div>
             <span className="detail-overline">Monitor audio</span>
             <h2 id="output-title">Where should audio play?</h2>
-            <p>You can change this later from the header.</p>
+            <p>
+              Join a host output session, or listen on this device. You can
+              change this later from the header.
+            </p>
           </div>
           {onClose ? (
             <button className="line-button" type="button" onClick={onClose}>

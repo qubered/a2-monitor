@@ -353,7 +353,9 @@ describe("parseWorkerEvent", () => {
       outputBinary: "/bin/output",
       processFactory: factory,
     });
-    media.setMonitor({ channel: 1, gain: 0.5 });
+    media.setMonitor(0, { channel: 1, gain: 0.5 });
+    // A mix beyond the routes is ignored.
+    media.setMonitor(3, { channel: 1, gain: 0.5 });
     media.start();
     expect(factory).toHaveBeenCalledWith("/bin/worker", [
       "--capture-bin",
@@ -364,7 +366,7 @@ describe("parseWorkerEvent", () => {
       "/bin/output",
       "--output-device",
       "DVS",
-      "--output-channels",
+      "--output-routes",
       "3,4",
     ]);
     expect(media.getOutputState()).toMatchObject({ status: "starting" });
@@ -374,7 +376,7 @@ describe("parseWorkerEvent", () => {
       type: "output-ready",
       deviceName: "DVS",
       channelCount: 64,
-      outputChannels: [3, 4],
+      outputRoutes: [[3, 4]],
     });
     child.emit({
       type: "output-stats",
@@ -385,14 +387,13 @@ describe("parseWorkerEvent", () => {
     });
     await flush();
     // The monitor set before the worker was ready is sent once it is.
-    expect(child.commands).toContainEqual({
-      type: "monitor",
-      channel: 1,
-      gain: 0.5,
-    });
+    expect(child.commands.filter(({ type }) => type === "monitor")).toEqual([
+      { type: "monitor", mix: 0, channel: 1, gain: 0.5 },
+    ]);
     expect(media.getOutputState()).toMatchObject({
       status: "ready",
-      detail: "Ready on outputs 3 + 4 of DVS.",
+      detail: "DVS is open: 1 session on 2 of 64 outputs.",
+      channelCount: 64,
       underruns: 2,
       droppedFrames: 490,
     });
@@ -423,7 +424,7 @@ describe("parseWorkerEvent", () => {
     }
   });
 
-  it("switches the output to a production's channels and back to the default", async () => {
+  it("switches the output to a production's sessions and back to the default", async () => {
     const child = new FakeWorkerProcess();
     const factory = vi.fn(() => child);
     const media = new MediaWorkerManager({
@@ -433,38 +434,42 @@ describe("parseWorkerEvent", () => {
       processFactory: factory,
     });
     // Set before the worker exists: the spawn already uses it.
-    media.setOutputChannels([12]);
+    media.setOutputRoutes([[12], [13, 14]]);
     media.start();
-    expect(factory.mock.calls[0]?.[1]).toContain("12");
+    const args = factory.mock.calls[0]![1] as string[];
+    expect(args[args.indexOf("--output-routes") + 1]).toBe("12;13,14");
 
     child.ready(64);
     await flush();
     const sent = () =>
-      child.commands.filter(({ type }) => type === "output-channels");
-    expect(sent().at(-1)).toEqual({ type: "output-channels", channels: [12] });
+      child.commands.filter(({ type }) => type === "output-routes");
+    expect(sent().at(-1)).toEqual({
+      type: "output-routes",
+      routes: [[12], [13, 14]],
+    });
 
     const before = sent().length;
-    media.setOutputChannels([12]);
+    media.setOutputRoutes([[12], [13, 14]]);
     expect(sent()).toHaveLength(before);
 
-    media.setOutputChannels(undefined);
+    media.setOutputRoutes(undefined);
     await flush();
-    expect(sent().at(-1)).toEqual({ type: "output-channels", channels: [1] });
+    expect(sent().at(-1)).toEqual({ type: "output-routes", routes: [[1]] });
     expect(media.getOutputState()).toMatchObject({
       status: "starting",
-      outputChannels: [1],
+      routes: [[1]],
     });
 
     child.emit({
       type: "output-ready",
       deviceName: "DVS",
       channelCount: 64,
-      outputChannels: [1],
+      outputRoutes: [[1]],
     });
     await flush();
     expect(media.getOutputState()).toMatchObject({
       status: "ready",
-      outputChannels: [1],
+      routes: [[1]],
     });
     media.stop();
   });
