@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.4cf5e3bf4fbe9ad7",
-  "sourceSha256": "4cf5e3bf4fbe9ad77b9b627cbbde431b5d8ba0a9c1b7fb0e635546e165de8c7e",
-  "inputCount": 393,
+  "buildId": "a2-0.0.0+sha256.73c5a37b23b99c17",
+  "sourceSha256": "73c5a37b23b99c173eeb2d21560bf1bcfd3bea0e89674e02fe8318014488d80d",
+  "inputCount": 389,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -28,12 +28,8 @@
       "sha256": "4c0aab2e1e2eb20df89d5f0c94aae51c032e50bacf8ce89b2d7e7b3f7c102a4a"
     },
     {
-      "path": ".github/ISSUE_TEMPLATE/phase_tracking.yml",
-      "sha256": "69395c71221e28e351572adfc9938faef0d470b2b0db67787cd572586af7dda2"
-    },
-    {
       "path": ".github/PULL_REQUEST_TEMPLATE.md",
-      "sha256": "4d894fc63bdc772ecf06297035af8683a1a15ff361d0b068479e4d435e022b06"
+      "sha256": "4aba513a41048c3c3e157bf1c3d488266982fe69c0172a70f5eefdb4714610cc"
     },
     {
       "path": ".github/workflows/repository.yml",
@@ -49,7 +45,7 @@
     },
     {
       "path": "AGENTS.md",
-      "sha256": "5f28c8f3e7594613210acc2b420ef52d9a098ef9bd0de89985e0a551c7a6ad0b"
+      "sha256": "27433bdb407bf1d5242d5b9015fb29793d00b2de146ea1e265e64c0941deef31"
     },
     {
       "path": "CHANGELOG.md",
@@ -57,7 +53,7 @@
     },
     {
       "path": "CONTRIBUTING.md",
-      "sha256": "d262e0972d54d7c8a8c31fb2ef62a6d55fe7334fed1f8ad2437263968dd00d2a"
+      "sha256": "d84354eed7c312ae29abe605e894d8c436d0af0bdd101623bf1f12aa240d2713"
     },
     {
       "path": "Cargo.lock",
@@ -69,7 +65,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "f8e375000d5252f09db9a519d4f7d2d94373fe5f8facd5183251590c88c7e370"
+      "sha256": "7c5d8c52628b026eed581d41378dde525b674b291e9e07c8ff7a08a49066b551"
     },
     {
       "path": "SECURITY.md",
@@ -473,7 +469,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256": "592326c0f05b2be1e5675a3359ef5cbbc76e560f584b484d8d59d8f81eadbef8"
+      "sha256": "a0c1fe887cf7cb271347b148bdad0fcb954bc514bfbf3a30e19836147a0f90ee"
     },
     {
       "path": "docs/api/show-management-and-control.md",
@@ -729,7 +725,7 @@
     },
     {
       "path": "docs/design/research-notes.md",
-      "sha256": "e3692ac08a111eeeaf1cdf1d63557ce49dd0e9837b409b73a4d2267e0099a334"
+      "sha256": "dd6e254071233e6c1cdf7bb28882a6e0767968e716c0ae8a1a6dad646b7f555a"
     },
     {
       "path": "docs/integrations/README.md",
@@ -760,16 +756,8 @@
       "sha256": "d2d4efe6bdbefde76679d6a22eb9dbcd0ec0b8a391ea80fb8149cf6118b9b55b"
     },
     {
-      "path": "docs/product/phase-capability-matrix.md",
-      "sha256": "d2c93bbc4ec922c84c7ac98284010e1fcc736cf5a6b84766f80d9bcfb2f0c73e"
-    },
-    {
       "path": "docs/product/reference-productions.md",
       "sha256": "56d85aba531a7c17850f835dee597b0b2fdf85e143997d6d12586013e5b939b4"
-    },
-    {
-      "path": "docs/product/roadmap.md",
-      "sha256": "192d5928b91a3f1bce2ffc7657c43d34ab4070c582456469f4bfafafe5c55d71"
     },
     {
       "path": "docs/product/vision.md",
@@ -782,10 +770,6 @@
     {
       "path": "docs/quality/client-and-appliance-profiles.md",
       "sha256": "0b4f323631e0edbe435323c9d4912f735a329a96e0b7c0f2383de7ab39b6dbad"
-    },
-    {
-      "path": "docs/quality/definition-of-done.md",
-      "sha256": "b98762ac122176ff413ecf96f34b5db313197329801de6551d8b46d7ddb30ddc"
     },
     {
       "path": "docs/quality/dependency-license-inventory.md",
@@ -1273,7 +1257,7 @@
     },
     {
       "path": "scripts/check-repo.sh",
-      "sha256": "782d72453a3fbb6e03cf0c0e6369d73e388bfd805334c1d094feffdebf246dd7"
+      "sha256": "c44dc356b74d3c9aec894ca8bacf86a80cb740461f989cba8835f3c2b0230559"
     },
     {
       "path": "scripts/dev.mjs",

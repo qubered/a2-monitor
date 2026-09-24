@@ -63,11 +63,9 @@ required_files=(
   docs/architecture/temporal-identity-and-swap.md
   docs/architecture/cue-and-operator-state-machines.md
   docs/architecture/ledger-reconciliation.md
-  docs/product/phase-capability-matrix.md
   docs/quality/phase0-evidence-contract.md
   docs/quality/phase1-operator-evidence-contract.md
   docs/quality/listening-safety.md
-  docs/quality/definition-of-done.md
   docs/quality/security-baseline.md
   docs/quality/threat-model.md
   docs/quality/validation-matrix.md

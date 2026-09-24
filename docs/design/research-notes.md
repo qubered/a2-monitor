@@ -218,9 +218,8 @@ the product rather than its finish.
    photograph with a 5:4 crop, the channel number and fault flags over the
    image, and the ten-second trace as a strip on its bottom edge. This is
    WaveTool's instinct and it is correct: an A2 looks for Eleanor, not for input
-   27. It also makes Manager's managed headshot pipeline
-   ([roadmap](../product/roadmap.md), Phase 1A.3) load-bearing for the Live
-   experience rather than a nicety, which is worth knowing before it is
+   27. It also makes Manager's managed headshot pipeline load-bearing for the
+   Live experience rather than a nicety, which is worth knowing before it is
    scheduled.
 2. **"I don't think a sidebar is the vibe for this app at all."** Correct, and
    for a reason beyond taste: a standing left rail spends permanent width on
