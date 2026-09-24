@@ -101,10 +101,7 @@ their boundary is deliberate:
 3. the Manager web app builds and administers shows; and
 4. the Live web app is the focused operator surface.
 
-See the [roadmap](docs/product/roadmap.md) and
-[performance baselines](docs/quality/performance-baselines.md). Active work and
-session handoffs are indexed in the
-[GitHub phase tracker](https://github.com/qubered/a2-monitor/issues/22).
+See the [performance baselines](docs/quality/performance-baselines.md).
 
 ## Development
 
