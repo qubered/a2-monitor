@@ -11,8 +11,9 @@ externally tested release.
 ### Changed
 
 - Live: the filter chips list the room's categories after All channels and
-  Needs someone (Wireless and Wired only when the show has no categories), and
-  the row is a dropdown on a phone.
+  Needs someone (Wireless and Wired only when the show has no categories). The
+  row stays on one line, with chips that do not fit under a More dropdown, and
+  is a dropdown on a phone.
 - Live: audio output, your name and the Manager link move into one settings
   menu (a cog) in the header, leaving the room switch, node state and alert
   count. Each item has an icon, and on a phone the cog sits on the top row with

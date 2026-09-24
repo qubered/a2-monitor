@@ -1595,6 +1595,56 @@ describe("Rooms", () => {
     expect(screen.queryByText("Talkback", { selector: "h2" })).toBeNull();
   });
 
+  it("puts the chips that do not fit into a More dropdown and keeps the active one in the row", async () => {
+    const user = userEvent.setup();
+    // Chips are 100 px and More is 40 px in a 380 px row: three chips and More fit.
+    const widthOf = vi
+      .spyOn(HTMLElement.prototype, "offsetWidth", "get")
+      .mockImplementation(function (this: HTMLElement) {
+        return this.hasAttribute("data-more") ? 40 : 100;
+      });
+    const rowWidth = vi
+      .spyOn(HTMLElement.prototype, "clientWidth", "get")
+      .mockReturnValue(380);
+    try {
+      renderApp(roomed());
+      const nav = await screen.findByRole("navigation", {
+        name: "Channel filters",
+      });
+      const chips = () =>
+        within(nav)
+          .getAllByRole("button")
+          .map((button) => button.childNodes[0]?.textContent?.trim());
+      expect(chips()).toEqual([
+        "All channels",
+        "Needs someone",
+        "Ballroom · Stage",
+        "More",
+      ]);
+
+      await user.click(within(nav).getByRole("button", { name: /^More/ }));
+      const menu = within(nav).getByRole("menu");
+      await user.click(
+        within(menu).getByRole("menuitemradio", {
+          name: /Breakout B · Lectern/,
+        }),
+      );
+      expect(screen.queryByRole("menu")).toBeNull();
+      // The choice moves into the row rather than vanishing into the dropdown.
+      expect(chips()).toEqual([
+        "All channels",
+        "Needs someone",
+        "Breakout B · Lectern",
+        "More",
+      ]);
+      expect(screen.getByText("Talkback", { selector: "h2" })).toBeTruthy();
+      expect(screen.queryByText("Marguerite", { selector: "h2" })).toBeNull();
+    } finally {
+      widthOf.mockRestore();
+      rowWidth.mockRestore();
+    }
+  });
+
   it("falls back to every room when the remembered room is gone", async () => {
     window.localStorage.setItem("pulse-room", "room-demolished");
     renderApp(roomed());

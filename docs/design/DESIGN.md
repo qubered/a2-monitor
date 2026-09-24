@@ -780,7 +780,9 @@ The filter band lists `All channels`, `Needs someone` (and `This session`
 while a run is on), then the shown room's **categories** with counts — prefixed
 by the room's name under `All rooms`, plus `No category` inside one room when
 some channels have none. `Wireless` and `Wired` stand in only when the show has
-no categories. On a phone the band is one dropdown with the same choices. The
+no categories. The band is one row: chips that do not fit collect under a `More` dropdown
+(with a count), and the active chip always stays in the row. On a phone the
+band is one dropdown with the same choices. The
 grid has no visible title or instructions: the active chip says what is shown
 and the counts say how many. A note appears only when a filter is
 hiding cards while a critical fault is still shown.

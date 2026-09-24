@@ -41,6 +41,7 @@ import { ChannelDetail } from "./components/ChannelDetail";
 import { ExceptionsSheet } from "./components/ExceptionsSheet";
 import { MicCheck } from "./components/MicCheck";
 import { OperatorSheet } from "./components/OperatorSheet";
+import { FilterBar, type FilterOption } from "./components/FilterBar";
 import { HeaderMenu } from "./components/HeaderMenu";
 import { OutputSheet } from "./components/OutputSheet";
 import { RoomSheet } from "./components/RoomSheet";
@@ -110,8 +111,6 @@ import { useNow } from "./useNow";
  * (`cat:<id>`, `cat:none` for channels without one).
  */
 type Filter = string;
-
-type FilterOption = { key: Filter; label: string; count: number };
 
 const ALERT_LOG_REFRESH_MS = 5_000;
 const defaultLiveStateSource = createEventSourceLiveState();
@@ -1364,45 +1363,11 @@ export function App({
 
       {roomChannels.length ? (
         <div className="chip-bands">
-          <nav className="filters" aria-label="Channel filters">
-            {filterOptions.map((option) => (
-              <button
-                type="button"
-                className="filter-button"
-                aria-pressed={filter === option.key}
-                onClick={() => setFilter(option.key)}
-                key={option.key}
-              >
-                {option.label} <span>{option.count}</span>
-              </button>
-            ))}
-          </nav>
-          <label className="filter-select">
-            <span className="sr-only">Channel filter</span>
-            <select
-              value={filter}
-              onChange={(event) => setFilter(event.target.value)}
-            >
-              {filterOptions.map((option) => (
-                <option key={option.key} value={option.key}>
-                  {option.label} ({option.count})
-                </option>
-              ))}
-            </select>
-            <svg
-              viewBox="0 0 12 12"
-              width="12"
-              height="12"
-              aria-hidden="true"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M2.5 4.5 6 8l3.5-3.5" />
-            </svg>
-          </label>
+          <FilterBar
+            options={filterOptions}
+            active={filter}
+            onChoose={setFilter}
+          />
         </div>
       ) : null}
 
