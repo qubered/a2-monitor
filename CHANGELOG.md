@@ -10,6 +10,11 @@ externally tested release.
 
 ### Changed
 
+- Live: an unacknowledged critical alert now radiates a red pulse (a crisp ring
+  that expands and fades) from its card and from the alert bell, and the
+  amber ring on a card with an unclaimed fault report uses the same pulse. It
+  stops on acknowledge or claim, caution alerts never pulse, and reduced motion
+  removes the movement.
 - Live: the alert count is a bell with a count beside the settings cog instead
   of a wide pill. It keeps the same tones and opens the same exceptions sheet;
   its accessible name still spells the state out. On a phone the logo, room,

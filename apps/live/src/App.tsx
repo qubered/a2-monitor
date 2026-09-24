@@ -1297,7 +1297,7 @@ export function App({
                   : summary.active > 0
                     ? "is-seen"
                     : "is-clear"
-          }`}
+          } ${summary && !offline && summary.outstandingCritical > 0 ? "is-pulsing" : ""}`}
           type="button"
           aria-label={alertLabel}
           title={alertLabel}

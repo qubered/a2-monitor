@@ -2176,17 +2176,36 @@ a:focus-visible {
   color: var(--paper);
 }
 
-/* Reported state (design system §10.7): the product's second and last
-   ambient loop marks work handed over and not yet picked up. */
+/* The attention pulse (design system §6): the product's second and last
+   ambient loop. A crisp 2px ring radiates outward and fades, from a card with
+   work handed over and not yet picked up (amber), from a card whose critical
+   alert nobody has acknowledged (red), and from the alert bell while one is
+   outstanding. Reduced motion removes the movement and leaves the static ring. */
 .channel-card.is-reported {
-  outline: var(--size-2) solid var(--warn);
+  --pulse: var(--warn);
+  outline: var(--size-2) solid var(--pulse);
   outline-offset: var(--size-2);
-  animation: report-pulse 1.6s ease-in-out infinite;
+  animation: radiate 1.8s ease-out infinite;
 }
 
-@keyframes report-pulse {
-  50% {
-    outline-color: var(--warn-soft);
+.channel-card.has-alert.is-critical-alert {
+  --pulse: var(--t-out);
+  outline: var(--size-2) solid var(--pulse);
+  outline-offset: var(--size-2);
+  animation: radiate 1.8s ease-out infinite;
+}
+
+.alert-bell.is-pulsing {
+  --pulse: var(--t-out);
+  outline: var(--size-2) solid var(--pulse);
+  outline-offset: 0;
+  animation: radiate 1.8s ease-out infinite;
+}
+
+@keyframes radiate {
+  to {
+    outline-offset: var(--space-4);
+    outline-color: transparent;
   }
 }
 

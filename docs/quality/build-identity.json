@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.0cc10ce9311184ec",
-  "sourceSha256": "0cc10ce9311184ec31d45b31cc902e583688cca1baf629768670d8f26664b896",
+  "buildId": "a2-0.0.0+sha256.1c4f6885e3aad3db",
+  "sourceSha256": "1c4f6885e3aad3dbb3a33095cb30360f01a831a0d5e1446caa7221c842437fb9",
   "inputCount": 429,
   "inputs": [
     {
@@ -53,7 +53,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "d70e6602e1de51b24ed8d3d258c430e65fff31c57f1057be52eb7648f7c047a0"
+      "sha256": "639c15ae73ab1a5f7040a93e52f6045cb42ec10097c0a51c9731c105ba872e28"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "ffdf23642479d9a3f839dd7dc21f097793626e801f7bb728389b198daf5ba61d"
+      "sha256": "c98ca9cc1ae97537712cf5142cfd99f8b32bf256a18ac17c2b1b6e734107f267"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "225cd909c5a272978d60b11f5541312594d35cee58cc669d6bbc0dc166774a93"
+      "sha256": "f2ce929eae4e1a0703fc47e01dccbd0e089c59cb37d83bb5145c7c96b53a4f0f"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -121,7 +121,7 @@
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
-      "sha256": "1caaaae5f21c460ed3ca45ea5dbc3f3f58dfbc180533516f9202741e8fe88234"
+      "sha256": "ea5e17b36bcf4d528ec1d8f070d79e34e12f782720524d90f3d979ac809d34fe"
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
@@ -237,7 +237,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "b3688bc257e80f6a3b55d4e4e7d4edbe68463842412579bc36d59df5aee24b83"
+      "sha256": "b2e1e913fde633446b108319030946f0e046d4489e02945c9c339dd5fef1c538"
     },
     {
       "path": "apps/live/src/trim.ts",
@@ -753,7 +753,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "bbfba9eada67c1875714d4c033fbba5f2dc79a6d1ee6e1ccd6aba3e87ecc2d1b"
+      "sha256": "49a78702e84f3dce10ee3c852e8d31216062403a9338ce77e1c3625e6371c68a"
     },
     {
       "path": "docs/design/README.md",

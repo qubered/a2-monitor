@@ -422,11 +422,17 @@ describe("Live channel grid", () => {
         }),
     );
     vi.stubGlobal("fetch", post);
-    renderApp(raised);
+    const { view } = renderApp(raised);
 
-    expect(
-      screen.getByRole("button", { name: "1 to acknowledge · 1 critical" }),
-    ).toBeTruthy();
+    const bell = screen.getByRole("button", {
+      name: "1 to acknowledge · 1 critical",
+    });
+    // An unacknowledged critical alert radiates from its card and the bell.
+    const alertedCard = view.container.querySelector(
+      '[data-channel-id="ch-marguerite"]',
+    )!;
+    expect(alertedCard.classList.contains("is-critical-alert")).toBe(true);
+    expect(bell.classList.contains("is-pulsing")).toBe(true);
     await user.click(
       screen.getByRole("button", {
         name: "Battery critical on Marguerite, channel 1. Press to acknowledge.",
@@ -440,9 +446,12 @@ describe("Live channel grid", () => {
         body: JSON.stringify({ operator: "Sam (A2)" }),
       }),
     );
-    expect(
-      await screen.findByRole("button", { name: "1 active · all seen" }),
-    ).toBeTruthy();
+    const seen = await screen.findByRole("button", {
+      name: "1 active · all seen",
+    });
+    // Seen is not fixed, but nothing is left to radiate.
+    expect(seen.classList.contains("is-pulsing")).toBe(false);
+    expect(alertedCard.classList.contains("is-critical-alert")).toBe(false);
     expect(
       screen.queryByRole("button", { name: /Press to acknowledge/ }),
     ).toBeNull();
@@ -630,9 +639,9 @@ describe("Live channel grid", () => {
     expect(
       screen.queryByRole("button", { name: /Press to acknowledge/ }),
     ).toBeNull();
-    expect(
-      screen.getByRole("button", { name: "1 to acknowledge" }),
-    ).toBeTruthy();
+    const bell = screen.getByRole("button", { name: "1 to acknowledge" });
+    // Only a critical alert radiates.
+    expect(bell.classList.contains("is-pulsing")).toBe(false);
   });
 
   it("keeps showfile order when a channel raises a critical alert", () => {

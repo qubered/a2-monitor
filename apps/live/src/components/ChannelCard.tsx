@@ -114,6 +114,7 @@ export function ChannelCard({
     selected ? "is-selected" : "",
     listening ? "is-listening" : "",
     alerting ? "has-alert" : "",
+    alert?.severity === "critical" ? "is-critical-alert" : "",
     report && report.unclaimed > 0 ? "is-reported" : "",
     channel.session?.inUse === false ? "is-idle" : "",
   ]
