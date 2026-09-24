@@ -241,28 +241,24 @@ a:focus-visible {
   text-decoration: none;
 }
 
-.filters {
-  min-height: var(--filter-height);
+/* One band for what this device shows: the room chips (design system §10.10)
+   then the channel filters, on one row where they fit and wrapping where not. */
+.chip-bands {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-2) var(--space-6);
   padding: var(--space-2) var(--space-6);
-  overflow-x: auto;
   border-bottom: var(--size-1) solid var(--line-2);
   background: var(--paper);
 }
 
-/* Rooms (design system §10.10): which room this device shows. Same chip
-   language as the filter band, one row above it. */
+.filters,
 .room-bar {
-  min-height: var(--filter-height);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-6);
-  overflow-x: auto;
-  border-bottom: var(--size-1) solid var(--line-2);
-  background: var(--paper-2);
 }
 
 .channel-group + .channel-group {
@@ -611,6 +607,12 @@ a:focus-visible {
   gap: var(--space-3);
   margin-bottom: var(--space-4);
   flex-wrap: wrap;
+}
+
+.grid-note {
+  margin: 0 0 var(--space-4);
+  color: var(--muted);
+  font-size: var(--font-ui);
 }
 
 .grid-heading h1 {
@@ -2252,7 +2254,7 @@ a:focus-visible {
 
   .app-header,
   .snapshot-notice,
-  .filters,
+  .chip-bands,
   .channel-main,
   .player-transport {
     padding-right: var(--space-4);
@@ -2298,7 +2300,7 @@ a:focus-visible {
     grid-column: 1 / -1;
   }
 
-  .room-bar {
+  .chip-bands {
     padding-right: var(--space-4);
     padding-left: var(--space-4);
   }

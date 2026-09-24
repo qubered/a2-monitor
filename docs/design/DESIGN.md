@@ -730,9 +730,11 @@ ready` in `--ok`). The bar is absent when the show has no sessions.
 
 ### 10.10 Rooms and categories
 
-A multi-room show (ADR 0030) gets a **room bar** above the run-of-show bars:
-`All rooms`, each room, and `No room` when some channels have none, with live
-counts, in the filter band's chip language. It is a per-device choice, not a
+A multi-room show (ADR 0030) gets **room chips** at the left of the filter
+band: `All rooms`, each room, and `No room` when some channels have none, with
+live counts, in the filter chips' language. Room and filter chips share one
+band, on one row where they fit and wrapping where they do not, with no
+labels; the band sits above the run-of-show bars. It is a per-device choice, not a
 permission, and a remembered room the show no longer has falls back to All
 rooms rather than hiding channels.
 
@@ -759,7 +761,7 @@ audio in one press and to a diagnosis in two.
 ┌────────────────────────────────────────────────────────────────┐
 │ HEADER  show · node · you · [no cue source]   counters         │
 ├────────────────────────────────────────────────────────────────┤
-│ SHOWING [All channels 64][Needs someone 4][Wireless][Wired]…   │
+│ [All channels 64][Needs someone 4][Wireless][Wired]…           │
 ├────────────────────────────────────────────────────────────────┤
 │ CHANNEL GRID — full width, photographs                         │
 ├────────────────────────────────────────────────────────────────┤
@@ -768,6 +770,9 @@ audio in one press and to a diagnosis in two.
 ```
 
 Default is **all channels** ([§1.5](#15-two-product-decisions-this-rests-on)).
+The grid has no visible title or instructions: the active chips say what is
+shown and the counts say how many. A note appears only when a filter is
+hiding cards while a critical fault is still shown.
 The grid is always in showfile order. Pulse never reorders cards — not by
 severity, not by alert, not for a moment — because an operator finds a person
 by where their card lives. A source with a critical exception stays visible

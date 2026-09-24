@@ -1197,37 +1197,61 @@ export function App({
         </section>
       ) : null}
 
-      {rooms.length ? (
-        <nav className="room-bar" aria-label="Rooms">
-          <span className="filter-label">Room</span>
-          {[
-            { key: "all", label: "All rooms", count: channels.length },
-            ...rooms.map(({ id, name }) => ({
-              key: id,
-              label: name,
-              count: channels.filter(({ roomId }) => roomId === id).length,
-            })),
-            ...(channels.some(({ roomId }) => !roomId)
-              ? [
-                  {
-                    key: NO_ROOM,
-                    label: "No room",
-                    count: channels.filter(({ roomId }) => !roomId).length,
-                  },
-                ]
-              : []),
-          ].map(({ key, label, count }) => (
-            <button
-              type="button"
-              className="filter-button"
-              aria-pressed={room === key}
-              onClick={() => chooseRoom(key)}
-              key={key}
-            >
-              {label} <span>{count}</span>
-            </button>
-          ))}
-        </nav>
+      {rooms.length || roomChannels.length ? (
+        <div className="chip-bands">
+          {rooms.length ? (
+            <nav className="room-bar" aria-label="Rooms">
+              {[
+                { key: "all", label: "All rooms", count: channels.length },
+                ...rooms.map(({ id, name }) => ({
+                  key: id,
+                  label: name,
+                  count: channels.filter(({ roomId }) => roomId === id).length,
+                })),
+                ...(channels.some(({ roomId }) => !roomId)
+                  ? [
+                      {
+                        key: NO_ROOM,
+                        label: "No room",
+                        count: channels.filter(({ roomId }) => !roomId).length,
+                      },
+                    ]
+                  : []),
+              ].map(({ key, label, count }) => (
+                <button
+                  type="button"
+                  className="filter-button"
+                  aria-pressed={room === key}
+                  onClick={() => chooseRoom(key)}
+                  key={key}
+                >
+                  {label} <span>{count}</span>
+                </button>
+              ))}
+            </nav>
+          ) : null}
+          {roomChannels.length ? (
+            <nav className="filters" aria-label="Channel filters">
+              {(Object.keys(filterLabels) as Filter[])
+                .filter(
+                  (filterOption) =>
+                    filterOption !== "session" || sessionRunning,
+                )
+                .map((filterOption) => (
+                  <button
+                    type="button"
+                    className="filter-button"
+                    aria-pressed={filter === filterOption}
+                    onClick={() => setFilter(filterOption)}
+                    key={filterOption}
+                  >
+                    {filterLabels[filterOption]}{" "}
+                    <span>{counts[filterOption]}</span>
+                  </button>
+                ))}
+            </nav>
+          ) : null}
+        </div>
       ) : null}
 
       {runs.map((run) => (
@@ -1261,44 +1285,31 @@ export function App({
         />
       ) : null}
 
-      {roomChannels.length ? (
-        <nav className="filters" aria-label="Channel filters">
-          <span className="filter-label">Showing</span>
-          {(Object.keys(filterLabels) as Filter[])
-            .filter(
-              (filterOption) => filterOption !== "session" || sessionRunning,
-            )
-            .map((filterOption) => (
-              <button
-                type="button"
-                className="filter-button"
-                aria-pressed={filter === filterOption}
-                onClick={() => setFilter(filterOption)}
-                key={filterOption}
-              >
-                {filterLabels[filterOption]} <span>{counts[filterOption]}</span>
-              </button>
-            ))}
-        </nav>
-      ) : null}
-
       <main className="channel-main" onClick={clearOnBlankPress}>
         {channels.length ? (
           <>
-            <div className="grid-heading">
-              <h1>
-                {room !== "all"
-                  ? `${room === NO_ROOM ? "No room" : roomName(room)} · `
-                  : ""}
-                {isA1 ? "Mix confidence" : filterLabels[filter]}
-              </h1>
-              <p>
-                {isA1
-                  ? `${visibleChannels.length} sources · press a channel to report what you hear · expand opens detail`
-                  : `${visibleChannels.length} sources · press a card to select · expand opens detail`}
-                {criticalIds.size ? " · critical faults always shown" : ""}
-              </p>
-            </div>
+            {isA1 ? (
+              <div className="grid-heading">
+                <h1>Mix confidence</h1>
+                <p>
+                  {visibleChannels.length} sources · press a channel to report
+                  what you hear · expand opens detail
+                  {criticalIds.size ? " · critical faults always shown" : ""}
+                </p>
+              </div>
+            ) : (
+              <>
+                <h1 className="sr-only">
+                  {room !== "all"
+                    ? `${room === NO_ROOM ? "No room" : roomName(room)} · `
+                    : ""}
+                  {filterLabels[filter]}
+                </h1>
+                {criticalIds.size && filter !== "all" ? (
+                  <p className="grid-note">Critical faults always shown</p>
+                ) : null}
+              </>
+            )}
             {groups.map((group) => (
               <section
                 className="channel-group"

@@ -8,6 +8,11 @@ externally tested release.
 
 ## Unreleased
 
+### Changed
+
+- Live: the room and filter chips share one unlabelled band, and the A2 grid
+  drops its title and instruction line (the A1 view keeps its heading).
+
 ### Added
 
 - Per-channel monitor trim (ADR 0033). Manager's Channels tab sets a trim of
