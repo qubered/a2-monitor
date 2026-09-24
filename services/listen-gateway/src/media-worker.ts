@@ -5,6 +5,8 @@ import type { MeterReading } from "./levels.js";
 
 const EVENT_LINE_LIMIT_BYTES = 256 * 1024;
 const OPEN_TIMEOUT_MS = 10_000;
+/** Frames in one worker block (10 ms at 48 kHz). */
+const FRAMES_PER_WORKER_BLOCK = 480;
 /**
  * Reserved device name that makes `pulse-device-capture` generate the built-in
  * test signal instead of opening a physical input (ADR 0027). It is always
@@ -58,6 +60,14 @@ export type MediaWorkerOptions = {
   device?: string;
   workerBinary?: string;
   captureBinary?: string;
+  /**
+   * Host monitor output (ADR 0031): all three are set together or not at all.
+   * `outputChannels` are the default single feed's channels, used when the
+   * production defines no feeds.
+   */
+  outputDevice?: string;
+  outputChannels?: readonly number[];
+  outputBinary?: string;
   processFactory?: WorkerProcessFactory;
   restartDelaysMs?: readonly number[];
   now?: () => number;
@@ -69,6 +79,53 @@ export type OpenSessionRequest = {
   offer: string;
   candidateAddress: string;
 };
+
+/**
+ * Reserved output device name that makes `pulse-device-output` accept and discard the
+ * host monitor feed without opening a device (ADR 0031). It is always reported as simulated.
+ */
+export const SIMULATED_OUTPUT_DEVICE_NAME = "Pulse simulated output";
+
+/** Host monitor output as the worker last reported it. */
+export type HostOutputState = {
+  status: "starting" | "ready" | "error";
+  detail: string;
+  deviceName: string;
+  /** Output channels the device has, once it has opened. */
+  channelCount: number | null;
+  /** 1-based channels per feed mix, in mix order. */
+  routes: number[][];
+  simulated: boolean;
+  underruns: number;
+  droppedFrames: number;
+};
+
+/** One feed's shared mix the worker renders: one input (or none) at one linear gain. */
+export type MonitorCommand = { channel: number | null; gain: number };
+
+/** Highest linear monitor gain the worker accepts: +12 dB. */
+export const MAX_MONITOR_GAIN = 3.981_072;
+
+/** Parses a comma-separated list of distinct 1-based output channel numbers. */
+export function parseOutputChannels(value: string): number[] {
+  const channels = value.split(",").map((part) => {
+    const trimmed = part.trim();
+    const number = Number(trimmed);
+    if (!/^\d+$/.test(trimmed) || number < 1 || number > 256) {
+      throw new Error(
+        `Output channel ${JSON.stringify(part)} is not a number from 1 to 256.`,
+      );
+    }
+    return number;
+  });
+  if (new Set(channels).size !== channels.length) {
+    throw new Error("Output channels must be distinct.");
+  }
+  if (channels.length > 8) {
+    throw new Error("At most 8 output channels can carry one feed.");
+  }
+  return channels;
+}
 
 /** The worker refused an offer; `capacity` distinguishes load from a bad request. */
 export class SessionRejectedError extends Error {
@@ -99,7 +156,21 @@ type WorkerEvent =
   | { type: "connected"; sessionId: string }
   | { type: "closed"; sessionId: string; reason: string }
   | ({ type: "meters" } & MeterReading)
-  | { type: "stats"; sessions: number; droppedCaptureBlocks: number };
+  | { type: "stats"; sessions: number; droppedCaptureBlocks: number }
+  | {
+      type: "output-ready";
+      deviceName: string;
+      channelCount: number;
+      outputRoutes: number[][];
+    }
+  | {
+      type: "output-stats";
+      underruns: number;
+      skippedFrames: number;
+      overflowFrames: number;
+      droppedBlocks: number;
+    }
+  | { type: "output-failed"; detail: string; retryInMs: number };
 
 const EVENT_FIELDS: Readonly<Record<WorkerEvent["type"], readonly string[]>> = {
   ready: ["channelCount", "deviceName", "sampleRateHz", "type"],
@@ -116,6 +187,15 @@ const EVENT_FIELDS: Readonly<Record<WorkerEvent["type"], readonly string[]>> = {
     "type",
   ],
   stats: ["droppedCaptureBlocks", "sessions", "type"],
+  "output-ready": ["channelCount", "deviceName", "outputRoutes", "type"],
+  "output-stats": [
+    "droppedBlocks",
+    "overflowFrames",
+    "skippedFrames",
+    "type",
+    "underruns",
+  ],
+  "output-failed": ["detail", "retryInMs", "type"],
 };
 
 function defaultProcessFactory(
@@ -247,6 +327,69 @@ export function parseWorkerEvent(line: string): WorkerEvent {
         clippedSamples: clippedSamples as number[],
       };
     }
+    case "output-ready": {
+      const deviceName = text("deviceName");
+      if (deviceName.length > 512) {
+        throw new Error(
+          "Media worker output-ready event deviceName is invalid.",
+        );
+      }
+      if (!isCount(record.channelCount, 1, 256)) {
+        throw new Error(
+          "Media worker output-ready event channelCount is invalid.",
+        );
+      }
+      const channelCount = record.channelCount;
+      const outputRoutes = record.outputRoutes;
+      if (
+        !Array.isArray(outputRoutes) ||
+        outputRoutes.length < 1 ||
+        outputRoutes.length > 8 ||
+        !outputRoutes.every(
+          (route) =>
+            Array.isArray(route) &&
+            route.length >= 1 &&
+            route.length <= 8 &&
+            route.every((channel) => isCount(channel, 1, channelCount)),
+        )
+      ) {
+        throw new Error(
+          "Media worker output-ready event outputRoutes is invalid.",
+        );
+      }
+      return {
+        type,
+        deviceName,
+        channelCount,
+        outputRoutes: outputRoutes as number[][],
+      };
+    }
+    case "output-stats": {
+      const counters = [
+        record.underruns,
+        record.skippedFrames,
+        record.overflowFrames,
+        record.droppedBlocks,
+      ];
+      if (
+        !counters.every((value) => isCount(value, 0, Number.MAX_SAFE_INTEGER))
+      ) {
+        throw new Error("Media worker output-stats event is invalid.");
+      }
+      return {
+        type,
+        underruns: record.underruns as number,
+        skippedFrames: record.skippedFrames as number,
+        overflowFrames: record.overflowFrames as number,
+        droppedBlocks: record.droppedBlocks as number,
+      };
+    }
+    case "output-failed": {
+      if (!isCount(record.retryInMs, 0, 3_600_000)) {
+        throw new Error("Media worker output-failed event is invalid.");
+      }
+      return { type, detail: text("detail"), retryInMs: record.retryInMs };
+    }
     default: {
       if (
         !isCount(record.sessions, 0, 1_000) ||
@@ -287,6 +430,15 @@ export class MediaWorkerManager extends EventEmitter {
   private restartAttempt = 0;
   private restartTimer: NodeJS.Timeout | undefined;
   private readyAtMs: number | undefined;
+  private readonly outputDevice: string | undefined;
+  /** The app/env channels of the default single feed. */
+  private readonly defaultOutputChannels: readonly number[];
+  /** One route per feed in effect: the production's, else the default. */
+  private outputRoutes: number[][];
+  private readonly outputBinary: string;
+  private outputState: HostOutputState | null;
+  /** Each feed's mix, by mix index. */
+  private monitors: MonitorCommand[] = [];
 
   constructor(options: MediaWorkerOptions) {
     super();
@@ -298,6 +450,32 @@ export class MediaWorkerManager extends EventEmitter {
     this.processFactory = options.processFactory ?? defaultProcessFactory;
     this.restartDelaysMs = options.restartDelaysMs ?? RESTART_DELAYS_MS;
     this.now = options.now ?? Date.now;
+    this.outputDevice = options.outputDevice || undefined;
+    this.defaultOutputChannels = options.outputChannels ?? [];
+    this.outputRoutes = [[...this.defaultOutputChannels]];
+    this.outputBinary =
+      options.outputBinary ?? "target/debug/pulse-device-output";
+    if (
+      this.outputDevice !== undefined &&
+      this.defaultOutputChannels.length === 0
+    ) {
+      throw new Error(
+        "A host output device needs at least one output channel.",
+      );
+    }
+    this.outputState =
+      this.outputDevice === undefined
+        ? null
+        : {
+            status: "starting",
+            detail: "Waiting for the audio node.",
+            deviceName: this.outputDevice,
+            channelCount: null,
+            routes: this.outputRoutes.map((route) => [...route]),
+            simulated: this.outputDevice === SIMULATED_OUTPUT_DEVICE_NAME,
+            underruns: 0,
+            droppedFrames: 0,
+          };
     this.state = {
       schemaVersion: 0,
       status: "configuration-required",
@@ -312,6 +490,72 @@ export class MediaWorkerManager extends EventEmitter {
   /** True when the configured device is the built-in test signal, not a physical input. */
   get simulated(): boolean {
     return this.device === SIMULATED_DEVICE_NAME;
+  }
+
+  /** Host monitor output state, or null when no output device is configured. */
+  getOutputState(): HostOutputState | null {
+    return this.outputState;
+  }
+
+  /**
+   * Sets one feed's shared mix. It is remembered and re-sent whenever the
+   * worker or its output restarts, so the output resumes the shared state
+   * rather than silence.
+   */
+  setMonitor(mix: number, command: MonitorCommand): void {
+    if (mix < 0 || mix >= this.outputRoutes.length) return;
+    this.monitors[mix] = {
+      channel: command.channel,
+      gain: Math.min(MAX_MONITOR_GAIN, Math.max(0, command.gain)),
+    };
+    if (this.outputState && this.state.status === "ready") {
+      this.send({ type: "monitor", mix, ...this.monitors[mix] });
+    }
+  }
+
+  /** The default single feed's channels (app/env). */
+  getDefaultOutputChannels(): number[] {
+    return [...this.defaultOutputChannels];
+  }
+
+  /** The routes in effect: one list of 1-based channels per feed. */
+  getOutputRoutes(): number[][] {
+    return this.outputRoutes.map((route) => [...route]);
+  }
+
+  /**
+   * Applies the active production's host output feeds as routes, one per
+   * mix (ADR 0031), or the node's default single feed when it sets none.
+   * A change reopens only the output device; capture and listeners carry on.
+   * Callers re-send each feed's mix afterwards.
+   */
+  setOutputRoutes(
+    routes: readonly (readonly number[])[] | null | undefined,
+  ): void {
+    if (!this.outputState) return;
+    const next = routes?.length
+      ? routes.map((route) => [...route])
+      : [[...this.defaultOutputChannels]];
+    if (JSON.stringify(next) === JSON.stringify(this.outputRoutes)) return;
+    this.outputRoutes = next;
+    this.monitors = this.monitors.slice(0, next.length);
+    this.setOutputState({
+      status: "starting",
+      detail: "Reopening the output on the saved feeds.",
+      routes: next.map((route) => [...route]),
+    });
+    if (this.child && this.state.status === "ready") {
+      this.send({ type: "output-routes", routes: next });
+    }
+  }
+
+  /** Sends the routes, then every feed's mix, to a ready worker. */
+  private syncOutput(): void {
+    if (!this.outputState) return;
+    this.send({ type: "output-routes", routes: this.outputRoutes });
+    this.monitors.forEach((monitor, mix) => {
+      if (monitor) this.send({ type: "monitor", mix, ...monitor });
+    });
   }
 
   hasSession(sessionId: string): boolean {
@@ -330,6 +574,12 @@ export class MediaWorkerManager extends EventEmitter {
     this.lineBytes = [];
     this.lineLength = 0;
 
+    this.setOutputState({
+      status: "starting",
+      detail: "Waiting for the audio node.",
+      underruns: 0,
+      droppedFrames: 0,
+    });
     let child: WorkerProcess;
     try {
       child = this.processFactory(this.workerBinary, [
@@ -337,6 +587,16 @@ export class MediaWorkerManager extends EventEmitter {
         this.captureBinary,
         "--device",
         this.device,
+        ...(this.outputDevice === undefined
+          ? []
+          : [
+              "--output-bin",
+              this.outputBinary,
+              "--output-device",
+              this.outputDevice,
+              "--output-routes",
+              this.outputRoutes.map((route) => route.join(",")).join(";"),
+            ]),
       ]);
     } catch {
       this.fail("Media worker could not be started.");
@@ -413,6 +673,24 @@ export class MediaWorkerManager extends EventEmitter {
     this.emit("state", state);
   }
 
+  private setOutputState(
+    change: Partial<
+      Pick<
+        HostOutputState,
+        | "status"
+        | "detail"
+        | "underruns"
+        | "droppedFrames"
+        | "routes"
+        | "channelCount"
+      >
+    >,
+  ): void {
+    if (!this.outputState) return;
+    this.outputState = { ...this.outputState, ...change };
+    this.emit("output", this.outputState);
+  }
+
   private clearSessions(error: Error): void {
     for (const pending of this.pending.values()) {
       clearTimeout(pending.timer);
@@ -439,6 +717,10 @@ export class MediaWorkerManager extends EventEmitter {
       this.restartAttempt = 0;
     }
     this.readyAtMs = undefined;
+    this.setOutputState({
+      status: "error",
+      detail: "The audio node stopped, so the host output is silent.",
+    });
     const delayMs =
       this.restartDelaysMs[
         Math.min(this.restartAttempt, this.restartDelaysMs.length - 1)
@@ -510,6 +792,9 @@ export class MediaWorkerManager extends EventEmitter {
             label: `Channel ${index + 1}`,
           })),
         });
+        // A restarted worker starts silent; give it the routes (a no-op when
+        // they did not change while it was starting) and every shared mix.
+        this.syncOutput();
         break;
       case "answer": {
         const pending = this.pending.get(event.sessionId);
@@ -562,6 +847,38 @@ export class MediaWorkerManager extends EventEmitter {
           );
         }
         this.droppedCaptureBlocks = event.droppedCaptureBlocks;
+        break;
+      case "output-ready":
+        this.setOutputState({
+          status: "ready",
+          detail: `${event.deviceName} is open: ${event.outputRoutes.length} ${event.outputRoutes.length === 1 ? "feed" : "feeds"} on ${event.outputRoutes.flat().length} of ${event.channelCount} outputs.`,
+          routes: event.outputRoutes,
+          channelCount: event.channelCount,
+          underruns: 0,
+          droppedFrames: 0,
+        });
+        break;
+      case "output-stats": {
+        const droppedFrames =
+          event.skippedFrames +
+          event.overflowFrames +
+          event.droppedBlocks * FRAMES_PER_WORKER_BLOCK;
+        if (this.outputState && event.underruns > this.outputState.underruns) {
+          process.stderr.write(
+            `a2-listen-gateway: host output underran ${event.underruns - this.outputState.underruns} time(s)\n`,
+          );
+        }
+        this.setOutputState({ underruns: event.underruns, droppedFrames });
+        break;
+      }
+      case "output-failed":
+        process.stderr.write(
+          `a2-listen-gateway: host output failed: ${event.detail}\n`,
+        );
+        this.setOutputState({
+          status: "error",
+          detail: `${event.detail.slice(0, 160)}. Retrying in ${Math.max(1, Math.round(event.retryInMs / 1000))} s.`,
+        });
         break;
     }
     return true;

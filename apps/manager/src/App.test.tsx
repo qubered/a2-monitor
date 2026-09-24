@@ -95,6 +95,38 @@ describe("Manager showfile editor", () => {
           ],
         });
       }
+      if (path === "/audio/v0/output") {
+        return Response.json({
+          schemaVersion: "0",
+          output: {
+            status: "ready",
+            detail:
+              "Dante Virtual Soundcard is open: 1 feed on 1 of 16 outputs.",
+            deviceName: "Dante Virtual Soundcard",
+            channelCount: 16,
+            simulated: false,
+            underruns: 0,
+            droppedFrames: 0,
+          },
+          feeds: [
+            {
+              id: "default",
+              name: "Host output",
+              outputChannels: [1],
+              revision: 0,
+              monitor: {
+                channelId: null,
+                input: null,
+                muted: false,
+                dimmed: false,
+                gainDb: 0,
+                changedBy: null,
+                changedAtUtc: null,
+              },
+            },
+          ],
+        });
+      }
       if (path === "/api/v1/showfile" && method === "PUT") {
         const body = JSON.parse(String(init?.body)) as StoredShowfile;
         const saved: StoredShowfile = {
@@ -540,5 +572,80 @@ describe("Manager showfile editor", () => {
       categoryId: saved.rooms[0]!.categories[0]!.id,
     });
     expect(saved.channels[1]!.roomId ?? null).toBeNull();
+  });
+
+  it("saves host output feeds with their outputs picked from the device", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /host output/i }));
+    expect(
+      await screen.findByText(/one feed, Host output, on output 1/),
+    ).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "Add feed" }));
+    await user.click(screen.getByRole("button", { name: "Add feed" }));
+    const second = screen.getByLabelText("Feed 2 name");
+    await user.clear(second);
+    await user.type(second, "Comms B");
+    expect(screen.getByText("Output 1")).toBeTruthy();
+    expect(screen.getByText("Output 2")).toBeTruthy();
+
+    // Add output 12 to Comms B from the device's free outputs.
+    await user.click(
+      screen.getByRole("combobox", { name: "Add an output to Comms B" }),
+    );
+    expect(screen.queryByRole("option", { name: "Output 1" })).toBeNull();
+    expect(screen.getAllByRole("option")).toHaveLength(14);
+    await user.click(screen.getByRole("option", { name: "Output 12" }));
+
+    // Removing Feed 1's only output is flagged before saving.
+    await user.click(
+      screen.getByRole("button", { name: "Remove output 1 from Feed 1" }),
+    );
+    expect(screen.getByRole("alert").textContent).toContain(
+      "Feed 1 needs an output.",
+    );
+    // Keyboard operation: focus the dropdown and open it with Enter.
+    screen.getByRole("combobox", { name: "Add an output to Feed 1" }).focus();
+    await user.keyboard("{Enter}");
+    await user.click(screen.getByRole("option", { name: "Output 3" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Save showfile" }));
+    expect(await screen.findByText("Revision 3")).toBeTruthy();
+    const saveCall = fetchMock.mock.calls.find(
+      ([path, init]) =>
+        String(path) === "/api/v1/showfile" && init?.method === "PUT",
+    );
+    expect(
+      JSON.parse(String(saveCall?.[1]?.body)).hostOutput.feeds.map(
+        ({
+          name,
+          outputChannels,
+        }: {
+          name: string;
+          outputChannels: number[];
+        }) => [name, outputChannels],
+      ),
+    ).toEqual([
+      ["Feed 1", [3]],
+      ["Comms B", [2, 12]],
+    ]);
+
+    // Removing every feed returns the production to the node's default.
+    await user.click(screen.getByRole("button", { name: "Remove feed 2" }));
+    await user.click(screen.getByRole("button", { name: "Remove feed 1" }));
+    await user.click(screen.getByRole("button", { name: "Save showfile" }));
+    expect(await screen.findByText("Revision 4")).toBeTruthy();
+    const lastSave = fetchMock.mock.calls
+      .filter(
+        ([path, init]) =>
+          String(path) === "/api/v1/showfile" && init?.method === "PUT",
+      )
+      .at(-1);
+    expect(JSON.parse(String(lastSave?.[1]?.body))).not.toHaveProperty(
+      "hostOutput",
+    );
   });
 });

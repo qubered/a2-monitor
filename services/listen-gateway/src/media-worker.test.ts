@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   MediaWorkerManager,
   SessionRejectedError,
+  parseOutputChannels,
   parseWorkerEvent,
   type WorkerProcess,
 } from "./media-worker.js";
@@ -338,5 +339,138 @@ describe("parseWorkerEvent", () => {
     ]) {
       expect(() => parseWorkerEvent(meters(invalid))).toThrow();
     }
+  });
+
+  it("adds the output device to the worker and tracks its state", async () => {
+    const child = new FakeWorkerProcess();
+    const factory = vi.fn(() => child);
+    const media = new MediaWorkerManager({
+      device: "DVS",
+      workerBinary: "/bin/worker",
+      captureBinary: "/bin/capture",
+      outputDevice: "DVS",
+      outputChannels: [3, 4],
+      outputBinary: "/bin/output",
+      processFactory: factory,
+    });
+    media.setMonitor(0, { channel: 1, gain: 0.5 });
+    // A mix beyond the routes is ignored.
+    media.setMonitor(3, { channel: 1, gain: 0.5 });
+    media.start();
+    expect(factory).toHaveBeenCalledWith("/bin/worker", [
+      "--capture-bin",
+      "/bin/capture",
+      "--device",
+      "DVS",
+      "--output-bin",
+      "/bin/output",
+      "--output-device",
+      "DVS",
+      "--output-routes",
+      "3,4",
+    ]);
+    expect(media.getOutputState()).toMatchObject({ status: "starting" });
+
+    child.ready();
+    child.emit({
+      type: "output-ready",
+      deviceName: "DVS",
+      channelCount: 64,
+      outputRoutes: [[3, 4]],
+    });
+    child.emit({
+      type: "output-stats",
+      underruns: 2,
+      skippedFrames: 10,
+      overflowFrames: 0,
+      droppedBlocks: 1,
+    });
+    await flush();
+    // The monitor set before the worker was ready is sent once it is.
+    expect(child.commands.filter(({ type }) => type === "monitor")).toEqual([
+      { type: "monitor", mix: 0, channel: 1, gain: 0.5 },
+    ]);
+    expect(media.getOutputState()).toMatchObject({
+      status: "ready",
+      detail: "DVS is open: 1 feed on 2 of 64 outputs.",
+      channelCount: 64,
+      underruns: 2,
+      droppedFrames: 490,
+    });
+
+    child.emit({
+      type: "output-failed",
+      detail: "output device not found",
+      retryInMs: 2_000,
+    });
+    await flush();
+    expect(media.getOutputState()).toMatchObject({
+      status: "error",
+      detail: "output device not found. Retrying in 2 s.",
+    });
+    media.stop();
+  });
+
+  it("reports no output state without an output device", () => {
+    const media = new MediaWorkerManager({ device: "DVS" });
+    expect(media.getOutputState()).toBeNull();
+  });
+
+  it("parses output channel lists strictly", () => {
+    expect(parseOutputChannels("1")).toEqual([1]);
+    expect(parseOutputChannels(" 3, 4 ")).toEqual([3, 4]);
+    for (const invalid of ["", "0", "1,1", "257", "1.5", "a"]) {
+      expect(() => parseOutputChannels(invalid), invalid).toThrow();
+    }
+  });
+
+  it("switches the output to a production's feeds and back to the default", async () => {
+    const child = new FakeWorkerProcess();
+    const factory = vi.fn(() => child);
+    const media = new MediaWorkerManager({
+      device: "DVS",
+      outputDevice: "DVS",
+      outputChannels: [1],
+      processFactory: factory,
+    });
+    // Set before the worker exists: the spawn already uses it.
+    media.setOutputRoutes([[12], [13, 14]]);
+    media.start();
+    const args = factory.mock.calls[0]![1] as string[];
+    expect(args[args.indexOf("--output-routes") + 1]).toBe("12;13,14");
+
+    child.ready(64);
+    await flush();
+    const sent = () =>
+      child.commands.filter(({ type }) => type === "output-routes");
+    expect(sent().at(-1)).toEqual({
+      type: "output-routes",
+      routes: [[12], [13, 14]],
+    });
+
+    const before = sent().length;
+    media.setOutputRoutes([[12], [13, 14]]);
+    expect(sent()).toHaveLength(before);
+
+    media.setOutputRoutes(undefined);
+    await flush();
+    expect(sent().at(-1)).toEqual({ type: "output-routes", routes: [[1]] });
+    expect(media.getOutputState()).toMatchObject({
+      status: "starting",
+      routes: [[1]],
+    });
+
+    child.emit({
+      type: "output-ready",
+      deviceName: "DVS",
+      channelCount: 64,
+      outputRoutes: [[1]],
+    });
+    await flush();
+    expect(media.getOutputState()).toMatchObject({
+      status: "ready",
+      routes: [[1]],
+    });
+    media.stop();
   });
 });

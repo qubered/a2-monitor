@@ -604,6 +604,28 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     async (): Promise<Showfile> => productionStore.loadActive(),
   );
 
+  /**
+   * Host output feeds (ADR 0031): at least one, each with a distinct id and
+   * name and at least one output channel, and no channel in two feeds.
+   */
+  function isCoherentHostOutput(
+    hostOutput: NonNullable<Showfile["hostOutput"]>,
+  ): boolean {
+    const { feeds } = hostOutput;
+    const ids = feeds.map(({ id }) => id.trim());
+    const names = feeds.map(({ name }) => name.trim().toLowerCase());
+    const channels = feeds.flatMap(({ outputChannels }) => outputChannels);
+    return (
+      feeds.length > 0 &&
+      ids.every((id) => id.length > 0) &&
+      names.every((name) => name.length > 0) &&
+      new Set(ids).size === ids.length &&
+      new Set(names).size === names.length &&
+      feeds.every(({ outputChannels }) => outputChannels.length > 0) &&
+      new Set(channels).size === channels.length
+    );
+  }
+
   server.put(
     "/api/v1/showfile",
     {
@@ -666,7 +688,9 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
         !hasCoherentSessions(candidate) ||
         !hasCoherentRooms(candidate) ||
         (candidate.alertPolicy !== undefined &&
-          !isCoherentAlertPolicy(candidate.alertPolicy));
+          !isCoherentAlertPolicy(candidate.alertPolicy)) ||
+        (candidate.hostOutput !== undefined &&
+          !isCoherentHostOutput(candidate.hostOutput));
       if (invalid) {
         await reply.code(400).send({ error: "invalid-showfile" });
         return undefined;

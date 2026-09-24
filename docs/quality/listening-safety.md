@@ -12,10 +12,11 @@ exposure is measured on the exact kit and capped by the production's applicable
 hearing-conservation policy; this plan does not invent a universal dBA value.
 The profile records the responsible safety owner and measurement method.
 
-Listen starts muted after page load, route change, device loss, decoder restart,
-sleep/resume, reconnect or stale control state. It resumes only through an
-explicit local action, ramps from silence over the qualified interval and never
-restores a louder effective gain than the last locally confirmed value. A
+Listen starts unmuted at the last locally confirmed gain
+([ADR 0031](../decisions/0031-shared-host-monitor-output.md) removed the
+start-muted step at operator request). It ramps from silence over the qualified
+interval and never restores a louder effective gain than the last locally
+confirmed value. The shared host output starts at unity with nothing selected. A
 latched listen/PFL cancels on route identity change, selected-source removal,
 authority loss or interruption; stale key-up cannot reopen it.
 

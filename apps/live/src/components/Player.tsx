@@ -32,6 +32,13 @@ type PlayerProps = {
   dimmed: boolean;
   gainDb: number;
   playback: PlaybackUpdate;
+  /** Set when controls act on the shared host output (ADR 0031), not this device. */
+  hostOutput?: {
+    /** The joined feed, e.g. "Comms A". */
+    feedName: string;
+    changedBy: string | null;
+    changedAtUtc: string | null;
+  } | null;
   directListeningAvailable: boolean;
   meterStore: MeterStore;
   /** Alerts on the selected channel, active and cleared, drawn as rail marks. */
@@ -82,6 +89,7 @@ export function Player({
   dimmed,
   gainDb,
   playback,
+  hostOutput = null,
   directListeningAvailable,
   meterStore,
   alertMarks = [],
@@ -92,6 +100,7 @@ export function Player({
   onGainChange,
 }: PlayerProps) {
   const effectiveGainDb = gainDb + (dimmed ? DIM_ATTENUATION_DB : 0);
+  const outputName = hostOutput ? hostOutput.feedName : "Monitor output";
   const gainLabel = `${effectiveGainDb > 0 ? "+" : ""}${effectiveGainDb}`;
   const reading = useMeterReading(meterStore, channel?.input.index ?? null);
 
@@ -218,7 +227,14 @@ export function Player({
     : "Press a card to select a source";
 
   return (
-    <footer className="player" aria-label="Monitor output controls">
+    <footer
+      className="player"
+      aria-label={
+        hostOutput
+          ? `${hostOutput.feedName} shared output controls`
+          : "Monitor output controls"
+      }
+    >
       {expanded && channel ? (
         <MultiLaneTimeline
           lanes={lanes}
@@ -263,22 +279,38 @@ export function Player({
         </div>
         <p className="safety-state" aria-live="polite">
           <strong className={`playback-${playback.status}`}>
-            {playback.status === "idle"
-              ? "Not listening"
-              : playback.status === "connecting"
-                ? "Connecting"
-                : playback.status === "listening"
-                  ? "Listening"
-                  : "Listening error"}
+            {hostOutput
+              ? playback.status === "idle"
+                ? `${hostOutput.feedName} idle`
+                : playback.status === "connecting"
+                  ? `${hostOutput.feedName} starting`
+                  : playback.status === "listening"
+                    ? `Playing on ${hostOutput.feedName}`
+                    : `${hostOutput.feedName} error`
+              : playback.status === "idle"
+                ? "Not listening"
+                : playback.status === "connecting"
+                  ? "Connecting"
+                  : playback.status === "listening"
+                    ? "Listening"
+                    : "Listening error"}
           </strong>
           <span>{playback.detail}</span>
           <span>
             {muted
-              ? "Monitor output is muted"
+              ? `${outputName} is muted`
               : dimmed
-                ? "Monitor output is dimmed"
-                : "Monitor output is unmuted"}
+                ? `${outputName} is dimmed`
+                : `${outputName} is unmuted`}
           </span>
+          {hostOutput ? (
+            <span>
+              Shared with everyone in {hostOutput.feedName}.
+              {hostOutput.changedBy && hostOutput.changedAtUtc
+                ? ` Last change: ${hostOutput.changedBy}, ${formatClock(hostOutput.changedAtUtc)}.`
+                : ""}
+            </span>
+          ) : null}
         </p>
         <div className="player-controls">
           <button
@@ -300,7 +332,9 @@ export function Player({
             Dim
           </button>
           <label className="volume-control">
-            <span className="sr-only">Monitor volume</span>
+            <span className="sr-only">
+              {hostOutput ? `${hostOutput.feedName} level` : "Monitor volume"}
+            </span>
             <input
               type="range"
               min={MIN_MONITOR_GAIN_DB}

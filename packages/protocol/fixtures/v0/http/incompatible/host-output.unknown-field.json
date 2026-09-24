@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "0",
+  "output": null,
+  "feeds": [
+    {
+      "id": "default",
+      "name": "Host output",
+      "outputChannels": [1],
+      "revision": 0,
+      "monitor": {
+        "channelId": null,
+        "input": null,
+        "muted": false,
+        "dimmed": false,
+        "gainDb": 0,
+        "changedBy": null,
+        "changedAtUtc": null,
+        "listeners": 2
+      }
+    }
+  ]
+}

@@ -237,6 +237,38 @@ export function hasUniqueChannelIds(candidate: Showfile): boolean {
 
 const DEFAULT_MONITOR = { battery: true, rf: true, audio: true };
 
+/**
+ * Unreleased builds saved host output as one list of channels, then as
+ * `sessions`; both become `feeds` so a saved output (for example 12) keeps
+ * playing.
+ */
+function migrateHostOutput(hostOutput: unknown): Record<string, unknown> {
+  if (
+    typeof hostOutput !== "object" ||
+    hostOutput === null ||
+    "feeds" in hostOutput
+  ) {
+    return {};
+  }
+  if ("sessions" in hostOutput) {
+    return { hostOutput: { feeds: hostOutput.sessions } };
+  }
+  if ("outputChannels" in hostOutput) {
+    return {
+      hostOutput: {
+        feeds: [
+          {
+            id: "default",
+            name: "Host output",
+            outputChannels: hostOutput.outputChannels,
+          },
+        ],
+      },
+    };
+  }
+  return {};
+}
+
 export function migrateShowfile(value: unknown): unknown {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return value;
@@ -245,6 +277,7 @@ export function migrateShowfile(value: unknown): unknown {
   const needsReceivers = record.shureReceivers === undefined;
   return {
     ...record,
+    ...migrateHostOutput(record.hostOutput),
     shureReceivers: needsReceivers ? [] : record.shureReceivers,
     channels: Array.isArray(record.channels)
       ? record.channels.map((channel, position) => {

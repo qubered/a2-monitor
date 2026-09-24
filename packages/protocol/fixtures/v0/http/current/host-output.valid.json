@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "0",
+  "output": {
+    "status": "ready",
+    "detail": "Ready on output 1 of Dante Virtual Soundcard.",
+    "deviceName": "Dante Virtual Soundcard",
+    "channelCount": 64,
+    "simulated": false,
+    "underruns": 0,
+    "droppedFrames": 0
+  },
+  "feeds": [
+    {
+      "id": "feed-comms-a",
+      "name": "Comms A",
+      "outputChannels": [1],
+      "revision": 12,
+      "monitor": {
+        "channelId": "ch-lead-vocal",
+        "input": 4,
+        "muted": false,
+        "dimmed": true,
+        "gainDb": -6,
+        "changedBy": "Sam (A2)",
+        "changedAtUtc": "2026-09-24T09:15:00.000Z"
+      }
+    },
+    {
+      "id": "feed-comms-b",
+      "name": "Comms B",
+      "outputChannels": [2, 3],
+      "revision": 0,
+      "monitor": {
+        "channelId": null,
+        "input": null,
+        "muted": false,
+        "dimmed": false,
+        "gainDb": 0,
+        "changedBy": null,
+        "changedAtUtc": null
+      }
+    }
+  ]
+}

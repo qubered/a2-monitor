@@ -74,7 +74,13 @@ network, then click Start Server. The app opens the local page in the default
 browser and lives in the menu bar; its icon and the window's own buttons open
 Live or Manager, start or stop the server, open the log, and quit. Closing the
 window only hides it — reopen it from the menu bar's "Show Pulse" item.
-The last chosen device and network scope are remembered for next launch.
+Optionally pick a **host monitor output** device and its output channels (for
+example Dante Virtual Soundcard output 1, routed to comms in Dante Controller);
+Live then offers to play on that shared output instead of each device
+(ADR 0031). The default is None. The channels here are the default
+single feed's: feeds saved in Manager's Host output tab take precedence.
+The last chosen device, network scope and output are remembered for next
+launch.
 Receiver configuration lives in Manager. Logs are written to
 `~/Library/Logs/Pulse/mvp.log`.
 

@@ -1,7 +1,9 @@
 import {
+  parseHostOutput,
   parseProductionList,
   parseShowfile,
   parseShureTelemetry,
+  type HostOutput,
   type ProductionList,
   type Showfile,
   type ShureTelemetry,
@@ -74,6 +76,16 @@ export async function loadShureTelemetry(
   const response = await fetch("/audio/v0/shure", { signal });
   if (!response.ok) throw new Error("Shure telemetry could not be loaded.");
   return parseShureTelemetry(await response.json());
+}
+
+/** The node's host output state (ADR 0031): device, channels in effect and status. */
+export async function loadHostOutput(
+  signal?: AbortSignal,
+): Promise<HostOutput> {
+  const response = await fetch("/audio/v0/output", { signal });
+  if (!response.ok)
+    throw new Error("The host output state could not be loaded.");
+  return parseHostOutput(await response.json());
 }
 
 export async function saveShowfile(showfile: Showfile): Promise<Showfile> {

@@ -42,7 +42,10 @@ const contracts = [
       "fixtures/v0/http/current/showfile.valid.json",
       "fixtures/v0/http/previous/showfile.valid.json",
     ],
-    rejected: ["fixtures/v0/http/incompatible/showfile.unknown-field.json"],
+    rejected: [
+      "fixtures/v0/http/incompatible/showfile.unknown-field.json",
+      "fixtures/v0/http/incompatible/showfile.host-output-channel-zero.json",
+    ],
   },
   {
     name: "shure-telemetry",
@@ -97,6 +100,18 @@ const contracts = [
       "fixtures/v0/http/previous/meter-frame.valid.json",
     ],
     rejected: ["fixtures/v0/http/incompatible/meter-frame.unknown-field.json"],
+  },
+  {
+    name: "host-output",
+    schema: "schema/v0/http/host-output.schema.json",
+    accepted: [
+      "fixtures/v0/http/current/host-output.valid.json",
+      "fixtures/v0/http/previous/host-output.valid.json",
+    ],
+    rejected: [
+      "fixtures/v0/http/incompatible/host-output.unknown-field.json",
+      "fixtures/v0/http/incompatible/host-output.gain-above-range.json",
+    ],
   },
   {
     name: "live-state",

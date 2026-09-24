@@ -40,6 +40,7 @@ import { ChannelDetail } from "./components/ChannelDetail";
 import { ExceptionsSheet } from "./components/ExceptionsSheet";
 import { MicCheck } from "./components/MicCheck";
 import { OperatorSheet } from "./components/OperatorSheet";
+import { OutputSheet } from "./components/OutputSheet";
 import { Player } from "./components/Player";
 import { A1Bar, ReportBanner } from "./components/Reports";
 import { ReportSheet } from "./components/ReportSheet";
@@ -59,6 +60,17 @@ import {
   type LiveStateConnection,
   type LiveStateSource,
 } from "./live-state";
+import {
+  createHttpHostOutputSource,
+  describeOutputChannels,
+  readLastDestination,
+  feedIdOf,
+  saveLastDestination,
+  useHostOutput,
+  type HostMonitorChange,
+  type HostOutputSource,
+  type OutputDestination,
+} from "./host-output";
 import { MeterStore } from "./meters";
 import { effectiveRoom, groupChannels, inRoom, type RoomChoice } from "./rooms";
 import {
@@ -92,6 +104,7 @@ const filterLabels: Record<Filter, string> = {
 
 const ALERT_LOG_REFRESH_MS = 5_000;
 const defaultLiveStateSource = createEventSourceLiveState();
+const defaultHostOutputSource = createHttpHostOutputSource();
 
 function readMonitorGainDb(): number {
   try {
@@ -345,12 +358,14 @@ export function App({
   liveStateSource = defaultLiveStateSource,
   audioDeviceSource = httpAudioDeviceSource,
   playbackFactory = webRtcPlaybackFactory,
+  hostOutputSource = defaultHostOutputSource,
   meterStore: providedMeterStore,
   fetchAlertLog = fetch,
 }: {
   liveStateSource?: LiveStateSource;
   audioDeviceSource?: AudioDeviceSource;
   playbackFactory?: PlaybackFactory;
+  hostOutputSource?: HostOutputSource;
   meterStore?: MeterStore;
   fetchAlertLog?: typeof fetch;
 }) {
@@ -402,7 +417,7 @@ export function App({
   const [dismissedReports, setDismissedReports] =
     useState<Set<string>>(readDismissed);
   const [announcement, setAnnouncement] = useState("");
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(false);
   const [dimmed, setDimmed] = useState(false);
   const [gainDb, setGainDb] = useState(readMonitorGainDb);
   const [playback, setPlayback] = useState<PlaybackUpdate>({
@@ -410,12 +425,43 @@ export function App({
     detail: "Select a patched channel to listen.",
   });
   const playbackSession = useRef<PlaybackSession | null>(null);
-  const outputState = useRef({ muted: true, dimmed: false, gainDb });
+  const outputState = useRef({ muted: false, dimmed: false, gainDb });
   const announcedCritical = useRef<Set<string> | null>(null);
 
   const offline = connection === "offline";
   const device =
     audioDeviceState.status === "ready" ? audioDeviceState.device : null;
+
+  // Where monitor audio plays (ADR 0031). The choice is asked each time Live
+  // opens when the node has a host output: this device, or one of its shared
+  // feeds. Without a host output, this device plays.
+  const hostOutput = useHostOutput(hostOutputSource);
+  const hostDocument = hostOutput.document;
+  const hostAvailability: "unknown" | "absent" | "present" = hostDocument
+    ? hostDocument.output
+      ? "present"
+      : "absent"
+    : hostOutput.connection === "offline"
+      ? "absent"
+      : "unknown";
+  const [destination, setDestination] = useState<OutputDestination | null>(
+    null,
+  );
+  const [outputSheetOpen, setOutputSheetOpen] = useState(false);
+  const hostFeedId = destination ? feedIdOf(destination) : null;
+  const hostFeed =
+    hostFeedId === null
+      ? null
+      : (hostDocument?.feeds.find(({ id }) => id === hostFeedId) ?? null);
+  // A joined feed that the production no longer has asks again.
+  const feedGone =
+    hostFeedId !== null && hostDocument?.output != null && !hostFeed;
+  const chosenDestination: OutputDestination | null = feedGone
+    ? null
+    : (destination ?? (hostAvailability === "absent" ? "device" : null));
+  const hostMode = chosenDestination !== null && chosenDestination !== "device";
+  const deviceMode = chosenDestination === "device";
+  const hostMonitor = hostMode ? (hostFeed?.monitor ?? null) : null;
 
   const channels = useMemo<LiveStateChannel[]>(() => {
     if (liveState && !offline) return liveState.channels;
@@ -443,8 +489,18 @@ export function App({
     [liveState, offline],
   );
 
+  // On host output the selection is the shared one, so every client shows it.
+  const hostSelectedId = hostMonitor
+    ? (channels.find(
+        ({ id, input }) =>
+          id === hostMonitor.channelId && input.index === hostMonitor.input,
+      )?.id ??
+      channels.find(({ input }) => input.index === hostMonitor.input)?.id ??
+      null)
+    : null;
+  const effectiveSelectedId = hostMode ? hostSelectedId : selectedId;
   const selectedChannel =
-    channels.find((channel) => channel.id === selectedId) ?? null;
+    channels.find((channel) => channel.id === effectiveSelectedId) ?? null;
   const detailChannel =
     channels.find((channel) => channel.id === detailId) ?? null;
   const micCheckChannel =
@@ -472,7 +528,7 @@ export function App({
   }, [selectedInput]);
   useEffect(() => {
     const initialInput = selectedInputRef.current;
-    if (initialInput === null) return;
+    if (initialInput === null || !deviceMode) return;
     const session = playbackFactory({
       channel: initialInput,
       onUpdate: setPlayback,
@@ -485,7 +541,7 @@ export function App({
       if (playbackSession.current === session) playbackSession.current = null;
       session.close();
     };
-  }, [hasSelectedInput, playbackFactory]);
+  }, [deviceMode, hasSelectedInput, playbackFactory]);
 
   useEffect(() => {
     if (selectedInput !== null)
@@ -504,6 +560,42 @@ export function App({
     void playbackSession.current?.setMuted(muted);
   }, [dimmed, gainDb, muted]);
 
+  const changeHost = useCallback(
+    async (change: Omit<HostMonitorChange, "changedBy">) => {
+      setActionError(null);
+      if (hostFeedId === null) return;
+      try {
+        await hostOutput.change(hostFeedId, {
+          ...change,
+          changedBy: operatorLabel(operator),
+        });
+      } catch (error) {
+        setActionError(
+          `Host output did not change. ${
+            error instanceof Error ? error.message : ""
+          }`.trim(),
+        );
+      }
+    },
+    [hostOutput, hostFeedId, operator],
+  );
+
+  const shownMuted = hostMode ? (hostMonitor?.muted ?? false) : muted;
+  const shownDimmed = hostMode ? (hostMonitor?.dimmed ?? false) : dimmed;
+  const shownGainDb = hostMode ? (hostMonitor?.gainDb ?? 0) : gainDb;
+  const toggleMute = () =>
+    hostMode
+      ? void changeHost({ muted: !shownMuted })
+      : setMuted((value) => !value);
+  const toggleDim = () =>
+    hostMode
+      ? void changeHost({ dimmed: !shownDimmed })
+      : setDimmed((value) => !value);
+  const keyboardToggles = useRef({ toggleMute, toggleDim });
+  useEffect(() => {
+    keyboardToggles.current = { toggleMute, toggleDim };
+  });
+
   useEffect(() => {
     function handleKeyboard(event: KeyboardEvent) {
       if (
@@ -513,8 +605,8 @@ export function App({
       ) {
         return;
       }
-      if (event.key.toLowerCase() === "m") setMuted((value) => !value);
-      if (event.key.toLowerCase() === "d") setDimmed((value) => !value);
+      if (event.key.toLowerCase() === "m") keyboardToggles.current.toggleMute();
+      if (event.key.toLowerCase() === "d") keyboardToggles.current.toggleDim();
       if (event.key === "Escape") {
         setDetailId(null);
         setExceptionsOpen(false);
@@ -795,6 +887,17 @@ export function App({
   };
 
   function selectChannel(channel: LiveStateChannel) {
+    if (hostMode) {
+      if (channel.id === effectiveSelectedId) return;
+      if (channel.input.index === null) {
+        setActionError(
+          `${channel.name} has no patched input, so the host output is unchanged.`,
+        );
+        return;
+      }
+      void changeHost({ channelId: channel.id, input: channel.input.index });
+      return;
+    }
     setSelectedId(channel.id);
     if (channel.id === selectedId) return;
     if (channel.input.index === null) {
@@ -817,8 +920,67 @@ export function App({
     // when the new input is flowing, so a source change never shows a reconnect.
   }
 
+  const hostOutputInfo = hostDocument?.output ?? null;
+  const hostPlayback: PlaybackUpdate =
+    hostOutput.connection === "offline" || !hostDocument
+      ? {
+          status: "error",
+          detail:
+            "Lost contact with the audio node. The host output state is unknown.",
+        }
+      : !hostOutputInfo
+        ? {
+            status: "error",
+            detail: "The audio node no longer has a host output device.",
+          }
+        : hostOutputInfo.status === "starting"
+          ? { status: "connecting", detail: hostOutputInfo.detail }
+          : hostOutputInfo.status === "error"
+            ? { status: "error", detail: hostOutputInfo.detail }
+            : !hostFeed || !hostMonitor
+              ? {
+                  status: "error",
+                  detail: "This host output feed is not available.",
+                }
+              : hostMonitor.input === null
+                ? {
+                    status: "idle",
+                    detail: `Nothing selected in ${hostFeed.name}. Press a card to play it on ${describeOutputChannels(hostFeed.outputChannels)} of ${hostOutputInfo.deviceName}.`,
+                  }
+                : {
+                    status: "listening",
+                    detail: `${hostFeed.name}: input ${hostMonitor.input + 1} on ${describeOutputChannels(hostFeed.outputChannels)} of ${hostOutputInfo.deviceName}.`,
+                  };
+  const shownPlayback = hostMode ? hostPlayback : playback;
   const listening =
-    playback.status === "listening" && !muted && selectedChannel !== null;
+    shownPlayback.status === "listening" &&
+    !shownMuted &&
+    selectedChannel !== null;
+  const lastDestination = readLastDestination();
+  const chooseDestination = (next: OutputDestination) => {
+    saveLastDestination(next);
+    setDestination(next);
+    setOutputSheetOpen(false);
+  };
+  const outputPrompt =
+    !isA1 && hostDocument?.output && chosenDestination === null;
+  // What each feed is playing, for the destination prompt.
+  const nowPlaying = Object.fromEntries(
+    (hostDocument?.feeds ?? []).map(({ id, monitor }) => {
+      const playing =
+        channels.find(
+          (channel) =>
+            channel.id === monitor.channelId &&
+            channel.input.index === monitor.input,
+        ) ?? channels.find(({ input }) => input.index === monitor.input);
+      return [
+        id,
+        monitor.input === null
+          ? "Nothing selected."
+          : `Now: ${playing?.name ?? `input ${monitor.input + 1}`}${monitor.muted ? ", muted" : ""}.`,
+      ];
+    }),
+  );
   const summary = liveState?.summary;
   const showName = liveState?.show.name ?? "Show state unavailable";
   const nodeDevice = liveState?.node.device ?? null;
@@ -906,6 +1068,19 @@ export function App({
                 ? `${summary.active} active · all seen`
                 : "No active alerts"}
         </button>
+        {!isA1 && hostDocument?.output ? (
+          <button
+            className={`operator-chip output-chip ${hostMode ? "is-host" : ""}`}
+            type="button"
+            onClick={() => setOutputSheetOpen(true)}
+          >
+            {hostMode
+              ? `Audio: ${hostFeed?.name ?? "host output"}`
+              : deviceMode
+                ? "Audio: this device"
+                : "Audio: choose"}
+          </button>
+        ) : null}
         <button
           className="operator-chip"
           type="button"
@@ -1078,9 +1253,9 @@ export function App({
                         liveState?.show.overlayExpiryMs ?? 300_000
                       }
                       nowMs={nowMs}
-                      selected={!isA1 && selectedId === channel.id}
+                      selected={!isA1 && effectiveSelectedId === channel.id}
                       listening={
-                        !isA1 && listening && selectedId === channel.id
+                        !isA1 && listening && effectiveSelectedId === channel.id
                       }
                       imageRevision={liveState?.show.showfileRevision ?? 0}
                       meterStore={meterStore}
@@ -1131,21 +1306,41 @@ export function App({
       ) : (
         <Player
           channel={selectedChannel}
-          muted={muted}
-          dimmed={dimmed}
-          gainDb={gainDb}
-          playback={
-            selectedChannel && selectedInput === null
+          muted={shownMuted}
+          dimmed={shownDimmed}
+          gainDb={shownGainDb}
+          hostOutput={
+            hostMode
               ? {
-                  status: "idle",
-                  detail:
-                    selectedChannel.input.index === null
-                      ? `${selectedChannel.input.label}. There is nothing to listen to.`
-                      : "The audio node is not ready, so listening is unavailable.",
+                  feedName: hostFeed?.name ?? "host output",
+                  changedBy: hostMonitor?.changedBy ?? null,
+                  changedAtUtc: hostMonitor?.changedAtUtc ?? null,
                 }
-              : playback
+              : null
           }
-          directListeningAvailable={device !== null}
+          playback={
+            hostMode
+              ? shownPlayback
+              : chosenDestination === null
+                ? {
+                    status: "idle",
+                    detail: "Choose where monitor audio plays.",
+                  }
+                : selectedChannel && selectedInput === null
+                  ? {
+                      status: "idle",
+                      detail:
+                        selectedChannel.input.index === null
+                          ? `${selectedChannel.input.label}. There is nothing to listen to.`
+                          : "The audio node is not ready, so listening is unavailable.",
+                    }
+                  : playback
+          }
+          directListeningAvailable={
+            hostMode
+              ? hostOutputInfo !== null && hostOutput.connection !== "offline"
+              : device !== null && deviceMode
+          }
           meterStore={meterStore}
           alertMarks={
             selectedChannel
@@ -1156,9 +1351,13 @@ export function App({
           }
           nowMs={nowMs}
           onExpandedChange={setTimelineOpen}
-          onToggleMute={() => setMuted((value) => !value)}
-          onToggleDim={() => setDimmed((value) => !value)}
-          onGainChange={(value) => setGainDb(clampMonitorGainDb(value))}
+          onToggleMute={toggleMute}
+          onToggleDim={toggleDim}
+          onGainChange={(value) =>
+            hostMode
+              ? void changeHost({ gainDb: clampMonitorGainDb(value) })
+              : setGainDb(clampMonitorGainDb(value))
+          }
         />
       )}
 
@@ -1253,6 +1452,18 @@ export function App({
             setOperatorOpen(false);
           }}
           onClose={() => setOperatorOpen(false)}
+        />
+      ) : null}
+
+      {(outputPrompt || outputSheetOpen) && hostDocument?.output ? (
+        <OutputSheet
+          output={hostDocument.output}
+          feeds={hostDocument.feeds}
+          nowPlaying={nowPlaying}
+          current={chosenDestination}
+          suggested={lastDestination}
+          onChoose={chooseDestination}
+          onClose={outputPrompt ? undefined : () => setOutputSheetOpen(false)}
         />
       ) : null}
 

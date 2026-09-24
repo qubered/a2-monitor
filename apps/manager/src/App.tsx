@@ -4,6 +4,7 @@ import {
   CalendarClock,
   DoorOpen,
   FolderKanban,
+  Headphones,
   Radio,
   SlidersHorizontal,
   Theater,
@@ -26,6 +27,7 @@ import {
   type ObservedDevice,
 } from "./showfile";
 import { AlertsTab } from "./components/AlertsTab";
+import { HostOutputTab } from "./components/HostOutputTab";
 import { ChannelsTab } from "./components/ChannelsTab";
 import { EmptyState } from "./components/EmptyState";
 import { ProductionsTab } from "./components/ProductionsTab";
@@ -347,6 +349,13 @@ export function App() {
                 Alerts
                 {showfile.alertPolicy ? " · custom" : ""}
               </TabsTrigger>
+              <TabsTrigger value="host-output">
+                <Headphones aria-hidden="true" />
+                Host output
+                {showfile.hostOutput?.feeds.length
+                  ? ` · ${showfile.hostOutput.feeds.length}`
+                  : ""}
+              </TabsTrigger>
             </TabsList>
             <div className="min-w-0 flex-1">
               <TabsContent value="show">
@@ -390,6 +399,9 @@ export function App() {
               </TabsContent>
               <TabsContent value="alerts">
                 <AlertsTab showfile={showfile} onChange={update} />
+              </TabsContent>
+              <TabsContent value="host-output">
+                <HostOutputTab showfile={showfile} onChange={update} />
               </TabsContent>
             </div>
           </Tabs>

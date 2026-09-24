@@ -39,6 +39,31 @@ at the repository root runs it with a seeded demo show, and
 `npm run simulate:shure` starts a development AD4Q double on `127.0.0.1:2202`
 with scripted battery drain, RF dips, interference, mute and transmitter loss.
 
+### Shared host output
+
+When `A2_OUTPUT_DEVICE` names an exact output device (for example Dante Virtual
+Soundcard, routed to comms), the worker also renders one shared monitor mix per
+host output **feed**, and `pulse-device-output` plays each on its own 1-based
+output channels of that one device (ADR 0031). Feeds come from the active
+production (`hostOutput.feeds`, set in Manager's Host output tab and read
+with the receiver inventory); a change reopens only the output device. Without
+saved feeds there is one default feed, `Host output`, on
+`A2_OUTPUT_CHANNELS` (default `1`). Every Live client in a feed controls and
+sees that feed's selection, mute, dim and level:
+
+| Request                             | Body                                                                 | Response                                   |
+| ----------------------------------- | -------------------------------------------------------------------- | ------------------------------------------ |
+| `GET /audio/v0/output`              | none                                                                 | `host-output` contract, every feed         |
+| `GET /audio/v0/output/events`       | none                                                                 | SSE `event: output`, on connect and change |
+| `PATCH /audio/v0/output/feeds/{id}` | any of `channelId`+`input`, `muted`, `dimmed`, `gainDb`, `changedBy` | `200` with the new `host-output`           |
+
+`channelId` and `input` change together; `null` for both clears the selection.
+`gainDb` is −60 to +12. An unknown feed returns `404`. Without an output
+device `output` is `null`, `feeds` is empty and `PATCH` returns `409`. State
+is held in memory and each feed starts unmuted at 0 dB with nothing
+selected. `Pulse simulated output` (8 outputs) discards the feed and is
+labelled simulated; `npm run dev:simulate` uses it with two demo feeds.
+
 The gateway is deliberately outside the management backend. Signaling has no
 listener authorization and makes no performance claim. It must not be exposed
 to an untrusted network.
@@ -48,6 +73,8 @@ List the host's input devices:
 ```sh
 npm run devices
 ```
+
+List output devices with `cargo run --locked --bin pulse-device-output -- --list`.
 
 Start the complete local application with an exact name from that output:
 
@@ -62,6 +89,7 @@ development defaults:
 
 - `A2_MEDIA_WORKER_BIN`
 - `A2_CAPTURE_BIN`
+- `A2_OUTPUT_DEVICE`, `A2_OUTPUT_CHANNELS` and `A2_OUTPUT_BIN` (host output)
 - `A2_SIMULATED_CHANNELS` (test signal only, 1 to 64)
 - `A2_LISTEN_HOST`
 - `A2_LISTEN_PORT`

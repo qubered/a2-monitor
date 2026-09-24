@@ -10,6 +10,14 @@ externally tested release.
 
 ### Added
 
+- Live: shared host monitor output feeds (ADR 0031). When the node has an
+  output device (for example Dante Virtual Soundcard routed to comms), Live
+  asks on open whether audio plays on this device or in one of the
+  production's feeds, e.g. Comms A on output 1 or Comms B on output 2.
+  Everyone in a feed shares its selection, mute, dim and level and sees who
+  changed it last. Manager's Host output tab defines the feeds and picks
+  their outputs from the device; the node applies changes without a restart.
+  The macOS app window gains an output device and default channel choice.
 - Rooms and categories (ADR 0030). Manager gains a Rooms section (rooms, and
   categories inside each room) and a room/category picker per channel;
   sessions belong to a room. Each room runs its own sessions, so a breakout
@@ -46,6 +54,7 @@ externally tested release.
 
 ### Changed
 
+- Live: listening no longer starts muted. Mute and dim stay one touch away.
 - Live alerts no longer veil the card. An unacknowledged alert is a 2px
   severity ring plus a solid band across the photo's lower edge, so the card
   underneath is not dimmed and the label reads from across a room

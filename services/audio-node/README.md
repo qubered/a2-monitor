@@ -86,7 +86,13 @@ The runnable native scaffold now contains:
 - `pulse-media-worker`, the local-MVP listen transport (ADR 0026). It runs
   `pulse-device-capture` as a child and serves each listener an ICE-lite
   `str0m` session with 10 ms mono Opus of the selected input. Input switches
-  crossfade server-side; and
+  crossfade server-side. Given an output device it also renders one shared host
+  monitor mix and pipes it to `pulse-device-output` (ADR 0031);
+- `pulse-device-output`, the local-MVP host monitor output. It opens one exact
+  48 kHz Core Audio/WASAPI output device, copies the worker's mono feed to the
+  listed output channels, and reports underruns and dropped frames. The device
+  callback only reads a preallocated SPSC ring (`monitor_output`). The reserved
+  name `Pulse simulated output` discards the feed; and
 - `crates/supervisor`, a deterministic native-worker lifecycle policy with
   boot/generation fencing, role-specific readiness gates, bounded heartbeats,
   restart/quarantine, and confirmed-death shutdown deadlines behind injected

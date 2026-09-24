@@ -8,13 +8,14 @@
 //   - schema/v0/http/channel-level-history.schema.json
 //   - schema/v0/http/node-levels.schema.json
 //   - schema/v0/http/meter-frame.schema.json
+//   - schema/v0/http/host-output.schema.json
 //   - schema/v0/http/live-state.schema.json
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: c707f6651b6e7dfc2b0d033f943ea692ed1576f64238aa6febbfd05804fa00c5
-// Generator-SHA256: 1a037c5d886a218624ec27da5ce598a9d0abd5d3c5e4690b1e37bf4b6b235531
-// Body-SHA256: f63c8e3c13fe322c3db811e339ea2813312eb4a410ca62caf8abe60b2033568b
+// Schema-SHA256: cccc8d820a9fd33f42d7bac020c68ecddd5245ed336392c10cdfda6f99e7e12e
+// Generator-SHA256: 7c6c8c3297d1ffee85f78fc29a4b03c3fbf3fa68da597de8be09f1f2e73d4cbf
+// Body-SHA256: a56a271019ab8abadb6e916f5ec1d3bc3a5df9cd45365a7fc6930cd69a3459cc
 
 export type HealthResponse = {
   status: "ok";
@@ -94,6 +95,13 @@ export type Showfile = {
     silenceAfterSeconds: number;
     clipAlerts: boolean;
     overlayExpiryMinutes: number;
+  };
+  hostOutput?: {
+    feeds: Array<{
+      id: string;
+      name: string;
+      outputChannels: Array<number>;
+    }>;
   };
   device: {
     name: string;
@@ -288,6 +296,34 @@ export type MeterFrame = {
   peakDbfs: Array<number>;
   rmsDbfs: Array<number>;
   clipped: Array<boolean>;
+};
+
+export type HostOutput = {
+  schemaVersion: "0";
+  output: {
+    status: "starting" | "ready" | "error";
+    detail: string;
+    deviceName: string;
+    channelCount: number | null;
+    simulated: boolean;
+    underruns: number;
+    droppedFrames: number;
+  } | null;
+  feeds: Array<{
+    id: string;
+    name: string;
+    outputChannels: Array<number>;
+    revision: number;
+    monitor: {
+      channelId: string | null;
+      input: number | null;
+      muted: boolean;
+      dimmed: boolean;
+      gainDb: number;
+      changedBy: string | null;
+      changedAtUtc: string | null;
+    };
+  }>;
 };
 
 export type LiveStateVerdict =
@@ -964,6 +1000,45 @@ const showfileSchema = {
           type: "integer",
           minimum: 1,
           maximum: 60,
+        },
+      },
+    },
+    hostOutput: {
+      description:
+        "Host monitor output feeds for this production (ADR 0031). Each feed is one shared mix that Live clients join by name; outputChannels are the 1-based channels of the node's host output device that carry it. A device channel belongs to at most one feed. Absent means the node's own single default feed.",
+      type: "object",
+      additionalProperties: false,
+      required: ["feeds"],
+      properties: {
+        feeds: {
+          type: "array",
+          maxItems: 8,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["id", "name", "outputChannels"],
+            properties: {
+              id: {
+                type: "string",
+                minLength: 1,
+                maxLength: 64,
+              },
+              name: {
+                type: "string",
+                minLength: 1,
+                maxLength: 60,
+              },
+              outputChannels: {
+                type: "array",
+                maxItems: 8,
+                items: {
+                  type: "integer",
+                  minimum: 1,
+                  maximum: 256,
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -1807,6 +1882,160 @@ const meterFrameSchema = {
       maxItems: 256,
       items: {
         type: "boolean",
+      },
+    },
+  },
+} as const;
+
+const hostOutputSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://pulse.local/schema/v0/http/host-output.schema.json",
+  title: "Audio node host output",
+  description:
+    "The audio node's host monitor output (ADR 0031), served at GET /audio/v0/output and as `output` events on /audio/v0/output/events. `output` is the output device, or null when the node has none. Each of `feeds` is one shared mix on its own output channels: Live clients join a feed, and a change by any client in it is heard on its channels and shown to every client in it. A feed's `revision` increases with every change to its monitor.",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "output", "feeds"],
+  properties: {
+    schemaVersion: {
+      const: "0",
+    },
+    output: {
+      type: ["object", "null"],
+      additionalProperties: false,
+      required: [
+        "status",
+        "detail",
+        "deviceName",
+        "channelCount",
+        "simulated",
+        "underruns",
+        "droppedFrames",
+      ],
+      properties: {
+        status: {
+          enum: ["starting", "ready", "error"],
+        },
+        detail: {
+          type: "string",
+          minLength: 1,
+          maxLength: 240,
+        },
+        deviceName: {
+          type: "string",
+          minLength: 1,
+          maxLength: 512,
+        },
+        channelCount: {
+          description:
+            "Output channels the device has, once it has opened; null before.",
+          type: ["integer", "null"],
+          minimum: 1,
+          maximum: 256,
+        },
+        simulated: {
+          type: "boolean",
+        },
+        underruns: {
+          description:
+            "Device callbacks that found no audio queued since the output last started.",
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        droppedFrames: {
+          description:
+            "Frames skipped or dropped to bound latency since the output last started.",
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+      },
+    },
+    feeds: {
+      type: "array",
+      maxItems: 8,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["id", "name", "outputChannels", "revision", "monitor"],
+        properties: {
+          id: {
+            type: "string",
+            minLength: 1,
+            maxLength: 64,
+          },
+          name: {
+            type: "string",
+            minLength: 1,
+            maxLength: 60,
+          },
+          outputChannels: {
+            description:
+              "1-based device output channels that carry this feed's mono mix.",
+            type: "array",
+            maxItems: 8,
+            items: {
+              type: "integer",
+              minimum: 1,
+              maximum: 256,
+            },
+          },
+          revision: {
+            type: "integer",
+            minimum: 0,
+            maximum: 9007199254740991,
+          },
+          monitor: {
+            type: "object",
+            additionalProperties: false,
+            required: [
+              "channelId",
+              "input",
+              "muted",
+              "dimmed",
+              "gainDb",
+              "changedBy",
+              "changedAtUtc",
+            ],
+            properties: {
+              channelId: {
+                description:
+                  "The show channel whose input is selected, as the selecting client named it. Null when nothing is selected.",
+                type: ["string", "null"],
+                minLength: 1,
+                maxLength: 128,
+              },
+              input: {
+                description:
+                  "0-based captured input that is playing. Null when nothing is selected.",
+                type: ["integer", "null"],
+                minimum: 0,
+                maximum: 255,
+              },
+              muted: {
+                type: "boolean",
+              },
+              dimmed: {
+                type: "boolean",
+              },
+              gainDb: {
+                type: "number",
+                minimum: -60,
+                maximum: 12,
+              },
+              changedBy: {
+                type: ["string", "null"],
+                minLength: 1,
+                maxLength: 80,
+              },
+              changedAtUtc: {
+                type: ["string", "null"],
+                format: "date-time",
+              },
+            },
+          },
+        },
       },
     },
   },
@@ -3254,6 +3483,10 @@ export function parseNodeLevels(value: unknown): NodeLevels {
 
 export function parseMeterFrame(value: unknown): MeterFrame {
   return parseWithSchema<MeterFrame>(value, meterFrameSchema, "MeterFrame");
+}
+
+export function parseHostOutput(value: unknown): HostOutput {
+  return parseWithSchema<HostOutput>(value, hostOutputSchema, "HostOutput");
 }
 
 export function parseLiveState(value: unknown): LiveState {

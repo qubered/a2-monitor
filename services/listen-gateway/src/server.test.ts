@@ -3,7 +3,11 @@ import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { PassThrough } from "node:stream";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { parseMeterFrame, parseNodeLevels } from "@rvlt/pulse-protocol/http";
+import {
+  parseHostOutput,
+  parseMeterFrame,
+  parseNodeLevels,
+} from "@rvlt/pulse-protocol/http";
 import {
   MediaWorkerManager,
   SIMULATED_DEVICE_NAME,
@@ -50,11 +54,15 @@ afterEach(async () => {
   gateways.clear();
 });
 
-async function startGateway(device = "Test Device") {
+async function startGateway(
+  device = "Test Device",
+  output?: { outputDevice: string; outputChannels: number[] },
+) {
   const worker = new ScriptedWorker();
   const media = new MediaWorkerManager({
     device,
     processFactory: () => worker,
+    ...output,
   });
   const gateway = new ListenGateway({
     mediaWorker: media,
@@ -82,7 +90,7 @@ async function startGateway(device = "Test Device") {
   gateway.server.listen(0, "127.0.0.1");
   await once(gateway.server, "listening");
   const { port } = gateway.server.address() as AddressInfo;
-  return { worker, base: `http://127.0.0.1:${port}` };
+  return { worker, gateway, base: `http://127.0.0.1:${port}` };
 }
 
 const json = { "Content-Type": "application/json" };
@@ -288,5 +296,219 @@ describe("candidateAddressFor", () => {
 
   it("falls back to loopback only without a LAN interface", () => {
     expect(candidateAddressFor("127.0.0.1", interfaces)).toBe("127.0.0.1");
+  });
+});
+
+describe("ListenGateway shared host output", () => {
+  const output = { outputDevice: "DVS", outputChannels: [3] };
+
+  async function patch(base: string, body: unknown, feed = "default") {
+    return fetch(`${base}/audio/v0/output/feeds/${feed}`, {
+      method: "PATCH",
+      headers: json,
+      body: JSON.stringify(body),
+    });
+  }
+
+  async function readOutput(base: string) {
+    return parseHostOutput(
+      await (await fetch(`${base}/audio/v0/output`)).json(),
+    );
+  }
+
+  it("reports no output when no output device is configured and refuses changes", async () => {
+    const { base } = await startGateway();
+    const state = await readOutput(base);
+    expect(state.output).toBeNull();
+    expect(state.feeds).toEqual([]);
+    const refused = await patch(base, { muted: true });
+    expect(refused.status).toBe(409);
+  });
+
+  it("applies one client's change for everyone in the feed and drives its mix", async () => {
+    const { worker, base } = await startGateway("Test Device", output);
+    worker.emit({
+      type: "output-ready",
+      deviceName: "DVS",
+      channelCount: 64,
+      outputRoutes: [[3]],
+    });
+    await vi.waitFor(async () => {
+      const state = await readOutput(base);
+      expect(state.output).toMatchObject({ status: "ready", channelCount: 64 });
+    });
+
+    const events = await fetch(`${base}/audio/v0/output/events`);
+    const reader = events.body!.getReader();
+    const decoder = new TextDecoder();
+    let text = "";
+    const nextDocument = async () => {
+      while (!text.includes("\n\n")) {
+        const { value } = await reader.read();
+        text += decoder.decode(value);
+      }
+      const [message, ...rest] = text.split("\n\n");
+      text = rest.join("\n\n");
+      const data = message!
+        .split("\n")
+        .find((line) => line.startsWith("data: "))!
+        .slice(6);
+      return parseHostOutput(JSON.parse(data));
+    };
+    const first = await nextDocument();
+    expect(first.feeds).toMatchObject([
+      { id: "default", name: "Host output", outputChannels: [3] },
+    ]);
+    expect(first.feeds[0]!.monitor.input).toBeNull();
+
+    const selected = await patch(base, {
+      channelId: "ch-lead",
+      input: 1,
+      changedBy: "Sam (A2)",
+    });
+    expect(selected.status).toBe(200);
+    const pushed = (await nextDocument()).feeds[0]!;
+    expect(pushed.monitor).toMatchObject({
+      channelId: "ch-lead",
+      input: 1,
+      muted: false,
+      gainDb: 0,
+      changedBy: "Sam (A2)",
+    });
+    expect(pushed.revision).toBe(1);
+    expect(worker.commands.at(-1)).toEqual({
+      type: "monitor",
+      mix: 0,
+      channel: 1,
+      gain: 1,
+    });
+
+    await patch(base, { dimmed: true, gainDb: -6 });
+    expect((await nextDocument()).feeds[0]!.monitor).toMatchObject({
+      input: 1,
+      dimmed: true,
+      gainDb: -6,
+      changedBy: null,
+    });
+    expect(worker.commands.at(-1)).toMatchObject({ mix: 0, channel: 1 });
+    expect(worker.commands.at(-1)?.gain).toBeCloseTo(10 ** (-18 / 20), 6);
+
+    await patch(base, { muted: true });
+    expect(worker.commands.at(-1)).toEqual({
+      type: "monitor",
+      mix: 0,
+      channel: 1,
+      gain: 0,
+    });
+    await reader.cancel();
+  });
+
+  it("keeps feeds independent, each on its own mix and outputs", async () => {
+    const { worker, base, gateway } = await startGateway("Test Device", output);
+    gateway.hostFeeds.configure(
+      [
+        { id: "feed-a", name: "Comms A", outputChannels: [1] },
+        { id: "feed-b", name: "Comms B", outputChannels: [2] },
+      ],
+      [3],
+    );
+    expect(worker.commands).toContainEqual({
+      type: "output-routes",
+      routes: [[1], [2]],
+    });
+
+    await patch(base, { channelId: "ch-a", input: 0 }, "feed-a");
+    await patch(base, { channelId: "ch-b", input: 1, muted: true }, "feed-b");
+    expect(worker.commands.slice(-2)).toEqual([
+      { type: "monitor", mix: 0, channel: 0, gain: 1 },
+      { type: "monitor", mix: 1, channel: 1, gain: 0 },
+    ]);
+    const state = await readOutput(base);
+    expect(
+      state.feeds.map(({ id, monitor }) => [id, monitor.input, monitor.muted]),
+    ).toEqual([
+      ["feed-a", 0, false],
+      ["feed-b", 1, true],
+    ]);
+    expect((await patch(base, { muted: true }, "feed-missing")).status).toBe(
+      404,
+    );
+  });
+
+  it("rejects out-of-range inputs, unpaired selections and unsafe gain", async () => {
+    const { base } = await startGateway("Test Device", output);
+    for (const body of [
+      { channelId: "ch", input: 2 },
+      { input: 0 },
+      { channelId: "ch" },
+      { gainDb: 13 },
+      { muted: "yes" },
+      { changedBy: "Sam" },
+      { volume: 1 },
+      {},
+    ]) {
+      expect((await patch(base, body)).status, JSON.stringify(body)).toBe(400);
+    }
+    const cleared = await patch(base, { channelId: null, input: null });
+    expect(cleared.status).toBe(200);
+  });
+
+  it("re-sends the routes and every shared mix after the worker restarts", async () => {
+    const { worker, base } = await startGateway("Test Device", output);
+    await patch(base, { channelId: "ch", input: 0 });
+    worker.commands.length = 0;
+    worker.emit({
+      type: "ready",
+      deviceName: "Test Device",
+      sampleRateHz: 48_000,
+      channelCount: 2,
+    });
+    await vi.waitFor(() =>
+      expect(worker.commands).toEqual([
+        { type: "output-routes", routes: [[3]] },
+        { type: "monitor", mix: 0, channel: 0, gain: 1 },
+      ]),
+    );
+  });
+
+  it("opens the host output on the production's saved feeds at start", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          schemaVersion: "0",
+          revision: 1,
+          updatedAtUtc: null,
+          show: { name: "Show" },
+          hostOutput: {
+            feeds: [
+              { id: "feed-a", name: "Comms A", outputChannels: [12] },
+              { id: "feed-b", name: "Comms B", outputChannels: [13, 14] },
+            ],
+          },
+          device: null,
+          shureReceivers: [],
+          channels: [],
+        }),
+      ),
+    );
+    const worker = new ScriptedWorker();
+    const factory = vi.fn(() => worker);
+    const gateway = new ListenGateway({
+      device: "Test Device",
+      outputDevice: "DVS",
+      outputChannels: [1],
+      processFactory: factory,
+      backendOrigin: "http://backend.invalid/",
+    });
+    gateways.add(gateway);
+    gateway.server.listen(0, "127.0.0.1");
+    await once(gateway.server, "listening");
+    gateway.startCapture();
+    expect(factory).not.toHaveBeenCalled();
+    await vi.waitFor(() => expect(factory).toHaveBeenCalledOnce());
+    const args = factory.mock.calls[0]![1] as string[];
+    expect(args[args.indexOf("--output-routes") + 1]).toBe("12;13,14");
+    vi.unstubAllGlobals();
   });
 });

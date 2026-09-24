@@ -10,7 +10,7 @@
       {
         "id": "feed-comms-a",
         "name": "Comms A",
-        "outputChannels": [12]
+        "outputChannels": [0]
       }
     ]
   },
@@ -41,16 +41,12 @@
         "rf": true,
         "audio": true
       },
-      "performer": "Eleanor Vance",
-      "roomId": "room-main",
-      "categoryId": "cat-cast"
+      "performer": "Eleanor Vance"
     },
     {
       "id": "ch-talkback",
       "inputIndex": 1,
-      "name": "Talkback",
-      "roomId": "room-main",
-      "categoryId": "cat-crew"
+      "name": "Talkback"
     }
   ],
   "alertPolicy": {
@@ -64,51 +60,5 @@
     "silenceAfterSeconds": 30,
     "clipAlerts": true,
     "overlayExpiryMinutes": 5
-  },
-  "sessions": [
-    {
-      "id": "ses-act-1",
-      "name": "Act one",
-      "startMinute": 1170,
-      "channels": [
-        {
-          "channelId": "ch-marguerite",
-          "presenter": null
-        },
-        {
-          "channelId": "ch-talkback",
-          "presenter": null
-        }
-      ],
-      "roomId": "room-main"
-    },
-    {
-      "id": "ses-curtain",
-      "name": "Curtain speech",
-      "startMinute": null,
-      "channels": [
-        {
-          "channelId": "ch-talkback",
-          "presenter": "Company manager"
-        }
-      ],
-      "roomId": "room-main"
-    }
-  ],
-  "rooms": [
-    {
-      "id": "room-main",
-      "name": "Main house",
-      "categories": [
-        {
-          "id": "cat-cast",
-          "name": "Cast"
-        },
-        {
-          "id": "cat-crew",
-          "name": "Crew"
-        }
-      ]
-    }
-  ]
+  }
 }

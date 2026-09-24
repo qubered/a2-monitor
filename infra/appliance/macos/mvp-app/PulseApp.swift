@@ -5,6 +5,12 @@ private let listenBase = "http://127.0.0.1:4173"
 private let simulatedDevice = "Pulse test signal"
 private let deviceDefaultsKey = "PulseAudioDevice"
 private let hostDefaultsKey = "PulseBindHost"
+private let outputDefaultsKey = "PulseOutputDevice"
+private let outputChannelsDefaultsKey = "PulseOutputChannels"
+/// Host monitor output is off unless an output device is chosen (ADR 0031).
+private let noOutput = "None (listen on each device only)"
+/// Reserved name pulse-device-output accepts and discards without opening a device.
+private let simulatedOutput = "Pulse simulated output"
 
 private struct HostOption {
     let title: String
@@ -23,6 +29,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var window: NSWindow!
     private var deviceButton: NSPopUpButton!
     private var hostButton: NSPopUpButton!
+    private var outputButton: NSPopUpButton!
+    private var outputChannelsField: NSTextField!
     private var statusLabel: NSTextField!
     private var startStopButton: NSButton!
     private var refreshButton: NSButton!
@@ -76,7 +84,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private func buildWindow() {
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 420, height: 260),
+            contentRect: NSRect(x: 0, y: 0, width: 420, height: 380),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false)
@@ -97,6 +105,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         hostButton = NSPopUpButton(frame: .zero, pullsDown: false)
         hostButton.addItems(withTitles: hostOptions.map(\.title))
 
+        let outputLabel = NSTextField(labelWithString: "Host monitor output (shared, e.g. to comms)")
+        outputButton = NSPopUpButton(frame: .zero, pullsDown: false)
+        let channelsLabel = NSTextField(labelWithString: "Output channels")
+        outputChannelsField = NSTextField(string: "1")
+        outputChannelsField.placeholderString = "1 or 1,2"
+        outputChannelsField.widthAnchor.constraint(equalToConstant: 80).isActive = true
+        let outputRow = NSStackView(views: [outputButton, channelsLabel, outputChannelsField])
+        outputRow.orientation = .horizontal
+        outputRow.spacing = 8
+        outputButton.setContentHuggingPriority(.defaultLow, for: .horizontal)
+
         statusLabel = NSTextField(labelWithString: "Server stopped")
         statusLabel.textColor = .secondaryLabelColor
 
@@ -114,6 +133,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let stack = NSStackView(views: [
             deviceLabel, deviceRow,
             hostLabel, hostButton,
+            outputLabel, outputRow,
             statusLabel,
             startStopButton,
             actionRow,
@@ -140,6 +160,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         {
             hostButton.selectItem(at: index)
         }
+        if let savedChannels = defaults.string(forKey: outputChannelsDefaultsKey) {
+            outputChannelsField.stringValue = savedChannels
+        }
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
@@ -158,13 +181,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc private func refreshDevices() {
         guard let resources = Bundle.main.resourceURL else { return }
         let captureBinary = resources.appendingPathComponent("bin/pulse-device-capture")
+        let outputBinary = resources.appendingPathComponent("bin/pulse-device-output")
         let savedDevice = UserDefaults.standard.string(forKey: deviceDefaultsKey)
+        let savedOutput = UserDefaults.standard.string(forKey: outputDefaultsKey)
         deviceButton.isEnabled = false
+        outputButton.isEnabled = false
         refreshButton.isEnabled = false
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let devices = Self.listDevices(captureBinary: captureBinary)
+            let devices = Self.listDevices(binary: captureBinary)
+            let outputs = Self.listDevices(binary: outputBinary)
             DispatchQueue.main.async {
                 guard let self else { return }
+                // No host output is the default; the simulated output is last.
+                self.outputButton.removeAllItems()
+                self.outputButton.addItems(withTitles: [noOutput] + outputs + [simulatedOutput])
+                if let savedOutput, outputs.contains(savedOutput) || savedOutput == simulatedOutput {
+                    self.outputButton.selectItem(withTitle: savedOutput)
+                }
+                self.outputButton.isEnabled = true
                 self.deviceButton.removeAllItems()
                 // Physical inputs first; the simulated source is always last so
                 // it is never the accidental default for a real show.
@@ -182,9 +216,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
-    private static func listDevices(captureBinary: URL) -> [String] {
+    /// Lists the 48 kHz devices a bundled `--list` binary reports (inputs or outputs).
+    private static func listDevices(binary: URL) -> [String] {
         let process = Process()
-        process.executableURL = captureBinary
+        process.executableURL = binary
         process.arguments = ["--list"]
         let pipe = Pipe()
         process.standardOutput = pipe
@@ -232,10 +267,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             hostOptions.indices.contains(hostIndex)
         else { return }
         let host = hostOptions[hostIndex].value
+        let output = outputButton.titleOfSelectedItem ?? noOutput
+        let outputChannels = outputChannelsField.stringValue
+            .replacingOccurrences(of: " ", with: "")
+        if output != noOutput && !Self.validOutputChannels(outputChannels) {
+            statusLabel.stringValue = "Output channels must be distinct numbers from 1 to 256, e.g. 1 or 1,2."
+            return
+        }
 
         let defaults = UserDefaults.standard
         defaults.set(device, forKey: deviceDefaultsKey)
         defaults.set(host, forKey: hostDefaultsKey)
+        defaults.set(output, forKey: outputDefaultsKey)
+        defaults.set(outputChannels, forKey: outputChannelsDefaultsKey)
 
         let process = Process()
         process.executableURL = resources.appendingPathComponent("bin/node")
@@ -245,6 +289,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         environment["A2_APP_SHELL"] = "app"
         environment["A2_AUDIO_DEVICE"] = device
         environment["A2_BIND_HOST"] = host
+        if output == noOutput {
+            environment.removeValue(forKey: "A2_OUTPUT_DEVICE")
+        } else {
+            environment["A2_OUTPUT_DEVICE"] = output
+            environment["A2_OUTPUT_CHANNELS"] = outputChannels
+        }
         process.environment = environment
         process.terminationHandler = { [weak self] finished in
             DispatchQueue.main.async {
@@ -263,6 +313,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             updateMenu(running: false, status: "Server could not start")
             NSAlert(error: error).runModal()
         }
+    }
+
+    private static func validOutputChannels(_ value: String) -> Bool {
+        let parts = value.split(separator: ",", omittingEmptySubsequences: false)
+        let numbers = parts.compactMap { Int($0) }
+        return !parts.isEmpty && parts.count <= 8 && numbers.count == parts.count
+            && numbers.allSatisfy { (1...256).contains($0) } && Set(numbers).count == numbers.count
     }
 
     @objc private func stopServer() {
@@ -296,6 +353,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         startStopButton.title = running ? "Stop Server" : "Start Server"
         deviceButton.isEnabled = !running
         hostButton.isEnabled = !running
+        outputButton.isEnabled = !running
+        outputChannelsField.isEnabled = !running
         refreshButton.isEnabled = !running
     }
 }

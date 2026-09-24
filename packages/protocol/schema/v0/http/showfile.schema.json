@@ -53,6 +53,32 @@
         "overlayExpiryMinutes": { "type": "integer", "minimum": 1, "maximum": 60 }
       }
     },
+    "hostOutput": {
+      "description": "Host monitor output feeds for this production (ADR 0031). Each feed is one shared mix that Live clients join by name; outputChannels are the 1-based channels of the node's host output device that carry it. A device channel belongs to at most one feed. Absent means the node's own single default feed.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["feeds"],
+      "properties": {
+        "feeds": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name", "outputChannels"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+              "name": { "type": "string", "minLength": 1, "maxLength": 60 },
+              "outputChannels": {
+                "type": "array",
+                "maxItems": 8,
+                "items": { "type": "integer", "minimum": 1, "maximum": 256 }
+              }
+            }
+          }
+        }
+      }
+    },
     "device": {
       "type": ["object", "null"],
       "additionalProperties": false,

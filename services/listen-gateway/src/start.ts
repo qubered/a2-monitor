@@ -1,5 +1,6 @@
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { parseOutputChannels } from "./media-worker.js";
 import { ListenGateway } from "./server.js";
 
 const host = process.env.A2_LISTEN_HOST ?? "127.0.0.1";
@@ -11,6 +12,14 @@ const defaultCaptureBinary = fileURLToPath(
 const defaultWorkerBinary = fileURLToPath(
   new URL("../../../target/debug/pulse-media-worker", import.meta.url),
 );
+const defaultOutputBinary = fileURLToPath(
+  new URL("../../../target/debug/pulse-device-output", import.meta.url),
+);
+// Host monitor output (ADR 0031) is off unless an exact output device is named.
+const outputDevice = process.env.A2_OUTPUT_DEVICE || undefined;
+const outputChannels = outputDevice
+  ? parseOutputChannels(process.env.A2_OUTPUT_CHANNELS ?? "1")
+  : undefined;
 
 if (!Number.isInteger(port) || port < 1 || port > 65_535) {
   throw new Error("A2_LISTEN_PORT must be an integer from 1 to 65535.");
@@ -20,6 +29,9 @@ const gateway = new ListenGateway({
   device: process.env.A2_AUDIO_DEVICE,
   workerBinary: process.env.A2_MEDIA_WORKER_BIN ?? defaultWorkerBinary,
   captureBinary: process.env.A2_CAPTURE_BIN ?? defaultCaptureBinary,
+  outputDevice,
+  outputChannels,
+  outputBinary: process.env.A2_OUTPUT_BIN ?? defaultOutputBinary,
   webRoot: process.env.A2_LIVE_DIR,
   managerRoot: process.env.A2_MANAGER_DIR,
   backendOrigin: process.env.A2_BACKEND_ORIGIN,

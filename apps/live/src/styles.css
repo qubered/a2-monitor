@@ -2370,3 +2370,45 @@ a:focus-visible {
     animation-duration: 0ms !important;
   }
 }
+
+/* Monitor destination (ADR 0031): where this device's listening plays. */
+.output-options {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.output-option {
+  display: grid;
+  gap: var(--space-1);
+  min-height: var(--target-primary);
+  padding: var(--space-4);
+  border: var(--size-1) solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--ink);
+  text-align: left;
+}
+
+.output-option strong {
+  font-size: var(--font-section);
+}
+
+.output-option span {
+  color: var(--ink-2);
+  font-size: var(--font-ui);
+}
+
+.output-option[aria-pressed="true"] {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+}
+
+.output-option:active {
+  background: var(--elev);
+}
+
+.output-chip.is-host {
+  border-color: var(--blue);
+  color: var(--ink);
+}

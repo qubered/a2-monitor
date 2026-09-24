@@ -54,6 +54,11 @@ const contracts = [
     parserName: "parseMeterFrame",
   },
   {
+    schemaPath: "schema/v0/http/host-output.schema.json",
+    typeName: "HostOutput",
+    parserName: "parseHostOutput",
+  },
+  {
     schemaPath: "schema/v0/http/live-state.schema.json",
     typeName: "LiveState",
     parserName: "parseLiveState",
