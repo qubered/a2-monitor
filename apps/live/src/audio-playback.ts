@@ -50,6 +50,8 @@ type Dependencies = {
   fetch?: typeof fetch;
   createAudioElement?: () => HTMLAudioElement;
   network?: EventTarget;
+  /** Where a touch or key press can start held browser audio. */
+  gestureTarget?: EventTarget;
   timers?: Timers;
 };
 
@@ -128,11 +130,11 @@ export function createWebRtcPlaybackFactory(
 
     const context = new AudioContextClass({ latencyHint: "interactive" });
     const gain = context.createGain();
-    gain.gain.value = 0;
     gain.connect(context.destination);
 
     let channel = initialChannel;
-    let muted = true;
+    // Listening starts audible; mute and dim stay one touch away (DESIGN.md §2.7).
+    let muted = false;
     let dimmed = false;
     let gainDb = DEFAULT_MONITOR_GAIN_DB;
     let closed = false;
@@ -151,9 +153,54 @@ export function createWebRtcPlaybackFactory(
       gain.gain.value = muted ? 0 : 10 ** (effectiveGainDb / 20);
     }
 
+    applyGain();
+
+    let lastStatus: PlaybackState = "idle";
+    let lastDetail = "";
     function update(status: PlaybackState, detail: string) {
       listening = status === "listening";
+      lastStatus = status;
+      lastDetail = detail;
       if (!closed) onUpdate({ status, detail });
+    }
+
+    /**
+     * Browsers hold audio output until the page is touched. When a resume is
+     * refused, the next touch or key press anywhere starts it, and the status
+     * says so until then rather than claiming the operator can hear anything.
+     */
+    const AUDIO_HELD =
+      "The browser is holding audio. Tap anywhere to start it.";
+    let heldDetail: string | undefined;
+    const gestureTarget = dependencies?.gestureTarget ?? window.document;
+    const onGesture = () => {
+      if (closed || muted || context.state === "running") return;
+      void context.resume().then(
+        () => {
+          if (heldDetail === undefined || context.state !== "running") return;
+          const previous = heldDetail;
+          heldDetail = undefined;
+          if (lastDetail === AUDIO_HELD) update(lastStatus, previous);
+        },
+        () => undefined,
+      );
+    };
+    for (const type of ["pointerdown", "keydown"] as const) {
+      gestureTarget.addEventListener(type, onGesture, true);
+    }
+    // A function, so TypeScript does not narrow the state across the await.
+    const running = () => context.state === "running";
+    async function startOutput() {
+      if (muted || running()) return;
+      try {
+        await context.resume();
+      } catch {
+        // Held until a gesture; reported below.
+      }
+      if (!closed && !muted && !running() && heldDetail === undefined) {
+        heldDetail = lastDetail;
+        update(lastStatus, AUDIO_HELD);
+      }
     }
 
     /** Moves the live session to `channel`; the node crossfades, no renegotiation. */
@@ -331,15 +378,7 @@ export function createWebRtcPlaybackFactory(
       async setMuted(nextMuted) {
         muted = nextMuted;
         applyGain();
-        if (!muted && context.state !== "running") {
-          try {
-            await context.resume();
-          } catch {
-            muted = true;
-            applyGain();
-            update("error", "Browser audio output could not be started.");
-          }
-        }
+        await startOutput();
       },
       setDimmed(nextDimmed) {
         dimmed = nextDimmed;
@@ -352,6 +391,9 @@ export function createWebRtcPlaybackFactory(
       close() {
         closed = true;
         network.removeEventListener("online", onOnline);
+        for (const type of ["pointerdown", "keydown"] as const) {
+          gestureTarget.removeEventListener(type, onGesture, true);
+        }
         if (retryTimer !== undefined) timers.clearTimeout(retryTimer);
         retryTimer = undefined;
         teardown();

@@ -8,13 +8,14 @@
 //   - schema/v0/http/channel-level-history.schema.json
 //   - schema/v0/http/node-levels.schema.json
 //   - schema/v0/http/meter-frame.schema.json
+//   - schema/v0/http/host-output.schema.json
 //   - schema/v0/http/live-state.schema.json
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: 50ddea44559473413171c8bab6c01d3aa63d760cc3573f890c9629fbb8df9b5a
-// Generator-SHA256: 1a037c5d886a218624ec27da5ce598a9d0abd5d3c5e4690b1e37bf4b6b235531
-// Body-SHA256: 76c63b481d31a1cb8c48855a5e711483e24f1ed6906f2bcb0298034dd0b9af10
+// Schema-SHA256: 2525f6c5e3ff67b1917fdb3bb3886ac1b559599c7330a55dc6c0a10f05cc5e30
+// Generator-SHA256: 7c6c8c3297d1ffee85f78fc29a4b03c3fbf3fa68da597de8be09f1f2e73d4cbf
+// Body-SHA256: f73a9560e187018c9b52107e26f2bd33b3c78837067f433f039773ba7fd0c20d
 
 export type HealthResponse = {
   status: "ok";
@@ -268,6 +269,29 @@ export type MeterFrame = {
   peakDbfs: Array<number>;
   rmsDbfs: Array<number>;
   clipped: Array<boolean>;
+};
+
+export type HostOutput = {
+  schemaVersion: "0";
+  revision: number;
+  output: {
+    status: "starting" | "ready" | "error";
+    detail: string;
+    deviceName: string;
+    outputChannels: Array<number>;
+    simulated: boolean;
+    underruns: number;
+    droppedFrames: number;
+  } | null;
+  monitor: {
+    channelId: string | null;
+    input: number | null;
+    muted: boolean;
+    dimmed: boolean;
+    gainDb: number;
+    changedBy: string | null;
+    changedAtUtc: string | null;
+  };
 };
 
 export type LiveStateVerdict =
@@ -1651,6 +1675,132 @@ const meterFrameSchema = {
   },
 } as const;
 
+const hostOutputSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://pulse.local/schema/v0/http/host-output.schema.json",
+  title: "Audio node host output",
+  description:
+    "The audio node's shared host monitor output (ADR 0029), served at GET /audio/v0/output and as `output` events on /audio/v0/output/events. `output` is null when the node has no output device configured. `monitor` is the one mix every Live client in host-output mode shares: a change by any client is heard on the host output and shown to every client. `revision` increases with every monitor change.",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "revision", "output", "monitor"],
+  properties: {
+    schemaVersion: {
+      const: "0",
+    },
+    revision: {
+      type: "integer",
+      minimum: 0,
+      maximum: 9007199254740991,
+    },
+    output: {
+      type: ["object", "null"],
+      additionalProperties: false,
+      required: [
+        "status",
+        "detail",
+        "deviceName",
+        "outputChannels",
+        "simulated",
+        "underruns",
+        "droppedFrames",
+      ],
+      properties: {
+        status: {
+          enum: ["starting", "ready", "error"],
+        },
+        detail: {
+          type: "string",
+          minLength: 1,
+          maxLength: 240,
+        },
+        deviceName: {
+          type: "string",
+          minLength: 1,
+          maxLength: 512,
+        },
+        outputChannels: {
+          description:
+            "1-based device output channels that carry the mono monitor feed.",
+          type: "array",
+          maxItems: 8,
+          items: {
+            type: "integer",
+            minimum: 1,
+            maximum: 256,
+          },
+        },
+        simulated: {
+          type: "boolean",
+        },
+        underruns: {
+          description:
+            "Device callbacks that found no audio queued since the output last started.",
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        droppedFrames: {
+          description:
+            "Frames skipped or dropped to bound latency since the output last started.",
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+      },
+    },
+    monitor: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "channelId",
+        "input",
+        "muted",
+        "dimmed",
+        "gainDb",
+        "changedBy",
+        "changedAtUtc",
+      ],
+      properties: {
+        channelId: {
+          description:
+            "The show channel whose input is selected, as the selecting client named it. Null when nothing is selected.",
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 128,
+        },
+        input: {
+          description:
+            "0-based captured input that is playing. Null when nothing is selected.",
+          type: ["integer", "null"],
+          minimum: 0,
+          maximum: 255,
+        },
+        muted: {
+          type: "boolean",
+        },
+        dimmed: {
+          type: "boolean",
+        },
+        gainDb: {
+          type: "number",
+          minimum: -60,
+          maximum: 12,
+        },
+        changedBy: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 80,
+        },
+        changedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+      },
+    },
+  },
+} as const;
+
 const liveStateSchema = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
   $id: "https://pulse.local/schema/v0/http/live-state.schema.json",
@@ -2934,6 +3084,10 @@ export function parseNodeLevels(value: unknown): NodeLevels {
 
 export function parseMeterFrame(value: unknown): MeterFrame {
   return parseWithSchema<MeterFrame>(value, meterFrameSchema, "MeterFrame");
+}
+
+export function parseHostOutput(value: unknown): HostOutput {
+  return parseWithSchema<HostOutput>(value, hostOutputSchema, "HostOutput");
 }
 
 export function parseLiveState(value: unknown): LiveState {

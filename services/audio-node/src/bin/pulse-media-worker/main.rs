@@ -5,9 +5,13 @@
 //! selected input. It also meters every captured input and reports 20 Hz levels (ADR 0027).
 //! The capture callback stays in the capture process; this process owns only network-facing
 //! media work and metering. The listen gateway controls it over stdin/stdout.
+//!
+//! When given an output device it also renders the shared host monitor mix and feeds it to
+//! a `pulse-device-output` child (ADR 0029).
 
 mod capture;
 mod control;
+mod host_output;
 mod meters;
 mod session;
 
@@ -24,6 +28,7 @@ use std::time::{Duration, Instant};
 
 use capture::{CaptureBlock, CaptureHeader};
 use control::{Command, EventWriter};
+use host_output::{HostOutput, OutputArgs, OutputEvent};
 use meters::MeterBank;
 use session::{ListenSession, SessionEvent};
 use socket2::{Domain, Protocol, Socket, Type};
@@ -41,6 +46,7 @@ pub enum Event {
     Command(Command),
     ControlClosed,
     ControlFailed(String),
+    Output(OutputEvent),
     Datagram {
         local: SocketAddr,
         source: SocketAddr,
@@ -52,34 +58,61 @@ pub enum Event {
 struct Args {
     capture_binary: OsString,
     device_name: OsString,
+    output: Option<OutputArgs>,
 }
 
-fn parse_args<I>(mut args: I) -> Result<Args, &'static str>
+fn parse_args<I>(args: I) -> Result<Args, &'static str>
 where
     I: Iterator<Item = OsString>,
 {
-    const USAGE: &str =
-        "usage: pulse-media-worker --capture-bin <path> --device <exact-device-name>";
-    match (
-        args.next(),
-        args.next(),
-        args.next(),
-        args.next(),
-        args.next(),
-    ) {
-        (Some(bin_flag), Some(capture_binary), Some(device_flag), Some(device_name), None)
-            if bin_flag == "--capture-bin" && device_flag == "--device" =>
-        {
-            if capture_binary.is_empty() || device_name.is_empty() {
-                return Err(USAGE);
-            }
-            Ok(Args {
-                capture_binary,
-                device_name,
-            })
-        }
-        _ => Err(USAGE),
+    const USAGE: &str = "usage: pulse-media-worker --capture-bin <path> --device <exact-device-name> \
+         [--output-bin <path> --output-device <exact-device-name> --output-channels <n[,n…]>]";
+    let args: Vec<OsString> = args.collect();
+    if !args.len().is_multiple_of(2) {
+        return Err(USAGE);
     }
+    let mut values: [Option<OsString>; 5] = Default::default();
+    const FLAGS: [&str; 5] = [
+        "--capture-bin",
+        "--device",
+        "--output-bin",
+        "--output-device",
+        "--output-channels",
+    ];
+    for pair in args.as_chunks::<2>().0 {
+        let index = FLAGS
+            .iter()
+            .position(|flag| pair[0] == *flag)
+            .ok_or(USAGE)?;
+        if values[index].is_some() || pair[1].is_empty() {
+            return Err(USAGE);
+        }
+        values[index] = Some(pair[1].clone());
+    }
+    let [
+        capture_binary,
+        device_name,
+        output_binary,
+        output_device,
+        output_channels,
+    ] = values;
+    let (Some(capture_binary), Some(device_name)) = (capture_binary, device_name) else {
+        return Err(USAGE);
+    };
+    let output = match (output_binary, output_device, output_channels) {
+        (None, None, None) => None,
+        (Some(binary), Some(device_name), Some(channels)) => Some(OutputArgs {
+            binary,
+            device_name,
+            channels,
+        }),
+        _ => return Err(USAGE),
+    };
+    Ok(Args {
+        capture_binary,
+        device_name,
+        output,
+    })
 }
 
 struct Sockets {
@@ -166,6 +199,7 @@ struct Worker<W: io::Write> {
     sessions: HashMap<String, ListenSession>,
     channel_count: Option<usize>,
     meters: Option<MeterBank>,
+    host_output: Option<HostOutput>,
     recycle: Sender<Vec<f32>>,
     dropped_blocks: Arc<AtomicU64>,
 }
@@ -223,6 +257,16 @@ impl<W: io::Write> Worker<W> {
                 }
                 None => self.output.closed(&session_id, "unknown-session"),
             },
+            Command::Monitor { channel, gain } => {
+                // Before capture is ready the input is held; an input beyond the device
+                // renders as silence (`mix_block`).
+                let channel = channel
+                    .filter(|channel| self.channel_count.is_none_or(|count| *channel < count));
+                if let Some(output) = &mut self.host_output {
+                    output.set_monitor(channel, gain);
+                }
+                Ok(())
+            }
             Command::Close { session_id } => match self.sessions.get_mut(&session_id) {
                 Some(session) => {
                     session.close("requested");
@@ -236,6 +280,9 @@ impl<W: io::Write> Worker<W> {
     fn handle_block(&mut self, block: CaptureBlock, now: Instant) -> io::Result<()> {
         for session in self.sessions.values_mut() {
             session.write_block(&block, now);
+        }
+        if let Some(output) = &mut self.host_output {
+            output.write_block(&block);
         }
         let reading = self
             .meters
@@ -289,7 +336,34 @@ impl<W: io::Write> Worker<W> {
         self.sessions
             .values()
             .map(ListenSession::next_deadline)
+            .chain(
+                self.host_output
+                    .as_ref()
+                    .and_then(HostOutput::next_deadline),
+            )
             .fold(now + IDLE_WAKE, Instant::min)
+    }
+
+    fn handle_output(&mut self, event: OutputEvent, now: Instant) -> io::Result<()> {
+        let report = self
+            .host_output
+            .as_mut()
+            .and_then(|output| output.handle_event(event, now));
+        match report {
+            Some(report) => self.output.output(&report),
+            None => Ok(()),
+        }
+    }
+
+    fn poll_output(&mut self, now: Instant) -> io::Result<()> {
+        let report = self
+            .host_output
+            .as_mut()
+            .and_then(|output| output.poll(now));
+        match report {
+            Some(report) => self.output.output(&report),
+            None => Ok(()),
+        }
     }
 }
 
@@ -331,6 +405,10 @@ fn run(args: &Args) -> Result<(), String> {
             .map_err(|error| error.to_string())?;
     }
 
+    let host_output = args
+        .output
+        .clone()
+        .map(|output| HostOutput::new(output, events_tx.clone()));
     let mut worker = Worker {
         crypto: Arc::new(str0m::crypto::from_feature_flags()),
         output: EventWriter::new(io::stdout().lock()),
@@ -342,14 +420,31 @@ fn run(args: &Args) -> Result<(), String> {
         sessions: HashMap::new(),
         channel_count: None,
         meters: None,
+        host_output,
         recycle: recycle_tx,
         dropped_blocks,
     };
 
-    let result = event_loop(&mut worker, &events);
+    let result = start_host_output(&mut worker)
+        .map_err(|error| format!("control output failed: {error}"))
+        .and_then(|()| event_loop(&mut worker, &events));
+    if let Some(output) = &mut worker.host_output {
+        output.shutdown();
+    }
     let _ = child.kill();
     let _ = child.wait();
     result
+}
+
+fn start_host_output<W: io::Write>(worker: &mut Worker<W>) -> io::Result<()> {
+    let report = worker
+        .host_output
+        .as_mut()
+        .and_then(|output| output.start(Instant::now()));
+    match report {
+        Some(report) => worker.output.output(&report),
+        None => Ok(()),
+    }
 }
 
 fn event_loop<W: io::Write>(
@@ -378,6 +473,9 @@ fn event_loop<W: io::Write>(
             Ok(Event::Command(command)) => worker
                 .handle_command(command, Instant::now())
                 .map_err(io_error)?,
+            Ok(Event::Output(event)) => worker
+                .handle_output(event, Instant::now())
+                .map_err(io_error)?,
             Ok(Event::CaptureEnded(detail)) => return Err(detail),
             Ok(Event::ControlClosed) => return Ok(()),
             Ok(Event::ControlFailed(detail)) => return Err(detail),
@@ -386,6 +484,7 @@ fn event_loop<W: io::Write>(
         }
         let now = Instant::now();
         worker.drive(now).map_err(io_error)?;
+        worker.poll_output(now).map_err(io_error)?;
         if now >= next_stats {
             next_stats = now + STATS_INTERVAL;
             worker
@@ -424,7 +523,54 @@ mod tests {
             Ok(Args {
                 capture_binary: "/bin/capture".into(),
                 device_name: "DVS".into(),
+                output: None,
             })
+        );
+        assert_eq!(
+            args(&[
+                "--device",
+                "DVS",
+                "--output-channels",
+                "3,4",
+                "--capture-bin",
+                "/bin/capture",
+                "--output-device",
+                "DVS",
+                "--output-bin",
+                "/bin/output",
+            ]),
+            Ok(Args {
+                capture_binary: "/bin/capture".into(),
+                device_name: "DVS".into(),
+                output: Some(OutputArgs {
+                    binary: "/bin/output".into(),
+                    device_name: "DVS".into(),
+                    channels: "3,4".into(),
+                }),
+            })
+        );
+        assert!(
+            args(&[
+                "--capture-bin",
+                "/bin/capture",
+                "--device",
+                "DVS",
+                "--output-device",
+                "DVS"
+            ])
+            .is_err(),
+            "output needs a binary, a device and channels together"
+        );
+        assert!(
+            args(&[
+                "--capture-bin",
+                "/a",
+                "--capture-bin",
+                "/b",
+                "--device",
+                "DVS"
+            ])
+            .is_err()
         );
         assert!(args(&["--device", "DVS"]).is_err());
         assert!(args(&["--capture-bin", "/bin/capture", "--device", ""]).is_err());

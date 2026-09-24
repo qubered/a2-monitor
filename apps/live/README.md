@@ -105,11 +105,15 @@ Live renders one shared monitoring state from the backend (ADR 0027):
 - on the A2 side, a persistent, silent, dismissible banner for every unclaimed
   report, a pulsing outline and Reported badge on the card until claimed, and
   claim and mark-fixed actions in the banner, detail and exceptions sheet;
-  incidents wait for the A1 to confirm the fix; and
-- muted-start listening over WebRTC/Opus directly from the node (ADR 0026).
-  Changing input switches the node's selection inside the same session, so
-  mute, dim and gain carry over; gain runs from `-60 dB` to `+12 dB` and dim
-  adds `-12 dB`.
+  incidents wait for the A1 to confirm the fix;
+- listening over WebRTC/Opus directly from the node (ADR 0026), unmuted on
+  start (ADR 0029). Changing input switches the node's selection inside the
+  same session, so mute, dim and gain carry over; gain runs from `-60 dB` to
+  `+12 dB` and dim adds `-12 dB`; and
+- a shared host output (ADR 0029). When the node has an output device, Live
+  asks on open whether audio plays on this device or the host output (for
+  example DVS into comms). On host output every client shares one selection,
+  mute, dim and level, and the player names who changed it last.
 
 A simulated test signal is labelled `Simulated test signal` in the header at
 every width. No support, performance or operator claim follows from this build.
@@ -125,7 +129,7 @@ A2_AUDIO_DEVICE="Exact device name" npm run dev
 ```
 
 Without hardware, `npm run dev:simulate` runs the same stack against the
-built-in test signal and a simulated Shure AD4Q, with a seeded demo show in
+built-in test signal, a simulated host output and a simulated Shure AD4Q, with a seeded demo show in
 `data/simulated`. Vite serves Live at `http://127.0.0.1:4173` and Manager at
 `http://127.0.0.1:4174/manager/`. Component checks are:
 
@@ -138,7 +142,8 @@ npm run check --workspace @rvlt/pulse-live
 - [x] npm workspace and independent React/Vite production build
 - [x] shared Paper/dark design tokens and offline font assets
 - [x] A2 channel grid, filters, alert acknowledgement and detail surface
-- [x] muted-by-default source selection with visible mute and dim controls
+- [x] source selection with visible mute and dim controls (unmuted on start)
+- [x] shared host output chosen on open (ADR 0029)
 - [x] interaction tests and desktop/iPad visual checks
 - [x] backend health and fabricated snapshot endpoint
 - [x] Live snapshot loading, explicit waiting/offline/error states and reconnect

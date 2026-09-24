@@ -46,3 +46,7 @@ path = "src/bin/device-capture.rs"
 [[bin]]
 name = "pulse-media-worker"
 path = "src/bin/pulse-media-worker/main.rs"
+
+[[bin]]
+name = "pulse-device-output"
+path = "src/bin/device-output.rs"

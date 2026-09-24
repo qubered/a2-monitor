@@ -39,6 +39,26 @@ at the repository root runs it with a seeded demo show, and
 `npm run simulate:shure` starts a development AD4Q double on `127.0.0.1:2202`
 with scripted battery drain, RF dips, interference, mute and transmitter loss.
 
+### Shared host output
+
+When `A2_OUTPUT_DEVICE` names an exact output device (for example Dante Virtual
+Soundcard, routed to comms), the worker also renders one shared monitor mix and
+`pulse-device-output` plays it on the listed 1-based channels
+(`A2_OUTPUT_CHANNELS`, default `1`) (ADR 0029). Every Live client that chose
+host output controls and sees the same selection, mute, dim and level:
+
+| Request                       | Body                                                                 | Response                                   |
+| ----------------------------- | -------------------------------------------------------------------- | ------------------------------------------ |
+| `GET /audio/v0/output`        | none                                                                 | `host-output` contract                     |
+| `GET /audio/v0/output/events` | none                                                                 | SSE `event: output`, on connect and change |
+| `PATCH /audio/v0/output`      | any of `channelId`+`input`, `muted`, `dimmed`, `gainDb`, `changedBy` | `200` with the new `host-output`           |
+
+`channelId` and `input` change together; `null` for both clears the selection.
+`gainDb` is −60 to +12. Without an output device `output` is `null` and `PATCH`
+returns `409`. The state is held in memory and starts unmuted at 0 dB with
+nothing selected. `Pulse simulated output` discards the feed and is labelled
+simulated; `npm run dev:simulate` uses it.
+
 The gateway is deliberately outside the management backend. Signaling has no
 listener authorization and makes no performance claim. It must not be exposed
 to an untrusted network.
@@ -48,6 +68,8 @@ List the host's input devices:
 ```sh
 npm run devices
 ```
+
+List output devices with `cargo run --locked --bin pulse-device-output -- --list`.
 
 Start the complete local application with an exact name from that output:
 
@@ -62,6 +84,7 @@ development defaults:
 
 - `A2_MEDIA_WORKER_BIN`
 - `A2_CAPTURE_BIN`
+- `A2_OUTPUT_DEVICE`, `A2_OUTPUT_CHANNELS` and `A2_OUTPUT_BIN` (host output)
 - `A2_SIMULATED_CHANNELS` (test signal only, 1 to 64)
 - `A2_LISTEN_HOST`
 - `A2_LISTEN_PORT`

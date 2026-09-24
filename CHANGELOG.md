@@ -10,6 +10,12 @@ externally tested release.
 
 ### Added
 
+- Live: shared host monitor output (ADR 0029). When the node has an output
+  device (for example Dante Virtual Soundcard routed to comms), Live asks on
+  open whether audio plays on this device or the host output. Everyone on host
+  output shares one selection, mute, dim and level and sees who changed it
+  last. The macOS app window gains an output device and channel choice.
+
 - Manager: a Productions section for listing, creating, activating and
   removing named local productions, backed by a new
   `GET/POST /api/v1/productions`, `POST /api/v1/productions/:id/activate`
@@ -27,6 +33,8 @@ externally tested release.
   applied when Manager loads its own showfile.
 
 ### Changed
+
+- Live: listening no longer starts muted. Mute and dim stay one touch away.
 
 - Manager navigation moved from horizontal tabs to a settings-style sidebar
   (Show, Productions, Receivers, Channels), and the Show and Receivers

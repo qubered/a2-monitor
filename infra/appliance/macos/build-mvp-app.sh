@@ -62,7 +62,8 @@ npm run build --workspace @rvlt/pulse-backend
 npm run build --workspace @rvlt/pulse-listen-gateway
 npm run build --workspace @rvlt/pulse-live
 npm run build --workspace @rvlt/pulse-manager
-cargo build --locked --release --bin pulse-device-capture --bin pulse-media-worker
+cargo build --locked --release --bin pulse-device-capture --bin pulse-media-worker \
+  --bin pulse-device-output
 
 runtime_root="$(mktemp -d)"
 icon_root="$(mktemp -d)"
@@ -114,6 +115,7 @@ swift infra/appliance/macos/mvp-app/svg-to-png.swift infra/appliance/macos/mvp-a
 
 cp target/release/pulse-device-capture "$app/Contents/Resources/bin/pulse-device-capture"
 cp target/release/pulse-media-worker "$app/Contents/Resources/bin/pulse-media-worker"
+cp target/release/pulse-device-output "$app/Contents/Resources/bin/pulse-device-output"
 cp "$node_bin" "$app/Contents/Resources/bin/node"
 cp infra/appliance/macos/mvp-app/launcher.mjs "$app/Contents/Resources/launcher.mjs"
 xcrun swiftc \

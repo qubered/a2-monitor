@@ -13,6 +13,7 @@ import {
 } from "vitest";
 import type {
   FaultReport,
+  HostOutput,
   LiveAlert,
   LiveState,
   LiveStateChannel,
@@ -20,6 +21,7 @@ import type {
 import { App } from "./App";
 import type { AudioDeviceSource } from "./audio-device";
 import type { PlaybackFactory } from "./audio-playback";
+import { createManualHostOutput } from "./host-output";
 import { createManualLiveState } from "./live-state";
 import { MeterStore } from "./meters";
 
@@ -247,26 +249,62 @@ function liveMeters(): MeterStore {
   return store;
 }
 
+function hostDocument(
+  output: HostOutput["output"] = null,
+  monitor: Partial<HostOutput["monitor"]> = {},
+): HostOutput {
+  return {
+    schemaVersion: "0",
+    revision: 0,
+    output,
+    monitor: {
+      channelId: null,
+      input: null,
+      muted: false,
+      dimmed: false,
+      gainDb: 0,
+      changedBy: null,
+      changedAtUtc: null,
+      ...monitor,
+    },
+  };
+}
+
+const dvsOutput: NonNullable<HostOutput["output"]> = {
+  status: "ready",
+  detail: "Ready on output 3 of Dante Virtual Soundcard.",
+  deviceName: "Dante Virtual Soundcard",
+  outputChannels: [3],
+  simulated: false,
+  underruns: 0,
+  droppedFrames: 0,
+};
+
 function renderApp(
   state: LiveState | null,
   options: {
     audioDeviceSource?: AudioDeviceSource;
     playbackFactory?: PlaybackFactory;
     fetchAlertLog?: typeof fetch;
+    /** The node's host output document; by default it has no host output. */
+    hostOutput?: HostOutput;
   } = {},
 ) {
   const source = createManualLiveState();
   if (state) source.push(state);
+  const hostOutput = createManualHostOutput();
+  hostOutput.push(options.hostOutput ?? hostDocument());
   const view = render(
     <App
       liveStateSource={source}
       audioDeviceSource={options.audioDeviceSource ?? noDevice}
       playbackFactory={options.playbackFactory}
+      hostOutputSource={hostOutput}
       meterStore={liveMeters()}
       fetchAlertLog={options.fetchAlertLog}
     />,
   );
-  return { source, view };
+  return { source, hostOutput, view };
 }
 
 beforeAll(() => {
@@ -284,11 +322,11 @@ afterEach(() => {
 });
 
 describe("Live channel grid", () => {
-  it("starts muted and selecting a channel does not unmute", async () => {
+  it("starts unmuted and selecting a channel keeps the output state", async () => {
     const user = userEvent.setup();
     renderApp(stateWith());
 
-    expect(await screen.findByText("Monitor output is muted")).toBeTruthy();
+    expect(await screen.findByText("Monitor output is unmuted")).toBeTruthy();
     await user.click(
       screen.getByRole("button", { name: "Select Talkback, channel 2" }),
     );
@@ -303,7 +341,9 @@ describe("Live channel grid", () => {
     ).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Mute" }).getAttribute("aria-pressed"),
-    ).toBe("true");
+    ).toBe("false");
+    // Without a host output there is nothing to choose.
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("veils a card with the backend alert and acknowledges it as the named operator", async () => {
@@ -655,7 +695,7 @@ describe("Live channel grid", () => {
     expect(window.localStorage.getItem("pulse-operator-name")).toBe("Jamie");
   });
 
-  it("starts the first listen muted and keeps output state across channel changes", async () => {
+  it("starts the first listen audible and keeps output state across channel changes", async () => {
     const user = userEvent.setup();
     const setMuted = vi.fn(async () => undefined);
     const setChannel = vi.fn();
@@ -682,7 +722,7 @@ describe("Live channel grid", () => {
         }) as HTMLInputElement
       ).value,
     ).toBe("-18");
-    await screen.findByRole("button", { name: "Mute", pressed: true });
+    await screen.findByRole("button", { name: "Mute", pressed: false });
     await user.click(
       screen.getByRole("button", { name: "Select Talkback, channel 2" }),
     );
@@ -691,15 +731,18 @@ describe("Live channel grid", () => {
         expect.objectContaining({ channel: 1 }),
       ),
     );
-    expect(setMuted).toHaveBeenCalledWith(true);
-    expect(screen.getByText("Monitor output is muted")).toBeTruthy();
-
-    await user.click(screen.getByRole("button", { name: "Mute" }));
-    expect(setMuted).toHaveBeenLastCalledWith(false);
+    expect(setMuted).toHaveBeenCalledWith(false);
+    expect(screen.getByText("Monitor output is unmuted")).toBeTruthy();
     const card = screen
       .getByRole("button", { name: "Select Talkback, channel 2" })
       .closest("article")!;
     expect(card.classList.contains("is-listening")).toBe(true);
+
+    await user.click(screen.getByRole("button", { name: "Mute" }));
+    expect(setMuted).toHaveBeenLastCalledWith(true);
+    expect(card.classList.contains("is-listening")).toBe(false);
+    await user.click(screen.getByRole("button", { name: "Mute" }));
+    expect(setMuted).toHaveBeenLastCalledWith(false);
 
     await user.click(
       screen.getByRole("button", { name: "Select Marguerite, channel 1" }),
@@ -715,7 +758,7 @@ describe("Live channel grid", () => {
     const user = userEvent.setup();
     const playbackFactory = vi.fn<PlaybackFactory>();
     renderApp(stateWith(), { audioDeviceSource: readyDevice, playbackFactory });
-    await screen.findByRole("button", { name: "Mute", pressed: true });
+    await screen.findByRole("button", { name: "Mute", pressed: false });
 
     await user.click(
       screen.getByRole("button", { name: "Select Spare, channel 3" }),
@@ -841,5 +884,122 @@ describe("Live channel grid", () => {
     ).toBeNull();
     expect(card.classList.contains("is-reported")).toBe(false);
     expect(within(card).getByText("Being worked · Sam (A2)")).toBeTruthy();
+  });
+
+  it("asks where audio plays and shares one selection on the host output", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem("pulse-operator-name", "Sam");
+    const playbackFactory = vi.fn<PlaybackFactory>();
+    const { hostOutput } = renderApp(stateWith(), {
+      audioDeviceSource: readyDevice,
+      playbackFactory,
+      hostOutput: hostDocument(dvsOutput),
+    });
+
+    const prompt = await screen.findByRole("dialog", {
+      name: "Where should audio play?",
+    });
+    // The opening prompt needs an answer; it has no Cancel.
+    expect(within(prompt).queryByRole("button", { name: "Cancel" })).toBeNull();
+    await user.click(
+      within(prompt).getByRole("button", { name: /^Host output/ }),
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Audio: host output" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Host output idle")).toBeTruthy();
+
+    await user.click(
+      screen.getByRole("button", { name: "Select Talkback, channel 2" }),
+    );
+    expect(hostOutput.changes.at(-1)).toEqual({
+      channelId: "ch-talkback",
+      input: 1,
+      changedBy: "Sam (A2)",
+    });
+    const talkback = screen
+      .getByRole("button", { name: "Select Talkback, channel 2" })
+      .closest("article")!;
+    await vi.waitFor(() =>
+      expect(talkback.classList.contains("is-listening")).toBe(true),
+    );
+    expect(screen.getByText("Playing on host output")).toBeTruthy();
+    expect(
+      screen.getByText("Input 2 on output 3 of Dante Virtual Soundcard."),
+    ).toBeTruthy();
+    // The iPad itself never opens a listen session in host mode.
+    expect(playbackFactory).not.toHaveBeenCalled();
+
+    // Another operator selects a different channel: this device follows.
+    act(() =>
+      hostOutput.push(
+        hostDocument(dvsOutput, {
+          channelId: "ch-marguerite",
+          input: 0,
+          muted: true,
+          changedBy: "Alex (A2)",
+          changedAtUtc: new Date().toISOString(),
+        }),
+      ),
+    );
+    const marguerite = screen
+      .getByRole("button", { name: "Select Marguerite, channel 1" })
+      .closest("article")!;
+    expect(marguerite.classList.contains("is-selected")).toBe(true);
+    expect(talkback.classList.contains("is-selected")).toBe(false);
+    expect(screen.getByText("Host output is muted")).toBeTruthy();
+    expect(screen.getByText(/Last change: Alex \(A2\)/)).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "Mute" }));
+    expect(hostOutput.changes.at(-1)).toEqual({
+      muted: false,
+      changedBy: "Sam (A2)",
+    });
+  });
+
+  it("plays on this device when chosen, without touching the host output", async () => {
+    const user = userEvent.setup();
+    const playbackFactory = vi.fn<PlaybackFactory>(() => ({
+      setChannel: vi.fn(),
+      setMuted: vi.fn(async () => undefined),
+      setDimmed: vi.fn(),
+      setGainDb: vi.fn(),
+      close: vi.fn(),
+    }));
+    window.localStorage.setItem("pulse-selected-channel", "ch-talkback");
+    const { hostOutput } = renderApp(stateWith(), {
+      audioDeviceSource: readyDevice,
+      playbackFactory,
+      hostOutput: hostDocument(dvsOutput, {
+        channelId: "ch-marguerite",
+        input: 0,
+      }),
+    });
+
+    const prompt = await screen.findByRole("dialog", {
+      name: "Where should audio play?",
+    });
+    // Nothing plays until the choice is made, even with a remembered channel.
+    expect(playbackFactory).not.toHaveBeenCalled();
+    await user.click(
+      within(prompt).getByRole("button", { name: /^This device/ }),
+    );
+    await vi.waitFor(() =>
+      expect(playbackFactory).toHaveBeenCalledWith(
+        expect.objectContaining({ channel: 1 }),
+      ),
+    );
+    expect(hostOutput.changes).toEqual([]);
+
+    // The choice can be changed from the header.
+    await user.click(
+      screen.getByRole("button", { name: "Audio: this device" }),
+    );
+    const sheet = screen.getByRole("dialog", {
+      name: "Where should audio play?",
+    });
+    await user.click(within(sheet).getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

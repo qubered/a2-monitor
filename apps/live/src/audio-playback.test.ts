@@ -131,6 +131,7 @@ function setup(responses?: (url: string, init?: RequestInit) => Response) {
     return new Response(null, { status: 204 });
   });
   const network = new EventTarget();
+  const gestures = new EventTarget();
   const clock = manualTimers();
   const audio = {
     muted: false,
@@ -146,13 +147,14 @@ function setup(responses?: (url: string, init?: RequestInit) => Response) {
     fetch: fetch as unknown as typeof globalThis.fetch,
     createAudioElement: () => audio as unknown as HTMLAudioElement,
     network,
+    gestureTarget: gestures,
     timers: clock.timers,
   });
-  return { factory, calls, network, clock, audio, updates };
+  return { factory, calls, network, gestures, clock, audio, updates };
 }
 
 describe("WebRTC Opus playback", () => {
-  it("signals a recvonly offer, starts muted and applies dim safely", async () => {
+  it("signals a recvonly offer, starts audible and applies dim safely", async () => {
     const { factory, calls, audio, updates } = setup();
     const session = factory({ channel: 1, onUpdate: (u) => updates.push(u) });
     await settle();
@@ -168,7 +170,8 @@ describe("WebRTC Opus playback", () => {
     expect(FakeAudioContext.latest.options).toEqual({
       latencyHint: "interactive",
     });
-    expect(FakeAudioContext.latest.gain.gain.value).toBe(0);
+    // Unmuted at the default −18 dB monitor level.
+    expect(FakeAudioContext.latest.gain.gain.value).toBeCloseTo(0.1259, 4);
 
     peer?.deliverTrack();
     // The element only feeds Web Audio; it is never an audible path.
@@ -195,6 +198,38 @@ describe("WebRTC Opus playback", () => {
       url: `${LISTEN_SESSIONS_PATH}/00000000-0000-4000-8000-000000000001`,
       init: { method: "DELETE", keepalive: true },
     });
+  });
+
+  it("says when the browser holds audio and starts it on the next touch", async () => {
+    const { factory, gestures, updates } = setup();
+    const session = factory({ channel: 0, onUpdate: (u) => updates.push(u) });
+    await settle();
+    FakePeerConnection.instances[0]?.deliverTrack();
+    const context = FakeAudioContext.latest;
+
+    // Without a gesture the context stays suspended after resume().
+    await session.setMuted(false);
+    expect(updates.at(-1)).toEqual({
+      status: "listening",
+      detail: "The browser is holding audio. Tap anywhere to start it.",
+    });
+
+    context.resume.mockImplementation(async () => {
+      context.state = "running";
+    });
+    gestures.dispatchEvent(new Event("pointerdown"));
+    await settle();
+    expect(context.state).toBe("running");
+    expect(updates.at(-1)).toEqual({
+      status: "listening",
+      detail: "Receiving input 1.",
+    });
+
+    session.close();
+    context.resume.mockClear();
+    context.state = "suspended";
+    gestures.dispatchEvent(new Event("pointerdown"));
+    expect(context.resume).not.toHaveBeenCalled();
   });
 
   it("switches input on the live session without renegotiating", async () => {

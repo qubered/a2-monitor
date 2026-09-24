@@ -80,6 +80,7 @@ boundary; production evidence promotion remains deferred.
 - [WebRTC/Opus listen transport for the local MVP](decisions/0026-webrtc-opus-listen-mvp.md)
 - [MVP live monitoring state and alert lifecycle](decisions/0027-mvp-live-monitoring-and-alerts.md)
 - [MVP shared mic checks and A1 fault reports](decisions/0028-mvp-shared-checks-and-fault-reports.md)
+- [Shared host monitor output](decisions/0029-shared-host-monitor-output.md)
 
 ## Reference
 

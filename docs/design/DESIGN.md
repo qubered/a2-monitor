@@ -1,9 +1,9 @@
 # Pulse — design language
 
-- **Version:** 2.2.0
+- **Version:** 2.3.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
-- **Last updated:** 2026-09-23
+- **Last updated:** 2026-09-24
 
 This is the whole design language in one document. It is normative: where it and
 anything else disagree, this document is the intent, and the implementation is
@@ -115,8 +115,10 @@ the product — the pulse on an unclaimed fault report — and it marks work tha
 been handed over and not picked up. Everything else moves only in response to a
 touch or a change in data.
 
-**2.7 Safety is a control, not a setting.** Listen starts muted. Mute and dim are
-always visible and one touch away, never in a menu.
+**2.7 Safety is a control, not a setting.** Mute and dim are always visible and
+one touch away, never in a menu. Listen starts unmuted at the operator's last
+level ([ADR 0029](../decisions/0029-shared-host-monitor-output.md)); a
+start-muted step was removed at operator request.
 
 **2.8 The tool is advisory.** Alerts say what happened, not what it means. No
 diagnosis is claimed before a labelled evidence base exists.
@@ -615,6 +617,15 @@ permissioned from listening and from marking.
 **Transport row**, always visible: what you are hearing · previous · clear ·
 **mute** · **dim** · output level with its numeric value · groups · expand.
 
+**Where audio plays.** When the node has a host output
+([ADR 0029](../decisions/0029-shared-host-monitor-output.md)), Live asks on open
+whether to play on _this device_ or the _host output_, offering the last choice
+first; a header chip reopens the choice. On host output the transport row
+controls one mix shared by everyone on host output: the selected card, mute,
+dim and level follow whoever changed them last, the row is labelled _host
+output_, and it says it is shared and who changed it last and when. The
+device never plays in that mode.
+
 ### 10.5 Detail
 
 Opened by the `⤢` button. This is where the depth lives, which is what lets the
@@ -906,6 +917,11 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.3.0 — 2026-09-24.** Listen no longer starts muted ([§2.7](#2-principles));
+mute and dim stay one touch away. Live can play on a shared host output instead
+of the device, chosen on open ([§10.4](#104-the-player), ADR 0029). Implemented in
+Live alongside this entry; not operator-validated.
 
 **2.2.0 — 2026-09-23.** The A2 grid no longer reorders
 ([§11.1](#111-a2-grid)). Critical sources used to pin to the top, with the

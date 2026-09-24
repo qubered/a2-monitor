@@ -99,6 +99,18 @@ const contracts = [
     rejected: ["fixtures/v0/http/incompatible/meter-frame.unknown-field.json"],
   },
   {
+    name: "host-output",
+    schema: "schema/v0/http/host-output.schema.json",
+    accepted: [
+      "fixtures/v0/http/current/host-output.valid.json",
+      "fixtures/v0/http/previous/host-output.valid.json",
+    ],
+    rejected: [
+      "fixtures/v0/http/incompatible/host-output.unknown-field.json",
+      "fixtures/v0/http/incompatible/host-output.gain-above-range.json",
+    ],
+  },
+  {
     name: "live-state",
     schema: "schema/v0/http/live-state.schema.json",
     accepted: [

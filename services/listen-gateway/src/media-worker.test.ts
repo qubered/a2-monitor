@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   MediaWorkerManager,
   SessionRejectedError,
+  parseOutputChannels,
   parseWorkerEvent,
   type WorkerProcess,
 } from "./media-worker.js";
@@ -337,6 +338,88 @@ describe("parseWorkerEvent", () => {
       { peakDbfs: ["-6"] },
     ]) {
       expect(() => parseWorkerEvent(meters(invalid))).toThrow();
+    }
+  });
+
+  it("adds the output device to the worker and tracks its state", async () => {
+    const child = new FakeWorkerProcess();
+    const factory = vi.fn(() => child);
+    const media = new MediaWorkerManager({
+      device: "DVS",
+      workerBinary: "/bin/worker",
+      captureBinary: "/bin/capture",
+      outputDevice: "DVS",
+      outputChannels: [3, 4],
+      outputBinary: "/bin/output",
+      processFactory: factory,
+    });
+    media.setMonitor({ channel: 1, gain: 0.5 });
+    media.start();
+    expect(factory).toHaveBeenCalledWith("/bin/worker", [
+      "--capture-bin",
+      "/bin/capture",
+      "--device",
+      "DVS",
+      "--output-bin",
+      "/bin/output",
+      "--output-device",
+      "DVS",
+      "--output-channels",
+      "3,4",
+    ]);
+    expect(media.getOutputState()).toMatchObject({ status: "starting" });
+
+    child.ready();
+    child.emit({
+      type: "output-ready",
+      deviceName: "DVS",
+      channelCount: 64,
+      outputChannels: [3, 4],
+    });
+    child.emit({
+      type: "output-stats",
+      underruns: 2,
+      skippedFrames: 10,
+      overflowFrames: 0,
+      droppedBlocks: 1,
+    });
+    await flush();
+    // The monitor set before the worker was ready is sent once it is.
+    expect(child.commands).toContainEqual({
+      type: "monitor",
+      channel: 1,
+      gain: 0.5,
+    });
+    expect(media.getOutputState()).toMatchObject({
+      status: "ready",
+      detail: "Ready on outputs 3 + 4 of DVS.",
+      underruns: 2,
+      droppedFrames: 490,
+    });
+
+    child.emit({
+      type: "output-failed",
+      detail: "output device not found",
+      retryInMs: 2_000,
+    });
+    await flush();
+    expect(media.getOutputState()).toMatchObject({
+      status: "error",
+      detail: "output device not found. Retrying in 2 s.",
+    });
+    media.stop();
+  });
+
+  it("reports no output state without an output device", () => {
+    const media = new MediaWorkerManager({ device: "DVS" });
+    expect(media.getOutputState()).toBeNull();
+  });
+
+  it("parses output channel lists strictly", () => {
+    expect(parseOutputChannels("1")).toEqual([1]);
+    expect(parseOutputChannels(" 3, 4 ")).toEqual([3, 4]);
+    for (const invalid of ["", "0", "1,1", "257", "1.5", "a"]) {
+      expect(() => parseOutputChannels(invalid), invalid).toThrow();
     }
   });
 });

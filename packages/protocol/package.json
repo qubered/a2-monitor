@@ -23,6 +23,7 @@
     "./schema/channel-level-history": "./schema/v0/http/channel-level-history.schema.json",
     "./schema/node-levels": "./schema/v0/http/node-levels.schema.json",
     "./schema/meter-frame": "./schema/v0/http/meter-frame.schema.json",
+    "./schema/host-output": "./schema/v0/http/host-output.schema.json",
     "./schema/live-state": "./schema/v0/http/live-state.schema.json",
     "./schema/alert-log": "./schema/v0/http/alert-log.schema.json",
     "./schema/mic-checks": "./schema/v0/http/mic-checks.schema.json",

@@ -10,6 +10,7 @@ use std::sync::mpsc::SyncSender;
 
 use crate::Event;
 use crate::capture::CaptureHeader;
+use crate::host_output::{MAX_MONITOR_GAIN, OutputReport};
 use crate::meters::{METER_INTERVAL_MS, MeterReading};
 
 const COMMAND_LIMIT_BYTES: usize = 128 * 1024;
@@ -17,7 +18,7 @@ const OFFER_LIMIT_BYTES: usize = 64 * 1024;
 const SESSION_ID_LIMIT: usize = 64;
 const MAX_CHANNEL_INDEX: u64 = 255;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Command {
     Open {
         session_id: String,
@@ -31,6 +32,11 @@ pub enum Command {
     },
     Close {
         session_id: String,
+    },
+    /// Sets the shared host monitor mix (ADR 0029). `None` fades the output to silence.
+    Monitor {
+        channel: Option<usize>,
+        gain: f32,
     },
 }
 
@@ -106,6 +112,19 @@ pub fn parse_command(line: &str) -> Result<Command, String> {
                 session_id: session_id(record)?,
                 channel: channel(record)?,
             })
+        }
+        Some("monitor") => {
+            exact_keys(record, &["type", "channel", "gain"])?;
+            let channel = match record.get("channel") {
+                Some(Value::Null) => None,
+                _ => Some(channel(record)?),
+            };
+            let gain = record
+                .get("gain")
+                .and_then(Value::as_f64)
+                .filter(|gain| (0.0..=f64::from(MAX_MONITOR_GAIN)).contains(gain))
+                .ok_or_else(|| "gain is invalid".to_owned())? as f32;
+            Ok(Command::Monitor { channel, gain })
         }
         Some("close") => {
             exact_keys(record, &["type", "sessionId"])?;
@@ -210,6 +229,39 @@ impl<W: Write> EventWriter<W> {
         }))
     }
 
+    /// Host monitor output state for the gateway (ADR 0029).
+    pub fn output(&mut self, report: &OutputReport) -> std::io::Result<()> {
+        self.emit(match report {
+            OutputReport::Ready {
+                device_name,
+                channel_count,
+                output_channels,
+            } => json!({
+                "type": "output-ready",
+                "deviceName": device_name,
+                "channelCount": channel_count,
+                "outputChannels": output_channels,
+            }),
+            OutputReport::Stats {
+                underruns,
+                skipped_frames,
+                overflow_frames,
+                dropped_blocks,
+            } => json!({
+                "type": "output-stats",
+                "underruns": underruns,
+                "skippedFrames": skipped_frames,
+                "overflowFrames": overflow_frames,
+                "droppedBlocks": dropped_blocks,
+            }),
+            OutputReport::Failed { detail, retry_in } => json!({
+                "type": "output-failed",
+                "detail": detail,
+                "retryInMs": retry_in.as_millis() as u64,
+            }),
+        })
+    }
+
     pub fn stats(&mut self, sessions: usize, dropped_blocks: u64) -> std::io::Result<()> {
         self.emit(json!({
             "type": "stats",
@@ -244,6 +296,20 @@ mod tests {
             })
         );
         assert_eq!(
+            parse_command(r#"{"type":"monitor","channel":2,"gain":0.5}"#),
+            Ok(Command::Monitor {
+                channel: Some(2),
+                gain: 0.5
+            })
+        );
+        assert_eq!(
+            parse_command(r#"{"type":"monitor","channel":null,"gain":0}"#),
+            Ok(Command::Monitor {
+                channel: None,
+                gain: 0.0
+            })
+        );
+        assert_eq!(
             parse_command(r#"{"type":"close","sessionId":"a-1"}"#),
             Ok(Command::Close {
                 session_id: "a-1".into()
@@ -261,6 +327,9 @@ mod tests {
             r#"{"type":"open","sessionId":"a","channel":0,"offer":"v=0","candidateAddress":"0.0.0.0"}"#,
             r#"{"type":"open","sessionId":"a","channel":0,"offer":"","candidateAddress":"127.0.0.1"}"#,
             r#"{"type":"restart"}"#,
+            r#"{"type":"monitor","channel":0,"gain":5}"#,
+            r#"{"type":"monitor","channel":0,"gain":-0.1}"#,
+            r#"{"type":"monitor","channel":0}"#,
             "[]",
         ] {
             assert!(parse_command(line).is_err(), "{line}");

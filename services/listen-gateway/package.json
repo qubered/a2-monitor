@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "check": "npm run format && npm run lint && npm run test && npm run build",
-    "dev": "cargo build --locked --bin pulse-device-capture --bin pulse-media-worker --manifest-path ../../Cargo.toml && npm run build && node --watch dist/start.js",
+    "dev": "cargo build --locked --bin pulse-device-capture --bin pulse-media-worker --bin pulse-device-output --manifest-path ../../Cargo.toml && npm run build && node --watch dist/start.js",
     "format": "prettier --check \"src/**/*.ts\" \"*.json\"",
     "lint": "eslint src",
     "start": "node dist/start.js",

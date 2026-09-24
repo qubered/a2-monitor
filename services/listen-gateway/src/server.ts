@@ -7,7 +7,18 @@ import {
   type ServerResponse,
 } from "node:http";
 import { networkInterfaces, type NetworkInterfaceInfo } from "node:os";
-import type { MeterFrame, NodeLevels } from "@rvlt/pulse-protocol/http";
+import type {
+  HostOutput,
+  MeterFrame,
+  NodeLevels,
+} from "@rvlt/pulse-protocol/http";
+import {
+  hostOutputDocument,
+  MonitorChangeError,
+  monitorCommand,
+  parseMonitorChange,
+  SharedHostMonitor,
+} from "./host-output.js";
 import { LEVEL_WINDOW_MS, LevelBank, type MeterReading } from "./levels.js";
 import {
   MediaWorkerManager,
@@ -19,6 +30,7 @@ import { ShureFleetMonitor } from "./shure.js";
 
 const MAX_SIGNALING_BODY_BYTES = 64 * 1024;
 const MAX_METER_CLIENTS = 64;
+const MAX_OUTPUT_CLIENTS = 64;
 const MAX_METER_BUFFERED_BYTES = 64 * 1024;
 const METER_KEEPALIVE_MS = 15_000;
 const MAX_DETAIL_LENGTH = 240;
@@ -29,6 +41,7 @@ const SESSION_CHANNEL_PATH =
 export type ListenGatewayOptions = MediaWorkerOptions &
   WebHostOptions & {
     mediaWorker?: MediaWorkerManager;
+    hostMonitor?: SharedHostMonitor;
     shureMonitor?: ShureFleetMonitor;
     interfaces?: () => NodeJS.Dict<NetworkInterfaceInfo[]>;
   };
@@ -58,11 +71,12 @@ function sendJson(
 
 /**
  * Reads a small JSON object. Requiring `application/json` makes any cross-origin
- * page go through a CORS preflight this server never approves.
+ * page go through a CORS preflight this server never approves. With `keys`, the
+ * object must have exactly those fields.
  */
 async function readJsonObject(
   request: IncomingMessage,
-  keys: readonly string[],
+  keys?: readonly string[],
 ): Promise<Record<string, unknown>> {
   const contentType = request.headers["content-type"] ?? "";
   if (!/^application\/json(\s*;|$)/i.test(contentType)) {
@@ -88,6 +102,7 @@ async function readJsonObject(
     throw new HttpError(400, "invalid-body");
   }
   const record = value as Record<string, unknown>;
+  if (keys === undefined) return record;
   const actual = Object.keys(record).sort();
   const expected = [...keys].sort();
   if (
@@ -150,6 +165,8 @@ export class ListenGateway {
   readonly server: Server;
   private readonly interfaces: () => NodeJS.Dict<NetworkInterfaceInfo[]>;
   private readonly meterClients = new Set<ServerResponse>();
+  private readonly outputClients = new Set<ServerResponse>();
+  readonly hostMonitor: SharedHostMonitor;
   private readonly keepalive: NodeJS.Timeout;
   private levels: LevelBank | undefined;
 
@@ -160,14 +177,30 @@ export class ListenGateway {
         device: options.device,
         workerBinary: options.workerBinary,
         captureBinary: options.captureBinary,
+        outputDevice: options.outputDevice,
+        outputChannels: options.outputChannels,
+        outputBinary: options.outputBinary,
         processFactory: options.processFactory,
       });
-    this.media.on("state", () => this.resetLevels());
+    this.hostMonitor = options.hostMonitor ?? new SharedHostMonitor();
+    this.media.on("state", () => {
+      this.resetLevels();
+      const state = this.media.getState();
+      if (state.status === "ready") {
+        this.hostMonitor.constrain(state.device.channelCount);
+      }
+    });
+    this.media.on("output", () => this.broadcastOutput());
+    this.hostMonitor.on("change", () => {
+      this.media.setMonitor(monitorCommand(this.hostMonitor.get()));
+      this.broadcastOutput();
+    });
     this.media.on("meters", (reading: MeterReading) =>
       this.levels?.ingest(reading),
     );
     this.keepalive = setInterval(() => {
       for (const client of this.meterClients) client.write(": keepalive\n\n");
+      for (const client of this.outputClients) client.write(": keepalive\n\n");
     }, METER_KEEPALIVE_MS);
     this.keepalive.unref();
     this.shure =
@@ -185,6 +218,24 @@ export class ListenGateway {
       }
       if (request.method === "GET" && request.url === "/audio/v0/meters") {
         this.openMeterStream(response);
+        return;
+      }
+      if (request.url === "/audio/v0/output") {
+        this.handleOutput(request, response).catch((error: unknown) => {
+          if (response.headersSent) return;
+          if (error instanceof HttpError) {
+            sendJson(response, error.status, { error: error.code });
+          } else {
+            sendJson(response, 500, { error: "internal-error" });
+          }
+        });
+        return;
+      }
+      if (
+        request.method === "GET" &&
+        request.url === "/audio/v0/output/events"
+      ) {
+        this.openOutputStream(response);
         return;
       }
       if (request.method === "GET" && request.url === "/audio/v0/shure") {
@@ -282,6 +333,73 @@ export class ListenGateway {
     throw new HttpError(404, "not-found");
   }
 
+  /** The `host-output` document: output device state plus the shared monitor mix. */
+  getOutput(): HostOutput {
+    return hostOutputDocument(this.media.getOutputState(), this.hostMonitor);
+  }
+
+  /**
+   * Shared host monitor output (ADR 0029). `GET` reads it; `PATCH` changes any
+   * subset of the monitor for every client at once and returns the new document.
+   */
+  private async handleOutput(
+    request: IncomingMessage,
+    response: ServerResponse,
+  ): Promise<void> {
+    if (request.method === "GET") {
+      sendJson(response, 200, this.getOutput());
+      return;
+    }
+    if (request.method !== "PATCH")
+      throw new HttpError(405, "method-not-allowed");
+    if (this.media.getOutputState() === null) {
+      throw new HttpError(409, "host-output-not-configured");
+    }
+    const body = await readJsonObject(request);
+    const state = this.media.getState();
+    try {
+      this.hostMonitor.apply(
+        parseMonitorChange(
+          body,
+          state.status === "ready" ? state.device.channelCount : null,
+        ),
+      );
+    } catch (error) {
+      if (error instanceof MonitorChangeError) {
+        throw new HttpError(
+          error.code === "audio-not-ready" ? 503 : 400,
+          error.code,
+        );
+      }
+      throw error;
+    }
+    sendJson(response, 200, this.getOutput());
+  }
+
+  /** Server-Sent Events: the `host-output` document on connect and after every change. */
+  private openOutputStream(response: ServerResponse): void {
+    if (this.outputClients.size >= MAX_OUTPUT_CLIENTS) {
+      sendJson(response, 503, { error: "output-capacity-reached" });
+      return;
+    }
+    response.writeHead(200, {
+      "Cache-Control": "no-store",
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "X-Accel-Buffering": "no",
+    });
+    response.write(
+      `event: output\ndata: ${JSON.stringify(this.getOutput())}\n\n`,
+    );
+    this.outputClients.add(response);
+    response.on("close", () => this.outputClients.delete(response));
+  }
+
+  private broadcastOutput(): void {
+    if (this.outputClients.size === 0) return;
+    const message = `event: output\ndata: ${JSON.stringify(this.getOutput())}\n\n`;
+    for (const client of this.outputClients) client.write(message);
+  }
+
   /** The capture state plus the trailing per-input level summary the backend evaluates alerts from. */
   getLevels(): NodeLevels {
     const state = this.media.getState();
@@ -357,6 +475,8 @@ export class ListenGateway {
     this.shure.close();
     for (const client of this.meterClients) client.end();
     this.meterClients.clear();
+    for (const client of this.outputClients) client.end();
+    this.outputClients.clear();
     const closed = new Promise<void>((resolve, reject) => {
       this.server.close((error) => (error ? reject(error) : resolve()));
     });

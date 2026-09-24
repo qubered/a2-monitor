@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "0",
+  "revision": 0,
+  "output": null,
+  "monitor": {
+    "channelId": null,
+    "input": null,
+    "muted": false,
+    "dimmed": false,
+    "gainDb": 0,
+    "changedBy": null,
+    "changedAtUtc": null
+  }
+}

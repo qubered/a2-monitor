@@ -3,7 +3,11 @@ import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { PassThrough } from "node:stream";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { parseMeterFrame, parseNodeLevels } from "@rvlt/pulse-protocol/http";
+import {
+  parseHostOutput,
+  parseMeterFrame,
+  parseNodeLevels,
+} from "@rvlt/pulse-protocol/http";
 import {
   MediaWorkerManager,
   SIMULATED_DEVICE_NAME,
@@ -50,11 +54,15 @@ afterEach(async () => {
   gateways.clear();
 });
 
-async function startGateway(device = "Test Device") {
+async function startGateway(
+  device = "Test Device",
+  output?: { outputDevice: string; outputChannels: number[] },
+) {
   const worker = new ScriptedWorker();
   const media = new MediaWorkerManager({
     device,
     processFactory: () => worker,
+    ...output,
   });
   const gateway = new ListenGateway({
     mediaWorker: media,
@@ -288,5 +296,138 @@ describe("candidateAddressFor", () => {
 
   it("falls back to loopback only without a LAN interface", () => {
     expect(candidateAddressFor("127.0.0.1", interfaces)).toBe("127.0.0.1");
+  });
+});
+
+describe("ListenGateway shared host output", () => {
+  const output = { outputDevice: "DVS", outputChannels: [3] };
+
+  async function patch(base: string, body: unknown) {
+    return fetch(`${base}/audio/v0/output`, {
+      method: "PATCH",
+      headers: json,
+      body: JSON.stringify(body),
+    });
+  }
+
+  it("reports no output when no output device is configured and refuses changes", async () => {
+    const { base } = await startGateway();
+    const state = parseHostOutput(
+      await (await fetch(`${base}/audio/v0/output`)).json(),
+    );
+    expect(state.output).toBeNull();
+    const refused = await patch(base, { muted: true });
+    expect(refused.status).toBe(409);
+  });
+
+  it("applies one client's change for everyone and drives the worker mix", async () => {
+    const { worker, base } = await startGateway("Test Device", output);
+    worker.emit({
+      type: "output-ready",
+      deviceName: "DVS",
+      channelCount: 64,
+      outputChannels: [3],
+    });
+    await vi.waitFor(async () => {
+      const state = parseHostOutput(
+        await (await fetch(`${base}/audio/v0/output`)).json(),
+      );
+      expect(state.output?.status).toBe("ready");
+    });
+
+    const events = await fetch(`${base}/audio/v0/output/events`);
+    const reader = events.body!.getReader();
+    const decoder = new TextDecoder();
+    let text = "";
+    const nextDocument = async () => {
+      while (!text.includes("\n\n")) {
+        const { value } = await reader.read();
+        text += decoder.decode(value);
+      }
+      const [message, ...rest] = text.split("\n\n");
+      text = rest.join("\n\n");
+      const data = message!
+        .split("\n")
+        .find((line) => line.startsWith("data: "))!
+        .slice(6);
+      return parseHostOutput(JSON.parse(data));
+    };
+    expect((await nextDocument()).monitor.input).toBeNull();
+
+    const selected = await patch(base, {
+      channelId: "ch-lead",
+      input: 1,
+      changedBy: "Sam (A2)",
+    });
+    expect(selected.status).toBe(200);
+    const pushed = await nextDocument();
+    expect(pushed.monitor).toMatchObject({
+      channelId: "ch-lead",
+      input: 1,
+      muted: false,
+      gainDb: 0,
+      changedBy: "Sam (A2)",
+    });
+    expect(pushed.revision).toBe(1);
+    expect(worker.commands.at(-1)).toEqual({
+      type: "monitor",
+      channel: 1,
+      gain: 1,
+    });
+
+    await patch(base, { dimmed: true, gainDb: -6 });
+    expect((await nextDocument()).monitor).toMatchObject({
+      input: 1,
+      dimmed: true,
+      gainDb: -6,
+      changedBy: null,
+    });
+    expect(worker.commands.at(-1)).toMatchObject({ channel: 1 });
+    expect(worker.commands.at(-1)?.gain).toBeCloseTo(10 ** (-18 / 20), 6);
+
+    await patch(base, { muted: true });
+    expect(worker.commands.at(-1)).toEqual({
+      type: "monitor",
+      channel: 1,
+      gain: 0,
+    });
+    await reader.cancel();
+  });
+
+  it("rejects out-of-range inputs, unpaired selections and unsafe gain", async () => {
+    const { base } = await startGateway("Test Device", output);
+    for (const body of [
+      { channelId: "ch", input: 2 },
+      { input: 0 },
+      { channelId: "ch" },
+      { gainDb: 13 },
+      { muted: "yes" },
+      { changedBy: "Sam" },
+      { volume: 1 },
+      {},
+    ]) {
+      expect((await patch(base, body)).status, JSON.stringify(body)).toBe(400);
+    }
+    const cleared = await patch(base, { channelId: null, input: null });
+    expect(cleared.status).toBe(200);
+  });
+
+  it("re-sends the shared mix after the worker restarts", async () => {
+    const { worker, base } = await startGateway("Test Device", output);
+    await patch(base, { channelId: "ch", input: 0 });
+    worker.commands.length = 0;
+    worker.emit({
+      type: "ready",
+      deviceName: "Test Device",
+      sampleRateHz: 48_000,
+      channelCount: 2,
+    });
+    await vi.waitFor(() =>
+      expect(worker.commands).toContainEqual({
+        type: "monitor",
+        channel: 0,
+        gain: 1,
+      }),
+    );
   });
 });

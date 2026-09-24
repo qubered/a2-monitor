@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.73c5a37b23b99c17",
-  "sourceSha256": "73c5a37b23b99c173eeb2d21560bf1bcfd3bea0e89674e02fe8318014488d80d",
+  "buildId": "a2-0.0.0+sha256.cf2db8d25890fe89",
+  "sourceSha256": "cf2db8d25890fe895bc2738f3605859e816f651964d5cf1c34726120c102a942",
   "inputCount": 389,
   "inputs": [
     {
@@ -45,11 +45,11 @@
     },
     {
       "path": "AGENTS.md",
-      "sha256": "27433bdb407bf1d5242d5b9015fb29793d00b2de146ea1e265e64c0941deef31"
+      "sha256": "135c5c5fc90411baa0e7ed57553092bd6b5832834466ca8e4814b8e08671ee4c"
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "9bfc61e1d2ef3a5fd01b69544de27cf0ffe430d06b4f4da8b3533becaf659446"
+      "sha256": "b14fd1e3e9a3ba0dc9220c2b887ed5fa4d6f8e8f185ccf772ccce47a9cdb08c9"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -73,7 +73,7 @@
     },
     {
       "path": "apps/live/README.md",
-      "sha256": "eddb2bae43e34d560bda5e59b692855cc3446dc300c3938a61106b246fa55ef1"
+      "sha256": "2751221c6fd485c7f7d7af083dcec05f257b3bd80c5700bb9b9baa97f10fc4f6"
     },
     {
       "path": "apps/live/index.html",
@@ -89,11 +89,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "14db8b66c03d6bad684e90ae8a8e5aed2d1a7b5307814c015acd7a464877c5fa"
+      "sha256": "7e33b2689b9182eefe14f57f74bd0dc6ae8787af0bc5c41d1fafc43d2d6f2da7"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "09078d71ccb0e6ca50875e61eacfd750dc64ca8549f2957b94de6862149d79ba"
+      "sha256": "c1efc21c3bc4fdf457f70b8fd52607f12d55a2e0de8f5eb5a282f602753bf48a"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -109,11 +109,11 @@
     },
     {
       "path": "apps/live/src/audio-playback.test.ts",
-      "sha256": "e793a5b4244bdd3b5b28d961799a5578e6c70080423fd5c202b6d1070482030c"
+      "sha256": "fb1ec30ff687672fb32c511f6f7b0b308f2e8ec36a29f3e1867c39fb56d5182f"
     },
     {
       "path": "apps/live/src/audio-playback.ts",
-      "sha256": "35c322a57534b1e88e9bd42fec15746ddc7691e53039c1fa1d861d467bbf433c"
+      "sha256": "b4d5cb261bc5e9ab984d271081ac39c8c2187e567312651cfb1a7513f342c4a5"
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
@@ -141,7 +141,7 @@
     },
     {
       "path": "apps/live/src/components/Player.tsx",
-      "sha256": "741a1cfa8b69ff889192b0e8daa0d10e6ae7889fb7efb231831c842fc3870c5e"
+      "sha256": "e2af85945b10ff898b878ab113905ed86f4212f47e62090f122fe8bcc395f8be"
     },
     {
       "path": "apps/live/src/components/ReportSheet.tsx",
@@ -185,7 +185,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "d095dfebe06f759e12f090663dcb6ab7b741ffd115097bf0961972d768dd09ca"
+      "sha256": "d60524ace8863896c6eb01f0eb1ad96ac389b808a6ef0bf929f19b498dec1e4c"
     },
     {
       "path": "apps/live/src/useAudioDevice.ts",
@@ -469,7 +469,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256": "a0c1fe887cf7cb271347b148bdad0fcb954bc514bfbf3a30e19836147a0f90ee"
+      "sha256": "74fa0a752493d95987eec32d279433ffc525f6c595b5073ad3537fc32a3119ed"
     },
     {
       "path": "docs/api/show-management-and-control.md",
@@ -657,7 +657,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "80539e9241478eeaab6657fd2c59205fe7924d915c09581dd485d60f4a68b285"
+      "sha256": "b4bca39ecd5c406255285b817f6180d91bfd486dccb57000c5b3259248ed1521"
     },
     {
       "path": "docs/design/README.md",
@@ -777,7 +777,7 @@
     },
     {
       "path": "docs/quality/listening-safety.md",
-      "sha256": "32211ce987402045864321d8cac9eebffdb46bd902a81bda557884c31cb9288b"
+      "sha256": "a072ae1b02c85f43903eebae821bdc1a05bb7773eff9e955a50de60e435cb9f8"
     },
     {
       "path": "docs/quality/node-dependency-inventory.json",
@@ -873,11 +873,11 @@
     },
     {
       "path": "infra/appliance/macos/README.md",
-      "sha256": "7e7e61a8ef092ac3490b6ce8543ae9cbe2bfc34986b299ead663d4305c47d113"
+      "sha256": "5bf238aaee5056c33b9c175fc1d62b3839e218fd24b9e2d414d16c9f978bbc49"
     },
     {
       "path": "infra/appliance/macos/build-mvp-app.sh",
-      "sha256": "e9104dfbdc2df7b88f11b59d5940da9ddb0723ee528a2a208d597d40d3e23fe2"
+      "sha256": "2f314477c2cef053086cbce57e79011844407fc8beef3ba7c49c9d77b4ed93b7"
     },
     {
       "path": "infra/appliance/macos/build-unsigned-pkg.sh",
@@ -893,11 +893,11 @@
     },
     {
       "path": "infra/appliance/macos/mvp-app/PulseApp.swift",
-      "sha256": "c5cbeba316306268d22951e59fed8908081e994692ea33f2f18c9eafc7fd4ad0"
+      "sha256": "c36cbb77359a467e20f9c35cfa797fc5956c2dd8f6fb093240841b8980ffc620"
     },
     {
       "path": "infra/appliance/macos/mvp-app/launcher.mjs",
-      "sha256": "db6ca070ed6d205e032ab81cba553a8d5100c78ce594675f65463b6d5e7cb1ca"
+      "sha256": "813913bf6d7b7cdd7204bb30694fade9ee2129e8608b815ad45343073d3b2145"
     },
     {
       "path": "infra/appliance/macos/mvp-app/menu-bar-icon.svg",
@@ -1101,7 +1101,7 @@
     },
     {
       "path": "packages/protocol/generated/http-contracts.ts",
-      "sha256": "c4e9b1ec2b4acef3f650930ff2b8c17375e78acfc21a9428a2ca7938215511a1"
+      "sha256": "471c0db5f4c60029d2e9b12f0484b2af3686f0ac0aec14555fe0ff6bf7962bfe"
     },
     {
       "path": "packages/protocol/model/aggregate-transitions.v0.json",
@@ -1109,7 +1109,7 @@
     },
     {
       "path": "packages/protocol/package.json",
-      "sha256": "1ea3fe98986960cfa5b0f98395364969b3f842e55a9c21786eab591ad6257b34"
+      "sha256": "2a75461b86fff4b10b067c0d4b4c5e7c02cfff737c03055b91b560e2d6b16cf1"
     },
     {
       "path": "packages/protocol/policy/alert-policy.ts",
@@ -1165,11 +1165,11 @@
     },
     {
       "path": "packages/protocol/scripts/generate-http-contracts.mjs",
-      "sha256": "1a037c5d886a218624ec27da5ce598a9d0abd5d3c5e4690b1e37bf4b6b235531"
+      "sha256": "7c6c8c3297d1ffee85f78fc29a4b03c3fbf3fa68da597de8be09f1f2e73d4cbf"
     },
     {
       "path": "packages/protocol/scripts/validate-http-contract-fixtures.mjs",
-      "sha256": "61f0f49fd2b16fdf0c8b9bcc44c2ac4547d42057bd3d979141321e350cbf08ea"
+      "sha256": "b0457172210512703bb484abc5b209a533ed2ac5d6e42c253a5453d7961e6634"
     },
     {
       "path": "packages/protocol/specification.md",
@@ -1261,7 +1261,7 @@
     },
     {
       "path": "scripts/dev.mjs",
-      "sha256": "50fb753fa7c14e8a91922c0e8ab22e363d037bf56905db21e6b035d413c4dd17"
+      "sha256": "6c45bdc47b757c7d4d9a5312e3dae20b2ead123225003a30c82941195d77fa93"
     },
     {
       "path": "scripts/generate-build-identity.mjs",
@@ -1293,11 +1293,11 @@
     },
     {
       "path": "services/audio-node/Cargo.toml",
-      "sha256": "799becce194e900baa4332d6221926da224b870380dc44245458d1492621d914"
+      "sha256": "d47ffcd8c84127652baf41daab0a97f6f5a10fe7ac81b9f46464365f67bd4150"
     },
     {
       "path": "services/audio-node/README.md",
-      "sha256": "0f9a19c5acc892761d7e2df59969d2715570239063516c4d146be648d9d8f463"
+      "sha256": "3fe2e3ba23475b111017ac958af5a82acda17eb6718cc3f9cd61a33579a7a778"
     },
     {
       "path": "services/audio-node/src/bin/device-capture.rs",
@@ -1313,11 +1313,11 @@
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/control.rs",
-      "sha256": "72ee6bccd3b54301856161f0e0a782a4f0155bc4ccd88fe1e1904de0fb0d3671"
+      "sha256": "e3949f5da43ef40e89330a7fdc4b715d2267230fc5363d8bcb0210c8b6b79165"
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/main.rs",
-      "sha256": "bb3a74cd7a05ddfee3135ad4b632ce28d60b3d8c99c5b057d5ab40b24636de87"
+      "sha256": "a3f71314a833e819afa8eb3953a7e3e452471efff9a85a9440129ab554247d91"
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/meters.rs",
@@ -1337,7 +1337,7 @@
     },
     {
       "path": "services/audio-node/src/lib.rs",
-      "sha256": "1401c81225e648828f94a5d81b0cd0039c2960276a3532529569dc4c860dc877"
+      "sha256": "76a1eb8f1123bd48062dde676dc52fe7b5fb6f42314d7bab95b3a780d364eda2"
     },
     {
       "path": "services/audio-node/src/test_signal.rs",
@@ -1457,11 +1457,11 @@
     },
     {
       "path": "services/listen-gateway/README.md",
-      "sha256": "546e470ccdc97bff9874419317c07d226ffc3a2817c4e79c400ff24d17da1b93"
+      "sha256": "9949f78b4a8809cc5007b25b1f89ac231194bea5027eb2642d35b858ef9e2fa8"
     },
     {
       "path": "services/listen-gateway/package.json",
-      "sha256": "58e4869a554f45b0ae4e2736d295899b26855e91554e820ca51d35b214109f97"
+      "sha256": "2398e5a5a53a3f65f61660b4e5b22316081781c3185abad60a965875fb12abe1"
     },
     {
       "path": "services/listen-gateway/src/dev/shure-simulator.ts",
@@ -1477,19 +1477,19 @@
     },
     {
       "path": "services/listen-gateway/src/media-worker.test.ts",
-      "sha256": "31e84c7a486a4940863f54c6b7eeaeb57b93599ef5e7102c1d257d27a5f6c598"
+      "sha256": "c7e1aaedb8a3f3c930f3205f9df5ec8e63b21f64e9c91e6ea1721eb04ffde282"
     },
     {
       "path": "services/listen-gateway/src/media-worker.ts",
-      "sha256": "c6610eeeb2cedb6edc2279573a913e6f90bc1ceb47fbf6cb47290ad1b4b763d3"
+      "sha256": "a7cb739d156ee873dee9a77c39a038f542df6e5bdb10962d57df6963c79b229f"
     },
     {
       "path": "services/listen-gateway/src/server.test.ts",
-      "sha256": "c18b0a1ea0b2b2d6f9c16993177443eb6c01cb84752302e244322dcc181b8495"
+      "sha256": "9394c10f0d7c519d7a0d27599791117bec771490c6b923856bd269bc1402e9b1"
     },
     {
       "path": "services/listen-gateway/src/server.ts",
-      "sha256": "d5b0aaf6bf163371690ef22b33066621c8322a47e9a72d1d940ce88c7a128771"
+      "sha256": "6c9b372f810c1d38fd659b925e2b09a3182285a19ed34c2d83e2881d2dcbf257"
     },
     {
       "path": "services/listen-gateway/src/shure.test.ts",
@@ -1501,7 +1501,7 @@
     },
     {
       "path": "services/listen-gateway/src/start.ts",
-      "sha256": "a2b191d43d51e44a6ce1326da871124d5c1b82e8aee7706be9398261be4024e3"
+      "sha256": "497019640f053d2d34c20ab9fe844cc3ad80d6852b2bb5ed2f5a26710927839d"
     },
     {
       "path": "services/listen-gateway/src/web-host.ts",
