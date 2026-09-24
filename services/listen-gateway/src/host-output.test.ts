@@ -63,6 +63,13 @@ describe("shared host monitor", () => {
     );
   });
 
+  it("accepts gain up to +24 dB and refuses more", () => {
+    expect(parseMonitorChange({ gainDb: 24 }, null)).toEqual({ gainDb: 24 });
+    expect(() => parseMonitorChange({ gainDb: 24.1 }, null)).toThrow(
+      "invalid-gainDb",
+    );
+  });
+
   it("refuses a selection while capture is not ready", () => {
     expect(() =>
       parseMonitorChange({ channelId: "ch-1", input: 0 }, null),

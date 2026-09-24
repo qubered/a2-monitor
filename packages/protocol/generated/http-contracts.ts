@@ -13,9 +13,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: cccc8d820a9fd33f42d7bac020c68ecddd5245ed336392c10cdfda6f99e7e12e
+// Schema-SHA256: 2e08ec88356aecd66eb8a2033094e70f791eaf0256246008522c1396c11cf6ec
 // Generator-SHA256: 7c6c8c3297d1ffee85f78fc29a4b03c3fbf3fa68da597de8be09f1f2e73d4cbf
-// Body-SHA256: a56a271019ab8abadb6e916f5ec1d3bc3a5df9cd45365a7fc6930cd69a3459cc
+// Body-SHA256: 5f15b5cb93139c820d7a0a173086861833e51c44dbc3f587e4ffb8604b1cb657
 
 export type HealthResponse = {
   status: "ok";
@@ -2022,7 +2022,7 @@ const hostOutputSchema = {
               gainDb: {
                 type: "number",
                 minimum: -60,
-                maximum: 12,
+                maximum: 24,
               },
               changedBy: {
                 type: ["string", "null"],

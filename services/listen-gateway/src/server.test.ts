@@ -441,7 +441,7 @@ describe("ListenGateway shared host output", () => {
       { channelId: "ch", input: 2 },
       { input: 0 },
       { channelId: "ch" },
-      { gainDb: 13 },
+      { gainDb: 25 },
       { muted: "yes" },
       { changedBy: "Sam" },
       { volume: 1 },

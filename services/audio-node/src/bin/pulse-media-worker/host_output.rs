@@ -23,8 +23,8 @@ use crate::capture::{CaptureBlock, FRAMES_PER_BLOCK};
 use crate::session::mix_block;
 use a2_audio_node::monitor_output::parse_output_routes;
 
-/// Highest accepted linear gain: +12 dB.
-pub const MAX_MONITOR_GAIN: f32 = 3.981_072;
+/// Highest accepted linear gain: +24 dB.
+pub const MAX_MONITOR_GAIN: f32 = 15.848_932;
 /// Blocks queued for the writer thread: 80 ms.
 const WRITE_QUEUE_BLOCKS: usize = 8;
 const RESTART_DELAYS: [Duration; 6] = [

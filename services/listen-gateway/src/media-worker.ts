@@ -103,8 +103,8 @@ export type HostOutputState = {
 /** One feed's shared mix the worker renders: one input (or none) at one linear gain. */
 export type MonitorCommand = { channel: number | null; gain: number };
 
-/** Highest linear monitor gain the worker accepts: +12 dB. */
-export const MAX_MONITOR_GAIN = 3.981_072;
+/** Highest linear monitor gain the worker accepts: +24 dB. */
+export const MAX_MONITOR_GAIN = 15.848_932;
 
 /** Parses a comma-separated list of distinct 1-based output channel numbers. */
 export function parseOutputChannels(value: string): number[] {

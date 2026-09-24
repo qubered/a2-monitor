@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.ce5467a8e5013a9b",
-  "sourceSha256": "ce5467a8e5013a9b19432e27115e438d60b84cfa3c1773e237b444d24d751e45",
+  "buildId": "a2-0.0.0+sha256.696095f6621f17f6",
+  "sourceSha256": "696095f6621f17f6a9029b7b5bac2a46ec78c97a4456193e7b3ed486a63f86c3",
   "inputCount": 420,
   "inputs": [
     {
@@ -77,7 +77,7 @@
     },
     {
       "path": "apps/live/README.md",
-      "sha256": "0a702c98cfb0abe6477eb426ee65d69336caee1b8f455f4eb930bf90fa1d303c"
+      "sha256": "99d437c5857e1b3d8f7bf431a3b21e991aa529672ce656e9e0fb265d91f41388"
     },
     {
       "path": "apps/live/index.html",
@@ -117,7 +117,7 @@
     },
     {
       "path": "apps/live/src/audio-playback.ts",
-      "sha256": "b4d5cb261bc5e9ab984d271081ac39c8c2187e567312651cfb1a7513f342c4a5"
+      "sha256": "53d971fb71549523d90bbf91e6d849eb814393ff80246d01cba2368dcd494e1a"
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
@@ -1069,7 +1069,7 @@
     },
     {
       "path": "packages/protocol/fixtures/v0/http/incompatible/host-output.gain-above-range.json",
-      "sha256": "90093ecc387980aa19f9c8669354576d491b519401b0bfc578f2421f76b11e6f"
+      "sha256": "a39403582cbc800eccabebe66942b169325dab045621066ad414127d7169e0e5"
     },
     {
       "path": "packages/protocol/fixtures/v0/http/incompatible/host-output.unknown-field.json",
@@ -1185,7 +1185,7 @@
     },
     {
       "path": "packages/protocol/generated/http-contracts.ts",
-      "sha256": "5f5d8d769d11ac54a9c547bbd2ef0de4b5538180e6d3e76e798e79fe7f8c5037"
+      "sha256": "710cb0dda6894d7b654b969092c5c200bb44f95821c50f16bdf534c9ecbf8e66"
     },
     {
       "path": "packages/protocol/model/aggregate-transitions.v0.json",
@@ -1217,7 +1217,7 @@
     },
     {
       "path": "packages/protocol/schema/v0/http/host-output.schema.json",
-      "sha256": "13537fa74b07b075f3f678f426a0de3c79c5ec123e463dd639faf72b5c1b578a"
+      "sha256": "60ef03e88022cb081a3af223652d0d2486dd70ba9f8ab413b9ae6d7438ee46db"
     },
     {
       "path": "packages/protocol/schema/v0/http/live-snapshot-response.schema.json",
@@ -1405,11 +1405,11 @@
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/control.rs",
-      "sha256": "9f87a5f0bec7a308b6a23f7aaab44fb4313a9eaf834b15542925019eca84cf59"
+      "sha256": "de2e0ea664a331dc5efdd9e0daae03f3c125444954f05b84edd90b2dd4ea8fbf"
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/host_output.rs",
-      "sha256": "71ce8b8f1fea5cbabfac549c3bd26d6497cf83043d96546c39e34d44951e3698"
+      "sha256": "89fdbc8687232cd9cb9edc7a235be840a60bc3bcab81f8eaf0e6147d2cef75db"
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/main.rs",
@@ -1573,7 +1573,7 @@
     },
     {
       "path": "services/listen-gateway/README.md",
-      "sha256": "88ea3989735dd2d4ff1c471a7b3042bed5c79b2e837eebdca51efa1c7eed90aa"
+      "sha256": "4488bd01094b798553ff9c7017573b42dec35be7e71ff1fc23675617ded4e47b"
     },
     {
       "path": "services/listen-gateway/package.json",
@@ -1585,11 +1585,11 @@
     },
     {
       "path": "services/listen-gateway/src/host-output.test.ts",
-      "sha256": "e9eb6b1cda72ca54570684f190a14bb7d72a116e676547216c479d0253b0f7c4"
+      "sha256": "110c249143cde24b0f811a92e8cc628a115091103be47fd6f349dfbb9292b672"
     },
     {
       "path": "services/listen-gateway/src/host-output.ts",
-      "sha256": "6ba297986206f1b5795867cf0152b44260b03e958992262d3c5b3d0e25c4f284"
+      "sha256": "bf578bcc3742a11faf06f2d58744e256e7820d8cfb1c4728fd61e3ff3658dced"
     },
     {
       "path": "services/listen-gateway/src/levels.test.ts",
@@ -1605,11 +1605,11 @@
     },
     {
       "path": "services/listen-gateway/src/media-worker.ts",
-      "sha256": "686ae19263adba101bfd518be9242d1aa86593f33605125ac57e541dc74c565e"
+      "sha256": "0624df1ac607747d99bc73469141164e00bb943a40db3da50cdc050342a4d5eb"
     },
     {
       "path": "services/listen-gateway/src/server.test.ts",
-      "sha256": "6836e016b71a9405970a1549bbdac3a60838b34a047d94d243dd98f84f61680c"
+      "sha256": "09a346982fe30c13ae1151972e93f0d82f4831fce8d269ae3312d1dab1174ed3"
     },
     {
       "path": "services/listen-gateway/src/server.ts",

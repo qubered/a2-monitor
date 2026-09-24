@@ -3,7 +3,7 @@ import type { HostOutput } from "@rvlt/pulse-protocol/http";
 import type { HostOutputState, MonitorCommand } from "./media-worker.js";
 
 export const MIN_MONITOR_GAIN_DB = -60;
-export const MAX_MONITOR_GAIN_DB = 12;
+export const MAX_MONITOR_GAIN_DB = 24;
 export const DIM_ATTENUATION_DB = -12;
 /** Unity: the host output carries the captured level unless someone turns it down. */
 export const DEFAULT_HOST_GAIN_DB = 0;
