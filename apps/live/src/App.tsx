@@ -1252,6 +1252,7 @@ export function App({
               ? [
                   {
                     key: "audio",
+                    icon: "audio" as const,
                     label: "Audio output",
                     value: hostMode
                       ? (hostFeed?.name ?? "Host output")
@@ -1265,12 +1266,18 @@ export function App({
               : []),
             {
               key: "operator",
+              icon: "user" as const,
               label: "You",
               value: operator.name ? operatorLabel(operator) : "Set your name",
               attention: !operator.name,
               onSelect: () => setOperatorOpen(true),
             },
-            { key: "manager", label: "Manager", href: "/manager/" },
+            {
+              key: "manager",
+              icon: "manager" as const,
+              label: "Manager",
+              href: "/manager/",
+            },
           ]}
         />
       </header>

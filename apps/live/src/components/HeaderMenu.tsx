@@ -1,7 +1,33 @@
 import { useEffect, useId, useRef, useState } from "react";
 
+/** Lucide glyphs, 2px stroke (DESIGN.md §7). */
+const ICONS = {
+  audio: (
+    <>
+      <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
+      <path d="M16 9a5 5 0 0 1 0 6" />
+      <path d="M19.364 18.364a9 9 0 0 0 0-12.728" />
+    </>
+  ),
+  user: (
+    <>
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </>
+  ),
+  manager: (
+    <>
+      <rect width="7" height="9" x="3" y="3" rx="1" />
+      <rect width="7" height="5" x="14" y="3" rx="1" />
+      <rect width="7" height="9" x="14" y="12" rx="1" />
+      <rect width="7" height="5" x="3" y="16" rx="1" />
+    </>
+  ),
+} as const;
+
 export type HeaderMenuItem = {
   key: string;
+  icon: keyof typeof ICONS;
   label: string;
   /** What is set now, shown under the label. */
   value?: string;
@@ -94,12 +120,29 @@ export function HeaderMenu({ items }: { items: readonly HeaderMenuItem[] }) {
           {items.map((item) => {
             const content = (
               <>
-                <strong>{item.label}</strong>
-                {item.value ? (
-                  <span className={item.attention ? "is-attention" : undefined}>
-                    {item.value}
-                  </span>
-                ) : null}
+                <svg
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  {ICONS[item.icon]}
+                </svg>
+                <span className="header-menu-text">
+                  <strong>{item.label}</strong>
+                  {item.value ? (
+                    <span
+                      className={item.attention ? "is-attention" : undefined}
+                    >
+                      {item.value}
+                    </span>
+                  ) : null}
+                </span>
               </>
             );
             return item.href ? (

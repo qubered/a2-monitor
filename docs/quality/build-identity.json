@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.1fe4f57610c4096f",
-  "sourceSha256": "1fe4f57610c4096fbb653b655bbd342a7d6ae8f9e0f0bf1922019702f7caefd9",
+  "buildId": "a2-0.0.0+sha256.3ee6254878722271",
+  "sourceSha256": "3ee62548787222711bdef919ef0fd04db6f3db332203e35568a6b10fef393a4c",
   "inputCount": 426,
   "inputs": [
     {
@@ -53,7 +53,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "fd6a0b91c64a3d459bb5f53282bfbe9ad658bbb8517272ac296a6a0798eb14a2"
+      "sha256": "df33590515d0acf44a7ed1293e236eea2fed214732103d8ce06e98d9294e7bac"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -97,7 +97,7 @@
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "89a5ae2597c188f5740246dcd6243e45c192f944d4b9073d602bef0bd34fa3a8"
+      "sha256": "b54d8d8688b673bf5d02229d39a1d6eaf88698f2c108a60b2c5eb8b26a1a7fcc"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -133,7 +133,7 @@
     },
     {
       "path": "apps/live/src/components/HeaderMenu.tsx",
-      "sha256": "88df0b0d12e042d84124a1e933e34c379c1c054bd54f2c7a4a55329ba612b6fc"
+      "sha256": "ca12924ea883a818ca4763202a0aa1ab71d697e47cf80f4d00bb548645abd706"
     },
     {
       "path": "apps/live/src/components/MeterTrace.tsx",
@@ -225,7 +225,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "8bfea0121676b9c2dfc94820d8886f9d9266c9d6e8bc29159c44367536ffd38b"
+      "sha256": "f569db9af556a79d16795dcbd4bf76494238af73603430171d7632e136c8c603"
     },
     {
       "path": "apps/live/src/trim.ts",

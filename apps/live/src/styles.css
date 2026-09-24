@@ -389,7 +389,9 @@ a:focus-visible {
 
 .header-menu-item {
   display: grid;
-  gap: var(--space-1);
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--space-4);
   min-height: var(--target);
   padding: var(--space-3) var(--space-4);
   border: 0;
@@ -406,16 +408,26 @@ a:focus-visible {
   background: var(--elev);
 }
 
+.header-menu-item > svg {
+  color: var(--ink-2);
+}
+
+.header-menu-text {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
 .header-menu-item strong {
   font-size: var(--font-ui);
 }
 
-.header-menu-item span {
+.header-menu-text > span {
   color: var(--muted);
   font-size: var(--font-table);
 }
 
-.header-menu-item span.is-attention {
+.header-menu-text > span.is-attention {
   color: var(--warn);
 }
 
@@ -2407,10 +2419,16 @@ a:focus-visible {
     margin-left: 0;
   }
 
-  /* Brand, room and the menu share the first row; the alert count wraps below. */
+  /* Brand, room and the menu share the first row; the badges and alert count
+     wrap below it. */
   .header-menu {
     order: 1;
     margin-left: auto;
+  }
+
+  .simulated-badge,
+  .alert-count {
+    order: 2;
   }
 
   .player-transport {
