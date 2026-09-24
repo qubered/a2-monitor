@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.a1eaf048d734eb38",
-  "sourceSha256": "a1eaf048d734eb3872968ecb20fd3a35a434a18cbf0fd0b0467e4b4977434206",
+  "buildId": "a2-0.0.0+sha256.e91d469955fd2603",
+  "sourceSha256": "e91d469955fd2603dab7fce3af5f82337b8212c9f2d459f0834539e06129d492",
   "inputCount": 420,
   "inputs": [
     {
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "8da26a1242e3a26a1e3b2631c3254ecd67a12397d9bfc66e64b086b0bb72a4e8"
+      "sha256": "446af4c7905a8668fd9887d4b5884a0772d1e80dc9f064063b706ab07d1f854c"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "de6eb73f5991ae233e782da3e5265bca675211665453a76f9d235e12b28e909d"
+      "sha256": "f4d18d2c1b9bb850b250e4a09b3c445fbc474d96dacfe8db1047aa6481cd3600"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -717,11 +717,11 @@
     },
     {
       "path": "docs/decisions/0031-shared-host-monitor-output.md",
-      "sha256": "1c0a1cdcb17124e4a22a78cb7a0244a1cc84d4bdfc6fd7d0799ebea7d8316826"
+      "sha256": "55c788253271b3a5f4eb8ffb27102a81fd69a02a3b29a77b5fc639fe8c6bb1be"
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "08f3013989423c1a26ca4cae54fe06b610676596013e8854a48023f5e7b94408"
+      "sha256": "212a54966a57da0eab12bf0cfdd4055b35526a33b49c76c528e531b2bb389729"
     },
     {
       "path": "docs/design/README.md",

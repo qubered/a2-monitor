@@ -1041,6 +1041,44 @@ describe("Live channel grid", () => {
     ).toEqual(["This device", "Comms B"]);
   });
 
+  it("remembers the choice on this device and only asks again when the feed is gone", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem("pulse-operator-name", "Sam");
+    const feeds = [
+      hostFeed("feed-a", "Comms A", [1]),
+      hostFeed("feed-b", "Comms B", [2]),
+    ];
+    const first = renderApp(stateWith(), {
+      audioDeviceSource: readyDevice,
+      hostOutput: hostDocument(dvsOutput, feeds),
+    });
+    const prompt = await screen.findByRole("dialog", {
+      name: "Where should audio play?",
+    });
+    await user.click(within(prompt).getByRole("button", { name: /^Comms B/ }));
+    first.view.unmount();
+
+    // Opening Live again joins Comms B without asking.
+    renderApp(stateWith(), {
+      audioDeviceSource: readyDevice,
+      hostOutput: hostDocument(dvsOutput, feeds),
+    });
+    expect(
+      await screen.findByRole("button", { name: "Audio: Comms B" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    cleanup();
+
+    // A remembered feed the production no longer has asks again.
+    renderApp(stateWith(), {
+      audioDeviceSource: readyDevice,
+      hostOutput: hostDocument(dvsOutput, [feeds[0]]),
+    });
+    expect(
+      await screen.findByRole("dialog", { name: "Where should audio play?" }),
+    ).toBeTruthy();
+  });
+
   it("plays on this device when chosen, without touching the host output", async () => {
     const user = userEvent.setup();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
