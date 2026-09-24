@@ -40,7 +40,11 @@ import type { SessionPersistence } from "./sessions.js";
 import { fabricatedLiveSnapshot } from "./fixtures/live-snapshot.js";
 import { LiveMonitor, type PublishedState } from "./live-monitor.js";
 import type { NodeSource } from "./node-observer.js";
-import { hasCoherentSessions, hasUniqueChannelIds } from "./showfile.js";
+import {
+  hasCoherentRooms,
+  hasCoherentSessions,
+  hasUniqueChannelIds,
+} from "./showfile.js";
 import {
   ActiveProductionError,
   MemoryProductionStore,
@@ -105,6 +109,7 @@ const startSessionBodySchema = {
   required: ["sessionId", "operator"],
   properties: {
     sessionId: { type: ["string", "null"], minLength: 1, maxLength: 64 },
+    roomId: { type: ["string", "null"], minLength: 1, maxLength: 64 },
     operator: { type: "string", maxLength: 80 },
   },
 } as const;
@@ -363,11 +368,16 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
       },
     },
     async (request, reply) => {
-      const { sessionId, operator } = request.body as {
+      const { sessionId, roomId, operator } = request.body as {
         sessionId: string | null;
+        roomId?: string | null;
         operator: string;
       };
-      const published = await liveMonitor.startSession(sessionId, operator);
+      const published = await liveMonitor.startSession(
+        sessionId,
+        roomId ?? null,
+        operator,
+      );
       if (!published) {
         return reply.code(404).send({ error: "session-not-found" });
       }
@@ -654,6 +664,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
         ) ||
         !hasUniqueChannelIds(candidate) ||
         !hasCoherentSessions(candidate) ||
+        !hasCoherentRooms(candidate) ||
         (candidate.alertPolicy !== undefined &&
           !isCoherentAlertPolicy(candidate.alertPolicy));
       if (invalid) {

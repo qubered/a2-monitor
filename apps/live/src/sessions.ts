@@ -4,8 +4,17 @@ import {
   type LiveStateChannel,
 } from "@rvlt/pulse-protocol/http";
 
-export type SessionState = NonNullable<LiveState["session"]>;
+/** One room's run of show (the room is null for channels in no room). */
+export type SessionState = NonNullable<LiveState["runs"]>[number];
 export type SessionSummary = SessionState["sessions"][number];
+export type Room = NonNullable<LiveState["rooms"]>[number];
+
+/** Channels outside every room are shown and run under this key. */
+export const NO_ROOM = "no-room";
+
+export function roomKeyOf(roomId: string | null | undefined): string {
+  return roomId ?? NO_ROOM;
+}
 
 /** A scheduled start as local wall-clock time, from minutes after midnight. */
 export function formatStartMinute(minute: number | null): string | null {
@@ -53,16 +62,20 @@ export class SessionError extends Error {
   }
 }
 
-/** Starts a session for every client, or ends the run with null. */
+/**
+ * Starts a session in its room for every client, or ends that room's run
+ * with a null session (room null for channels in no room).
+ */
 export async function startSession(
   sessionId: string | null,
+  roomId: string | null,
   operator: string,
   fetchResponse: typeof fetch = fetch,
 ): Promise<LiveState> {
   const response = await fetchResponse("/api/v1/live/session", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ sessionId, operator }),
+    body: JSON.stringify({ sessionId, roomId, operator }),
   });
   if (response.status === 404) {
     throw new SessionError(

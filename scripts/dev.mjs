@@ -122,7 +122,7 @@ for (const child of children) {
 /** A demo show over the simulated inputs and receiver, written only into an empty simulate-mode library. */
 function demoShowfile(revision) {
   const monitor = { battery: true, rf: true, audio: true };
-  const wireless = (id, name, inputIndex, receiverChannel) => ({
+  const wireless = (id, name, inputIndex, receiverChannel, place) => ({
     id,
     inputIndex,
     name,
@@ -132,8 +132,9 @@ function demoShowfile(revision) {
     micType: "headset",
     imageUrl: null,
     monitor,
+    ...place,
   });
-  const wired = (id, name, inputIndex, micType) => ({
+  const wired = (id, name, inputIndex, micType, place) => ({
     id,
     inputIndex,
     name,
@@ -143,7 +144,10 @@ function demoShowfile(revision) {
     micType,
     imageUrl: null,
     monitor,
+    ...place,
   });
+  const ballroom = (categoryId) => ({ roomId: "demo-ballroom", categoryId });
+  const breakout = (categoryId) => ({ roomId: "demo-breakout", categoryId });
   return {
     schemaVersion: "0",
     revision,
@@ -159,15 +163,43 @@ function demoShowfile(revision) {
         channelCount: 4,
       },
     ],
+    rooms: [
+      {
+        id: "demo-ballroom",
+        name: "Ballroom",
+        categories: [
+          { id: "demo-stage", name: "Stage" },
+          { id: "demo-audience", name: "Audience" },
+          { id: "demo-band", name: "Band" },
+        ],
+      },
+      {
+        id: "demo-breakout",
+        name: "Breakout B",
+        categories: [{ id: "demo-lectern", name: "Lectern" }],
+      },
+    ],
     channels: [
-      wireless("demo-lead-vocal", "Lead vocal", 0, 0),
-      wireless("demo-presenter", "Presenter", 1, 1),
-      wireless("demo-guitar", "Guitar", 3, 2),
-      wireless("demo-host", "Host", 7, 3),
-      wired("demo-line-tone", "Line check tone", 2, "other"),
-      wired("demo-ambient", "Ambient mic", 4, "boundary"),
-      wired("demo-keys", "Keys DI", 5, "instrument"),
-      wired("demo-spare", "Spare", 6, "other"),
+      wireless("demo-lead-vocal", "Lead vocal", 0, 0, ballroom("demo-band")),
+      wireless("demo-presenter", "Presenter", 1, 1, ballroom("demo-stage")),
+      wireless("demo-guitar", "Guitar", 3, 2, ballroom("demo-audience")),
+      wireless("demo-host", "Host", 7, 3, ballroom("demo-stage")),
+      wired(
+        "demo-line-tone",
+        "Line check tone",
+        2,
+        "other",
+        breakout("demo-lectern"),
+      ),
+      wired(
+        "demo-ambient",
+        "Ambient mic",
+        4,
+        "boundary",
+        ballroom("demo-audience"),
+      ),
+      wired("demo-keys", "Keys DI", 5, "instrument", ballroom("demo-band")),
+      wired("demo-spare", "Spare", 6, "other", breakout("demo-lectern")),
     ],
     // A short corporate run of show: presenters change per session and the
     // channels a session does not list are expected to be switched off.
@@ -175,6 +207,7 @@ function demoShowfile(revision) {
       {
         id: "demo-welcome",
         name: "Welcome and keynote",
+        roomId: "demo-ballroom",
         startMinute: 9 * 60,
         channels: [
           { channelId: "demo-host", presenter: "Jordan Ellis" },
@@ -185,6 +218,7 @@ function demoShowfile(revision) {
       {
         id: "demo-panel",
         name: "Panel: the year ahead",
+        roomId: "demo-ballroom",
         startMinute: 10 * 60 + 15,
         channels: [
           { channelId: "demo-host", presenter: "Jordan Ellis" },
@@ -197,13 +231,31 @@ function demoShowfile(revision) {
       {
         id: "demo-close",
         name: "Awards and close",
+        roomId: "demo-ballroom",
         startMinute: 11 * 60 + 30,
         channels: [
           { channelId: "demo-host", presenter: "Jordan Ellis" },
           { channelId: "demo-presenter", presenter: "Dana Lee" },
           { channelId: "demo-keys", presenter: null },
+          { channelId: "demo-lead-vocal", presenter: "House band" },
+        ],
+      },
+      {
+        id: "demo-workshop-1",
+        name: "Workshop: planning tools",
+        roomId: "demo-breakout",
+        startMinute: 9 * 60 + 30,
+        channels: [
+          { channelId: "demo-spare", presenter: "Sam Ortiz" },
           { channelId: "demo-line-tone", presenter: null },
         ],
+      },
+      {
+        id: "demo-workshop-2",
+        name: "Workshop: hiring",
+        roomId: "demo-breakout",
+        startMinute: 11 * 60,
+        channels: [{ channelId: "demo-spare", presenter: "Ana Ruiz" }],
       },
     ],
   };

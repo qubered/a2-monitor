@@ -56,6 +56,7 @@ function wireless(
 }
 
 const RUN: SessionState = {
+  roomId: null,
   activeId: "a",
   nextId: "b",
   startedAtUtc: null,

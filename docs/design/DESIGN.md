@@ -1,6 +1,6 @@
 # Pulse — design language
 
-- **Version:** 2.5.0
+- **Version:** 2.6.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
 - **Last updated:** 2026-09-24
@@ -711,6 +711,25 @@ ready` in `--ok`). The bar is absent when the show has no sessions.
   strength. A **This session** filter chip appears while a session runs.
 - Nothing starts a session from the clock. Agendas run late; the operator
   decides when the turnover is done.
+- With rooms ([§10.10](#1010-rooms-and-categories)) there is one bar per room
+  in view, each labelled with its room.
+
+### 10.10 Rooms and categories
+
+A multi-room show (ADR 0030) gets a **room bar** above the run-of-show bars:
+`All rooms`, each room, and `No room` when some channels have none, with live
+counts, in the filter band's chip language. It is a per-device choice, not a
+permission, and a remembered room the show no longer has falls back to All
+rooms rather than hiding channels.
+
+- The grid groups cards under **category headings** — `Ballroom · Stage` when
+  showing all rooms, `Stage` inside one — in showfile order, with a mono count.
+  Channels without a category follow their room's categories under
+  `No category`. Cards never move between groups on their own.
+- The header's alert count and the exceptions sheet stay **show-wide**: a
+  critical fault in another room still counts. The grid does not pull another
+  room's card in; the header is how that room reaches this device.
+- A show without rooms keeps the single ungrouped grid.
 
 ---
 
@@ -939,6 +958,11 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.6.0 — 2026-09-24.** Adds rooms and categories
+([§10.10](#1010-rooms-and-categories)): a per-device room bar, category
+headings in the grid, and one run-of-show bar per room. Implemented in Live,
+Manager and the backend alongside this entry (ADR 0030).
 
 **2.5.0 — 2026-09-24.** The Check cell is removed from the card's status strip
 ([§10.2](#102-status-strip)); the strip is RF · Audio · Battery. Mic-check

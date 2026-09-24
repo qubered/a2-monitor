@@ -15,8 +15,15 @@ import { buildServer } from "./server.js";
 import {
   MemorySessionPersistence,
   NO_SESSION,
+  resolveRoom,
   resolveSessions,
+  type SessionRun,
 } from "./sessions.js";
+
+/** Resolved runs for a show whose sessions are all in no room. */
+function unroomed(showfile: Showfile, run: SessionRun) {
+  return resolveSessions(showfile, new Map([["", run]]));
+}
 
 const T0 = Date.parse("2026-09-23T01:00:00Z");
 
@@ -40,18 +47,20 @@ const SESSIONS: NonNullable<Showfile["sessions"]> = [
 
 describe("resolveSessions", () => {
   it("treats the first session as next when nothing is running", () => {
-    const { active, next } = resolveSessions(
+    const { active, next } = resolveRoom(
       showfileWith({ sessions: SESSIONS }),
       NO_SESSION,
+      "",
     );
     expect(active).toBeNull();
     expect(next?.id).toBe("ses-keynote");
   });
 
   it("forgets a run whose session the show no longer has", () => {
-    const { active, next } = resolveSessions(
+    const { active, next } = resolveRoom(
       showfileWith({ sessions: SESSIONS }),
       { activeId: "ses-gone", startedAtUtc: null, startedBy: null },
+      "",
     );
     expect(active).toBeNull();
     expect(next?.id).toBe("ses-keynote");
@@ -60,7 +69,7 @@ describe("resolveSessions", () => {
 
 describe("evaluate with a running session", () => {
   const showfile = showfileWith({ sessions: SESSIONS });
-  const sessions = resolveSessions(showfile, {
+  const sessions = unroomed(showfile, {
     activeId: "ses-keynote",
     startedAtUtc: "2026-09-23T00:59:00Z",
     startedBy: "Sam",
@@ -120,7 +129,7 @@ describe("evaluate with a running session", () => {
 
   it("still raises transmitter loss for a channel the session uses", () => {
     const trackers = new Map<string, ChannelTracker>();
-    const panel = resolveSessions(showfile, {
+    const panel = unroomed(showfile, {
       activeId: "ses-panel",
       startedAtUtc: null,
       startedBy: null,
@@ -158,7 +167,7 @@ describe("evaluate with a running session", () => {
       ),
       trackers: new Map(),
       nowMs: T0,
-      sessions: resolveSessions(showfileWith(), NO_SESSION),
+      sessions: unroomed(showfileWith(), NO_SESSION),
     });
     expect(result.channels.every(({ session }) => session === null)).toBe(true);
   });
@@ -207,7 +216,9 @@ describe("session routes", () => {
         await server.inject({ method: "GET", url: "/api/v1/live/state" })
       ).json(),
     );
-    expect(before.session).toMatchObject({
+    expect(before.runs).toHaveLength(1);
+    expect(before.runs![0]).toMatchObject({
+      roomId: null,
       activeId: null,
       nextId: "ses-keynote",
       sessions: [
@@ -228,25 +239,25 @@ describe("session routes", () => {
     });
     expect(started.statusCode).toBe(200);
     const state = parseLiveState(started.json());
-    expect(state.session).toMatchObject({
+    expect(state.runs![0]).toMatchObject({
       activeId: "ses-keynote",
       nextId: "ses-panel",
       startedAtUtc: "2026-09-23T01:00:00.000Z",
       startedBy: "Sam (A2)",
     });
     expect(state.channels[1]!.performer).toBe("Dana Lee");
-    expect(sessionPersistence.saved?.activeId).toBe("ses-keynote");
+    expect(sessionPersistence.saved?.get("")?.activeId).toBe("ses-keynote");
 
     const ended = parseLiveState(
       (
         await server.inject({
           method: "PUT",
           url: "/api/v1/live/session",
-          payload: { sessionId: null, operator: "Sam" },
+          payload: { sessionId: null, roomId: null, operator: "Sam" },
         })
       ).json(),
     );
-    expect(ended.session).toMatchObject({
+    expect(ended.runs![0]).toMatchObject({
       activeId: null,
       nextId: "ses-keynote",
       startedBy: null,
@@ -259,7 +270,7 @@ describe("session routes", () => {
     // No audio...
     await advance(1000, [-12, -30]);
     await advance(1000, [-12, -90]);
-    await liveMonitor.startSession("ses-keynote", "Sam");
+    await liveMonitor.startSession("ses-keynote", null, "Sam");
     // ...but the new session has not heard it yet, so it stays quiet.
     for (let second = 0; second < 40; second += 1) {
       await advance(1000, [-12, -90]);

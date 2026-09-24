@@ -5,14 +5,20 @@ import type { LiveState, Showfile } from "@rvlt/pulse-protocol/http";
 export type ShowSession = NonNullable<Showfile["sessions"]>[number];
 type ShowChannel = Showfile["channels"][number];
 
-/** Which session of the active show is running, who started it and when. */
+/** Which session of one room is running, who started it and when. */
 export type SessionRun = {
   activeId: string | null;
   startedAtUtc: string | null;
   startedBy: string | null;
 };
 
-type PersistedSessionRun = { schemaVersion: "0" } & SessionRun;
+/** Runs by room key: a room's id, or "" for channels and sessions in no room. */
+export type SessionRuns = ReadonlyMap<string, SessionRun>;
+
+type PersistedRuns = {
+  schemaVersion: "0";
+  runs: Array<{ roomId: string | null } & SessionRun>;
+};
 
 export const NO_SESSION: SessionRun = {
   activeId: null,
@@ -20,20 +26,25 @@ export const NO_SESSION: SessionRun = {
   startedBy: null,
 };
 
+/** The key a room's run is held under; channels and sessions in no room share "". */
+export function roomKey(roomId: string | null | undefined): string {
+  return roomId ?? "";
+}
+
 export interface SessionPersistence {
-  load(): Promise<SessionRun | null>;
-  save(run: SessionRun): Promise<void>;
+  load(): Promise<Map<string, SessionRun> | null>;
+  save(runs: SessionRuns): Promise<void>;
 }
 
 export class MemorySessionPersistence implements SessionPersistence {
-  saved: SessionRun | null = null;
+  saved: Map<string, SessionRun> | null = null;
 
-  async load(): Promise<SessionRun | null> {
-    return this.saved ? { ...this.saved } : null;
+  async load(): Promise<Map<string, SessionRun> | null> {
+    return this.saved ? new Map(this.saved) : null;
   }
 
-  async save(run: SessionRun): Promise<void> {
-    this.saved = { ...run };
+  async save(runs: SessionRuns): Promise<void> {
+    this.saved = new Map(runs);
   }
 }
 
@@ -48,34 +59,49 @@ export class FileSessionPersistence implements SessionPersistence {
     this.path = join(dataDirectory, "session.json");
   }
 
-  async load(): Promise<SessionRun | null> {
+  async load(): Promise<Map<string, SessionRun> | null> {
     try {
       const value = JSON.parse(await readFile(this.path, "utf8")) as unknown;
       if (typeof value !== "object" || value === null) return null;
-      const record = value as Partial<PersistedSessionRun>;
-      if (
-        record.schemaVersion !== "0" ||
-        !isNullableString(record.activeId) ||
-        !isNullableString(record.startedAtUtc) ||
-        !isNullableString(record.startedBy)
-      ) {
+      const record = value as Partial<PersistedRuns>;
+      if (record.schemaVersion !== "0" || !Array.isArray(record.runs)) {
         return null;
       }
-      return {
-        activeId: record.activeId,
-        startedAtUtc: record.startedAtUtc,
-        startedBy: record.startedBy,
-      };
+      const runs = new Map<string, SessionRun>();
+      for (const run of record.runs as unknown[]) {
+        if (typeof run !== "object" || run === null) continue;
+        const entry = run as Record<string, unknown>;
+        if (
+          !isNullableString(entry.roomId) ||
+          !isNullableString(entry.activeId) ||
+          !isNullableString(entry.startedAtUtc) ||
+          !isNullableString(entry.startedBy)
+        ) {
+          continue;
+        }
+        runs.set(roomKey(entry.roomId), {
+          activeId: entry.activeId,
+          startedAtUtc: entry.startedAtUtc,
+          startedBy: entry.startedBy,
+        });
+      }
+      return runs;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
       throw error;
     }
   }
 
-  async save(run: SessionRun): Promise<void> {
+  async save(runs: SessionRuns): Promise<void> {
     await mkdir(dirname(this.path), { recursive: true });
     const temporary = `${this.path}.${process.pid}.tmp`;
-    const persisted: PersistedSessionRun = { schemaVersion: "0", ...run };
+    const persisted: PersistedRuns = {
+      schemaVersion: "0",
+      runs: [...runs].map(([key, run]) => ({
+        roomId: key === "" ? null : key,
+        ...run,
+      })),
+    };
     await writeFile(temporary, `${JSON.stringify(persisted)}\n`, {
       encoding: "utf8",
       mode: 0o600,
@@ -89,24 +115,56 @@ export type ResolvedSessions = {
   next: ShowSession | null;
 };
 
+/** One room's sessions, in showfile order. */
+function roomSessions(showfile: Showfile, key: string): ShowSession[] {
+  return (showfile.sessions ?? []).filter(
+    ({ roomId }) => roomKey(roomId) === key,
+  );
+}
+
 /**
- * The running and next session of a show. A run that names a session the show
- * no longer has (removed in Manager, or another production activated) is no
- * run at all. With nothing running, the first session is next.
+ * The running and next session of one room. A run that names a session the
+ * room no longer has (removed or moved in Manager, or another production
+ * activated) is no run at all. With nothing running, the first is next.
  */
-export function resolveSessions(
+export function resolveRoom(
   showfile: Showfile,
-  run: SessionRun,
+  run: SessionRun | undefined,
+  key: string,
 ): ResolvedSessions {
-  const sessions = showfile.sessions ?? [];
+  const sessions = roomSessions(showfile, key);
   const position =
-    run.activeId === null
+    !run || run.activeId === null
       ? -1
       : sessions.findIndex(({ id }) => id === run.activeId);
   return {
     active: position === -1 ? null : sessions[position]!,
     next: sessions[position + 1] ?? null,
   };
+}
+
+/** Room keys that have sessions: rooms in showfile order, then channels in no room. */
+export function sessionRoomKeys(showfile: Showfile): string[] {
+  const keys = new Set(
+    (showfile.sessions ?? []).map(({ roomId }) => roomKey(roomId)),
+  );
+  const ordered = (showfile.rooms ?? []).flatMap(({ id }) =>
+    id !== undefined && keys.has(id) ? [id] : [],
+  );
+  return keys.has("") ? [...ordered, ""] : ordered;
+}
+
+/** Every room's resolved run, keyed by room key. */
+export function resolveSessions(
+  showfile: Showfile,
+  runs: SessionRuns,
+): Map<string, ResolvedSessions> {
+  return new Map(
+    sessionRoomKeys(showfile).map((key) => [
+      key,
+      resolveRoom(showfile, runs.get(key), key),
+    ]),
+  );
 }
 
 /** The presenter a session names for a channel, else the showfile's performer. */
@@ -120,27 +178,49 @@ export function sessionPerformer(
   return entry?.presenter ?? channel.performer ?? null;
 }
 
-export function sessionSummary(
+export function sessionRunsSummary(
   showfile: Showfile,
-  run: SessionRun,
-): NonNullable<LiveState["session"]> {
-  const { active, next } = resolveSessions(showfile, run);
-  return {
-    activeId: active?.id ?? null,
-    nextId: next?.id ?? null,
-    startedAtUtc: active ? run.startedAtUtc : null,
-    startedBy: active ? run.startedBy : null,
-    sessions: (showfile.sessions ?? []).flatMap((session) =>
-      session.id
-        ? [
-            {
-              id: session.id,
-              name: session.name,
-              startMinute: session.startMinute,
-              channelCount: session.channels.length,
-            },
-          ]
-        : [],
-    ),
-  };
+  runs: SessionRuns,
+): NonNullable<LiveState["runs"]> {
+  return sessionRoomKeys(showfile).map((key) => {
+    const run = runs.get(key);
+    const { active, next } = resolveRoom(showfile, run, key);
+    return {
+      roomId: key === "" ? null : key,
+      activeId: active?.id ?? null,
+      nextId: next?.id ?? null,
+      startedAtUtc: active ? (run?.startedAtUtc ?? null) : null,
+      startedBy: active ? (run?.startedBy ?? null) : null,
+      sessions: roomSessions(showfile, key).flatMap((session) =>
+        session.id
+          ? [
+              {
+                id: session.id,
+                name: session.name,
+                startMinute: session.startMinute,
+                channelCount: session.channels.length,
+              },
+            ]
+          : [],
+      ),
+    };
+  });
+}
+
+export function roomsSummary(
+  showfile: Showfile,
+): NonNullable<LiveState["rooms"]> {
+  return (showfile.rooms ?? []).flatMap((room) =>
+    room.id
+      ? [
+          {
+            id: room.id,
+            name: room.name,
+            categories: room.categories.flatMap((category) =>
+              category.id ? [{ id: category.id, name: category.name }] : [],
+            ),
+          },
+        ]
+      : [],
+  );
 }

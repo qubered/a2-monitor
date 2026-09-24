@@ -7,6 +7,7 @@ import {
 
 type SessionSheetProps = {
   session: SessionState;
+  roomName?: string | null;
   turnover: readonly TurnoverItem[];
   busy: boolean;
   error: string | null;
@@ -28,6 +29,7 @@ const TONE_LABEL: Record<TurnoverItem["tone"], string> = {
  */
 export function SessionSheet({
   session,
+  roomName = null,
   turnover,
   busy,
   error,
@@ -51,6 +53,7 @@ export function SessionSheet({
         <header>
           <div>
             <span className="detail-overline">
+              {roomName ? `${roomName} · ` : ""}
               {active ? `Now · ${active.name}` : "No session running"}
             </span>
             <h2 id="session-title">
@@ -186,7 +189,7 @@ export function SessionSheet({
               disabled={busy}
               onClick={() => onStart(null)}
             >
-              End the run of show
+              End the run of show{roomName ? ` in ${roomName}` : ""}
             </button>
           ) : null}
         </section>

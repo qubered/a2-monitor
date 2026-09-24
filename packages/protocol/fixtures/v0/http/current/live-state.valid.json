@@ -104,7 +104,9 @@
         "inUse": true,
         "nextInUse": false,
         "nextPresenter": null
-      }
+      },
+      "roomId": "room-main",
+      "categoryId": "cat-cast"
     },
     {
       "id": "ch-talkback",
@@ -163,7 +165,9 @@
         "inUse": true,
         "nextInUse": true,
         "nextPresenter": "Company manager"
-      }
+      },
+      "roomId": "room-main",
+      "categoryId": "cat-crew"
     }
   ],
   "alerts": [
@@ -216,24 +220,43 @@
     "outstanding": 1,
     "outstandingCritical": 1
   },
-  "session": {
-    "activeId": "ses-act-1",
-    "nextId": "ses-curtain",
-    "startedAtUtc": "2026-09-23T00:30:00Z",
-    "startedBy": "Sam (A2)",
-    "sessions": [
-      {
-        "id": "ses-act-1",
-        "name": "Act one",
-        "startMinute": 1170,
-        "channelCount": 2
-      },
-      {
-        "id": "ses-curtain",
-        "name": "Curtain speech",
-        "startMinute": null,
-        "channelCount": 1
-      }
-    ]
-  }
+  "rooms": [
+    {
+      "id": "room-main",
+      "name": "Main house",
+      "categories": [
+        {
+          "id": "cat-cast",
+          "name": "Cast"
+        },
+        {
+          "id": "cat-crew",
+          "name": "Crew"
+        }
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "roomId": "room-main",
+      "activeId": "ses-act-1",
+      "nextId": "ses-curtain",
+      "startedAtUtc": "2026-09-23T00:30:00Z",
+      "startedBy": "Sam (A2)",
+      "sessions": [
+        {
+          "id": "ses-act-1",
+          "name": "Act one",
+          "startMinute": 1170,
+          "channelCount": 2
+        },
+        {
+          "id": "ses-curtain",
+          "name": "Curtain speech",
+          "startMinute": null,
+          "channelCount": 1
+        }
+      ]
+    }
+  ]
 }

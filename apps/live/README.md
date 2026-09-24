@@ -88,6 +88,9 @@ Live renders one shared monitoring state from the backend (ADR 0027):
   channels the running session does not use read "Not in this session" and do
   not alert for silence, mute or transmitter loss, and a "This session" filter
   shows only the channels in use;
+- rooms and categories when the showfile has them (ADR 0030): a per-device
+  room bar, a grid grouped under category headings, and one run of show per
+  room; the header's alert count stays show-wide;
 - a header counter of outstanding and critical alerts that opens a show-wide
   exceptions sheet with recently cleared history, and an assertive live-region
   announcement for each newly raised critical alert;

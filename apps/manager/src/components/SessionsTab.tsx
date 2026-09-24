@@ -7,6 +7,13 @@ import { Button } from "./ui/button";
 import { CardOverline } from "./ui/card";
 import { Input } from "./ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -16,6 +23,8 @@ import {
 } from "./ui/table";
 
 type Session = NonNullable<Showfile["sessions"]>[number];
+
+const NO_ROOM = "no-room";
 
 export function SessionsTab({
   showfile,
@@ -28,11 +37,18 @@ export function SessionsTab({
   const [chosen, setChosen] = useState(0);
   const selected = Math.min(chosen, Math.max(sessions.length - 1, 0));
   const session = sessions[selected] ?? null;
-  const savedChannels = showfile.channels.filter(
+  const rooms = showfile.rooms ?? [];
+  // A session only uses channels in its own room (or, without a room, the
+  // channels in no room).
+  const sessionRoom = session?.roomId ?? null;
+  const roomChannels = showfile.channels.filter(
+    ({ roomId }) => (roomId ?? null) === sessionRoom,
+  );
+  const savedChannels = roomChannels.filter(
     (channel): channel is typeof channel & { id: string } =>
       channel.id !== undefined,
   );
-  const unsavedChannels = showfile.channels.length - savedChannels.length;
+  const unsavedChannels = roomChannels.length - savedChannels.length;
 
   function setSessions(next: Session[]) {
     onChange({ ...showfile, sessions: next });
@@ -78,6 +94,7 @@ export function SessionsTab({
               ...sessions,
               {
                 name: `Session ${sessions.length + 1}`,
+                ...(previous?.roomId ? { roomId: previous.roomId } : {}),
                 startMinute: null,
                 // A new session starts from the last one's channels: most
                 // turnovers change a presenter or two, not the whole patch.
@@ -105,6 +122,7 @@ export function SessionsTab({
               <TableRow>
                 <TableHead className="w-32">Starts</TableHead>
                 <TableHead>Name</TableHead>
+                {rooms.length ? <TableHead>Room</TableHead> : null}
                 <TableHead className="w-28">Channels</TableHead>
                 <TableHead className="w-48">
                   <span className="sr-only">Actions</span>
@@ -139,6 +157,39 @@ export function SessionsTab({
                       }
                     />
                   </TableCell>
+                  {rooms.length ? (
+                    <TableCell className="min-w-40">
+                      <Select
+                        value={entry.roomId ?? NO_ROOM}
+                        onValueChange={(value) =>
+                          updateSession(position, {
+                            roomId: value === NO_ROOM ? null : value,
+                            // Channels belong to one room; a moved session
+                            // starts its channel list again.
+                            channels: [],
+                          })
+                        }
+                      >
+                        <SelectTrigger
+                          aria-label={`Session ${position + 1} room`}
+                        >
+                          <SelectValue placeholder="No room" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={NO_ROOM}>No room</SelectItem>
+                          {rooms.flatMap(({ id, name }) =>
+                            id ? (
+                              <SelectItem key={id} value={id}>
+                                {name}
+                              </SelectItem>
+                            ) : (
+                              []
+                            ),
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                  ) : null}
                   <TableCell className="font-mono text-table tabular-nums text-muted-foreground">
                     {entry.channels.length}
                   </TableCell>
@@ -206,7 +257,11 @@ export function SessionsTab({
               {savedChannels.length === 0 ? (
                 <EmptyState
                   title="No saved channels."
-                  detail="Add channels and save the showfile first."
+                  detail={
+                    rooms.length
+                      ? "Add channels to this session's room in Channels and save the showfile first."
+                      : "Add channels and save the showfile first."
+                  }
                 />
               ) : (
                 <Table>

@@ -8,6 +8,8 @@ import {
 
 type SessionBarProps = {
   session: SessionState;
+  /** The room this run belongs to, when the device shows more than one. */
+  roomName?: string | null;
   turnover: readonly TurnoverItem[];
   offline: boolean;
   onOpen: () => void;
@@ -20,6 +22,7 @@ type SessionBarProps = {
  */
 export function SessionBar({
   session,
+  roomName = null,
   turnover,
   offline,
   onOpen,
@@ -30,7 +33,11 @@ export function SessionBar({
   const nextStart = formatStartMinute(next?.startMinute ?? null);
 
   return (
-    <section className="session-bar" aria-label="Run of show">
+    <section
+      className="session-bar"
+      aria-label={roomName ? `Run of show: ${roomName}` : "Run of show"}
+    >
+      {roomName ? <span className="session-room">{roomName}</span> : null}
       <div className="session-slot">
         <span className="session-overline">Now</span>
         <strong>

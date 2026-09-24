@@ -874,7 +874,8 @@ describe("Live channel grid", () => {
 });
 
 describe("Run of show", () => {
-  const session: NonNullable<LiveState["session"]> = {
+  const session: NonNullable<LiveState["runs"]>[number] = {
+    roomId: null,
     activeId: null,
     nextId: "ses-keynote",
     startedAtUtc: null,
@@ -900,7 +901,7 @@ describe("Run of show", () => {
     const user = userEvent.setup();
     window.localStorage.setItem("pulse-operator-name", "Sam");
     const before = stateWith({
-      session,
+      runs: [session],
       channels: [
         channel({
           session: {
@@ -917,13 +918,15 @@ describe("Run of show", () => {
     });
     const after = stateWith({
       revision: 11,
-      session: {
-        ...session,
-        activeId: "ses-keynote",
-        nextId: "ses-panel",
-        startedAtUtc: new Date().toISOString(),
-        startedBy: "Sam (A2)",
-      },
+      runs: [
+        {
+          ...session,
+          activeId: "ses-keynote",
+          nextId: "ses-panel",
+          startedAtUtc: new Date().toISOString(),
+          startedBy: "Sam (A2)",
+        },
+      ],
       channels: [
         channel({
           performer: "Dana Lee",
@@ -966,6 +969,7 @@ describe("Run of show", () => {
         method: "PUT",
         body: JSON.stringify({
           sessionId: "ses-keynote",
+          roomId: null,
           operator: "Sam (A2)",
         }),
       }),
@@ -986,5 +990,89 @@ describe("Run of show", () => {
     expect(
       screen.getByRole("button", { name: "Select Marguerite, channel 1" }),
     ).toBeTruthy();
+  });
+});
+
+describe("Rooms", () => {
+  const rooms: NonNullable<LiveState["rooms"]> = [
+    {
+      id: "room-ballroom",
+      name: "Ballroom",
+      categories: [{ id: "cat-stage", name: "Stage" }],
+    },
+    {
+      id: "room-breakout",
+      name: "Breakout B",
+      categories: [{ id: "cat-lectern", name: "Lectern" }],
+    },
+  ];
+  const run = (
+    roomId: string,
+    name: string,
+  ): NonNullable<LiveState["runs"]>[number] => ({
+    roomId,
+    activeId: null,
+    nextId: `ses-${roomId}`,
+    startedAtUtc: null,
+    startedBy: null,
+    sessions: [
+      { id: `ses-${roomId}`, name, startMinute: 540, channelCount: 1 },
+    ],
+  });
+  const roomed = () =>
+    stateWith({
+      rooms,
+      runs: [run("room-ballroom", "Keynote"), run("room-breakout", "Workshop")],
+      channels: [
+        channel({ roomId: "room-ballroom", categoryId: "cat-stage" }),
+        { ...talkback, roomId: "room-breakout", categoryId: "cat-lectern" },
+        { ...unpatched, roomId: null, categoryId: null },
+      ],
+    });
+
+  it("groups every room's channels under room and category headings", async () => {
+    renderApp(roomed());
+    expect(
+      await screen.findByRole("region", { name: "Ballroom · Stage" }),
+    ).toBeTruthy();
+    const lectern = screen.getByRole("region", {
+      name: "Breakout B · Lectern",
+    });
+    expect(
+      within(lectern).getByText("Talkback", { selector: "h2" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("region", { name: "No room" })).toBeTruthy();
+    expect(
+      screen.getByRole("region", { name: "Run of show: Ballroom" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("region", { name: "Run of show: Breakout B" }),
+    ).toBeTruthy();
+  });
+
+  it("shows one room per device and remembers it", async () => {
+    const user = userEvent.setup();
+    renderApp(roomed());
+    const picker = await screen.findByRole("navigation", { name: "Rooms" });
+    await user.click(
+      within(picker).getByRole("button", { name: /Breakout B/ }),
+    );
+
+    expect(window.localStorage.getItem("pulse-room")).toBe("room-breakout");
+    expect(screen.getByRole("region", { name: "Lectern" })).toBeTruthy();
+    expect(screen.queryByText("Marguerite", { selector: "h2" })).toBeNull();
+    expect(screen.getByRole("region", { name: "Run of show" })).toBeTruthy();
+    expect(
+      screen.queryByRole("region", { name: /Run of show: Ballroom/ }),
+    ).toBeNull();
+  });
+
+  it("falls back to every room when the remembered room is gone", async () => {
+    window.localStorage.setItem("pulse-room", "room-demolished");
+    renderApp(roomed());
+    expect(
+      await screen.findByText("Marguerite", { selector: "h2" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Talkback", { selector: "h2" })).toBeTruthy();
   });
 });

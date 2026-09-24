@@ -204,56 +204,20 @@
         }
       }
     },
-    "session": {
-      "description": "The active production's run of show: which session is live and what is next. Absent from producers that predate sessions.",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "activeId",
-        "nextId",
-        "startedAtUtc",
-        "startedBy",
-        "sessions"
-      ],
-      "properties": {
-        "activeId": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "minLength": 1,
-          "maxLength": 64
-        },
-        "nextId": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "minLength": 1,
-          "maxLength": 64
-        },
-        "startedAtUtc": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "startedBy": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "minLength": 1,
-          "maxLength": 80
-        },
-        "sessions": {
-          "type": "array",
-          "maxItems": 100,
-          "items": {
-            "$ref": "#/$defs/sessionSummary"
-          }
-        }
+    "rooms": {
+      "description": "Rooms and their categories, in showfile order. Absent from producers that predate rooms.",
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "$ref": "#/$defs/room"
+      }
+    },
+    "runs": {
+      "description": "One run of show per room that has sessions: which session is running there and what is next. Absent from producers that predate sessions.",
+      "type": "array",
+      "maxItems": 33,
+      "items": {
+        "$ref": "#/$defs/sessionRun"
       }
     }
   },
@@ -771,6 +735,22 @@
               "maxLength": 120
             }
           }
+        },
+        "roomId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "categoryId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 64
         }
       }
     },
@@ -1093,6 +1073,112 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 128
+        }
+      }
+    },
+    "sessionRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "roomId",
+        "activeId",
+        "nextId",
+        "startedAtUtc",
+        "startedBy",
+        "sessions"
+      ],
+      "properties": {
+        "roomId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "The room this run of show belongs to; null for channels in no room."
+        },
+        "activeId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "nextId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "startedAtUtc": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "startedBy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "sessions": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/sessionSummary"
+          }
+        }
+      }
+    },
+    "room": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "categories"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "categories": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              }
+            }
+          }
         }
       }
     }

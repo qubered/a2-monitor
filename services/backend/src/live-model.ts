@@ -17,7 +17,11 @@ import {
   NODE_UNREACHABLE_AFTER_MS,
   type NodeObservation,
 } from "./node-observer.js";
-import { sessionPerformer, type ResolvedSessions } from "./sessions.js";
+import {
+  roomKey,
+  sessionPerformer,
+  type ResolvedSessions,
+} from "./sessions.js";
 
 type ShowChannel = Showfile["channels"][number];
 type ReceiverConfig = Showfile["shureReceivers"][number];
@@ -60,8 +64,8 @@ export type EvaluationInput = {
   nowMs: number;
   /** Guided mic checks by channel id; absent means no channel has been checked. */
   checks?: ReadonlyMap<string, StoredCheck>;
-  /** The running and next session; absent or both null means the show is not being run by session. */
-  sessions?: ResolvedSessions;
+  /** Each room's running and next session, by room key; a room with none is not run by session. */
+  sessions?: ReadonlyMap<string, ResolvedSessions>;
 };
 
 const DEFAULT_MONITOR = { battery: true, rf: true, audio: true };
@@ -257,8 +261,10 @@ function buildChannel(
   const monitor = showChannel.monitor ?? DEFAULT_MONITOR;
   const tracker = trackerFor(input.trackers, id);
   const conditions: AlertCondition[] = [];
-  const activeSession = input.sessions?.active ?? null;
-  const nextSession = input.sessions?.next ?? null;
+  // A channel follows its own room's run of show.
+  const roomSessions = input.sessions?.get(roomKey(showChannel.roomId));
+  const activeSession = roomSessions?.active ?? null;
+  const nextSession = roomSessions?.next ?? null;
   const inSession = (session: typeof activeSession) =>
     session === null
       ? null
@@ -633,6 +639,8 @@ function buildChannel(
       performer,
       kind: wireless ? "wireless" : "wired",
       micType: showChannel.micType ?? null,
+      roomId: showChannel.roomId ?? null,
+      categoryId: showChannel.categoryId ?? null,
       hasImage: Boolean(showChannel.imageUrl),
       input: { index: inputIndex, label: bounded(inputLabel, 160) },
       receiver: wireless

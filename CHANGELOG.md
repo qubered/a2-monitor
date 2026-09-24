@@ -10,6 +10,13 @@ externally tested release.
 
 ### Added
 
+- Rooms and categories (ADR 0030). Manager gains a Rooms section (rooms, and
+  categories inside each room) and a room/category picker per channel;
+  sessions belong to a room. Each room runs its own sessions, so a breakout
+  can turn over while the ballroom keynote runs. Live gains a per-device room
+  bar, groups the grid under category headings, and shows one now/next bar
+  per room. `PUT /api/v1/live/session` takes a `roomId` to end one room's run.
+
 - Sessions and a shared run of show for corporate events (ADR 0029). Manager
   gains a Sessions section: an ordered agenda with start times, the channels
   each session uses and a per-session presenter. Live gains a now/next bar and

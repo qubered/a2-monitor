@@ -81,8 +81,9 @@ session-not-found`. The run (session, who, when) persists to
 - Session length is inferred from the next session's scheduled start; the last
   session and unscheduled sessions have no length, so only the threshold
   applies to them.
-- One running session per backend. Several rooms need several backends until
-  rooms exist in the model.
+- One running session per room; ADR 0030 adds rooms and makes the run of
+  show per room. The live-state `session` field described here was replaced
+  by ADR 0030's `runs` before release.
 - An operator who forgets to start the next session leaves the previous one's
   idle rules in force. The bar keeps "Now" and "Next" in view for that
   reason; nothing starts a session automatically from the clock.

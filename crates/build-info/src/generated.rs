@@ -2,8 +2,8 @@
 // Source: repository build inputs listed in docs/quality/build-identity.json
 // Regenerate: node scripts/generate-build-identity.mjs
 
-pub const BUILD_ID: &str = "a2-0.0.0+sha256.bc392a1f941cb429";
-pub const SOURCE_SHA256: &str = "bc392a1f941cb429542646c94bf52c7fbf48e2bb8aaf16c365da552197551ee0";
-pub const SOURCE_INPUT_COUNT: usize = 398;
+pub const BUILD_ID: &str = "a2-0.0.0+sha256.563b89748dc89f1b";
+pub const SOURCE_SHA256: &str = "563b89748dc89f1b53598389009bbb2008fc2a922ee663473b0dae21755a520b";
+pub const SOURCE_INPUT_COUNT: usize = 403;
 pub const VERSION: &str = "0.0.0";
 pub const IDENTITY_KIND: &str = "content-addressed-source-inputs";

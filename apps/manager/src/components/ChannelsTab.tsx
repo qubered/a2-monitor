@@ -45,6 +45,20 @@ type Monitor = NonNullable<Channel["monitor"]>;
 
 const DEFAULT_MONITOR: Monitor = { battery: true, rf: true, audio: true };
 
+/** One select value for a channel's place: none, "room" or "room/category". */
+function placeValue(channel: Channel): string {
+  if (!channel.roomId) return NONE;
+  return channel.categoryId
+    ? `${channel.roomId}/${channel.categoryId}`
+    : channel.roomId;
+}
+
+function placeOf(value: string): Pick<Channel, "roomId" | "categoryId"> {
+  if (value === NONE) return { roomId: null, categoryId: null };
+  const [roomId, categoryId] = value.split("/");
+  return { roomId: roomId!, categoryId: categoryId ?? null };
+}
+
 const MAX_IMAGE_DATA_URL_LENGTH = 300000;
 
 const MONITOR_DIMENSIONS = [
@@ -238,6 +252,9 @@ export function ChannelsTab({
               <TableHead>Photo</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Performer</TableHead>
+              {showfile.rooms?.length ? (
+                <TableHead>Room · category</TableHead>
+              ) : null}
               <TableHead>Mic type</TableHead>
               <TableHead>Audio input</TableHead>
               <TableHead>Shure channel</TableHead>
@@ -295,6 +312,48 @@ export function ChannelsTab({
                     }}
                   />
                 </TableCell>
+                {showfile.rooms?.length ? (
+                  <TableCell className="min-w-48">
+                    <Select
+                      value={placeValue(channel)}
+                      onValueChange={(value) => {
+                        const channels = [...showfile.channels];
+                        channels[position] = { ...channel, ...placeOf(value) };
+                        onChange({ ...showfile, channels });
+                      }}
+                    >
+                      <SelectTrigger
+                        aria-label={`Channel ${position + 1} room and category`}
+                      >
+                        <SelectValue placeholder="No room" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NONE}>No room</SelectItem>
+                        {showfile.rooms.flatMap((room) =>
+                          room.id
+                            ? [
+                                <SelectItem key={room.id} value={room.id}>
+                                  {room.name}
+                                </SelectItem>,
+                                ...room.categories.flatMap((category) =>
+                                  category.id
+                                    ? [
+                                        <SelectItem
+                                          key={`${room.id}/${category.id}`}
+                                          value={`${room.id}/${category.id}`}
+                                        >
+                                          {room.name} · {category.name}
+                                        </SelectItem>,
+                                      ]
+                                    : [],
+                                ),
+                              ]
+                            : [],
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                ) : null}
                 <TableCell className="min-w-36">
                   <Select
                     value={channel.micType ?? NONE}

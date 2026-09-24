@@ -60,11 +60,15 @@ import {
   type LiveStateSource,
 } from "./live-state";
 import { MeterStore } from "./meters";
+import { effectiveRoom, groupChannels, inRoom, type RoomChoice } from "./rooms";
 import {
+  NO_ROOM,
   nextSessionMinutes,
-  sessionById,
+  roomKeyOf,
   startSession,
   turnoverItems,
+  type SessionState,
+  type TurnoverItem,
 } from "./sessions";
 import {
   loadOperator,
@@ -376,7 +380,15 @@ export function App({
   const [detailId, setDetailId] = useState<string | null>(null);
   const [micCheckId, setMicCheckId] = useState<string | null>(null);
   const [exceptionsOpen, setExceptionsOpen] = useState(false);
-  const [sessionOpen, setSessionOpen] = useState(false);
+  /** Room key of the run whose turnover sheet is open. */
+  const [turnoverRoom, setTurnoverRoom] = useState<string | null>(null);
+  const [roomChoice, setRoomChoice] = useState<RoomChoice>(() => {
+    try {
+      return window.localStorage.getItem("pulse-room") ?? "all";
+    } catch {
+      return "all";
+    }
+  });
   const [sessionBusy, setSessionBusy] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [operatorOpen, setOperatorOpen] = useState(false);
@@ -506,7 +518,7 @@ export function App({
       if (event.key === "Escape") {
         setDetailId(null);
         setExceptionsOpen(false);
-        setSessionOpen(false);
+        setTurnoverRoom(null);
       }
     }
     window.addEventListener("keydown", handleKeyboard);
@@ -582,28 +594,66 @@ export function App({
     [liveState, offline],
   );
 
-  const session = liveState?.session;
-  const activeSession = offline
-    ? null
-    : sessionById(session, session?.activeId ?? null);
-  const turnover = useMemo(
-    () =>
-      liveState && !offline
-        ? turnoverItems(
-            liveState.channels,
-            nextSessionMinutes(liveState.session),
-          )
-        : [],
-    [liveState, offline],
+  const rooms = useMemo(() => liveState?.rooms ?? [], [liveState]);
+  const room = effectiveRoom(roomChoice, rooms, channels);
+  const roomChannels = useMemo(
+    () => channels.filter((channel) => inRoom(channel, room)),
+    [channels, room],
   );
+  const runs = useMemo(
+    () =>
+      (liveState?.runs ?? []).filter(
+        ({ roomId }) => room === "all" || roomKeyOf(roomId) === room,
+      ),
+    [liveState, room],
+  );
+  const sessionRunning = !offline && runs.some(({ activeId }) => activeId);
+  const roomName = (roomId: string | null) =>
+    roomId === null
+      ? "No room"
+      : (rooms.find(({ id }) => id === roomId)?.name ?? "Room");
+
+  function chooseRoom(next: RoomChoice) {
+    setRoomChoice(next);
+    try {
+      window.localStorage.setItem("pulse-room", next);
+    } catch {
+      // The room is a per-device convenience.
+    }
+  }
+
+  // Each room's turnover covers only that room's channels.
+  const turnovers = useMemo(() => {
+    const byRoom = new Map<string, TurnoverItem[]>();
+    if (!liveState || offline) return byRoom;
+    for (const run of liveState.runs ?? []) {
+      const key = roomKeyOf(run.roomId);
+      byRoom.set(
+        key,
+        turnoverItems(
+          liveState.channels.filter(
+            (channel) => roomKeyOf(channel.roomId) === key,
+          ),
+          nextSessionMinutes(run),
+        ),
+      );
+    }
+    return byRoom;
+  }, [liveState, offline]);
+  const turnoverRun: SessionState | null =
+    turnoverRoom === null
+      ? null
+      : ((liveState?.runs ?? []).find(
+          ({ roomId }) => roomKeyOf(roomId) === turnoverRoom,
+        ) ?? null);
 
   const changeSession = useCallback(
-    async (sessionId: string | null) => {
+    async (sessionId: string | null, roomId: string | null) => {
       setSessionBusy(true);
       setSessionError(null);
       try {
-        apply(await startSession(sessionId, operatorLabel(operator)));
-        setSessionOpen(false);
+        apply(await startSession(sessionId, roomId, operatorLabel(operator)));
+        setTurnoverRoom(null);
       } catch (error) {
         setSessionError(
           error instanceof Error
@@ -709,7 +759,7 @@ export function App({
 
   // "This session" means nothing once the run of show ends; fall back to all.
   const filter: Filter =
-    chosenFilter === "session" && activeSession === null ? "all" : chosenFilter;
+    chosenFilter === "session" && !sessionRunning ? "all" : chosenFilter;
 
   const visibleChannels = useMemo(() => {
     const matches = (channel: LiveStateChannel) => {
@@ -722,19 +772,26 @@ export function App({
     };
     // Showfile order, always: a critical channel stays visible whatever the
     // filter, but in its own place, so no card ever moves.
-    return channels.filter(
+    // Another room's critical fault counts in the header and the exceptions
+    // sheet; this device's grid stays on its own room.
+    return roomChannels.filter(
       (channel) => criticalIds.has(channel.id) || matches(channel),
     );
-  }, [activeAlerts, channels, criticalIds, filter]);
+  }, [activeAlerts, roomChannels, criticalIds, filter]);
+  const groups = useMemo(
+    () => groupChannels(visibleChannels, rooms, room),
+    [visibleChannels, rooms, room],
+  );
 
   const counts: Record<Filter, number> = {
-    all: channels.length,
-    session: channels.filter(({ session }) => session?.inUse !== false).length,
-    "needs-someone": channels.filter((channel) =>
+    all: roomChannels.length,
+    session: roomChannels.filter(({ session }) => session?.inUse !== false)
+      .length,
+    "needs-someone": roomChannels.filter((channel) =>
       needsSomeone(channel, activeAlerts),
     ).length,
-    wireless: channels.filter(({ kind }) => kind === "wireless").length,
-    wired: channels.filter(({ kind }) => kind === "wired").length,
+    wireless: roomChannels.filter(({ kind }) => kind === "wireless").length,
+    wired: roomChannels.filter(({ kind }) => kind === "wired").length,
   };
 
   function selectChannel(channel: LiveStateChannel) {
@@ -892,17 +949,56 @@ export function App({
         </section>
       ) : null}
 
-      {session?.sessions.length ? (
+      {rooms.length ? (
+        <nav className="room-bar" aria-label="Rooms">
+          <span className="filter-label">Room</span>
+          {[
+            { key: "all", label: "All rooms", count: channels.length },
+            ...rooms.map(({ id, name }) => ({
+              key: id,
+              label: name,
+              count: channels.filter(({ roomId }) => roomId === id).length,
+            })),
+            ...(channels.some(({ roomId }) => !roomId)
+              ? [
+                  {
+                    key: NO_ROOM,
+                    label: "No room",
+                    count: channels.filter(({ roomId }) => !roomId).length,
+                  },
+                ]
+              : []),
+          ].map(({ key, label, count }) => (
+            <button
+              type="button"
+              className="filter-button"
+              aria-pressed={room === key}
+              onClick={() => chooseRoom(key)}
+              key={key}
+            >
+              {label} <span>{count}</span>
+            </button>
+          ))}
+        </nav>
+      ) : null}
+
+      {runs.map((run) => (
         <SessionBar
-          session={session}
-          turnover={turnover}
+          key={roomKeyOf(run.roomId)}
+          session={run}
+          roomName={
+            rooms.length && (room === "all" || runs.length > 1)
+              ? roomName(run.roomId)
+              : null
+          }
+          turnover={turnovers.get(roomKeyOf(run.roomId)) ?? []}
           offline={offline}
           onOpen={() => {
             setSessionError(null);
-            setSessionOpen(true);
+            setTurnoverRoom(roomKeyOf(run.roomId));
           }}
         />
-      ) : null}
+      ))}
 
       {!isA1 ? (
         <ReportBanner
@@ -917,13 +1013,12 @@ export function App({
         />
       ) : null}
 
-      {channels.length ? (
+      {roomChannels.length ? (
         <nav className="filters" aria-label="Channel filters">
           <span className="filter-label">Showing</span>
           {(Object.keys(filterLabels) as Filter[])
             .filter(
-              (filterOption) =>
-                filterOption !== "session" || activeSession !== null,
+              (filterOption) => filterOption !== "session" || sessionRunning,
             )
             .map((filterOption) => (
               <button
@@ -943,7 +1038,12 @@ export function App({
         {channels.length ? (
           <>
             <div className="grid-heading">
-              <h1>{isA1 ? "Mix confidence" : filterLabels[filter]}</h1>
+              <h1>
+                {room !== "all"
+                  ? `${room === NO_ROOM ? "No room" : roomName(room)} · `
+                  : ""}
+                {isA1 ? "Mix confidence" : filterLabels[filter]}
+              </h1>
               <p>
                 {isA1
                   ? `${visibleChannels.length} sources · press a channel to report what you hear · expand opens detail`
@@ -951,41 +1051,61 @@ export function App({
                 {criticalIds.size ? " · critical faults always shown" : ""}
               </p>
             </div>
-            <div className="channel-grid">
-              {visibleChannels.map((channel) => (
-                <ChannelCard
-                  key={channel.id}
-                  channel={channel}
-                  alert={
-                    isA1 ? null : overlayAlert(activeAlerts, channel.id, nowMs)
-                  }
-                  report={cardReportState(reports, channel.id)}
-                  actionLabel={isA1 ? "Report a fault on" : "Select"}
-                  overlayExpiryMs={liveState?.show.overlayExpiryMs ?? 300_000}
-                  nowMs={nowMs}
-                  selected={!isA1 && selectedId === channel.id}
-                  listening={!isA1 && listening && selectedId === channel.id}
-                  imageRevision={liveState?.show.showfileRevision ?? 0}
-                  meterStore={meterStore}
-                  metersStale={
-                    offline ||
-                    !device ||
-                    (liveState !== null && liveState.node.status !== "ready")
-                  }
-                  onAcknowledge={(alert) => void acknowledge(alert)}
-                  onSelect={() => {
-                    if (isA1) {
-                      setFiledReportId(null);
-                      setReportError(null);
-                      setReportChannelId(channel.id);
-                    } else {
-                      selectChannel(channel);
-                    }
-                  }}
-                  onOpenDetail={() => setDetailId(channel.id)}
-                />
-              ))}
-            </div>
+            {groups.map((group) => (
+              <section
+                className="channel-group"
+                key={group.key}
+                aria-label={group.title ?? undefined}
+              >
+                {group.title ? (
+                  <h2 className="group-heading">
+                    {group.title} <span>{group.channels.length}</span>
+                  </h2>
+                ) : null}
+                <div className="channel-grid">
+                  {group.channels.map((channel) => (
+                    <ChannelCard
+                      key={channel.id}
+                      channel={channel}
+                      alert={
+                        isA1
+                          ? null
+                          : overlayAlert(activeAlerts, channel.id, nowMs)
+                      }
+                      report={cardReportState(reports, channel.id)}
+                      actionLabel={isA1 ? "Report a fault on" : "Select"}
+                      overlayExpiryMs={
+                        liveState?.show.overlayExpiryMs ?? 300_000
+                      }
+                      nowMs={nowMs}
+                      selected={!isA1 && selectedId === channel.id}
+                      listening={
+                        !isA1 && listening && selectedId === channel.id
+                      }
+                      imageRevision={liveState?.show.showfileRevision ?? 0}
+                      meterStore={meterStore}
+                      metersStale={
+                        offline ||
+                        !device ||
+                        (liveState !== null &&
+                          liveState.node.status !== "ready")
+                      }
+                      onAcknowledge={(alert) => void acknowledge(alert)}
+                      onSelect={() => {
+                        if (isA1) {
+                          setFiledReportId(null);
+                          setReportError(null);
+                          setReportChannelId(channel.id);
+                        } else {
+                          selectChannel(channel);
+                        }
+                      }}
+                      onOpenDetail={() => setDetailId(channel.id)}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
           </>
         ) : liveState && !offline ? (
           <section className="empty-state">
@@ -1080,18 +1200,21 @@ export function App({
         />
       ) : null}
 
-      {sessionOpen && session && !offline ? (
+      {turnoverRun && !offline ? (
         <SessionSheet
-          session={session}
-          turnover={turnover}
+          session={turnoverRun}
+          roomName={rooms.length ? roomName(turnoverRun.roomId) : null}
+          turnover={turnovers.get(roomKeyOf(turnoverRun.roomId)) ?? []}
           busy={sessionBusy}
           error={sessionError}
-          onStart={(sessionId) => void changeSession(sessionId)}
+          onStart={(sessionId) =>
+            void changeSession(sessionId, turnoverRun.roomId)
+          }
           onShowChannel={(channelId) => {
-            setSessionOpen(false);
+            setTurnoverRoom(null);
             setDetailId(channelId);
           }}
-          onClose={() => setSessionOpen(false)}
+          onClose={() => setTurnoverRoom(null)}
         />
       ) : null}
 

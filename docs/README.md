@@ -81,6 +81,7 @@ boundary; production evidence promotion remains deferred.
 - [MVP live monitoring state and alert lifecycle](decisions/0027-mvp-live-monitoring-and-alerts.md)
 - [MVP shared mic checks and A1 fault reports](decisions/0028-mvp-shared-checks-and-fault-reports.md)
 - [MVP sessions and a shared run of show](decisions/0029-mvp-sessions-and-run-of-show.md)
+- [MVP rooms and categories](decisions/0030-mvp-rooms-and-categories.md)
 
 ## Reference
 
