@@ -51,8 +51,11 @@ the blank frame when no photo is set, for a faster at-a-glance read.
    `"operator" | "inferred" | null` field on `LiveStateChannel` says whether
    `micType` came from Manager or from telemetry. The honesty grammar
    (DESIGN.md §9) requires inferred data to read as suspected, not
-   confirmed, so Live shows `Handheld`/`Beltpack` for an operator value and
-   `Likely handheld`/`Likely beltpack` (dashed glyph) for an inferred one.
+   confirmed, so Live draws the fallback glyph solid for an operator value
+   and dashed for an inferred one; the grammar's word ("likely") lives in
+   the glyph's accessible name rather than a visible caption, since at the
+   size the glyph now renders (large enough to read from operating
+   distance, DESIGN.md 2.8.1) it carries the read on its own.
    The field is optional rather than required in the schema so the existing
    backward-compatibility fixture (`fixtures/v0/http/previous/live-state.valid.json`)
    still validates against the current schema unchanged.

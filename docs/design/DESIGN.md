@@ -1,6 +1,6 @@
 # Pulse — design language
 
-- **Version:** 2.8.0
+- **Version:** 2.8.1
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
 - **Last updated:** 2026-09-25
@@ -499,15 +499,17 @@ for Eleanor, not for input 27, and a face is recognised faster than any label.
   image pipeline, 16:10 crop. Never a stock photo, never a face standing in for
   one that hasn't been supplied. A source with no headshot shows the empty
   dashed frame and reads as incomplete, because it is — with one exception: when
-  the mic type is known, a plain handheld or beltpack glyph (2px stroke, per
-  [§7](#7-iconography)) sits in the frame in place of the "Photo not added"
-  caption, so an A2 can tell a performer's kind of source at a glance before a
-  photo exists. This is a device pictograph, not an illustrated person, and it
-  never appears once a real headshot is set. It carries the
-  [honesty grammar](#9-the-honesty-grammar): **Handheld**/**Beltpack** in plain
-  text when the operator set the mic type in Manager, **Likely handheld**/
-  **Likely beltpack** with a dashed glyph when it is only inferred from Shure
-  transmitter telemetry and the operator hasn't confirmed one.
+  the mic type is known, a large handheld or beltpack glyph sits in the frame in
+  place of the "Photo not added" caption, sized to read from operating distance,
+  not just up close, so an A2 can tell a performer's kind of source at a glance
+  before a photo exists. This is a device pictograph, not an illustrated person,
+  and it never appears once a real headshot is set. No caption rides under it —
+  the glyph alone carries the read at this size. It still carries the
+  [honesty grammar](#9-the-honesty-grammar) visually: a solid glyph when the
+  operator set the mic type in Manager, a dashed glyph when it is only inferred
+  from Shure transmitter telemetry and the operator hasn't confirmed one; the
+  grammar's word ("likely") moves to the accessible name for screen readers
+  rather than appearing on the card.
 - **Channel number**, quiet mono over the photograph, top left.
 - **Fault flags**, top right: a category that is clear says nothing; one in fault
   says its name.
@@ -1017,6 +1019,15 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.8.1 — 2026-09-25.** The mic-type fallback glyph ([§10.1](#101-channel-card))
+is redrawn (a proper handheld silhouette and a detailed beltpack — body,
+antenna, connector, side control, screen — replacing the first pass's
+stand-mic and unreadable curl), shown much larger so it reads from
+operating distance, and loses its "Handheld"/"Likely beltpack" caption —
+the honesty grammar's dashed-vs-solid glyph now carries the visual read
+alone, with the word moved to the accessible name. Implemented in Live and
+Manager alongside this entry.
 
 **2.8.0 — 2026-09-25.** The channel card's empty photo frame
 ([§10.1](#101-channel-card)) can now carry a handheld or beltpack glyph

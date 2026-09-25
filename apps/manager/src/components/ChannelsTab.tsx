@@ -45,7 +45,7 @@ const MIC_TYPES = [
   { value: "other", label: "Other" },
 ] as const;
 
-/** A handheld transmitter's capsule-and-body silhouette, matching the 2px-stroke Lucide set (§7). */
+/** Phosphor Icons' microphone-stage (MIT), shipped as "Microphone" in RVLT Flow, rescaled onto Pulse's 24px grid (ADR 0036). */
 function HandheldMicIcon(props: { className?: string }) {
   return (
     <svg
@@ -58,13 +58,15 @@ function HandheldMicIcon(props: { className?: string }) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <rect x="9" y="2" width="6" height="11" rx="3" />
-      <path d="M12 13v4M8 21h8" />
+      <circle cx="15.75" cy="8.25" r="6" />
+      <path d="M19.99 12.49 11.51 4.01" />
+      <path d="M9 15l.75-.75" />
+      <path d="M9.84 9.33 3.15 18.47a.75.75 0 0 0 .07.97l1.34 1.34a.75.75 0 0 0 .97.07L14.67 14.16" />
     </svg>
   );
 }
 
-/** A beltpack transmitter's body-and-antenna silhouette, matching the 2px-stroke Lucide set (§7). */
+/** RVLT Flow's own beltpack transmitter glyph, rescaled onto Pulse's 24px grid (ADR 0036). */
 function BeltpackMicIcon(props: { className?: string }) {
   return (
     <svg
@@ -72,13 +74,24 @@ function BeltpackMicIcon(props: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <rect x="5" y="8" width="14" height="13" rx="2" />
-      <path d="M15 8V6a1 1 0 0 0-1-1h-1V3" />
+      <path d="M6.94 7.06V4.89q0-1.69-.72-2.89" />
+      <path d="M13.45 7.06v-1.93h1.69v1.93" />
+      <path d="M16.1 10.19h.72q.96 0 .96.96v6.03q0 .96-.96.96h-.72" />
+      <rect x="5.01" y="7.06" width="11.09" height="14.94" rx="1.21" />
+      <rect
+        x="7.18"
+        y="9.47"
+        width="6.75"
+        height="3.37"
+        rx="0.48"
+        fill="currentColor"
+        stroke="none"
+      />
     </svg>
   );
 }
@@ -215,7 +228,7 @@ function ChannelImage({
             }
           >
             {micType === "handheld" || micType === "beltpack" ? (
-              <MicTypeIcon micType={micType} className="size-4" />
+              <MicTypeIcon micType={micType} className="size-8" />
             ) : (
               <ImageOff className="size-4" aria-hidden="true" />
             )}
