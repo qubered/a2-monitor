@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.c02179fac1af2215",
-  "sourceSha256": "c02179fac1af2215f593b5b3d23270613bf5d85ecf5b2c5e36c94fc481da54ad",
-  "inputCount": 429,
+  "buildId": "a2-0.0.0+sha256.852acc787eb7b4c3",
+  "sourceSha256": "852acc787eb7b4c35b2d31e6c3fe4eeab0ccd69a790964d11f6dd181cf3acb5e",
+  "inputCount": 430,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -750,6 +750,10 @@
     {
       "path": "docs/decisions/0033-channel-monitor-trim.md",
       "sha256": "5445c98689b9aa3196ad00de2e3c91877254dafd4de3f9436bcb242a090098e6"
+    },
+    {
+      "path": "docs/decisions/0034-shared-fault-report-dismissal.md",
+      "sha256": "9ca2b6a318c2e754d9578f255e0a5349140627515e8957ab6e10cd2111678554"
     },
     {
       "path": "docs/design/DESIGN.md",
