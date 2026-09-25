@@ -132,6 +132,36 @@ describe("ReportBook", () => {
     );
   });
 
+  it("shares a dismissed banner with everyone, but only while a report is still open", () => {
+    const book = new ReportBook();
+    const report = book.create(
+      channels()[0]!,
+      ["hum-buzz"],
+      null,
+      "Morgan",
+      T0,
+    );
+    expect(
+      book.act(report.id, "dismiss", "Sam (A2)", T0 + 1_000),
+    ).toMatchObject({
+      status: "open",
+      dismissedBy: "Sam (A2)",
+      dismissedAtUtc: new Date(T0 + 1_000).toISOString(),
+    });
+
+    const claimed = book.create(
+      channels()[0]!,
+      ["popping"],
+      null,
+      "Morgan",
+      T0,
+    );
+    book.act(claimed.id, "claim", "Sam (A2)", T0 + 1_000);
+    expect(() =>
+      book.act(claimed.id, "dismiss", "Sam (A2)", T0 + 2_000),
+    ).toThrow("Only an unclaimed report's banner can be dismissed.");
+  });
+
   it("promotes an open task when its channel faults, and keeps closed reports visible briefly", () => {
     const book = new ReportBook();
     const report = book.create(

@@ -916,7 +916,9 @@
         "claimedAtUtc",
         "resolvedBy",
         "resolvedAtUtc",
-        "closedAtUtc"
+        "closedAtUtc",
+        "dismissedBy",
+        "dismissedAtUtc"
       ],
       "properties": {
         "id": {
@@ -1026,6 +1028,21 @@
           "format": "date-time"
         },
         "closedAtUtc": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "dismissedBy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "dismissedAtUtc": {
           "type": [
             "string",
             "null"

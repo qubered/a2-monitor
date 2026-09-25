@@ -216,23 +216,6 @@ function inputChannels(device: AudioDeviceState): LiveStateChannel[] {
   }));
 }
 
-const DISMISSED_KEY = "pulse-dismissed-reports";
-
-function readDismissed(): Set<string> {
-  try {
-    const value = JSON.parse(
-      window.localStorage.getItem(DISMISSED_KEY) ?? "[]",
-    ) as unknown;
-    return new Set(
-      Array.isArray(value)
-        ? value.filter((item): item is string => typeof item === "string")
-        : [],
-    );
-  } catch {
-    return new Set();
-  }
-}
-
 /** What a card says about the fault reports on its channel. */
 function cardReportState(
   reports: readonly FaultReport[],
@@ -424,8 +407,6 @@ export function App({
   const [filedReportId, setFiledReportId] = useState<string | null>(null);
   const [reportBusy, setReportBusy] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
-  const [dismissedReports, setDismissedReports] =
-    useState<Set<string>>(readDismissed);
   const [announcement, setAnnouncement] = useState("");
   const [muted, setMuted] = useState(false);
   const [dimmed, setDimmed] = useState(false);
@@ -932,21 +913,6 @@ export function App({
     [operator],
   );
 
-  function dismissReport(report: FaultReport) {
-    setDismissedReports((current) => {
-      const next = new Set(current).add(report.id);
-      try {
-        window.localStorage.setItem(
-          DISMISSED_KEY,
-          JSON.stringify([...next].slice(-100)),
-        );
-      } catch {
-        // Dismissal is a per-device convenience.
-      }
-      return next;
-    });
-  }
-
   // The filter row: everything, what needs someone, then the room's categories
   // (Wireless and Wired stand in when the show has none).
   const filterOptions = useMemo<FilterOption[]>(() => {
@@ -1421,12 +1387,12 @@ export function App({
         <ReportBanner
           reports={reports.filter(
             (report) =>
-              report.status === "open" && !dismissedReports.has(report.id),
+              report.status === "open" && report.dismissedAtUtc === null,
           )}
           busy={reportBusy}
           onClaim={(report) => void reportAction(report, "claim")}
           onShow={(report) => setDetailId(report.channelId)}
-          onDismiss={dismissReport}
+          onDismiss={(report) => void reportAction(report, "dismiss")}
         />
       ) : null}
 

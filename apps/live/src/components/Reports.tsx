@@ -5,8 +5,9 @@ import { faultSummary, reportStatusLine, type ReportAction } from "../reports";
 
 /**
  * Every incoming report, on whatever the A2 is doing (design system §11.2.1).
- * Persistent until claimed or dismissed on this device; never covers a meter
- * and never plays a sound. Comms remains the authoritative urgent path.
+ * Persistent until claimed or dismissed; dismissal is shared, so any A2's
+ * dismiss clears the banner for every A2. Never covers a meter and never
+ * plays a sound. Comms remains the authoritative urgent path.
  */
 export function ReportBanner({
   reports,

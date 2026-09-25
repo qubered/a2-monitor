@@ -13,9 +13,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: 29102e604cc286017df95fdd1a758d78893f2166bbc549e71a62a020b67fcd6f
+// Schema-SHA256: 04da132d6dc9ea6463c810cf1b4e18933a48a99e0b4ba309fbd919949f60a9a7
 // Generator-SHA256: 7c6c8c3297d1ffee85f78fc29a4b03c3fbf3fa68da597de8be09f1f2e73d4cbf
-// Body-SHA256: 42ba6793a215a6b36f9c176953f9f48cfd186f7461a0148c148bd2614b770dad
+// Body-SHA256: 23b7fb9e9fc73e9b0b8d2176496005f3b032443b14dd4a517866237f2c062669
 
 export type HealthResponse = {
   status: "ok";
@@ -476,6 +476,8 @@ export type FaultReport = {
   resolvedBy: string | null;
   resolvedAtUtc: string | null;
   closedAtUtc: string | null;
+  dismissedBy: string | null;
+  dismissedAtUtc: string | null;
 };
 
 export type ReportedFault =
@@ -2771,6 +2773,8 @@ const liveStateSchema = {
         "resolvedBy",
         "resolvedAtUtc",
         "closedAtUtc",
+        "dismissedBy",
+        "dismissedAtUtc",
       ],
       properties: {
         id: {
@@ -2858,6 +2862,15 @@ const liveStateSchema = {
           format: "date-time",
         },
         closedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        dismissedBy: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 80,
+        },
+        dismissedAtUtc: {
           type: ["string", "null"],
           format: "date-time",
         },
