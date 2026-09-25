@@ -13,9 +13,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: 04da132d6dc9ea6463c810cf1b4e18933a48a99e0b4ba309fbd919949f60a9a7
+// Schema-SHA256: bbf66fe09544e9609e7e584d44f0e4c6bea4720cfaf5c210ded09d2bdaf01d3d
 // Generator-SHA256: 7c6c8c3297d1ffee85f78fc29a4b03c3fbf3fa68da597de8be09f1f2e73d4cbf
-// Body-SHA256: 23b7fb9e9fc73e9b0b8d2176496005f3b032443b14dd4a517866237f2c062669
+// Body-SHA256: 67e8bdae65c932b0d44b8de062159e796d756eec99f9c47e82a77408f8b5980e
 
 export type HealthResponse = {
   status: "ok";
@@ -144,6 +144,7 @@ export type Showfile = {
       | "lavalier"
       | "headset"
       | "handheld"
+      | "beltpack"
       | "boundary"
       | "instrument"
       | "other"
@@ -351,10 +352,12 @@ export type LiveStateChannel = {
     | "lavalier"
     | "headset"
     | "handheld"
+    | "beltpack"
     | "boundary"
     | "instrument"
     | "other"
     | null;
+  micTypeSource?: "operator" | "inferred" | null;
   hasImage: boolean;
   input: {
     index: number | null;
@@ -1165,6 +1168,7 @@ const showfileSchema = {
               "lavalier",
               "headset",
               "handheld",
+              "beltpack",
               "boundary",
               "instrument",
               "other",
@@ -2343,11 +2347,17 @@ const liveStateSchema = {
             "lavalier",
             "headset",
             "handheld",
+            "beltpack",
             "boundary",
             "instrument",
             "other",
             null,
           ],
+        },
+        micTypeSource: {
+          description:
+            "Who set micType: the operator in Manager, or inferred from Shure transmitter telemetry because the operator hasn't set one yet. Null when micType itself is null.",
+          enum: ["operator", "inferred", null],
         },
         hasImage: {
           type: "boolean",

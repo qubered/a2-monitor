@@ -146,6 +146,30 @@ describe("applyChannelProperty", () => {
     expect(withMute?.transmitter.muted).toBe(true);
   });
 
+  it("retains the last confirmed transmitter model across an UNKNOWN report instead of clearing it", () => {
+    const withType = applyChannelProperty(
+      baseChannel(),
+      AXIENT_COMMANDS,
+      "TX_MODEL",
+      "AD2",
+    );
+    expect(withType).toMatchObject({
+      linkStatus: "active",
+      transmitter: { type: "AD2" },
+    });
+
+    const afterDropout = applyChannelProperty(
+      withType!,
+      AXIENT_COMMANDS,
+      "TX_MODEL",
+      "UNKNOWN",
+    );
+    expect(afterDropout).toMatchObject({
+      linkStatus: "no-transmitter",
+      transmitter: { type: "AD2" },
+    });
+  });
+
   it("ignores properties that do not belong to the receiver's family", () => {
     expect(
       applyChannelProperty(baseChannel(), QLXD_COMMANDS, "RSSI", "062"),
@@ -295,7 +319,9 @@ describe("ShureFleetMonitor against the development AD4Q simulator", () => {
       offsetMs = 65_000;
       await waitFor(() => host()?.linkStatus === "no-transmitter");
       expect(host()).toMatchObject({
-        transmitter: { type: null },
+        // The last confirmed model is retained across the gap instead of
+        // being cleared; only presence (linkStatus) reflects the dropout.
+        transmitter: { type: "ADX1" },
         batteryChargePercent: null,
         batteryBars: null,
         batteryRunTimeMinutes: null,

@@ -224,3 +224,34 @@ export function isShureReceiverModel(
 ): value is ShureReceiverModel {
   return Object.hasOwn(SHURE_MODEL_INFO, value);
 }
+
+/** Physical form factor of a Shure transmitter, as distinct from its receiver. */
+export type ShureTransmitterFormFactor = "handheld" | "beltpack";
+
+// Shure's transmitter model codes end in "1" for a bodypack/beltpack
+// transmitter and "2" for a handheld across every family that reports one
+// (AD/ADX, ULX-D, QLX-D, SLX-D), independent of any receiver-specific
+// prefix or trailing capsule/module suffix (e.g. "ADX1M"). Built from
+// Shure's published transmitter model lists; `compatible-read-only` and
+// unverified until it passes a hardware acceptance test, same as the
+// receiver command tables in listen-gateway.
+const TRANSMITTER_MODEL_PATTERN = /^(?:ADX|AD|ULXD|QLXD|SLXD)([12])/;
+
+/**
+ * Classifies a raw TX_MODEL/TX_TYPE command-string value into a transmitter
+ * form factor, or `null` when the value doesn't match a known pattern (an
+ * unrecognized or third-party transmitter). This is an inference from the
+ * vendor's model code, not a value the receiver reports directly.
+ */
+export function classifyShureTransmitter(
+  rawModel: string | null,
+): ShureTransmitterFormFactor | null {
+  if (!rawModel) return null;
+  const normalized = rawModel
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+  const match = TRANSMITTER_MODEL_PATTERN.exec(normalized);
+  if (!match) return null;
+  return match[1] === "1" ? "beltpack" : "handheld";
+}

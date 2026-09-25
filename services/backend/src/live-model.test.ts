@@ -105,6 +105,61 @@ describe("evaluate", () => {
     expect(result.conditions).toEqual([]);
   });
 
+  it("infers micType from the transmitter model only while the operator hasn't set one", () => {
+    const base = showfileWith();
+    const unset = {
+      ...base,
+      channels: base.channels.map((channel, index) =>
+        index === 0 ? { ...channel, micType: null } : channel,
+      ),
+    };
+
+    const inferred = run(
+      observationAt(
+        T0,
+        levelsWith([-12, -30]),
+        telemetryWith([
+          { transmitter: { type: "AD2", name: null, muted: null } },
+        ]),
+      ),
+      { showfile: unset },
+    );
+    expect(inferred.channels[0]).toMatchObject({
+      micType: "handheld",
+      micTypeSource: "inferred",
+    });
+
+    const beltpack = run(
+      observationAt(
+        T0,
+        levelsWith([-12, -30]),
+        telemetryWith([
+          { transmitter: { type: "AD1", name: null, muted: null } },
+        ]),
+      ),
+      { showfile: unset },
+    );
+    expect(beltpack.channels[0]).toMatchObject({
+      micType: "beltpack",
+      micTypeSource: "inferred",
+    });
+
+    const operatorSet = run(
+      observationAt(
+        T0,
+        levelsWith([-12, -30]),
+        telemetryWith([
+          { transmitter: { type: "AD1", name: null, muted: null } },
+        ]),
+      ),
+      { showfile: base },
+    );
+    expect(operatorSet.channels[0]).toMatchObject({
+      micType: "headset",
+      micTypeSource: "operator",
+    });
+  });
+
   it("escalates battery from caution to critical at the policy limits", () => {
     const low = run(
       observationAt(

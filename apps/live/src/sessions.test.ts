@@ -20,6 +20,7 @@ function wireless(
     performer: "Dana Lee",
     kind: "wireless",
     micType: "handheld",
+    micTypeSource: "operator",
     hasImage: false,
     input: { index: 0, label: "input 1" },
     receiver: null,

@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.852acc787eb7b4c3",
-  "sourceSha256": "852acc787eb7b4c35b2d31e6c3fe4eeab0ccd69a790964d11f6dd181cf3acb5e",
+  "buildId": "a2-0.0.0+sha256.c2043719c423cafc",
+  "sourceSha256": "c2043719c423cafcb49dcc0cc5c1f771497144f1af30e524c1cfeb9f23870eb5",
   "inputCount": 430,
   "inputs": [
     {
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "53f8abb73789c6f96fd90eaeedf78b519478790fa623c5529ab7c6b3a6f3c1e4"
+      "sha256": "f1a97d11b731fc1c46eb03ff13530563a81f9829fc1afb0751b2578ca8179b29"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "f11d1f326d5c6a2e3aceb8c7ac16e07a5b9b8c004f964b9a81bd48e69bc225ff"
+      "sha256": "d58372049ee1f4b1c333861048e9a437aaa336b1dfb550915112657a21594367"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -121,7 +121,7 @@
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
-      "sha256": "ea5e17b36bcf4d528ec1d8f070d79e34e12f782720524d90f3d979ac809d34fe"
+      "sha256": "a932009d49e77fa70499aab32bc24db694eb22dae99e63a8f698af9df61a17ee"
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
@@ -229,7 +229,7 @@
     },
     {
       "path": "apps/live/src/sessions.test.ts",
-      "sha256": "f3a1556a547415290a286dd96c7057fefa2888e1b191ad61a8e2011f8f02b7a1"
+      "sha256": "9b53093bd255ea2ca70fc446a4331b2118abcdbd997bd9047c874661e84a9f2f"
     },
     {
       "path": "apps/live/src/sessions.ts",
@@ -237,7 +237,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "7d02a5cd632d77565853641f26a748063d72af3ee8df6a43916652b9db9d5b21"
+      "sha256": "d9aa95e7f60cea63a9cbbdf9486035bf83337252baab61a947beb5448dac464d"
     },
     {
       "path": "apps/live/src/trim.ts",
@@ -309,7 +309,7 @@
     },
     {
       "path": "apps/manager/src/components/ChannelsTab.tsx",
-      "sha256": "6c93da7a0269393bfe4697dc88dbf5ac59c3ddedf4841f337eb80d1c9b0472ba"
+      "sha256": "3aad7f57cdf736336b2740069a18e04a987dd3f71005b02485053ba380b6d588"
     },
     {
       "path": "apps/manager/src/components/EmptyState.tsx",
@@ -545,7 +545,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256": "877574df2cbcbcad326fa26db8ec68e76a23216a6e4710c798d6bfa23f4a9efd"
+      "sha256": "33aa2518778027f6a37c935e8d06b16d4b3b2271ea7ec45f5a0d4caf45bce0e9"
     },
     {
       "path": "docs/api/show-management-and-control.md",
@@ -757,7 +757,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "8056baa31f987b586d19f6d32d4a0df2911be1b7c95c296828f3c41725d1194f"
+      "sha256": "4471253938c1319999acfcd1eb7532c83eb3baee48b72d0031de8e07bc47c0de"
     },
     {
       "path": "docs/design/README.md",
@@ -1065,7 +1065,7 @@
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/live-state.valid.json",
-      "sha256": "c59c6e4887522c3387c6a5f6655cfc38764f9464ed33fa9f09eacb51d126b617"
+      "sha256": "73c9c37ef8a7a5a19eb132cb46c4edfa145447c9b46d44745100d0f69aff379e"
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/meter-frame.valid.json",
@@ -1225,7 +1225,7 @@
     },
     {
       "path": "packages/protocol/generated/http-contracts.ts",
-      "sha256": "5ea1ee0cee13180205367dc372b0649efeaddb8ba339753efd4b9fd4e51bbcee"
+      "sha256": "3f360798a3a322dac0916ec763ac8df40e5f1f0a5fac10b7e30952f8406727dd"
     },
     {
       "path": "packages/protocol/model/aggregate-transitions.v0.json",
@@ -1233,7 +1233,7 @@
     },
     {
       "path": "packages/protocol/package.json",
-      "sha256": "2a75461b86fff4b10b067c0d4b4c5e7c02cfff737c03055b91b560e2d6b16cf1"
+      "sha256": "8839811e8123cb25fb36406a7c52a20820556a811984b8d0f7f807c92f65bc72"
     },
     {
       "path": "packages/protocol/policy/alert-policy.ts",
@@ -1241,7 +1241,7 @@
     },
     {
       "path": "packages/protocol/receivers/shure-models.ts",
-      "sha256": "54b71df2e0b48f9ef802f8957072dcad31db971b49bc85350025dd79cdcf2704"
+      "sha256": "efc569fd179184864dbc46a7ec9de5208ea8e22c871b0e0e91da54177375692f"
     },
     {
       "path": "packages/protocol/schema/v0/http/alert-log.schema.json",
@@ -1265,7 +1265,7 @@
     },
     {
       "path": "packages/protocol/schema/v0/http/live-state.schema.json",
-      "sha256": "5a748c963e5cd1ed1736ef3aeed813fda5d7e30f3389db4cfaa6165460f9d318"
+      "sha256": "e23e0b80359cf178564f82a16c266a7e30672d96c42e17be3b90a45d0c6afee0"
     },
     {
       "path": "packages/protocol/schema/v0/http/meter-frame.schema.json",
@@ -1285,7 +1285,7 @@
     },
     {
       "path": "packages/protocol/schema/v0/http/showfile.schema.json",
-      "sha256": "343ccfb42efa0c38808758727563531ddffe89f08d8a2216fb05bedb2b4a3eb5"
+      "sha256": "24d7b88f2166c20b926653b1a702e8c39e9e8d0aa10cd944d22bfbc66f0f3f6e"
     },
     {
       "path": "packages/protocol/schema/v0/http/shure-telemetry.schema.json",
@@ -1533,11 +1533,11 @@
     },
     {
       "path": "services/backend/src/live-model.test.ts",
-      "sha256": "de16ddd58785d969d778b8780a4eee3af507cd589506944104fa7756f911f350"
+      "sha256": "134f4ba42828506eb4ca7afc3c9e0cd85cc32aa9aede700b88414b5c6a81149e"
     },
     {
       "path": "services/backend/src/live-model.ts",
-      "sha256": "af21035e3ae483ce6ddb549c6310deab52c2308d99f766b656845c1032c47e0c"
+      "sha256": "bcd211932b8c1ad96ffa5eaa87b7daf7cfba068789e773160a2b59be942325fd"
     },
     {
       "path": "services/backend/src/live-monitor.ts",
@@ -1657,11 +1657,11 @@
     },
     {
       "path": "services/listen-gateway/src/shure.test.ts",
-      "sha256": "addf0ce9b6cb7c5769b5dbd893990118886675911bdc747a101aba54c5a36bba"
+      "sha256": "d51ac026569385221ac7c61854e2fe90ce2b31a05b7252eceab6331021644364"
     },
     {
       "path": "services/listen-gateway/src/shure.ts",
-      "sha256": "7ee30e73fa62d9c4c28e135f82f9f1e554f3885f64ae88187003a23c9089cd02"
+      "sha256": "7560bb5723037440511c253a16bc4925df0e72fb4f2b3a4886774d7f1b64becc"
     },
     {
       "path": "services/listen-gateway/src/start.ts",

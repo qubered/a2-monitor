@@ -5,6 +5,7 @@ import type {
   Showfile,
   ShureTelemetry,
 } from "@rvlt/pulse-protocol/http";
+import { classifyShureTransmitter } from "@rvlt/pulse-protocol/shure-models";
 import type { AlertPolicy } from "./alert-policy.js";
 import type { AlertCondition, AlertKind } from "./alerts.js";
 import {
@@ -446,6 +447,20 @@ function buildChannel(
     runtimeMinutes: telemetryChannel?.batteryRunTimeMinutes ?? null,
     type: telemetryChannel?.batteryType ?? null,
   };
+  // The operator's micType always wins; a detected form factor only fills the
+  // gap while none has been set, and is marked inferred rather than merged in
+  // as if the operator had confirmed it (the honesty grammar, DESIGN.md §9).
+  const detectedMicType = classifyShureTransmitter(
+    telemetryChannel?.transmitter.type ?? null,
+  );
+  const micType: LiveStateChannel["micType"] =
+    showChannel.micType ?? detectedMicType;
+  const micTypeSource: LiveStateChannel["micTypeSource"] =
+    showChannel.micType != null
+      ? "operator"
+      : detectedMicType !== null
+        ? "inferred"
+        : null;
   const transmitter: LiveStateChannel["transmitter"] = {
     type: telemetryChannel?.transmitter.type ?? null,
     name: telemetryChannel?.transmitter.name ?? null,
@@ -655,7 +670,8 @@ function buildChannel(
       name: showChannel.name,
       performer,
       kind: wireless ? "wireless" : "wired",
-      micType: showChannel.micType ?? null,
+      micType,
+      micTypeSource,
       trimDb: showChannel.trimDb ?? 0,
       roomId: showChannel.roomId ?? null,
       categoryId: showChannel.categoryId ?? null,
