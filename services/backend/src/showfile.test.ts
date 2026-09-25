@@ -46,6 +46,60 @@ describe("showfile migration", () => {
   });
 });
 
+describe("channel room migration (ADR 0035)", () => {
+  const base = {
+    schemaVersion: "0",
+    revision: 3,
+    updatedAtUtc: null,
+    show: { name: "Show" },
+    device: null,
+    shureReceivers: [],
+  };
+
+  it("turns one saved roomId/categoryId into a single-entry rooms array", () => {
+    const migrated = migrateShowfile({
+      ...base,
+      channels: [
+        {
+          id: "ch-a",
+          inputIndex: 0,
+          name: "Lead",
+          roomId: "room-a",
+          categoryId: "cat-a",
+        },
+        {
+          id: "ch-b",
+          inputIndex: 1,
+          name: "Second",
+          roomId: null,
+          categoryId: null,
+        },
+      ],
+    });
+    expect(migrated).toMatchObject({
+      channels: [
+        { id: "ch-a", rooms: [{ roomId: "room-a", categoryId: "cat-a" }] },
+        { id: "ch-b", rooms: [] },
+      ],
+    });
+    // The old fields are gone, not just superseded.
+    expect(migrated).not.toHaveProperty(["channels", 0, "roomId"]);
+    expect(migrated).not.toHaveProperty(["channels", 0, "categoryId"]);
+  });
+
+  it("leaves a channel that already has rooms as it is", () => {
+    const channels = [
+      {
+        id: "ch-a",
+        inputIndex: 0,
+        name: "Lead",
+        rooms: [{ roomId: "room-a", categoryId: null }],
+      },
+    ];
+    expect(migrateShowfile({ ...base, channels })).toMatchObject({ channels });
+  });
+});
+
 describe("channel monitor trim", () => {
   const showfile = (trimDb: unknown) => ({
     schemaVersion: "0",

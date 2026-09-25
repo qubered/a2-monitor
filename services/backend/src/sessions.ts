@@ -178,6 +178,69 @@ export function sessionPerformer(
   return entry?.presenter ?? channel.performer ?? null;
 }
 
+/** The room keys a channel follows: its own rooms (ADR 0035), or the "no room" bucket with none. */
+export function channelRoomKeys(channel: ShowChannel): string[] {
+  const rooms = channel.rooms ?? [];
+  return rooms.length > 0
+    ? rooms.map(({ roomId }) => roomKey(roomId))
+    : [roomKey(null)];
+}
+
+function inSession(
+  session: ShowSession | null,
+  channelId: string | undefined,
+): boolean | null {
+  return session === null
+    ? null
+    : session.channels.some(({ channelId: id }) => id === channelId);
+}
+
+/** True if any value is true, else false if any is false, else null. */
+function combineTri(values: readonly (boolean | null)[]): boolean | null {
+  if (values.some((value) => value === true)) return true;
+  if (values.some((value) => value === false)) return false;
+  return null;
+}
+
+export type ChannelSessionView = {
+  inUse: boolean | null;
+  nextInUse: boolean | null;
+  activeSession: ShowSession | null;
+  nextSession: ShowSession | null;
+};
+
+/**
+ * A channel's session standing across every room it belongs to (ADR 0035):
+ * `inUse` is true if any member room's active session includes the channel,
+ * false if some member room runs a session that excludes it, else null.
+ * `nextInUse` combines the same way over each room's next session. The
+ * governing session for `sessionPerformer` is whichever room resolved true;
+ * with none, `sessionPerformer` falls back to the channel's own performer as
+ * usual. A channel in exactly one room (or none) resolves exactly as before.
+ */
+export function resolveChannelSession(
+  channel: ShowChannel,
+  sessionsByRoom: ReadonlyMap<string, ResolvedSessions>,
+): ChannelSessionView {
+  const perRoom = channelRoomKeys(channel).map((key) => {
+    const resolved = sessionsByRoom.get(key) ?? { active: null, next: null };
+    return {
+      activeSession: resolved.active,
+      nextSession: resolved.next,
+      inUse: inSession(resolved.active, channel.id),
+      nextInUse: inSession(resolved.next, channel.id),
+    };
+  });
+  return {
+    inUse: combineTri(perRoom.map(({ inUse }) => inUse)),
+    nextInUse: combineTri(perRoom.map(({ nextInUse }) => nextInUse)),
+    activeSession:
+      perRoom.find(({ inUse }) => inUse === true)?.activeSession ?? null,
+    nextSession:
+      perRoom.find(({ nextInUse }) => nextInUse === true)?.nextSession ?? null,
+  };
+}
+
 export function sessionRunsSummary(
   showfile: Showfile,
   runs: SessionRuns,

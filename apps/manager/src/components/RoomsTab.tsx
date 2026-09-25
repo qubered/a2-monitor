@@ -31,11 +31,12 @@ export function RoomsTab({
     setRooms(
       rooms.filter((_, index) => index !== position),
       {
-        channels: showfile.channels.map((channel) =>
-          channel.roomId === removed
-            ? { ...channel, roomId: null, categoryId: null }
-            : channel,
-        ),
+        channels: showfile.channels.map((channel) => ({
+          ...channel,
+          rooms: (channel.rooms ?? []).filter(
+            ({ roomId }) => roomId !== removed,
+          ),
+        })),
         ...(showfile.sessions
           ? {
               sessions: showfile.sessions.map((session) =>
@@ -64,11 +65,14 @@ export function RoomsTab({
           : entry,
       ),
       {
-        channels: showfile.channels.map((channel) =>
-          channel.categoryId === removed
-            ? { ...channel, categoryId: null }
-            : channel,
-        ),
+        channels: showfile.channels.map((channel) => ({
+          ...channel,
+          rooms: (channel.rooms ?? []).map((entry) =>
+            entry.categoryId === removed
+              ? { ...entry, categoryId: null }
+              : entry,
+          ),
+        })),
       },
     );
   }
@@ -112,8 +116,8 @@ export function RoomsTab({
         />
       ) : (
         rooms.map((room, position) => {
-          const channelCount = showfile.channels.filter(
-            ({ roomId }) => roomId === room.id,
+          const channelCount = showfile.channels.filter((channel) =>
+            (channel.rooms ?? []).some(({ roomId }) => roomId === room.id),
           ).length;
           return (
             <section

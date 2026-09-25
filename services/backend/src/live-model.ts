@@ -18,7 +18,7 @@ import {
   type NodeObservation,
 } from "./node-observer.js";
 import {
-  roomKey,
+  resolveChannelSession,
   sessionPerformer,
   type ResolvedSessions,
 } from "./sessions.js";
@@ -278,16 +278,10 @@ function buildChannel(
   const monitor = showChannel.monitor ?? DEFAULT_MONITOR;
   const tracker = trackerFor(input.trackers, id);
   const conditions: AlertCondition[] = [];
-  // A channel follows its own room's run of show.
-  const roomSessions = input.sessions?.get(roomKey(showChannel.roomId));
-  const activeSession = roomSessions?.active ?? null;
-  const nextSession = roomSessions?.next ?? null;
-  const inSession = (session: typeof activeSession) =>
-    session === null
-      ? null
-      : session.channels.some(({ channelId }) => channelId === id);
-  const inUse = inSession(activeSession);
-  const nextInUse = inSession(nextSession);
+  // A channel follows the run of show of every room it belongs to (ADR 0035).
+  const { inUse, nextInUse, activeSession, nextSession } = input.sessions
+    ? resolveChannelSession(showChannel, input.sessions)
+    : { inUse: null, nextInUse: null, activeSession: null, nextSession: null };
   // A channel the running session does not use is expected to be switched off,
   // muted and silent: none of those is a fault until a session needs it.
   const idle = inUse === false;
@@ -657,8 +651,7 @@ function buildChannel(
       kind: wireless ? "wireless" : "wired",
       micType: showChannel.micType ?? null,
       trimDb: showChannel.trimDb ?? 0,
-      roomId: showChannel.roomId ?? null,
-      categoryId: showChannel.categoryId ?? null,
+      rooms: showChannel.rooms ?? [],
       hasImage: Boolean(showChannel.imageUrl),
       input: { index: inputIndex, label: bounded(inputLabel, 160) },
       receiver: wireless

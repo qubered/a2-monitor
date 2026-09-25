@@ -579,7 +579,12 @@ describe("Manager showfile editor", () => {
 
     await user.click(screen.getByRole("tab", { name: /channels/i }));
     await user.click(
-      screen.getByRole("combobox", { name: "Channel 1 room and category" }),
+      screen.getByRole("button", { name: "Channel 1 add room" }),
+    );
+    await user.click(
+      screen.getByRole("combobox", {
+        name: "Channel 1 room and category 1",
+      }),
     );
     await user.click(
       await screen.findByRole("option", { name: "Ballroom · Stage" }),
@@ -597,7 +602,9 @@ describe("Manager showfile editor", () => {
         name: string;
         categories: Array<{ id: string; name: string }>;
       }>;
-      channels: Array<{ roomId?: string | null; categoryId?: string | null }>;
+      channels: Array<{
+        rooms?: Array<{ roomId: string; categoryId: string | null }>;
+      }>;
     };
     expect(saved.rooms).toEqual([
       {
@@ -606,11 +613,13 @@ describe("Manager showfile editor", () => {
         categories: [{ id: expect.stringMatching(/^cat-/), name: "Stage" }],
       },
     ]);
-    expect(saved.channels[0]).toMatchObject({
-      roomId: saved.rooms[0]!.id,
-      categoryId: saved.rooms[0]!.categories[0]!.id,
-    });
-    expect(saved.channels[1]!.roomId ?? null).toBeNull();
+    expect(saved.channels[0]!.rooms).toEqual([
+      {
+        roomId: saved.rooms[0]!.id,
+        categoryId: saved.rooms[0]!.categories[0]!.id,
+      },
+    ]);
+    expect(saved.channels[1]!.rooms ?? []).toEqual([]);
   });
 
   it("saves host output feeds with their outputs picked from the device", async () => {

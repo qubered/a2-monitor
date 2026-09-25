@@ -1527,9 +1527,14 @@ describe("Rooms", () => {
       rooms,
       runs: [run("room-ballroom", "Keynote"), run("room-breakout", "Workshop")],
       channels: [
-        channel({ roomId: "room-ballroom", categoryId: "cat-stage" }),
-        { ...talkback, roomId: "room-breakout", categoryId: "cat-lectern" },
-        { ...unpatched, roomId: null, categoryId: null },
+        channel({
+          rooms: [{ roomId: "room-ballroom", categoryId: "cat-stage" }],
+        }),
+        {
+          ...talkback,
+          rooms: [{ roomId: "room-breakout", categoryId: "cat-lectern" }],
+        },
+        { ...unpatched, rooms: [] },
       ],
     });
 
@@ -1550,6 +1555,40 @@ describe("Rooms", () => {
     ).toBeTruthy();
     expect(
       screen.getByRole("region", { name: "Run of show: Breakout B" }),
+    ).toBeTruthy();
+  });
+
+  it("shows a channel in several rooms under each room's own category (ADR 0035)", async () => {
+    renderApp(
+      stateWith({
+        rooms,
+        runs: [
+          run("room-ballroom", "Keynote"),
+          run("room-breakout", "Workshop"),
+        ],
+        channels: [
+          // A shared spare, in both rooms with a different category in each.
+          channel({
+            rooms: [
+              { roomId: "room-ballroom", categoryId: "cat-stage" },
+              { roomId: "room-breakout", categoryId: "cat-lectern" },
+            ],
+          }),
+          { ...talkback, rooms: [] },
+        ],
+      }),
+    );
+    const stage = await screen.findByRole("region", {
+      name: "Ballroom · Stage",
+    });
+    expect(
+      within(stage).getByText("Marguerite", { selector: "h2" }),
+    ).toBeTruthy();
+    const lectern = screen.getByRole("region", {
+      name: "Breakout B · Lectern",
+    });
+    expect(
+      within(lectern).getByText("Marguerite", { selector: "h2" }),
     ).toBeTruthy();
   });
 

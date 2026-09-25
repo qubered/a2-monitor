@@ -78,6 +78,7 @@ import {
 } from "./host-output";
 import { MeterStore } from "./meters";
 import {
+  categoryIdInRoom,
   effectiveRoom,
   groupChannels,
   inRoom,
@@ -727,13 +728,19 @@ export function App({
   const [roomSheetOpen, setRoomSheetOpen] = useState(false);
   const roomOptions = useMemo<RoomOption[]>(() => {
     if (!rooms.length) return [];
-    const roomKeyByChannel = new Map(
-      channels.map(({ id, roomId }) => [id, roomKeyOf(roomId)]),
+    // A channel in several rooms (ADR 0035) counts toward each of them.
+    const roomKeysByChannel = new Map(
+      channels.map((channel) => [
+        channel.id,
+        (channel.rooms ?? []).length
+          ? channel.rooms!.map(({ roomId }) => roomKeyOf(roomId))
+          : [NO_ROOM],
+      ]),
     );
     const entries = [
       { key: "all", label: "All rooms" },
       ...rooms.map(({ id, name }) => ({ key: id, label: name })),
-      ...(channels.some(({ roomId }) => !roomId)
+      ...(channels.some((channel) => !(channel.rooms ?? []).length)
         ? [{ key: NO_ROOM, label: "No room" }]
         : []),
     ];
@@ -741,7 +748,8 @@ export function App({
       const scoped = activeAlerts.filter(
         ({ channelId }) =>
           key === "all" ||
-          (channelId !== null && roomKeyByChannel.get(channelId) === key),
+          (channelId !== null &&
+            (roomKeysByChannel.get(channelId) ?? []).includes(key)),
       );
       const unseen = scoped.filter(
         ({ acknowledgedAtUtc }) => acknowledgedAtUtc === null,
@@ -802,9 +810,7 @@ export function App({
       byRoom.set(
         key,
         turnoverItems(
-          liveState.channels.filter(
-            (channel) => roomKeyOf(channel.roomId) === key,
-          ),
+          liveState.channels.filter((channel) => inRoom(channel, key)),
           nextSessionMinutes(run),
         ),
       );
@@ -927,10 +933,15 @@ export function App({
               room === "all" && rooms.length > 1
                 ? `${entry.name} · ${category.name}`
                 : category.name,
-            count: count(({ categoryId }) => categoryId === category.id),
+            count: count(
+              (channel) => categoryIdInRoom(channel, entry.id!) === category.id,
+            ),
           })),
     );
-    const uncategorised = count(({ categoryId }) => !categoryId);
+    const uncategorised =
+      room === "all"
+        ? 0
+        : count((channel) => categoryIdInRoom(channel, room) === null);
     const byCategory: FilterOption[] = [
       ...categories.filter(({ count: members }) => members > 0),
       ...(categories.length && room !== "all" && uncategorised > 0
@@ -983,9 +994,14 @@ export function App({
         return needsSomeone(channel, activeAlerts);
       if (filter === "wireless" || filter === "wired")
         return channel.kind === filter;
-      if (filter === "cat:none") return !channel.categoryId;
-      if (filter.startsWith("cat:"))
-        return channel.categoryId === filter.slice("cat:".length);
+      if (filter === "cat:none")
+        return categoryIdInRoom(channel, room) === null;
+      if (filter.startsWith("cat:")) {
+        const categoryId = filter.slice("cat:".length);
+        return (channel.rooms ?? []).some(
+          (membership) => membership.categoryId === categoryId,
+        );
+      }
       return true;
     };
     // Showfile order, always: a critical channel stays visible whatever the
@@ -995,7 +1011,7 @@ export function App({
     return roomChannels.filter(
       (channel) => criticalIds.has(channel.id) || matches(channel),
     );
-  }, [activeAlerts, roomChannels, criticalIds, filter]);
+  }, [activeAlerts, roomChannels, criticalIds, filter, room]);
   const groups = useMemo(
     () => groupChannels(visibleChannels, rooms, room),
     [visibleChannels, rooms, room],
