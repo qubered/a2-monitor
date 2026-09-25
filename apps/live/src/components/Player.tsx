@@ -27,7 +27,18 @@ const NO_SAMPLES: readonly ChannelLevelSample[] = [];
 const READOUT_REFRESH_MS = 200;
 
 type PlayerProps = {
+  /** The primary channel: the meter, timeline and trim below follow this one. */
   channel: LiveStateChannel | null;
+  /** Every channel currently being monitored at once, `channel` among them.
+   * A shared host output feed carries only one input, so this is at most
+   * one channel there; on this device several can play together. */
+  monitoredChannels?: readonly LiveStateChannel[];
+  /** Each monitored channel's own connection state, keyed by channel id. */
+  playbackByChannel?: Readonly<Record<string, PlaybackUpdate>>;
+  /** Makes another monitored channel the primary one. */
+  onSelectPrimary?: (channelId: string) => void;
+  /** Stops monitoring one channel without touching the rest. */
+  onRemoveChannel?: (channelId: string) => void;
   muted: boolean;
   dimmed: boolean;
   gainDb: number;
@@ -85,6 +96,10 @@ function useMeterReading(
 
 export function Player({
   channel,
+  monitoredChannels = channel ? [channel] : [],
+  playbackByChannel = {},
+  onSelectPrimary,
+  onRemoveChannel,
   muted,
   dimmed,
   gainDb,
@@ -247,6 +262,38 @@ export function Player({
           marks={marks}
         />
       ) : null}
+      {monitoredChannels.length > 1 ? (
+        <ul className="monitor-list" aria-label="Channels being monitored">
+          {monitoredChannels.map((monitored) => {
+            const status = playbackByChannel[monitored.id]?.status ?? "idle";
+            const isPrimary = monitored.id === channel?.id;
+            return (
+              <li key={monitored.id}>
+                <button
+                  type="button"
+                  className={`monitor-chip playback-${status} ${
+                    isPrimary ? "is-primary" : ""
+                  }`}
+                  aria-pressed={isPrimary}
+                  aria-label={`${monitored.name}, ${status}. Show in the player.`}
+                  onClick={() => onSelectPrimary?.(monitored.id)}
+                >
+                  <i aria-hidden="true" />
+                  <span>{monitored.name}</span>
+                </button>
+                <button
+                  type="button"
+                  className="monitor-chip-remove"
+                  aria-label={`Stop monitoring ${monitored.name}`}
+                  onClick={() => onRemoveChannel?.(monitored.id)}
+                >
+                  ×
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
       <div className="player-transport">
         <div className="player-selection-rail" aria-hidden="true">
           <span />
@@ -259,7 +306,12 @@ export function Player({
             <span
               className={channel ? "source-selected-badge" : "waiting-badge"}
             >
-              <i aria-hidden="true" /> {channel ? "Selected" : "Waiting"}
+              <i aria-hidden="true" />{" "}
+              {channel
+                ? monitoredChannels.length > 1
+                  ? `Selected · +${monitoredChannels.length - 1} more`
+                  : "Selected"
+                : "Waiting"}
             </span>
           </div>
         </div>

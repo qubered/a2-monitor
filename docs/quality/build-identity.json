@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.a50db3b9070c8305",
-  "sourceSha256": "a50db3b9070c8305cac1c1649e55290b4268acebc75d3e420b59fedecae04c03",
+  "buildId": "a2-0.0.0+sha256.6d17f1771b694d8a",
+  "sourceSha256": "6d17f1771b694d8afbc30684318b7b6b48089c156a17957a291e06d79f590b9b",
   "inputCount": 434,
   "inputs": [
     {
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "918ef4be4815c20324e43d3c1c3a16c4b36d4724883ec0c426584b9731bacad7"
+      "sha256": "d959d56b00587bdda20d6d854a90a4ddb7f77bd4b880c7464f456631592bdb1b"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "77fffd85f3d1601b8cbbcc99f264dd0111c36c39723c003ff1bb2d034ca10b4c"
+      "sha256": "fdce6b65f452d06e680ab3de580e7fe80bebe3cbd8d09445732faeebf9a6da50"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -121,11 +121,11 @@
     },
     {
       "path": "apps/live/src/components/ChannelCard.test.tsx",
-      "sha256": "d1c439716c7be58453f88ed747add66c42b0d32bd3e751887c5b1f57850849f9"
+      "sha256": "7fb28fa2c8aa9958229754238a68e999e844443b4c9c3ebcc324c3ce0f2a3da5"
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
-      "sha256": "acacd599d4c8df5f479a80cd1d02692e1202390606c67b795aef76a3fd505cb2"
+      "sha256": "16b578a2a07eeb6cb1df700c91d35a27d609270cbc91b7cd25f4d82e14a0fb60"
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
@@ -161,7 +161,7 @@
     },
     {
       "path": "apps/live/src/components/Player.tsx",
-      "sha256": "a0490df6986a440d78168f864682d2a6452a1df9d76f88c9a18d2511b34d9e58"
+      "sha256": "4dde034c2686dd903a64d079b9606a0680ceae56419506336bac9481e8f72c3c"
     },
     {
       "path": "apps/live/src/components/ReportSheet.tsx",
@@ -241,7 +241,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "aa9e4b6fd17286e0c338dbd33643740b77a0d0d9ce2f8c7ac6144737a4674bda"
+      "sha256": "0b135e570ce9985cab2938305e7adc2eba523ca3a90a273344d9b10eaadba127"
     },
     {
       "path": "apps/live/src/trim.ts",
@@ -769,7 +769,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "090105c45bfd319dff20ad2a477554e3bd4a7e7e6254dce449129a0fd5d78ef3"
+      "sha256": "042bbdb6a513c9cae76a0543b558fa92feff1890c77fc3fbfaa2442b8172579b"
     },
     {
       "path": "docs/design/README.md",

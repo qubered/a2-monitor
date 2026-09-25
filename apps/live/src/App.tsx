@@ -48,6 +48,7 @@ import { RoomSheet } from "./components/RoomSheet";
 import { Player } from "./components/Player";
 import { A1Bar, ReportBanner } from "./components/Reports";
 import { ReportSheet } from "./components/ReportSheet";
+import { SelectionBar } from "./components/SelectionBar";
 import { SessionBar } from "./components/SessionBar";
 import { SessionSheet } from "./components/SessionSheet";
 import type { CardReportState } from "./components/ChannelCard";
@@ -380,13 +381,29 @@ export function App({
   const nowMs = useNow(1000);
   const [operator, setOperator] = useState<Operator>(loadOperator);
   const [chosenFilter, setFilter] = useState<Filter>("all");
-  const [selectedId, setSelectedId] = useState<string | null>(() => {
+  const [selectedIds, setSelectedIds] = useState<string[]>(() => {
     try {
-      return window.localStorage.getItem("pulse-selected-channel");
+      const raw = window.localStorage.getItem("pulse-selected-channels");
+      if (raw !== null) {
+        const parsed: unknown = JSON.parse(raw);
+        return Array.isArray(parsed)
+          ? parsed.filter((id): id is string => typeof id === "string")
+          : [];
+      }
+      // Migrated from the single-channel key this replaces.
+      const legacy = window.localStorage.getItem("pulse-selected-channel");
+      return legacy ? [legacy] : [];
     } catch {
-      return null;
+      return [];
     }
   });
+  /** The channel a Shift-click or Shift-Enter range extends from. */
+  const [selectionAnchorId, setSelectionAnchorId] = useState<string | null>(
+    null,
+  );
+  /** Touch equivalent of holding Ctrl/Cmd: entered by a long-press, it turns
+   * every following tap into a toggle instead of a plain select. */
+  const [touchSelecting, setTouchSelecting] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [micCheckId, setMicCheckId] = useState<string | null>(null);
   const [exceptionsOpen, setExceptionsOpen] = useState(false);
@@ -413,11 +430,18 @@ export function App({
   const [muted, setMuted] = useState(false);
   const [dimmed, setDimmed] = useState(false);
   const [gainDb, setGainDb] = useState(readMonitorGainDb);
-  const [playback, setPlayback] = useState<PlaybackUpdate>({
-    status: "idle",
-    detail: "Select a patched channel to listen.",
-  });
-  const playbackSession = useRef<PlaybackSession | null>(null);
+  const [playbackByChannel, setPlaybackByChannel] = useState<
+    Record<string, PlaybackUpdate>
+  >({});
+  // A WebRTC session outlives any one channel: switching the single selection
+  // (or a multi-selection swapping one member for another) retargets a slot
+  // in place via `setChannel`, the same session and connection throughout,
+  // rather than tearing one down to open another. `channelId` is mutable for
+  // exactly that reuse; each session's `onUpdate` closes over its slot, not
+  // a channel id, so it keeps posting to the right key after a retarget.
+  const playbackSlots = useRef<
+    { channelId: string; session: PlaybackSession }[]
+  >([]);
   const outputState = useRef({ muted: false, dimmed: false, gainDb });
   const announcedCritical = useRef<Set<string> | null>(null);
 
@@ -491,7 +515,9 @@ export function App({
     [liveState, offline],
   );
 
-  // On host output the selection is the shared one, so every client shows it.
+  // On host output the selection is the shared one, so every client shows it;
+  // the shared hardware feed still carries only one input at a time, so it
+  // never takes more than one channel.
   const hostSelectedId = hostMonitor
     ? (channels.find(
         ({ id, input }) =>
@@ -500,62 +526,137 @@ export function App({
       channels.find(({ input }) => input.index === hostMonitor.input)?.id ??
       null)
     : null;
-  const effectiveSelectedId = hostMode ? hostSelectedId : selectedId;
+  const effectiveSelectedIds = hostMode
+    ? hostSelectedId
+      ? [hostSelectedId]
+      : []
+    : selectedIds;
+  const selectedChannels = effectiveSelectedIds
+    .map((id) => channels.find((channel) => channel.id === id))
+    .filter((channel): channel is LiveStateChannel => channel !== undefined);
+  // The most recently added channel is the one the player's meter, timeline
+  // and trim follow when several are being monitored at once.
+  const primarySelectedId =
+    effectiveSelectedIds[effectiveSelectedIds.length - 1] ?? null;
   const selectedChannel =
-    channels.find((channel) => channel.id === effectiveSelectedId) ?? null;
+    selectedChannels.find((channel) => channel.id === primarySelectedId) ??
+    null;
   const detailChannel =
     channels.find((channel) => channel.id === detailId) ?? null;
   const micCheckChannel =
     channels.find((channel) => channel.id === micCheckId) ?? null;
   const selectedInput = device ? (selectedChannel?.input.index ?? null) : null;
-  const selectedTrimDb = selectedChannel?.trimDb ?? 0;
-  const selectedTrimRef = useRef(selectedTrimDb);
-  useEffect(() => {
-    selectedTrimRef.current = selectedTrimDb;
-    playbackSession.current?.setTrimDb(selectedTrimDb);
-  }, [selectedTrimDb]);
 
   useEffect(() => {
     try {
-      if (selectedId)
-        window.localStorage.setItem("pulse-selected-channel", selectedId);
-      else window.localStorage.removeItem("pulse-selected-channel");
+      if (selectedIds.length) {
+        window.localStorage.setItem(
+          "pulse-selected-channels",
+          JSON.stringify(selectedIds),
+        );
+      } else window.localStorage.removeItem("pulse-selected-channels");
+      // Migrated on load (above); drop it so stale data never reappears.
+      window.localStorage.removeItem("pulse-selected-channel");
     } catch {
       // Selection is per-device convenience only.
     }
-  }, [selectedId]);
+  }, [selectedIds]);
 
-  // One WebRTC session lives while any patched input is selected and the node
-  // is ready; changing input moves that session server-side instead of
-  // renegotiating, and the session itself reconnects after a capture restart.
-  const hasSelectedInput = selectedInput !== null;
-  const selectedInputRef = useRef(selectedInput);
+  // One WebRTC listen session per monitored channel, so several play at once.
+  // A slot no longer wanted is retargeted to a newly wanted channel with
+  // `setChannel` in place of tearing it down and reconnecting, exactly as a
+  // single selection has always moved server-side without renegotiating; a
+  // session is only actually closed when the wanted count shrinks. Each
+  // still reconnects on its own after a capture restart. Mute, dim and gain
+  // are one shared control for the whole monitor output, so every open
+  // session takes the same values.
   useEffect(() => {
-    // Declared before the session effect so a new session starts on the current input.
-    selectedInputRef.current = selectedInput;
-  }, [selectedInput]);
-  useEffect(() => {
-    const initialInput = selectedInputRef.current;
-    if (initialInput === null || !deviceMode) return;
-    const session = playbackFactory({
-      channel: initialInput,
-      onUpdate: setPlayback,
-    });
-    session.setGainDb(outputState.current.gainDb);
-    session.setTrimDb(selectedTrimRef.current);
-    session.setDimmed(outputState.current.dimmed);
-    void session.setMuted(outputState.current.muted);
-    playbackSession.current = session;
-    return () => {
-      if (playbackSession.current === session) playbackSession.current = null;
-      session.close();
-    };
-  }, [deviceMode, hasSelectedInput, playbackFactory]);
+    const slots = playbackSlots.current;
+    if (!deviceMode || !device) {
+      if (slots.length) {
+        for (const slot of slots) slot.session.close();
+        slots.length = 0;
+        setPlaybackByChannel({});
+      }
+      return;
+    }
+    const wanted = new Map<string, number>();
+    for (const channel of selectedChannels) {
+      if (channel.input.index !== null) {
+        wanted.set(channel.id, channel.input.index);
+      }
+    }
+    const trimDbFor = (id: string) =>
+      channels.find((channel) => channel.id === id)?.trimDb ?? 0;
+    const dropPlayback = (id: string) =>
+      setPlaybackByChannel((prev) => {
+        if (!(id in prev)) return prev;
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
 
-  useEffect(() => {
-    if (selectedInput !== null)
-      playbackSession.current?.setChannel(selectedInput);
-  }, [selectedInput]);
+    // A slot already pointed at a still-wanted channel just refreshes.
+    for (const slot of slots) {
+      if (!wanted.has(slot.channelId)) continue;
+      slot.session.setChannel(wanted.get(slot.channelId)!);
+      slot.session.setTrimDb(trimDbFor(slot.channelId));
+    }
+
+    const staleSlots = slots.filter((slot) => !wanted.has(slot.channelId));
+    const newIds = [...wanted.keys()].filter(
+      (id) => !slots.some((slot) => slot.channelId === id),
+    );
+
+    while (staleSlots.length && newIds.length) {
+      const slot = staleSlots.pop()!;
+      const newId = newIds.pop()!;
+      const oldId = slot.channelId;
+      slot.channelId = newId;
+      slot.session.setChannel(wanted.get(newId)!);
+      slot.session.setTrimDb(trimDbFor(newId));
+      dropPlayback(oldId);
+    }
+
+    // Left over with no replacement: actually close it.
+    for (const slot of staleSlots) {
+      slot.session.close();
+      const index = slots.indexOf(slot);
+      if (index !== -1) slots.splice(index, 1);
+      dropPlayback(slot.channelId);
+    }
+
+    // Left over with no spare session: open a new one.
+    for (const id of newIds) {
+      const slot = {
+        channelId: id,
+        session: undefined as unknown as PlaybackSession,
+      };
+      const session = playbackFactory({
+        channel: wanted.get(id)!,
+        onUpdate: (update) =>
+          setPlaybackByChannel((prev) => ({
+            ...prev,
+            [slot.channelId]: update,
+          })),
+      });
+      slot.session = session;
+      session.setGainDb(outputState.current.gainDb);
+      session.setTrimDb(trimDbFor(id));
+      session.setDimmed(outputState.current.dimmed);
+      void session.setMuted(outputState.current.muted);
+      slots.push(slot);
+    }
+  }, [selectedChannels, deviceMode, device, channels, playbackFactory]);
+
+  // Sessions otherwise outlive this effect; only unmounting closes them all.
+  useEffect(
+    () => () => {
+      for (const slot of playbackSlots.current) slot.session.close();
+      playbackSlots.current.length = 0;
+    },
+    [],
+  );
 
   useEffect(() => {
     outputState.current = { muted, dimmed, gainDb };
@@ -564,9 +665,11 @@ export function App({
     } catch {
       // Gain still applies for this session.
     }
-    playbackSession.current?.setGainDb(gainDb);
-    playbackSession.current?.setDimmed(dimmed);
-    void playbackSession.current?.setMuted(muted);
+    for (const slot of playbackSlots.current) {
+      slot.session.setGainDb(gainDb);
+      slot.session.setDimmed(dimmed);
+      void slot.session.setMuted(muted);
+    }
   }, [dimmed, gainDb, muted]);
 
   const changeHost = useCallback(
@@ -1018,9 +1121,27 @@ export function App({
     [visibleChannels, rooms, room],
   );
 
-  function selectChannel(channel: LiveStateChannel) {
+  /** Every visible channel in on-screen order, for Shift range-select. */
+  const orderedChannelIds = useMemo(
+    () => groups.flatMap((group) => group.channels.map(({ id }) => id)),
+    [groups],
+  );
+
+  /**
+   * Selects a channel to monitor. A plain press replaces the selection with
+   * just this one; a Shift-click (or Shift-Enter on a focused card) extends
+   * it to every card between the last anchor and this one; a Ctrl/Cmd-click,
+   * or any tap while `touchSelecting` is on, toggles this one card without
+   * touching the rest. Several channels can play at once in device mode; the
+   * shared host output feed still carries only one input, so it ignores
+   * every modifier and behaves as a plain single choice.
+   */
+  function selectChannel(
+    channel: LiveStateChannel,
+    modifiers: { extend?: boolean; toggle?: boolean } = {},
+  ) {
     if (hostMode) {
-      if (channel.id === effectiveSelectedId) return;
+      if (channel.id === hostSelectedId) return;
       if (channel.input.index === null) {
         setActionError(
           `${channel.name} has no patched input, so the host output is unchanged.`,
@@ -1030,29 +1151,31 @@ export function App({
       void changeHost({ channelId: channel.id, input: channel.input.index });
       return;
     }
-    setSelectedId(channel.id);
-    if (channel.id === selectedId) return;
-    if (channel.input.index === null) {
-      setPlayback({
-        status: "idle",
-        detail: `${channel.input.label}. There is nothing to listen to.`,
-      });
-    } else if (!device) {
-      setPlayback({
-        status: "idle",
-        detail: "The audio node is not ready, so listening is unavailable.",
-      });
-    } else if (!playbackSession.current) {
-      setPlayback({
-        status: "connecting",
-        detail: `Connecting to input ${channel.input.index + 1}.`,
-      });
+    if (modifiers.extend && selectionAnchorId) {
+      const from = orderedChannelIds.indexOf(selectionAnchorId);
+      const to = orderedChannelIds.indexOf(channel.id);
+      if (from !== -1 && to !== -1) {
+        const [start, end] = from <= to ? [from, to] : [to, from];
+        setSelectedIds(orderedChannelIds.slice(start, end + 1));
+        return;
+      }
     }
-    // With a session open the switch happens in place; the session reports
-    // when the new input is flowing, so a source change never shows a reconnect.
+    if (modifiers.toggle || touchSelecting) {
+      setSelectedIds((prev) =>
+        prev.includes(channel.id)
+          ? prev.filter((id) => id !== channel.id)
+          : [...prev, channel.id],
+      );
+      setSelectionAnchorId(channel.id);
+      return;
+    }
+    setSelectedIds([channel.id]);
+    setSelectionAnchorId(channel.id);
+    // A session already open for this channel switches in place; a new one
+    // reports its own connecting/listening state as it comes up.
   }
 
-  /** Stops what is playing: on this device, or the joined feed's shared selection. */
+  /** Stops everything playing on this device, or clears the joined feed's shared selection. */
   function clearSelection() {
     if (isA1) return;
     if (hostMode) {
@@ -1060,12 +1183,10 @@ export function App({
       void changeHost({ channelId: null, input: null });
       return;
     }
-    if (selectedId === null) return;
-    setSelectedId(null);
-    setPlayback({
-      status: "idle",
-      detail: "Select a patched channel to listen.",
-    });
+    if (selectedIds.length === 0 && !touchSelecting) return;
+    setSelectedIds([]);
+    setSelectionAnchorId(null);
+    setTouchSelecting(false);
   }
 
   /** A press on empty space between or beside the cards clears the selection. */
@@ -1110,11 +1231,20 @@ export function App({
                     status: "listening",
                     detail: `Input ${hostMonitor.input + 1} · ${describeOutputChannels(hostFeed.outputChannels)}`,
                   };
-  const shownPlayback = hostMode ? hostPlayback : playback;
-  const listening =
-    shownPlayback.status === "listening" &&
-    !shownMuted &&
-    selectedChannel !== null;
+  const primaryPlayback: PlaybackUpdate =
+    primarySelectedId !== null
+      ? (playbackByChannel[primarySelectedId] ?? {
+          status: "connecting",
+          detail: `Connecting to input ${(selectedInput ?? 0) + 1}.`,
+        })
+      : { status: "idle", detail: "Select a patched channel to listen." };
+  const shownPlayback = hostMode ? hostPlayback : primaryPlayback;
+  /** Whether this card is one of the ones actually audible right now, not just selected. */
+  function channelIsListening(channelId: string): boolean {
+    if (shownMuted || !effectiveSelectedIds.includes(channelId)) return false;
+    if (hostMode) return shownPlayback.status === "listening";
+    return playbackByChannel[channelId]?.status === "listening";
+  }
   const lastDestination = readLastDestination();
   const chooseDestination = (next: OutputDestination) => {
     saveLastDestination(next);
@@ -1372,6 +1502,15 @@ export function App({
         </section>
       ) : null}
 
+      {!isA1 && !hostMode ? (
+        <SelectionBar
+          count={selectedIds.length}
+          touchSelecting={touchSelecting}
+          onDone={() => setTouchSelecting(false)}
+          onClear={clearSelection}
+        />
+      ) : null}
+
       {roomChannels.length ? (
         <div className="chip-bands">
           <FilterBar
@@ -1465,10 +1604,10 @@ export function App({
                         liveState?.show.overlayExpiryMs ?? 300_000
                       }
                       nowMs={nowMs}
-                      selected={!isA1 && effectiveSelectedId === channel.id}
-                      listening={
-                        !isA1 && listening && effectiveSelectedId === channel.id
+                      selected={
+                        !isA1 && effectiveSelectedIds.includes(channel.id)
                       }
+                      listening={!isA1 && channelIsListening(channel.id)}
                       imageRevision={liveState?.show.showfileRevision ?? 0}
                       meterStore={meterStore}
                       metersStale={
@@ -1478,15 +1617,26 @@ export function App({
                           liveState.node.status !== "ready")
                       }
                       onAcknowledge={(alert) => void acknowledge(alert)}
-                      onSelect={() => {
+                      onSelect={(event) => {
                         if (isA1) {
                           setFiledReportId(null);
                           setReportError(null);
                           setReportChannelId(channel.id);
                         } else {
-                          selectChannel(channel);
+                          selectChannel(channel, {
+                            extend: event.shiftKey,
+                            toggle: event.ctrlKey || event.metaKey,
+                          });
                         }
                       }}
+                      onLongPressSelect={
+                        isA1 || hostMode
+                          ? undefined
+                          : () => {
+                              setTouchSelecting(true);
+                              selectChannel(channel, { toggle: true });
+                            }
+                      }
                       onOpenDetail={() => setDetailId(channel.id)}
                     />
                   ))}
@@ -1518,6 +1668,23 @@ export function App({
       ) : (
         <Player
           channel={selectedChannel}
+          monitoredChannels={selectedChannels}
+          playbackByChannel={playbackByChannel}
+          onSelectPrimary={
+            hostMode
+              ? undefined
+              : (id) =>
+                  setSelectedIds((prev) =>
+                    prev.includes(id)
+                      ? [...prev.filter((x) => x !== id), id]
+                      : prev,
+                  )
+          }
+          onRemoveChannel={
+            hostMode
+              ? undefined
+              : (id) => setSelectedIds((prev) => prev.filter((x) => x !== id))
+          }
           muted={shownMuted}
           dimmed={shownDimmed}
           gainDb={shownGainDb}
@@ -1546,7 +1713,7 @@ export function App({
                           ? `${selectedChannel.input.label}. There is nothing to listen to.`
                           : "The audio node is not ready, so listening is unavailable.",
                     }
-                  : playback
+                  : primaryPlayback
           }
           directListeningAvailable={
             hostMode
