@@ -33,7 +33,13 @@ export function faultSummary(report: FaultReport): string {
 }
 
 export type ReportAction =
-  "undo" | "urgent" | "claim" | "resolve" | "confirm-fixed" | "reopen";
+  | "undo"
+  | "urgent"
+  | "claim"
+  | "resolve"
+  | "confirm-fixed"
+  | "reopen"
+  | "dismiss";
 
 export function isActiveReport(report: FaultReport): boolean {
   return (

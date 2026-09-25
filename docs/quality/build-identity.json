@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.e96c053f7142969d",
-  "sourceSha256": "e96c053f7142969ddba7d7a17634b29f042b6fcf2cb8064be7d802b625e9e06b",
+  "buildId": "a2-0.0.0+sha256.c02179fac1af2215",
+  "sourceSha256": "c02179fac1af2215f593b5b3d23270613bf5d85ecf5b2c5e36c94fc481da54ad",
   "inputCount": 429,
   "inputs": [
     {
@@ -53,7 +53,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "029ee54e1de2b9a453c06fec39b520623c8ad24d52a3697f70a9e3e67f2759d6"
+      "sha256": "f4f1548a51162264eb6db6c2fa76c1c5a6d050e391ba948d6f439cfa901eca9f"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "15e48dd98626e4a89a040a681c7aa8178903f7cf4c0e39b5eef2cea683691d92"
+      "sha256": "53f8abb73789c6f96fd90eaeedf78b519478790fa623c5529ab7c6b3a6f3c1e4"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "f2ce929eae4e1a0703fc47e01dccbd0e089c59cb37d83bb5145c7c96b53a4f0f"
+      "sha256": "f11d1f326d5c6a2e3aceb8c7ac16e07a5b9b8c004f964b9a81bd48e69bc225ff"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -165,7 +165,7 @@
     },
     {
       "path": "apps/live/src/components/Reports.tsx",
-      "sha256": "c62254f27c7a9ef4961a3d6c743c93c96023144ff223d4fbff4f74ca602fe513"
+      "sha256": "ae054f92db5e9c5bd917ef375f3681039cfec1b5f2dffe266d3297fcef6c9373"
     },
     {
       "path": "apps/live/src/components/RoomSheet.tsx",
@@ -221,7 +221,7 @@
     },
     {
       "path": "apps/live/src/reports.ts",
-      "sha256": "3c64293f0492d1c182ba644abd4f44ef3bc1f9bb44cc897402d9e04c63e25cfd"
+      "sha256": "64aaaffa29cc0acdd652d004560a6c4903511fdbde7580669f6d6b9f60f87783"
     },
     {
       "path": "apps/live/src/rooms.ts",
@@ -1061,7 +1061,7 @@
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/live-state.valid.json",
-      "sha256": "c362de986a064719e2f9c1fb6190bb93c52fa6199a7f973bd7a726a8da467acf"
+      "sha256": "c59c6e4887522c3387c6a5f6655cfc38764f9464ed33fa9f09eacb51d126b617"
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/meter-frame.valid.json",
@@ -1221,7 +1221,7 @@
     },
     {
       "path": "packages/protocol/generated/http-contracts.ts",
-      "sha256": "f9c9b7af049642ded810a981b53eb9362b11a38c1179ecf7f8d619a172cba138"
+      "sha256": "5ea1ee0cee13180205367dc372b0649efeaddb8ba339753efd4b9fd4e51bbcee"
     },
     {
       "path": "packages/protocol/model/aggregate-transitions.v0.json",
@@ -1261,7 +1261,7 @@
     },
     {
       "path": "packages/protocol/schema/v0/http/live-state.schema.json",
-      "sha256": "af81d91164eb4747295d3582e28c9f840528e15674f88b24ed9dfbf5e28f4070"
+      "sha256": "5a748c963e5cd1ed1736ef3aeed813fda5d7e30f3389db4cfaa6165460f9d318"
     },
     {
       "path": "packages/protocol/schema/v0/http/meter-frame.schema.json",
@@ -1565,11 +1565,11 @@
     },
     {
       "path": "services/backend/src/reports.test.ts",
-      "sha256": "0eed7dd6a9d2af7c51ba1f4f8e6a2af6d70f759630335bde63973afd4f5f41ac"
+      "sha256": "3b29515da7ac85330eb5b6c8b4e306854f11aa31f8e628a0b5104a8cc5d9c383"
     },
     {
       "path": "services/backend/src/reports.ts",
-      "sha256": "7e369e7c3a0600798381f010d92bb679337d40191583efc8acee7285a607e693"
+      "sha256": "47379dc458790409efbde23209464345c6ffbee4ee486a0a97bef1a3918c2172"
     },
     {
       "path": "services/backend/src/rooms.test.ts",

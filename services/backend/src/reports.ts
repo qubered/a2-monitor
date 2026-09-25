@@ -21,6 +21,7 @@ export const REPORT_ACTIONS = [
   "resolve",
   "confirm-fixed",
   "reopen",
+  "dismiss",
 ] as const;
 export type ReportAction = (typeof REPORT_ACTIONS)[number];
 
@@ -181,6 +182,8 @@ export class ReportBook {
       resolvedBy: null,
       resolvedAtUtc: null,
       closedAtUtc: null,
+      dismissedBy: null,
+      dismissedAtUtc: null,
     };
     this.nextId += 1;
     this.reports.push(report);
@@ -262,6 +265,11 @@ export class ReportBook {
           resolvedBy: null,
           resolvedAtUtc: null,
         };
+        break;
+      case "dismiss":
+        if (report.status !== "open")
+          refuse("Only an unclaimed report's banner can be dismissed.");
+        next = { ...report, dismissedBy: who, dismissedAtUtc: at };
         break;
     }
     this.reports[index] = next;

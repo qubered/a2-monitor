@@ -213,7 +213,9 @@
       "claimedAtUtc": "2026-09-23T00:59:31Z",
       "resolvedBy": null,
       "resolvedAtUtc": null,
-      "closedAtUtc": null
+      "closedAtUtc": null,
+      "dismissedBy": null,
+      "dismissedAtUtc": null
     }
   ],
   "summary": {

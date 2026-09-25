@@ -10,6 +10,9 @@ externally tested release.
 
 ### Changed
 
+- Live: dismissing a fault-report banner is now shared (ADR 0034) instead of a
+  per-device preference — any A2 dismissing it clears it for every A2, and it
+  records who dismissed it.
 - Live: an unacknowledged critical alert now gives off a breathing red glow
   around its card and the alert bell, and the amber outline on a card with an
   unclaimed fault report uses the same glow. It stops on acknowledge or claim,

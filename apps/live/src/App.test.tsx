@@ -170,6 +170,8 @@ function report(overrides: Partial<FaultReport> = {}): FaultReport {
     resolvedBy: null,
     resolvedAtUtc: null,
     closedAtUtc: null,
+    dismissedBy: null,
+    dismissedAtUtc: null,
     ...overrides,
   };
 }
@@ -460,6 +462,50 @@ describe("Live channel grid", () => {
       .getByRole("button", { name: "Select Marguerite, channel 1" })
       .closest("article")!;
     expect(card.classList.contains("is-selected")).toBe(false);
+  });
+
+  it("dismisses a report banner as a shared action, not a per-device preference", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem("pulse-operator-name", "Sam");
+    const open = stateWith({ reports: [report()] });
+    const dismissed = stateWith({
+      revision: 11,
+      reports: [
+        report({
+          dismissedAtUtc: new Date().toISOString(),
+          dismissedBy: "Sam (A2)",
+        }),
+      ],
+    });
+    const post = vi.fn(
+      async () =>
+        new Response(JSON.stringify(dismissed), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+    vi.stubGlobal("fetch", post);
+    renderApp(open);
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Dismiss the banner for Marguerite",
+      }),
+    );
+
+    expect(post).toHaveBeenCalledWith(
+      "/api/v1/reports/report-000001/actions",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ action: "dismiss", by: "Sam (A2)" }),
+      }),
+    );
+    // The backend's shared state, not local storage, drives the banner.
+    expect(window.localStorage.getItem("pulse-dismissed-reports")).toBeNull();
+    await screen.findByRole("button", { name: "Select Marguerite, channel 1" });
+    expect(
+      screen.queryByRole("button", { name: /Dismiss the banner/ }),
+    ).toBeNull();
   });
 
   it("stops what is playing when empty space beside the cards is pressed", async () => {
