@@ -33,6 +33,7 @@ function channel(overrides: Partial<LiveStateChannel> = {}): LiveStateChannel {
     performer: "Eleanor Vance",
     kind: "wireless",
     micType: "headset",
+    micTypeSource: "operator",
     hasImage: false,
     input: { index: 0, label: "USB Interface · input 1" },
     receiver: {
@@ -86,6 +87,7 @@ const talkback = channel({
   performer: null,
   kind: "wired",
   micType: null,
+  micTypeSource: null,
   input: { index: 1, label: "USB Interface · input 2" },
   receiver: null,
   statuses: {

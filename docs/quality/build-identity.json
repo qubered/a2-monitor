@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.e787fe1e09e85456",
-  "sourceSha256": "e787fe1e09e854569468fa92f669be826a09f5d41513e7aecbc105e3bfa12975",
-  "inputCount": 431,
+  "buildId": "a2-0.0.0+sha256.66a9748a15fdd06b",
+  "sourceSha256": "66a9748a15fdd06b3652f48c3372192ed4b2a5b56b12436e87d66fe61939a08a",
+  "inputCount": 434,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "083896981499e8cf7964c994f6ca73a79bee22f427e91c9f81642a045df11a94"
+      "sha256": "918ef4be4815c20324e43d3c1c3a16c4b36d4724883ec0c426584b9731bacad7"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "3e528090a712c834fd99ec518f65551c1c2c8918cd1db5ac26ec3729f3d31406"
+      "sha256": "77fffd85f3d1601b8cbbcc99f264dd0111c36c39723c003ff1bb2d034ca10b4c"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -120,8 +120,12 @@
       "sha256": "5d45b06e020c40d50a8ea5567672ce17a2af3412f4a346425c0a18e3ac6255c5"
     },
     {
+      "path": "apps/live/src/components/ChannelCard.test.tsx",
+      "sha256": "d1c439716c7be58453f88ed747add66c42b0d32bd3e751887c5b1f57850849f9"
+    },
+    {
       "path": "apps/live/src/components/ChannelCard.tsx",
-      "sha256": "ea5e17b36bcf4d528ec1d8f070d79e34e12f782720524d90f3d979ac809d34fe"
+      "sha256": "a932009d49e77fa70499aab32bc24db694eb22dae99e63a8f698af9df61a17ee"
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
@@ -229,7 +233,7 @@
     },
     {
       "path": "apps/live/src/sessions.test.ts",
-      "sha256": "f3a1556a547415290a286dd96c7057fefa2888e1b191ad61a8e2011f8f02b7a1"
+      "sha256": "9b53093bd255ea2ca70fc446a4331b2118abcdbd997bd9047c874661e84a9f2f"
     },
     {
       "path": "apps/live/src/sessions.ts",
@@ -237,7 +241,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "7d02a5cd632d77565853641f26a748063d72af3ee8df6a43916652b9db9d5b21"
+      "sha256": "d9aa95e7f60cea63a9cbbdf9486035bf83337252baab61a947beb5448dac464d"
     },
     {
       "path": "apps/live/src/trim.ts",
@@ -309,7 +313,7 @@
     },
     {
       "path": "apps/manager/src/components/ChannelsTab.tsx",
-      "sha256": "b08e539b902ee564c0d44e24b6aa64993112099ad6fbee82fcd0b2efb5df3f1a"
+      "sha256": "2ddcd1a8f67c571effd56b8f582d5d98648e78c5e50b45f00bb4ad72440a0c22"
     },
     {
       "path": "apps/manager/src/components/EmptyState.tsx",
@@ -545,7 +549,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256": "877574df2cbcbcad326fa26db8ec68e76a23216a6e4710c798d6bfa23f4a9efd"
+      "sha256": "15b216d3be9eef97d20a377f3cf76c632551181d1e2aa8f5f4e166ff93ddf3e2"
     },
     {
       "path": "docs/api/show-management-and-control.md",
@@ -760,8 +764,12 @@
       "sha256": "a9317fb411be61216ae5272043901d2ad8907f8123acd0915ef8873bc18bb790"
     },
     {
+      "path": "docs/decisions/0036-transmitter-type-detection-and-photo-fallback-icon.md",
+      "sha256": "fb75080f387e297f4654a92acc36c74cd11ffe2d64e864600725d1688c96dea2"
+    },
+    {
       "path": "docs/design/DESIGN.md",
-      "sha256": "8056baa31f987b586d19f6d32d4a0df2911be1b7c95c296828f3c41725d1194f"
+      "sha256": "081b7c99fe2727baeb154f09f20f22e827c32aa455e71257d7c84c722fd411d8"
     },
     {
       "path": "docs/design/README.md",
@@ -1069,7 +1077,7 @@
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/live-state.valid.json",
-      "sha256": "05508586bcfe54f5df212fa54ca223e1556d563ca0e9f280cf86c37b73c2c884"
+      "sha256": "8e22a7313a2508c2eee0f6c6f658e16c7962e60465ed4e6616da0ee969909003"
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/meter-frame.valid.json",
@@ -1229,7 +1237,7 @@
     },
     {
       "path": "packages/protocol/generated/http-contracts.ts",
-      "sha256": "11d459ed39cad91c2c3f3d3b4631063a2067b6c85faa76bf5bb3cce38e056aed"
+      "sha256": "c3462cdb5916d4e1a262af5b005b53d417c744b75618949276694211edae4d1a"
     },
     {
       "path": "packages/protocol/model/aggregate-transitions.v0.json",
@@ -1237,7 +1245,7 @@
     },
     {
       "path": "packages/protocol/package.json",
-      "sha256": "2a75461b86fff4b10b067c0d4b4c5e7c02cfff737c03055b91b560e2d6b16cf1"
+      "sha256": "8839811e8123cb25fb36406a7c52a20820556a811984b8d0f7f807c92f65bc72"
     },
     {
       "path": "packages/protocol/policy/alert-policy.ts",
@@ -1245,7 +1253,7 @@
     },
     {
       "path": "packages/protocol/receivers/shure-models.ts",
-      "sha256": "54b71df2e0b48f9ef802f8957072dcad31db971b49bc85350025dd79cdcf2704"
+      "sha256": "efc569fd179184864dbc46a7ec9de5208ea8e22c871b0e0e91da54177375692f"
     },
     {
       "path": "packages/protocol/schema/v0/http/alert-log.schema.json",
@@ -1269,7 +1277,7 @@
     },
     {
       "path": "packages/protocol/schema/v0/http/live-state.schema.json",
-      "sha256": "07333619f090ab683f23b0f04db55f7931e7f90606134bc7f4f6f3f3d363c0f7"
+      "sha256": "4f7d391a838b90e80138c3213119eb5894dcff8340e2c51c5a238e256b881088"
     },
     {
       "path": "packages/protocol/schema/v0/http/meter-frame.schema.json",
@@ -1289,7 +1297,7 @@
     },
     {
       "path": "packages/protocol/schema/v0/http/showfile.schema.json",
-      "sha256": "272b1016200c48757b83160e98d831f51af41da99241a3ff124e55858e501541"
+      "sha256": "5262b0b4071033eb90fa2e9cbc9667945882fa7f152e21b9e1d86f6c36965e17"
     },
     {
       "path": "packages/protocol/schema/v0/http/shure-telemetry.schema.json",
@@ -1314,6 +1322,10 @@
     {
       "path": "packages/protocol/tests/http-contracts.test.ts",
       "sha256": "318e0ad0b26245a0ec3079d18fc4f1adeb1d4829a887eb809af5c8c05ce8de7a"
+    },
+    {
+      "path": "packages/protocol/tests/shure-models.test.ts",
+      "sha256": "7cc2c73eb40e38842460c4f46b6f35c8beecb2c25e205385fbdd4ad7e2d7a1f1"
     },
     {
       "path": "packages/protocol/tests/strict-ajv.test.mjs",
@@ -1537,11 +1549,11 @@
     },
     {
       "path": "services/backend/src/live-model.test.ts",
-      "sha256": "de16ddd58785d969d778b8780a4eee3af507cd589506944104fa7756f911f350"
+      "sha256": "134f4ba42828506eb4ca7afc3c9e0cd85cc32aa9aede700b88414b5c6a81149e"
     },
     {
       "path": "services/backend/src/live-model.ts",
-      "sha256": "9ad51ee94af42d63bd505e956860308ee461630e5895ee10425955762f376007"
+      "sha256": "c3ec819fb4c5a33a20571b7797b0a7d20b59e61577fc68e933e7aa7fe2743af0"
     },
     {
       "path": "services/backend/src/live-monitor.ts",
@@ -1661,11 +1673,11 @@
     },
     {
       "path": "services/listen-gateway/src/shure.test.ts",
-      "sha256": "addf0ce9b6cb7c5769b5dbd893990118886675911bdc747a101aba54c5a36bba"
+      "sha256": "d51ac026569385221ac7c61854e2fe90ce2b31a05b7252eceab6331021644364"
     },
     {
       "path": "services/listen-gateway/src/shure.ts",
-      "sha256": "7ee30e73fa62d9c4c28e135f82f9f1e554f3885f64ae88187003a23c9089cd02"
+      "sha256": "7560bb5723037440511c253a16bc4925df0e72fb4f2b3a4886774d7f1b64becc"
     },
     {
       "path": "services/listen-gateway/src/start.ts",

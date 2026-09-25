@@ -1,9 +1,9 @@
 # Pulse — design language
 
-- **Version:** 2.7.0
+- **Version:** 2.8.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
-- **Last updated:** 2026-09-24
+- **Last updated:** 2026-09-25
 
 This is the whole design language in one document. It is normative: where it and
 anything else disagree, this document is the intent, and the implementation is
@@ -496,8 +496,18 @@ for Eleanor, not for input 27, and a face is recognised faster than any label.
 ```
 
 - **Headshot.** The production's real approved headshot through Manager's managed
-  image pipeline, 16:10 crop. Never an illustrated avatar, never stock. A source
-  with no headshot shows the empty frame and reads as incomplete, because it is.
+  image pipeline, 16:10 crop. Never a stock photo, never a face standing in for
+  one that hasn't been supplied. A source with no headshot shows the empty
+  dashed frame and reads as incomplete, because it is — with one exception: when
+  the mic type is known, a plain handheld or beltpack glyph (2px stroke, per
+  [§7](#7-iconography)) sits in the frame in place of the "Photo not added"
+  caption, so an A2 can tell a performer's kind of source at a glance before a
+  photo exists. This is a device pictograph, not an illustrated person, and it
+  never appears once a real headshot is set. It carries the
+  [honesty grammar](#9-the-honesty-grammar): **Handheld**/**Beltpack** in plain
+  text when the operator set the mic type in Manager, **Likely handheld**/
+  **Likely beltpack** with a dashed glyph when it is only inferred from Shure
+  transmitter telemetry and the operator hasn't confirmed one.
 - **Channel number**, quiet mono over the photograph, top left.
 - **Fault flags**, top right: a category that is clear says nothing; one in fault
   says its name.
@@ -1007,6 +1017,16 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.8.0 — 2026-09-25.** The channel card's empty photo frame
+([§10.1](#101-channel-card)) can now carry a handheld or beltpack glyph
+instead of "Photo not added" once a mic type is known — set by the operator
+in Manager, or inferred from Shure transmitter telemetry when the operator
+hasn't set one, per the honesty grammar ([§9](#9-the-honesty-grammar)). This
+narrows, not reverses, the prior "never an illustrated avatar" refusal: a
+device pictograph standing in for an unset photo is not a face standing in
+for a real one, and it never appears once a headshot exists. Implemented in
+Live and Manager alongside this entry (ADR 0036).
 
 **2.7.0 — 2026-09-24.** Listen no longer starts muted ([§2.7](#2-principles));
 mute and dim stay one touch away. Live can play in a shared host output feed

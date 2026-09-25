@@ -39,10 +39,62 @@ const MIC_TYPES = [
   { value: "lavalier", label: "Lavalier" },
   { value: "headset", label: "Headset" },
   { value: "handheld", label: "Handheld" },
+  { value: "beltpack", label: "Beltpack" },
   { value: "boundary", label: "Boundary" },
   { value: "instrument", label: "Instrument" },
   { value: "other", label: "Other" },
 ] as const;
+
+/** A handheld transmitter's capsule-and-body silhouette, matching the 2px-stroke Lucide set (§7). */
+function HandheldMicIcon(props: { className?: string }) {
+  return (
+    <svg
+      {...props}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="9" y="2" width="6" height="11" rx="3" />
+      <path d="M12 13v4M8 21h8" />
+    </svg>
+  );
+}
+
+/** A beltpack transmitter's body-and-antenna silhouette, matching the 2px-stroke Lucide set (§7). */
+function BeltpackMicIcon(props: { className?: string }) {
+  return (
+    <svg
+      {...props}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="5" y="8" width="14" height="13" rx="2" />
+      <path d="M15 8V6a1 1 0 0 0-1-1h-1V3" />
+    </svg>
+  );
+}
+
+/** The type-derived glyph standing in for a missing photo, or null when the mic type gives no icon. */
+function MicTypeIcon({
+  micType,
+  className,
+}: {
+  micType: string | null | undefined;
+  className?: string;
+}) {
+  if (micType === "handheld") return <HandheldMicIcon className={className} />;
+  if (micType === "beltpack") return <BeltpackMicIcon className={className} />;
+  return null;
+}
 
 type Channel = Showfile["channels"][number];
 type Monitor = NonNullable<Channel["monitor"]>;
@@ -110,10 +162,12 @@ function MonitorToggle({
 function ChannelImage({
   position,
   imageUrl,
+  micType,
   onChange,
 }: {
   position: number;
   imageUrl: string | null | undefined;
+  micType: string | null | undefined;
   onChange: (imageUrl: string | null) => void;
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
@@ -152,8 +206,19 @@ function ChannelImage({
             className="size-11 shrink-0 rounded-full border-2 border-line-2 object-cover"
           />
         ) : (
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-line-2 text-muted-foreground">
-            <ImageOff className="size-4" aria-hidden="true" />
+          <span
+            className="flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-line-2 text-muted-foreground"
+            title={
+              micType === "handheld" || micType === "beltpack"
+                ? `No photo · mic type is ${micType}`
+                : "No photo"
+            }
+          >
+            {micType === "handheld" || micType === "beltpack" ? (
+              <MicTypeIcon micType={micType} className="size-4" />
+            ) : (
+              <ImageOff className="size-4" aria-hidden="true" />
+            )}
           </span>
         )}
         <input
@@ -296,6 +361,7 @@ export function ChannelsTab({
                   <ChannelImage
                     position={position}
                     imageUrl={channel.imageUrl}
+                    micType={channel.micType}
                     onChange={(imageUrl) => {
                       const channels = [...showfile.channels];
                       channels[position] = { ...channel, imageUrl };

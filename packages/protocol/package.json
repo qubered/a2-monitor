@@ -8,7 +8,7 @@
     "format": "prettier --check \"generated/**/*.ts\" \"receivers/**/*.ts\" \"policy/**/*.ts\" \"scripts/**/*.mjs\" \"tests/**/*.{mjs,ts}\" \"validation/*.{d.mts,mjs}\" \"*.json\"",
     "generate": "node scripts/generate-http-contracts.mjs",
     "generate:check": "node scripts/generate-http-contracts.mjs --check",
-    "test": "node --test tests/generator.test.mjs tests/strict-ajv.test.mjs && vitest run tests/http-contracts.test.ts",
+    "test": "node --test tests/generator.test.mjs tests/strict-ajv.test.mjs && vitest run tests/http-contracts.test.ts tests/shure-models.test.ts",
     "validate:fixtures": "node scripts/validate-http-contract-fixtures.mjs"
   },
   "exports": {

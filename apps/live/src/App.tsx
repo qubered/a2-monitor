@@ -177,6 +177,7 @@ function inputChannels(device: AudioDeviceState): LiveStateChannel[] {
     performer: null,
     kind: "wired",
     micType: null,
+    micTypeSource: null,
     hasImage: false,
     input: {
       index,

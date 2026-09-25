@@ -342,11 +342,16 @@
             "lavalier",
             "headset",
             "handheld",
+            "beltpack",
             "boundary",
             "instrument",
             "other",
             null
           ]
+        },
+        "micTypeSource": {
+          "description": "Who set micType: the operator in Manager, or inferred from Shure transmitter telemetry because the operator hasn't set one yet. Null when micType itself is null.",
+          "enum": ["operator", "inferred", null]
         },
         "hasImage": {
           "type": "boolean"

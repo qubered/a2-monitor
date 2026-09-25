@@ -39,6 +39,27 @@ function ExpandIcon() {
   );
 }
 
+/** The type-derived glyph standing in for a missing photo; DESIGN.md §10.1. */
+function MicTypeIcon({ micType }: { micType: LiveStateChannel["micType"] }) {
+  if (micType === "handheld") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="9" y="2" width="6" height="11" rx="3" />
+        <path d="M12 13v4M8 21h8" />
+      </svg>
+    );
+  }
+  if (micType === "beltpack") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="5" y="8" width="14" height="13" rx="2" />
+        <path d="M15 8V6a1 1 0 0 0-1-1h-1V3" />
+      </svg>
+    );
+  }
+  return null;
+}
+
 export function AlertIcon({
   dimension,
 }: {
@@ -141,6 +162,20 @@ export function ChannelCard({
               loading="lazy"
               decoding="async"
             />
+          ) : channel.micType === "handheld" ||
+            channel.micType === "beltpack" ? (
+            <span
+              className={`photo-fallback ${channel.micTypeSource === "inferred" ? "is-inferred" : ""}`}
+            >
+              <MicTypeIcon micType={channel.micType} />
+              <span className="photo-fallback-label">
+                {channel.micTypeSource === "inferred"
+                  ? `Likely ${channel.micType}`
+                  : channel.micType === "handheld"
+                    ? "Handheld"
+                    : "Beltpack"}
+              </span>
+            </span>
           ) : (
             <span className="photo-missing">Photo not added</span>
           )}

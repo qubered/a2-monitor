@@ -405,17 +405,20 @@ export function applyChannelProperty(
   if (property === commands.txTypeProperty) {
     // Receivers report UNKNOWN/UNKN for the transmitter model while no
     // transmitter is linked, which is the only direct presence signal the
-    // read-only command set gives us.
+    // read-only command set gives us. The last confirmed model is retained
+    // across that gap instead of being cleared: a power cycle or a dead
+    // battery is not evidence that a different transmitter is now on this
+    // channel, and clearing it would also drop the type-derived photo
+    // fallback every time a performer's pack goes quiet between cues.
     const absent = ["", "UNKNOWN", "UNKN", "NONE"].includes(
       value.trim().toUpperCase(),
     );
     return {
       ...channel,
       linkStatus: absent ? "no-transmitter" : "active",
-      transmitter: {
-        ...channel.transmitter,
-        type: absent ? null : boundedText(value, 64),
-      },
+      transmitter: absent
+        ? channel.transmitter
+        : { ...channel.transmitter, type: boundedText(value, 64) },
     };
   }
   if (property === commands.muteProperty) {
