@@ -1053,30 +1053,26 @@ a:focus-visible {
 .photo-fallback {
   z-index: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: var(--space-1);
+  justify-content: center;
   color: var(--muted);
 }
 
 .photo-fallback svg {
-  width: var(--icon-large);
-  height: var(--icon-large);
+  width: 4.5rem;
+  height: 4.5rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2;
+  stroke-width: 1.5;
 }
 
-.photo-fallback-label {
-  font-size: var(--font-caption);
-  font-weight: 600;
-}
-
-/* Inferred honesty-grammar treatment (DESIGN.md §9): the label says "likely"
-   and the glyph's stroke is dashed rather than solid, matching the empty
-   frame's own dashed border instead of reading as a confirmed value. */
+/* Inferred honesty-grammar treatment (DESIGN.md §9): the glyph's stroke is
+   dashed rather than solid, matching the empty frame's own dashed border
+   instead of reading as a confirmed value; the word "likely" that the word
+   half of the grammar calls for moves to the accessible name (sr-only)
+   since the glyph alone now carries the visual read at this size. */
 .photo-fallback.is-inferred svg {
-  stroke-dasharray: 2 2;
+  stroke-dasharray: 3 3;
 }
 
 .channel-number {
