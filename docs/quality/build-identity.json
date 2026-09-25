@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.c2043719c423cafc",
-  "sourceSha256": "c2043719c423cafcb49dcc0cc5c1f771497144f1af30e524c1cfeb9f23870eb5",
-  "inputCount": 430,
+  "buildId": "a2-0.0.0+sha256.a6b6716bb7d80cba",
+  "sourceSha256": "a6b6716bb7d80cbaab84c5fd7d993c608b4e346f55c630b5c37eba63f1b2cdd6",
+  "inputCount": 433,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -118,6 +118,10 @@
     {
       "path": "apps/live/src/audio-playback.ts",
       "sha256": "5d45b06e020c40d50a8ea5567672ce17a2af3412f4a346425c0a18e3ac6255c5"
+    },
+    {
+      "path": "apps/live/src/components/ChannelCard.test.tsx",
+      "sha256": "d1c439716c7be58453f88ed747add66c42b0d32bd3e751887c5b1f57850849f9"
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
@@ -756,6 +760,10 @@
       "sha256": "9ca2b6a318c2e754d9578f255e0a5349140627515e8957ab6e10cd2111678554"
     },
     {
+      "path": "docs/decisions/0035-transmitter-type-detection-and-photo-fallback-icon.md",
+      "sha256": "0368bbb44c4532be169399eeac67986f011029b4355f70b6a8246a0cc5127611"
+    },
+    {
       "path": "docs/design/DESIGN.md",
       "sha256": "4471253938c1319999acfcd1eb7532c83eb3baee48b72d0031de8e07bc47c0de"
     },
@@ -1310,6 +1318,10 @@
     {
       "path": "packages/protocol/tests/http-contracts.test.ts",
       "sha256": "318e0ad0b26245a0ec3079d18fc4f1adeb1d4829a887eb809af5c8c05ce8de7a"
+    },
+    {
+      "path": "packages/protocol/tests/shure-models.test.ts",
+      "sha256": "7cc2c73eb40e38842460c4f46b6f35c8beecb2c25e205385fbdd4ad7e2d7a1f1"
     },
     {
       "path": "packages/protocol/tests/strict-ajv.test.mjs",
