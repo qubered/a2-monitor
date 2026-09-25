@@ -97,21 +97,19 @@ function mintId(prefix: string, used: Set<string>): string {
 
 /**
  * Gives every room and category a stable identity, then clears channel
- * references the show can no longer honour: a room it does not have, or a
- * category that is not in the channel's room. A channel keeps its place and
- * patch either way; it just stops claiming the missing group.
+ * membership the show can no longer honour: a room it does not have, or a
+ * category that is not in that membership's room (ADR 0035). A channel keeps
+ * its place and patch either way; it just stops claiming the missing rooms
+ * or categories. Repeated memberships of the same room collapse to the first.
  */
 export function normalizeRooms(candidate: Showfile): Showfile {
   if (candidate.rooms === undefined) {
-    return candidate.channels.some(
-      ({ roomId, categoryId }) => roomId != null || categoryId != null,
-    )
+    return candidate.channels.some(({ rooms }) => rooms && rooms.length > 0)
       ? {
           ...candidate,
           channels: candidate.channels.map((channel) => ({
             ...channel,
-            roomId: null,
-            categoryId: null,
+            rooms: [],
           })),
         }
       : candidate;
@@ -140,20 +138,23 @@ export function normalizeRooms(candidate: Showfile): Showfile {
     ...candidate,
     rooms,
     channels: candidate.channels.map((channel) => {
-      const categories =
-        channel.roomId == null
-          ? undefined
-          : categoriesByRoom.get(channel.roomId);
-      const roomId = categories ? channel.roomId! : null;
-      const categoryId =
-        categories && channel.categoryId && categories.has(channel.categoryId)
-          ? channel.categoryId
-          : null;
-      return channel.roomId === undefined &&
-        channel.categoryId === undefined &&
-        roomId === null
-        ? channel
-        : { ...channel, roomId, categoryId };
+      if (channel.rooms === undefined) return channel;
+      const seen = new Set<string>();
+      const cleaned = channel.rooms.flatMap((membership) => {
+        const categories = categoriesByRoom.get(membership.roomId);
+        if (!categories || seen.has(membership.roomId)) return [];
+        seen.add(membership.roomId);
+        return [
+          {
+            roomId: membership.roomId,
+            categoryId:
+              membership.categoryId && categories.has(membership.categoryId)
+                ? membership.categoryId
+                : null,
+          },
+        ];
+      });
+      return { ...channel, rooms: cleaned };
     }),
   };
 }
@@ -170,8 +171,10 @@ export function normalizeSessions(candidate: Showfile): Showfile {
     (candidate.rooms ?? []).flatMap(({ id }) => (id === undefined ? [] : [id])),
   );
   const channelRooms = new Map(
-    candidate.channels.flatMap(({ id, roomId }) =>
-      id === undefined ? [] : [[id, roomId ?? null] as const],
+    candidate.channels.flatMap(({ id, rooms }) =>
+      id === undefined
+        ? []
+        : [[id, (rooms ?? []).map(({ roomId }) => roomId)] as const],
     ),
   );
   const used = new Set(
@@ -188,11 +191,13 @@ export function normalizeSessions(candidate: Showfile): Showfile {
         id: session.id ?? mintId("ses", used),
         ...session,
         ...(session.roomId === undefined && roomId === null ? {} : { roomId }),
-        channels: session.channels.filter(
-          ({ channelId }) =>
-            channelRooms.has(channelId) &&
-            channelRooms.get(channelId) === roomId,
-        ),
+        channels: session.channels.filter(({ channelId }) => {
+          const memberships = channelRooms.get(channelId);
+          if (memberships === undefined) return false;
+          return roomId === null
+            ? memberships.length === 0
+            : memberships.includes(roomId);
+        }),
       };
     }),
   };
@@ -269,6 +274,32 @@ function migrateHostOutput(hostOutput: unknown): Record<string, unknown> {
   return {};
 }
 
+/**
+ * Channels saved before ADR 0035 named one `roomId`/`categoryId`; both become
+ * a single-entry (or empty) `rooms` array so an old showfile keeps its place.
+ */
+function migrateChannelRooms(
+  channelRecord: Record<string, unknown>,
+): Record<string, unknown> {
+  if ("rooms" in channelRecord) return channelRecord;
+  if (!("roomId" in channelRecord) && !("categoryId" in channelRecord)) {
+    return channelRecord;
+  }
+  const { roomId, categoryId, ...rest } = channelRecord;
+  return {
+    ...rest,
+    rooms:
+      typeof roomId === "string"
+        ? [
+            {
+              roomId,
+              categoryId: typeof categoryId === "string" ? categoryId : null,
+            },
+          ]
+        : [],
+  };
+}
+
 export function migrateShowfile(value: unknown): unknown {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return value;
@@ -282,7 +313,9 @@ export function migrateShowfile(value: unknown): unknown {
     channels: Array.isArray(record.channels)
       ? record.channels.map((channel, position) => {
           if (typeof channel !== "object" || channel === null) return channel;
-          const channelRecord = channel as Record<string, unknown>;
+          const channelRecord = migrateChannelRooms(
+            channel as Record<string, unknown>,
+          );
           return {
             // Channels saved before ids existed get a position-derived id so
             // repeated loads agree; the next save persists it unchanged.

@@ -107,8 +107,7 @@
         "nextInUse": false,
         "nextPresenter": null
       },
-      "roomId": "room-main",
-      "categoryId": "cat-cast"
+      "rooms": [{ "roomId": "room-main", "categoryId": "cat-cast" }]
     },
     {
       "id": "ch-talkback",
@@ -169,8 +168,7 @@
         "nextInUse": true,
         "nextPresenter": "Company manager"
       },
-      "roomId": "room-main",
-      "categoryId": "cat-crew"
+      "rooms": [{ "roomId": "room-main", "categoryId": "cat-crew" }]
     }
   ],
   "alerts": [

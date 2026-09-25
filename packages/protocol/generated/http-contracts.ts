@@ -13,9 +13,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: bbf66fe09544e9609e7e584d44f0e4c6bea4720cfaf5c210ded09d2bdaf01d3d
+// Schema-SHA256: c87a474a7e37b6676f8bf2184796d20ce39d43491dbb32bd3c1c62c8033514b8
 // Generator-SHA256: 7c6c8c3297d1ffee85f78fc29a4b03c3fbf3fa68da597de8be09f1f2e73d4cbf
-// Body-SHA256: 67e8bdae65c932b0d44b8de062159e796d756eec99f9c47e82a77408f8b5980e
+// Body-SHA256: 8848c0995f5055783a2b14c1bf71b18e080c18bd7f65b2601cecd5a68bf8ec93
 
 export type HealthResponse = {
   status: "ok";
@@ -150,8 +150,10 @@ export type Showfile = {
       | "other"
       | null;
     imageUrl?: string | null;
-    roomId?: string | null;
-    categoryId?: string | null;
+    rooms?: Array<{
+      roomId: string;
+      categoryId: string | null;
+    }>;
     monitor?: {
       battery: boolean;
       rf: boolean;
@@ -424,8 +426,10 @@ export type LiveStateChannel = {
     nextInUse: boolean | null;
     nextPresenter: string | null;
   } | null;
-  roomId?: string | null;
-  categoryId?: string | null;
+  rooms?: Array<{
+    roomId: string;
+    categoryId: string | null;
+  }>;
 };
 
 export type LiveAlert = {
@@ -1180,15 +1184,28 @@ const showfileSchema = {
             minLength: 1,
             maxLength: 300000,
           },
-          roomId: {
-            type: ["string", "null"],
-            minLength: 1,
-            maxLength: 64,
-          },
-          categoryId: {
-            type: ["string", "null"],
-            minLength: 1,
-            maxLength: 64,
+          rooms: {
+            description:
+              "The rooms this channel belongs to, each with its own category in that room (ADR 0035). Absent or empty means no room.",
+            type: "array",
+            maxItems: 8,
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["roomId", "categoryId"],
+              properties: {
+                roomId: {
+                  type: "string",
+                  minLength: 1,
+                  maxLength: 64,
+                },
+                categoryId: {
+                  type: ["string", "null"],
+                  minLength: 1,
+                  maxLength: 64,
+                },
+              },
+            },
           },
           monitor: {
             type: "object",
@@ -2646,15 +2663,28 @@ const liveStateSchema = {
             },
           },
         },
-        roomId: {
-          type: ["string", "null"],
-          minLength: 1,
-          maxLength: 64,
-        },
-        categoryId: {
-          type: ["string", "null"],
-          minLength: 1,
-          maxLength: 64,
+        rooms: {
+          description:
+            "The rooms this channel belongs to, each with its own category in that room (ADR 0035). Empty means no room.",
+          type: "array",
+          maxItems: 8,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["roomId", "categoryId"],
+            properties: {
+              roomId: {
+                type: "string",
+                minLength: 1,
+                maxLength: 64,
+              },
+              categoryId: {
+                type: ["string", "null"],
+                minLength: 1,
+                maxLength: 64,
+              },
+            },
+          },
         },
       },
     },

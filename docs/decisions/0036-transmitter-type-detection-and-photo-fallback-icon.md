@@ -1,4 +1,4 @@
-# ADR 0035: Transmitter type detection and a photo fallback icon
+# ADR 0036: Transmitter type detection and a photo fallback icon
 
 - **Status:** Accepted for the local MVP only
 - **Date:** 2026-09-25

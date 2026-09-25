@@ -4,8 +4,10 @@ import {
   AudioLines,
   Battery,
   ImageOff,
+  Plus,
   Trash2,
   Upload,
+  X,
 } from "lucide-react";
 import type { Showfile } from "@rvlt/pulse-protocol/http";
 import type { ObservedDevice } from "../showfile";
@@ -96,19 +98,18 @@ function MicTypeIcon({
 
 type Channel = Showfile["channels"][number];
 type Monitor = NonNullable<Channel["monitor"]>;
+type RoomMembership = NonNullable<Channel["rooms"]>[number];
 
 const DEFAULT_MONITOR: Monitor = { battery: true, rf: true, audio: true };
 
-/** One select value for a channel's place: none, "room" or "room/category". */
-function placeValue(channel: Channel): string {
-  if (!channel.roomId) return NONE;
-  return channel.categoryId
-    ? `${channel.roomId}/${channel.categoryId}`
-    : channel.roomId;
+/** One select value for a room membership: "room" or "room/category". */
+function membershipValue(membership: RoomMembership): string {
+  return membership.categoryId
+    ? `${membership.roomId}/${membership.categoryId}`
+    : membership.roomId;
 }
 
-function placeOf(value: string): Pick<Channel, "roomId" | "categoryId"> {
-  if (value === NONE) return { roomId: null, categoryId: null };
+function membershipOf(value: string): RoomMembership {
   const [roomId, categoryId] = value.split("/");
   return { roomId: roomId!, categoryId: categoryId ?? null };
 }
@@ -401,44 +402,107 @@ export function ChannelsTab({
                 </TableCell>
                 {showfile.rooms?.length ? (
                   <TableCell className="min-w-48">
-                    <Select
-                      value={placeValue(channel)}
-                      onValueChange={(value) => {
-                        const channels = [...showfile.channels];
-                        channels[position] = { ...channel, ...placeOf(value) };
-                        onChange({ ...showfile, channels });
-                      }}
-                    >
-                      <SelectTrigger
-                        aria-label={`Channel ${position + 1} room and category`}
-                      >
-                        <SelectValue placeholder="No room" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={NONE}>No room</SelectItem>
-                        {showfile.rooms.flatMap((room) =>
-                          room.id
-                            ? [
-                                <SelectItem key={room.id} value={room.id}>
-                                  {room.name}
-                                </SelectItem>,
-                                ...room.categories.flatMap((category) =>
-                                  category.id
+                    <div className="flex flex-col gap-1">
+                      {(channel.rooms ?? []).map(
+                        (membership, membershipIndex) => (
+                          <div
+                            key={membershipIndex}
+                            className="flex items-center gap-1"
+                          >
+                            <Select
+                              value={membershipValue(membership)}
+                              onValueChange={(value) => {
+                                const channels = [...showfile.channels];
+                                const rooms = [...(channel.rooms ?? [])];
+                                rooms[membershipIndex] = membershipOf(value);
+                                channels[position] = { ...channel, rooms };
+                                onChange({ ...showfile, channels });
+                              }}
+                            >
+                              <SelectTrigger
+                                aria-label={`Channel ${position + 1} room and category ${membershipIndex + 1}`}
+                              >
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {(showfile.rooms ?? []).flatMap((room) =>
+                                  room.id
                                     ? [
                                         <SelectItem
-                                          key={`${room.id}/${category.id}`}
-                                          value={`${room.id}/${category.id}`}
+                                          key={room.id}
+                                          value={room.id}
                                         >
-                                          {room.name} · {category.name}
+                                          {room.name}
                                         </SelectItem>,
+                                        ...room.categories.flatMap(
+                                          (category) =>
+                                            category.id
+                                              ? [
+                                                  <SelectItem
+                                                    key={`${room.id}/${category.id}`}
+                                                    value={`${room.id}/${category.id}`}
+                                                  >
+                                                    {room.name} ·{" "}
+                                                    {category.name}
+                                                  </SelectItem>,
+                                                ]
+                                              : [],
+                                        ),
                                       ]
                                     : [],
-                                ),
-                              ]
-                            : [],
-                        )}
-                      </SelectContent>
-                    </Select>
+                                )}
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Channel ${position + 1} remove room ${membershipIndex + 1}`}
+                              onClick={() => {
+                                const channels = [...showfile.channels];
+                                const rooms = (channel.rooms ?? []).filter(
+                                  (_, index) => index !== membershipIndex,
+                                );
+                                channels[position] = { ...channel, rooms };
+                                onChange({ ...showfile, channels });
+                              }}
+                            >
+                              <X aria-hidden="true" />
+                            </Button>
+                          </div>
+                        ),
+                      )}
+                      {(() => {
+                        const used = new Set(
+                          (channel.rooms ?? []).map(({ roomId }) => roomId),
+                        );
+                        const nextRoom = (showfile.rooms ?? []).find(
+                          (room) => room.id && !used.has(room.id),
+                        );
+                        return (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            aria-label={`Channel ${position + 1} add room`}
+                            disabled={!nextRoom}
+                            onClick={() => {
+                              if (!nextRoom?.id) return;
+                              const channels = [...showfile.channels];
+                              const rooms = [
+                                ...(channel.rooms ?? []),
+                                { roomId: nextRoom.id, categoryId: null },
+                              ];
+                              channels[position] = { ...channel, rooms };
+                              onChange({ ...showfile, channels });
+                            }}
+                          >
+                            <Plus aria-hidden="true" />
+                            Add room
+                          </Button>
+                        );
+                      })()}
+                    </div>
                   </TableCell>
                 ) : null}
                 <TableCell className="min-w-36">

@@ -1026,7 +1026,7 @@ hasn't set one, per the honesty grammar ([§9](#9-the-honesty-grammar)). This
 narrows, not reverses, the prior "never an illustrated avatar" refusal: a
 device pictograph standing in for an unset photo is not a face standing in
 for a real one, and it never appears once a headshot exists. Implemented in
-Live and Manager alongside this entry (ADR 0035).
+Live and Manager alongside this entry (ADR 0036).
 
 **2.7.0 — 2026-09-24.** Listen no longer starts muted ([§2.7](#2-principles));
 mute and dim stay one touch away. Live can play in a shared host output feed

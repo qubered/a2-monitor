@@ -41,9 +41,12 @@ export function SessionsTab({
   // A session only uses channels in its own room (or, without a room, the
   // channels in no room).
   const sessionRoom = session?.roomId ?? null;
-  const roomChannels = showfile.channels.filter(
-    ({ roomId }) => (roomId ?? null) === sessionRoom,
-  );
+  const roomChannels = showfile.channels.filter((channel) => {
+    const memberships = (channel.rooms ?? []).map(({ roomId }) => roomId);
+    return sessionRoom === null
+      ? memberships.length === 0
+      : memberships.includes(sessionRoom);
+  });
   const savedChannels = roomChannels.filter(
     (channel): channel is typeof channel & { id: string } =>
       channel.id !== undefined,

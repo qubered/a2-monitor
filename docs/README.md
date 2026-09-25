@@ -86,7 +86,8 @@ boundary; production evidence promotion remains deferred.
 - [Per-channel monitor trim](decisions/0033-channel-monitor-trim.md)
 - [Reset a switched-off channel](decisions/0032-reset-channel-after-switch-off.md)
 - [Shared fault-report dismissal](decisions/0034-shared-fault-report-dismissal.md)
-- [Transmitter type detection and a photo fallback icon](decisions/0035-transmitter-type-detection-and-photo-fallback-icon.md)
+- [Multi-room channel membership](decisions/0035-multi-room-channel-membership.md)
+- [Transmitter type detection and a photo fallback icon](decisions/0036-transmitter-type-detection-and-photo-fallback-icon.md)
 
 ## Reference
 

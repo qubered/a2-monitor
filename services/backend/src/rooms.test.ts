@@ -37,13 +37,11 @@ function roomedShowfile(): Showfile {
     channels: [
       {
         ...base.channels[0]!,
-        roomId: "room-ballroom",
-        categoryId: "cat-stage",
+        rooms: [{ roomId: "room-ballroom", categoryId: "cat-stage" }],
       },
       {
         ...base.channels[1]!,
-        roomId: "room-breakout",
-        categoryId: "cat-lectern",
+        rooms: [{ roomId: "room-breakout", categoryId: "cat-lectern" }],
       },
     ],
     sessions: [
@@ -104,11 +102,9 @@ describe("rooms", () => {
       ).json(),
     );
     expect(state.rooms).toEqual(ROOMS);
-    expect(
-      state.channels.map(({ roomId, categoryId }) => [roomId, categoryId]),
-    ).toEqual([
-      ["room-ballroom", "cat-stage"],
-      ["room-breakout", "cat-lectern"],
+    expect(state.channels.map(({ rooms }) => rooms)).toEqual([
+      [{ roomId: "room-ballroom", categoryId: "cat-stage" }],
+      [{ roomId: "room-breakout", categoryId: "cat-lectern" }],
     ]);
     expect(state.runs!.map(({ roomId }) => roomId)).toEqual([
       "room-ballroom",
@@ -156,6 +152,71 @@ describe("rooms", () => {
     expect(run(ended, "room-breakout").activeId).toBe("ses-workshop");
   });
 
+  it("belongs to several rooms at once, each with its own category (ADR 0035)", async () => {
+    const base = showfileWith({ revision: 0 });
+    const productionStore = new MemoryProductionStore();
+    await productionStore.saveActive({
+      ...base,
+      rooms: ROOMS,
+      channels: [
+        {
+          // A shared spare, in both rooms with a different category in each.
+          ...base.channels[0]!,
+          rooms: [
+            { roomId: "room-ballroom", categoryId: "cat-stage" },
+            { roomId: "room-breakout", categoryId: "cat-lectern" },
+          ],
+        },
+        base.channels[1]!,
+      ],
+      sessions: [
+        {
+          id: "ses-keynote",
+          name: "Keynote",
+          roomId: "room-ballroom",
+          startMinute: 540,
+          channels: [{ channelId: "ch-marguerite", presenter: "Dana Lee" }],
+        },
+      ],
+    });
+    const nodeSource = new FakeNodeSource();
+    const liveMonitor = new LiveMonitor({
+      productionStore,
+      nodeSource,
+      now: () => T0,
+      tickMs: 60_000,
+    });
+    const server = buildServer({ productionStore, liveMonitor });
+    servers.add(server);
+    nodeSource.observe(T0, levelsWith([-12, -30]), telemetryWith([{}]));
+    await server.ready();
+
+    const before = parseLiveState(
+      (
+        await server.inject({ method: "GET", url: "/api/v1/live/state" })
+      ).json(),
+    );
+    expect(before.channels[0]!.rooms).toEqual([
+      { roomId: "room-ballroom", categoryId: "cat-stage" },
+      { roomId: "room-breakout", categoryId: "cat-lectern" },
+    ]);
+    // No session running in either room yet.
+    expect(before.channels[0]!.session).toMatchObject({ inUse: null });
+
+    const started = parseLiveState(
+      (
+        await server.inject({
+          method: "PUT",
+          url: "/api/v1/live/session",
+          payload: { sessionId: "ses-keynote", operator: "Sam" },
+        })
+      ).json(),
+    );
+    // The ballroom's session governs it: in use there, and it counts even
+    // though the breakout — the channel's other room — has nothing running.
+    expect(started.channels[0]!.session).toMatchObject({ inUse: true });
+  });
+
   it("refuses to end the run of a room the show does not have", async () => {
     const { put } = await roomServer();
     const response = await put({
@@ -182,9 +243,15 @@ describe("rooms", () => {
         ],
         channels: [
           // A category from another room.
-          { ...current.channels[0]!, categoryId: "cat-lectern" },
+          {
+            ...current.channels[0]!,
+            rooms: [{ roomId: "room-ballroom", categoryId: "cat-lectern" }],
+          },
           // A room that does not exist.
-          { ...current.channels[1]!, roomId: "room-gone" },
+          {
+            ...current.channels[1]!,
+            rooms: [{ roomId: "room-gone", categoryId: null }],
+          },
         ],
       },
     });
@@ -197,11 +264,10 @@ describe("rooms", () => {
       id: expect.stringMatching(/^cat-[0-9a-f]{8}$/),
       name: "Welcome desk",
     });
-    expect(saved.channels[0]).toMatchObject({
-      roomId: "room-ballroom",
-      categoryId: null,
-    });
-    expect(saved.channels[1]).toMatchObject({ roomId: null, categoryId: null });
+    expect(saved.channels[0]!.rooms).toEqual([
+      { roomId: "room-ballroom", categoryId: null },
+    ]);
+    expect(saved.channels[1]!.rooms).toEqual([]);
     // The talkback left the breakout, so the workshop no longer lists it.
     expect(
       saved.sessions!.find(({ id }) => id === "ses-workshop")!.channels,
