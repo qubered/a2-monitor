@@ -540,12 +540,13 @@ for Eleanor, not for input 27, and a face is recognised faster than any label.
   not just up close, so an A2 can tell a performer's kind of source at a glance
   before a photo exists. This is a device pictograph, not an illustrated person,
   and it never appears once a real headshot is set. No caption rides under it —
-  the glyph alone carries the read at this size. It still carries the
-  [honesty grammar](#9-the-honesty-grammar) visually: a solid glyph when the
-  operator set the mic type in Manager, a dashed glyph when it is only inferred
-  from Shure transmitter telemetry and the operator hasn't confirmed one; the
-  grammar's word ("likely") moves to the accessible name for screen readers
-  rather than appearing on the card.
+  the glyph alone carries the read at this size, always solid, whether the
+  operator set the mic type in Manager or it was only inferred from Shure
+  transmitter telemetry. This is a deliberate, narrow exception to the
+  [honesty grammar](#9-the-honesty-grammar)'s dashed-for-inferred rule: at a
+  glyph this size and this glanceable, a dashed stroke read as a rendering
+  fault rather than a qualifier. The grammar's word ("likely") is kept, but
+  only in the accessible name for screen readers, not visually on the card.
 - **Channel number**, quiet mono over the photograph, top left.
 - **Fault flags**, top right: a category that is clear says nothing; one in fault
   says its name.
@@ -1063,6 +1064,16 @@ become card-level rather than grid-level, and the player
 ([§10.4](#104-the-player)) gains a per-channel chip row alongside its existing
 single-channel meter, timeline and trim. Implemented in Live alongside this
 entry; not operator-validated.
+
+**2.8.2 — 2026-09-25.** The mic-type fallback glyph
+([§10.1](#101-channel-card)) drops the dashed-stroke treatment for an
+inferred value — at the size this glyph now renders, a dashed stroke read
+as broken rendering, not as a qualifier. It now always renders solid,
+whether the operator set the mic type or it was only inferred from Shure
+telemetry; the accessible name still says "Likely" for an inferred value,
+but nothing on the card does. A deliberate, narrow exception to the
+honesty grammar's dashed-for-inferred rule ([§9](#9-the-honesty-grammar)).
+Implemented in Live alongside this entry.
 
 **2.8.1 — 2026-09-25.** The mic-type fallback glyph ([§10.1](#101-channel-card))
 is redrawn (a proper handheld silhouette and a detailed beltpack — body,

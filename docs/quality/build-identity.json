@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.6d17f1771b694d8a",
-  "sourceSha256": "6d17f1771b694d8afbc30684318b7b6b48089c156a17957a291e06d79f590b9b",
-  "inputCount": 434,
+  "buildId": "a2-0.0.0+sha256.a6df42da7b7f895e",
+  "sourceSha256": "a6df42da7b7f895e432c97d4a347a6df7b69c7b0dd248378b6cdf278df8ec1fb",
+  "inputCount": 436,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -125,7 +125,7 @@
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
-      "sha256": "16b578a2a07eeb6cb1df700c91d35a27d609270cbc91b7cd25f4d82e14a0fb60"
+      "sha256": "38e61865e75015a9c6f44b6b3ba6e3464e52cac1e797bd366097c764ab7bbde4"
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
@@ -176,6 +176,10 @@
       "sha256": "836532172386b13e4d46fd0909affca0613339dd98f7c336079dd4b90596f450"
     },
     {
+      "path": "apps/live/src/components/SelectionBar.tsx",
+      "sha256": "d72d698da241217b3b40061010d03ee8781eab23f9c4023df31dae6d2da65ae0"
+    },
+    {
       "path": "apps/live/src/components/SessionBar.tsx",
       "sha256": "43c53d30c406d41f817e5c5d6f13b3fc298777984013494901ed418d01bd1d3a"
     },
@@ -186,6 +190,10 @@
     {
       "path": "apps/live/src/components/StatusStrip.tsx",
       "sha256": "c09477741f1f1f0d239e906888a90c6749ee6665e7fd9da6ddd68e29f1300211"
+    },
+    {
+      "path": "apps/live/src/components/useLongPress.ts",
+      "sha256": "b3cc3b4b6fd4393e95f005fd112b2006ca49506f5403beecbd2f400424ce1a1d"
     },
     {
       "path": "apps/live/src/filter-fit.test.ts",
@@ -241,7 +249,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "0b135e570ce9985cab2938305e7adc2eba523ca3a90a273344d9b10eaadba127"
+      "sha256": "c1a8aa3e97408e56371ca2a42802e7fc118d3eac53ecb96234c93fde49a1df25"
     },
     {
       "path": "apps/live/src/trim.ts",
@@ -765,11 +773,11 @@
     },
     {
       "path": "docs/decisions/0036-transmitter-type-detection-and-photo-fallback-icon.md",
-      "sha256": "ed22e1a8bd215e104b4679afe8fb337f5bd699dfa9ec4d3672ed75fd28f97d28"
+      "sha256": "8642047bf4a6aa65531bd2426181408ff3562bbf964282db8e0158b6657a721d"
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "042bbdb6a513c9cae76a0543b558fa92feff1890c77fc3fbfaa2442b8172579b"
+      "sha256": "56f7feeeec0528bd1f56cd760e474371679ddc6dee1e47c4f1e92e60d02f81d6"
     },
     {
       "path": "docs/design/README.md",
