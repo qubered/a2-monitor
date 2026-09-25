@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.a50db3b9070c8305",
-  "sourceSha256": "a50db3b9070c8305cac1c1649e55290b4268acebc75d3e420b59fedecae04c03",
+  "buildId": "a2-0.0.0+sha256.58632c77ac95cfda",
+  "sourceSha256": "58632c77ac95cfdad92466dd48aab06f7291c1f385cb37ef704ae51490a5b9ea",
   "inputCount": 434,
   "inputs": [
     {
@@ -125,7 +125,7 @@
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
-      "sha256": "acacd599d4c8df5f479a80cd1d02692e1202390606c67b795aef76a3fd505cb2"
+      "sha256": "9aad8d92d5f7aa0e9f16fd1368384550e10358cf8f32794a30ec3426bbf295a6"
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
@@ -241,7 +241,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "aa9e4b6fd17286e0c338dbd33643740b77a0d0d9ce2f8c7ac6144737a4674bda"
+      "sha256": "e030ef00ab99bfbf775c2c20298f1eb4f555c6db34e57e6ab4ddd40311c6dc2a"
     },
     {
       "path": "apps/live/src/trim.ts",
@@ -765,11 +765,11 @@
     },
     {
       "path": "docs/decisions/0036-transmitter-type-detection-and-photo-fallback-icon.md",
-      "sha256": "ed22e1a8bd215e104b4679afe8fb337f5bd699dfa9ec4d3672ed75fd28f97d28"
+      "sha256": "8642047bf4a6aa65531bd2426181408ff3562bbf964282db8e0158b6657a721d"
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "090105c45bfd319dff20ad2a477554e3bd4a7e7e6254dce449129a0fd5d78ef3"
+      "sha256": "3b79b6e6381da48b0d363cc844f679bf4a014baa03775eda54f551af71745394"
     },
     {
       "path": "docs/design/README.md",

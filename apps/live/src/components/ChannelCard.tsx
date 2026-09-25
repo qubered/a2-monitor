@@ -182,9 +182,7 @@ export function ChannelCard({
             />
           ) : channel.micType === "handheld" ||
             channel.micType === "beltpack" ? (
-            <span
-              className={`photo-fallback ${channel.micTypeSource === "inferred" ? "is-inferred" : ""}`}
-            >
+            <span className="photo-fallback">
               <MicTypeIcon micType={channel.micType} />
               <span className="sr-only">
                 {channel.micTypeSource === "inferred"

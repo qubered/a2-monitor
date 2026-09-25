@@ -49,13 +49,15 @@ the blank frame when no photo is set, for a faster at-a-glance read.
    model code.
 3. **`micTypeSource` marks how a value was set.** A new optional
    `"operator" | "inferred" | null` field on `LiveStateChannel` says whether
-   `micType` came from Manager or from telemetry. The honesty grammar
-   (DESIGN.md §9) requires inferred data to read as suspected, not
-   confirmed, so Live draws the fallback glyph solid for an operator value
-   and dashed for an inferred one; the grammar's word ("likely") lives in
-   the glyph's accessible name rather than a visible caption, since at the
-   size the glyph now renders (large enough to read from operating
-   distance, DESIGN.md 2.8.1) it carries the read on its own.
+   `micType` came from Manager or from telemetry. `micType` and
+   `micTypeSource` are still computed exactly as described above — the
+   operator's value always wins — but the fallback glyph itself always
+   renders solid regardless of source (DESIGN.md 2.8.2): at the size it now
+   renders (large enough to read from operating distance), a dashed stroke
+   read as broken rendering rather than a qualifier, a deliberate, narrow
+   exception to the honesty grammar's dashed-for-inferred rule (DESIGN.md
+   §9). The grammar's word ("likely") is kept, but only in the glyph's
+   accessible name for screen readers, never visually on the card.
    The field is optional rather than required in the schema so the existing
    backward-compatibility fixture (`fixtures/v0/http/previous/live-state.valid.json`)
    still validates against the current schema unchanged.

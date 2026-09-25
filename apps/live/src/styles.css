@@ -1066,15 +1066,6 @@ a:focus-visible {
   stroke-width: 1.5;
 }
 
-/* Inferred honesty-grammar treatment (DESIGN.md §9): the glyph's stroke is
-   dashed rather than solid, matching the empty frame's own dashed border
-   instead of reading as a confirmed value; the word "likely" that the word
-   half of the grammar calls for moves to the accessible name (sr-only)
-   since the glyph alone now carries the visual read at this size. */
-.photo-fallback.is-inferred svg {
-  stroke-dasharray: 3 3;
-}
-
 .channel-number {
   position: absolute;
   top: var(--space-2);
