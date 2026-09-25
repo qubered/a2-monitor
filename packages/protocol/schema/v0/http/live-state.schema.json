@@ -742,21 +742,33 @@
             }
           }
         },
-        "roomId": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "minLength": 1,
-          "maxLength": 64
-        },
-        "categoryId": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "minLength": 1,
-          "maxLength": 64
+        "rooms": {
+          "description": "The rooms this channel belongs to, each with its own category in that room (ADR 0035). Empty means no room.",
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "roomId",
+              "categoryId"
+            ],
+            "properties": {
+              "roomId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "categoryId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1,
+                "maxLength": 64
+              }
+            }
+          }
         }
       }
     },

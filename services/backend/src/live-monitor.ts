@@ -44,8 +44,9 @@ import { NodeObserver, type NodeSource } from "./node-observer.js";
 import type { ProductionStore } from "./productions.js";
 import { emptyShowfile } from "./showfile.js";
 import {
+  channelRoomKeys,
   MemorySessionPersistence,
-  resolveRoom,
+  resolveChannelSession,
   resolveSessions,
   roomKey,
   roomsSummary,
@@ -274,7 +275,7 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
         startedBy: normalizeOperator(by),
       });
     for (const channel of showfile.channels) {
-      if (!channel.id || roomKey(channel.roomId) !== key) continue;
+      if (!channel.id || !channelRoomKeys(channel).includes(key)) continue;
       const tracker = this.trackers.get(channel.id);
       if (!tracker) continue;
       tracker.heard = false;
@@ -292,21 +293,20 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
   /** Current subjects for every channel in the active show, keyed by channel id. */
   private async subjects(): Promise<Map<string, MicCheckSubject>> {
     const showfile = await this.activeShowfile();
+    const sessionsByRoom = resolveSessions(showfile, this.sessionRuns);
     return new Map(
       showfile.channels.flatMap((channel) => {
         if (!channel.id) return [];
-        const key = roomKey(channel.roomId);
-        const { active } = resolveRoom(
-          showfile,
-          this.sessionRuns.get(key),
-          key,
+        const { activeSession } = resolveChannelSession(
+          channel,
+          sessionsByRoom,
         );
         return [
           [
             channel.id,
             subjectOf({
               ...channel,
-              performer: sessionPerformer(channel, active),
+              performer: sessionPerformer(channel, activeSession),
             }),
           ] as const,
         ];

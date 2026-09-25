@@ -10,6 +10,11 @@ externally tested release.
 
 ### Changed
 
+- Manager and Live: a channel can now belong to several rooms at once (ADR
+  0035), each with its own category. Manager's Channels tab assigns and
+  removes room memberships one at a time instead of one dropdown; Live shows
+  the channel under every room and category heading it belongs to, and its
+  in-use/next-session state is shared across all its rooms.
 - Live: dismissing a fault-report banner is now shared (ADR 0034) instead of a
   per-device preference — any A2 dismissing it clears it for every A2, and it
   records who dismissed it.
