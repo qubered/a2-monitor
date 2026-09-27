@@ -611,16 +611,19 @@ a:focus-visible {
   display: flex;
   align-items: center;
   gap: var(--space-6);
-  padding: var(--space-3) var(--space-6);
+  padding: var(--space-1) var(--space-6);
   border-bottom: var(--size-1) solid var(--line-2);
   background: var(--paper-2);
 }
 
+/* One line per slot, so the run of show costs one row above the grid. */
 .session-slot {
   min-width: 0;
   display: flex;
-  flex-direction: column;
+  align-items: baseline;
+  gap: var(--space-2);
   line-height: 1.3;
+  white-space: nowrap;
 }
 
 .session-slot + .session-slot {
@@ -643,8 +646,10 @@ a:focus-visible {
 }
 
 .session-meta {
+  overflow: hidden;
   color: var(--muted);
   font-size: var(--font-caption);
+  text-overflow: ellipsis;
 }
 
 .session-meta.is-action {

@@ -1417,7 +1417,7 @@ export function App({
                 : "Waiting for validated data"}
           </span>
         </div>
-        {rooms.length && shownRoom ? (
+        {roomOptions.length > 2 && shownRoom ? (
           <button
             className="room-switch"
             type="button"

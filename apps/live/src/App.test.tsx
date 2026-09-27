@@ -448,7 +448,8 @@ describe("Live channel grid", () => {
     await user.keyboard("{/Control}");
     expect(marguerite.classList.contains("is-selected")).toBe(false);
     expect(talkbackCard.classList.contains("is-selected")).toBe(true);
-    expect(screen.getByText("1 channel monitored together.")).toBeTruthy();
+    // One channel is what the player shows; the bar is only for several.
+    expect(screen.queryByText(/monitored together/)).toBeNull();
   });
 
   it("Shift-click extends the selection to every channel between the last pick and this one", async () => {
