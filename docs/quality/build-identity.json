@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.da39b783ba36b77c",
-  "sourceSha256": "da39b783ba36b77c8fdb42c5287b96d765aeaebb26945b31434edb96dbf6ef32",
-  "inputCount": 441,
+  "buildId": "a2-0.0.0+sha256.d96e9fa9ec5ca503",
+  "sourceSha256": "d96e9fa9ec5ca503d71c4ae04fa50eb5c2449be3f21ada61cc3f8c56640c657e",
+  "inputCount": 457,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -861,7 +861,7 @@
     },
     {
       "path": "docs/open-questions.md",
-      "sha256": "dba853b0cabc07cca558a7e8c4b23eabfe8279f17d0811449db3c75ae10666a8"
+      "sha256": "528e8be5a2c36ef488cf910c3bda37aa31423184bd2cf65ab9f104064695010b"
     },
     {
       "path": "docs/product/a1-a2-views-and-collaboration.md",
@@ -938,6 +938,70 @@
     {
       "path": "docs/research/a1-a2-collaboration.md",
       "sha256": "e61bb860451eb08e89e803c71ea30d79a408a477d596a33963306b134d9c814b"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/A-webaudio.json",
+      "sha256": "4087e68b9b40d32ca07f63cf9ad6994a7ec7678797134b61c43084f8fdd1c90e"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/B-element.json",
+      "sha256": "ce668485d07e434e196ddeff745de9d5ad29846171eb82d74d7882d0a9f7bc93"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/C-webaudio-jbt0.json",
+      "sha256": "f6a3d316ea19c155e2f94a91258c5b199b02d9f33dafe75a9800256754f0a8e5"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/D-switch.json",
+      "sha256": "3d1af44d0cf0d8f4b21a8a6d10a43b60dd2554879d6b0fb562290d416eda38ee"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/F1-opus5.json",
+      "sha256": "8183d3680d48da9f7f11dd5597b2a386c605516147b999cb1a6052d4004cf2b8"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/F2-opus2_5.json",
+      "sha256": "e72cc9a2c4be1a357d03b1296bd0217964e8143cdc9480ce8db7b5a450e4df55"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/G-debug.json",
+      "sha256": "0ec084094f898f6ed7f0a999864f03b27bbf668ea85a9db1df2ced3717272f76"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/P10.json",
+      "sha256": "3f212b9a5577872c58425c56851825a685c03cf6721d39f6d7b2447137da92bc"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/README.md",
+      "sha256": "0f446fea5902dd05cb39f55e0bc6b87db9ec08c4299632fd25db5d4ce8496aa1"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/S16.json",
+      "sha256": "c21ea84cbf44b0f8d6f5a2230fd9ad654a9e75d61331825e60b7e395869f5e73"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/S32.json",
+      "sha256": "a6e57c6d8c7ef3f18ba86cfecdc1aeee4cf794a7755ffc519ea70493c634abf3"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/S8-opus5.json",
+      "sha256": "f6bf25a84f94e42b561da3a3b5250b3defce04e7222c23f67b68191609a4a591"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/S8.json",
+      "sha256": "5547c53273a50a9a297d85794d5207398f8d6fc579bd4ed1279b54895f4dfc51"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/W10.json",
+      "sha256": "4205c6cf28c80dad7b3d2c07d0ad38f05a771e2ee00dc7a348a35fa86e9d7da9"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/W5.json",
+      "sha256": "508b61b1153f3708f16fef02cb8b8c245791ed3e5fab63707d5082b8c8be8343"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09.md",
+      "sha256": "e81a5ad38df6e84a7d608395560e498aa0f9bae93ec9e47c20b210472d5d3bd3"
     },
     {
       "path": "docs/research/technology-stack-selection.md",
@@ -1753,7 +1817,7 @@
     },
     {
       "path": "tools/latency/README.md",
-      "sha256": "fb2ebfa4e29cd1514b0c7b34b24dbd125fdf50403735373e551b6284db865310"
+      "sha256": "bda9463c18f1823b65ced984d4d084212734288f196c62cec15a389fc72db040"
     },
     {
       "path": "tools/latency/click-capture.mjs",

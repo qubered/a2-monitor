@@ -3,7 +3,8 @@
 Measures the shipped listen path — `pulse-media-worker` → str0m → Opus →
 Chromium — from the moment a capture chunk reaches the worker's pipe to the
 moment the sample arrives at an audio sink. It exists so latency claims come
-with a method, not an estimate.
+with a method, not an estimate. Results and their interpretation live in
+[the 2026-09 audit](../../docs/research/next-level-audit-2026-09.md#g4--the-audio-core).
 
 ## What it measures, and what it does not
 
