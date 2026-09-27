@@ -138,7 +138,7 @@ function demoShowfile(revision) {
     micType: "headset",
     imageUrl: null,
     monitor,
-    ...place,
+    rooms: [place],
   });
   const wired = (id, name, inputIndex, micType, place) => ({
     id,
@@ -150,7 +150,7 @@ function demoShowfile(revision) {
     micType,
     imageUrl: null,
     monitor,
-    ...place,
+    rooms: [place],
   });
   const ballroom = (categoryId) => ({ roomId: "demo-ballroom", categoryId });
   const breakout = (categoryId) => ({ roomId: "demo-breakout", categoryId });
