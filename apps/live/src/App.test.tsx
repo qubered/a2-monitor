@@ -543,6 +543,24 @@ describe("Live channel grid", () => {
     ).toBeTruthy();
   });
 
+  it("counts audio the node lost in the header and calls out a fresh loss", () => {
+    const withDropouts = (callbacks: number, revision: number) => {
+      const base = stateWith({ revision });
+      return {
+        ...base,
+        node: { ...base.node, dropouts: { callbacks, blocks: 0 } },
+      };
+    };
+    const { source } = renderApp(withDropouts(2, 10));
+    // Losses before this page watched are counted, not announced.
+    expect(screen.getByText("2 dropouts")).toBeTruthy();
+    expect(screen.queryByText(/Audio capture dropped audio at/)).toBeNull();
+
+    act(() => source.push(withDropouts(3, 11)));
+    expect(screen.getByText("3 dropouts")).toBeTruthy();
+    expect(screen.getByText(/Audio capture dropped audio at/)).toBeTruthy();
+  });
+
   it("marks a card with the backend alert and acknowledges it as the named operator", async () => {
     const user = userEvent.setup();
     window.localStorage.setItem("pulse-operator-name", "Sam");

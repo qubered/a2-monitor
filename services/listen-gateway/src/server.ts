@@ -488,6 +488,9 @@ export class ListenGateway {
                 simulated: this.media.simulated,
               }
             : null,
+        ...(state.status === "ready"
+          ? { dropouts: this.media.getDropouts() }
+          : {}),
       },
       windowMs: LEVEL_WINDOW_MS,
       inputs:

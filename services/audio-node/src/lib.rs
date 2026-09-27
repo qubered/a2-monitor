@@ -1,5 +1,6 @@
 //! Deterministic synthetic audio host used before physical host qualification.
 
+pub mod capture_stats;
 pub mod monitor_output;
 pub mod test_signal;
 pub mod worker_control;

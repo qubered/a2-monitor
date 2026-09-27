@@ -297,11 +297,19 @@ impl<W: Write> EventWriter<W> {
         })
     }
 
-    pub fn stats(&mut self, sessions: usize, dropped_blocks: u64) -> std::io::Result<()> {
+    /// Periodic health: listeners, 10 ms blocks this worker dropped on a full
+    /// queue, and device callbacks the capture process dropped (its overruns).
+    pub fn stats(
+        &mut self,
+        sessions: usize,
+        dropped_blocks: u64,
+        dropped_callbacks: u64,
+    ) -> std::io::Result<()> {
         self.emit(json!({
             "type": "stats",
             "sessions": sessions,
             "droppedCaptureBlocks": dropped_blocks,
+            "droppedCaptureCallbacks": dropped_callbacks,
         }))
     }
 }

@@ -17,7 +17,7 @@ mod session;
 
 use std::collections::HashMap;
 use std::ffi::OsString;
-use std::io::{self, BufReader, ErrorKind};
+use std::io::{self, BufRead, BufReader, ErrorKind};
 use std::net::{IpAddr, SocketAddr, UdpSocket};
 use std::process::{Child, Command as ProcessCommand, ExitCode, Stdio};
 use std::sync::Arc;
@@ -202,6 +202,8 @@ struct Worker<W: io::Write> {
     host_output: Option<HostOutput>,
     recycle: Sender<Vec<f32>>,
     dropped_blocks: Arc<AtomicU64>,
+    /// Device callbacks `pulse-device-capture` dropped, from its stats lines.
+    dropped_callbacks: Arc<AtomicU64>,
 }
 
 impl<W: io::Write> Worker<W> {
@@ -383,7 +385,8 @@ fn spawn_capture(args: &Args) -> io::Result<Child> {
         .arg(&args.device_name)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::inherit())
+        // Piped so its capture-stats lines become metrics; the rest is passed on.
+        .stderr(Stdio::piped())
         .spawn()
 }
 
@@ -398,6 +401,21 @@ fn run(args: &Args) -> Result<(), String> {
     let (events_tx, events) = mpsc::sync_channel(EVENT_QUEUE);
     let (recycle_tx, recycle_rx) = mpsc::channel();
     let dropped_blocks = Arc::new(AtomicU64::new(0));
+    let dropped_callbacks = Arc::new(AtomicU64::new(0));
+    if let Some(capture_log) = child.stderr.take() {
+        let dropped = Arc::clone(&dropped_callbacks);
+        thread::Builder::new()
+            .name("capture-log".into())
+            .spawn(move || {
+                for line in BufReader::new(capture_log).lines().map_while(Result::ok) {
+                    match a2_audio_node::capture_stats::parse_stats_line(&line) {
+                        Some(count) => dropped.store(count, Ordering::Relaxed),
+                        None => eprintln!("{line}"),
+                    }
+                }
+            })
+            .map_err(|error| error.to_string())?;
+    }
 
     {
         let events = events_tx.clone();
@@ -433,6 +451,7 @@ fn run(args: &Args) -> Result<(), String> {
         host_output,
         recycle: recycle_tx,
         dropped_blocks,
+        dropped_callbacks,
     };
 
     let result = start_host_output(&mut worker)
@@ -502,6 +521,7 @@ fn event_loop<W: io::Write>(
                 .stats(
                     worker.sessions.len(),
                     worker.dropped_blocks.load(Ordering::Relaxed),
+                    worker.dropped_callbacks.load(Ordering::Relaxed),
                 )
                 .map_err(io_error)?;
         }

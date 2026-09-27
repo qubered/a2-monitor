@@ -50,6 +50,22 @@ describe("evaluate", () => {
     expect(result.channels.map(({ trimDb }) => trimDb)).toEqual([-4.5, 0]);
   });
 
+  it("passes the node's lost-audio counts through to the live state", () => {
+    const reported = run(
+      observationAt(
+        T0,
+        levelsWith([-12, -30], { dropouts: { callbacks: 3, blocks: 1 } }),
+        telemetryWith([{}]),
+      ),
+    );
+    expect(reported.node.dropouts).toEqual({ callbacks: 3, blocks: 1 });
+    // A node that does not report them says nothing, rather than zero.
+    const silent = run(
+      observationAt(T0, levelsWith([-12, -30]), telemetryWith([{}])),
+    );
+    expect(silent.node.dropouts).toBeUndefined();
+  });
+
   it("maps healthy observations onto honest verdicts and raises nothing", () => {
     const result = run(
       observationAt(

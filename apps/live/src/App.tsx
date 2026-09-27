@@ -117,6 +117,8 @@ import { useNow } from "./useNow";
 type Filter = string;
 
 const ALERT_LOG_REFRESH_MS = 5_000;
+/** How long a fresh capture dropout is called out above the grid. */
+const DROPOUT_NOTICE_MS = 60_000;
 const defaultLiveStateSource = createEventSourceLiveState();
 const defaultHostOutputSource = createHttpHostOutputSource();
 
@@ -448,6 +450,9 @@ export function App({
   const [reportBusy, setReportBusy] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
+  /** When the node's lost-audio count last went up while this page watched. */
+  const [dropoutAtMs, setDropoutAtMs] = useState<number | null>(null);
+  const seenDropouts = useRef<number | null>(null);
   const [muted, setMuted] = useState(false);
   const [dimmed, setDimmed] = useState(false);
   const [gainDb, setGainDb] = useState(readMonitorGainDb);
@@ -771,6 +776,19 @@ export function App({
       );
     }
   }, [liveState, offline]);
+
+  // A rise in the node's count is a fresh loss; the first reading, or a lower
+  // one after capture restarts, is only a baseline.
+  const nodeDropouts = liveState?.node.dropouts;
+  const nodeDropoutTotal = nodeDropouts
+    ? nodeDropouts.callbacks + nodeDropouts.blocks
+    : null;
+  useEffect(() => {
+    if (nodeDropoutTotal === null) return;
+    const seen = seenDropouts.current;
+    seenDropouts.current = nodeDropoutTotal;
+    if (seen !== null && nodeDropoutTotal > seen) setDropoutAtMs(Date.now());
+  }, [nodeDropoutTotal]);
 
   const wantsAlertLog = exceptionsOpen || detailId !== null || timelineOpen;
   useEffect(() => {
@@ -1366,6 +1384,15 @@ export function App({
       ];
     }),
   );
+  // Audio the node lost since capture started (CLAUDE.md: overruns are
+  // metrics). The header carries the count; a notice marks a fresh loss.
+  const dropouts =
+    liveState && !offline && liveState.node.status === "ready"
+      ? liveState.node.dropouts
+      : undefined;
+  const dropoutCount = dropouts ? dropouts.callbacks + dropouts.blocks : 0;
+  const recentDropout =
+    dropoutAtMs !== null && nowMs - dropoutAtMs < DROPOUT_NOTICE_MS;
   const summary = liveState?.summary;
   const alertLabel =
     !summary || offline
@@ -1460,7 +1487,7 @@ export function App({
                     liveState.node.status === "error"
                   ? "offline"
                   : "waiting"
-          }`}
+          }${dropoutCount > 0 ? " has-dropouts" : ""}`}
         >
           <span>Node</span>
           <strong>
@@ -1474,6 +1501,11 @@ export function App({
                     ? "Failed"
                     : "Waiting"}
           </strong>
+          {dropoutCount > 0 ? (
+            <em>
+              {dropoutCount} dropout{dropoutCount === 1 ? "" : "s"}
+            </em>
+          ) : null}
         </div>
         {nodeDevice?.simulated ? (
           <span className="simulated-badge">Simulated test signal</span>
@@ -1556,6 +1588,20 @@ export function App({
         device={device}
       />
       {liveState && !offline ? <NodeNotice state={liveState} /> : null}
+      {recentDropout && dropoutAtMs !== null ? (
+        <section className="snapshot-notice snapshot-waiting" role="status">
+          <div>
+            <strong>
+              Audio capture dropped audio at{" "}
+              {formatClock(new Date(dropoutAtMs).toISOString())}.
+            </strong>
+            <span>
+              Listening and meters had a gap. {dropoutCount} since capture
+              started; the node could not keep up with the device.
+            </span>
+          </div>
+        </section>
+      ) : null}
       {liveState && !offline ? <ReceiverNotice state={liveState} /> : null}
       {liveState?.node.status === "ready" && meterConnection !== "live" ? (
         <section className="snapshot-notice snapshot-waiting">

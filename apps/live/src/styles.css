@@ -140,6 +140,15 @@ a:focus-visible {
   font-size: var(--font-ui);
 }
 
+/* Audio the node lost since capture started: a caution, counted. */
+.node-state em {
+  color: var(--warn);
+  font-family: var(--font-mono);
+  font-size: var(--font-badge);
+  font-style: normal;
+  font-weight: 600;
+}
+
 .node-waiting strong,
 .node-unknown strong {
   color: var(--rep);

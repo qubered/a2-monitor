@@ -14,9 +14,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: 695c1700a69577b779877d3e1df5addeea7fb4c65e2d448c43f6bb509b66701f
+// Schema-SHA256: bfad69dfdd980c9b6e9d79f06d51806a622b16c30ad0cdad4b13e63480cc7f41
 // Generator-SHA256: 123e494d4215c85da4d6478cb1ee908a830ec3431fb8ab658c6fc0e098c4296b
-// Body-SHA256: cf146165697fb58af715b55f1e9784411e8ebfd3cb50727625723ba76b1370b0
+// Body-SHA256: b89534048f64f05b7b2442f32531ffb304dbba89bb31d391ccd892954f4cda46
 
 export type HealthResponse = {
   status: "ok";
@@ -289,6 +289,10 @@ export type NodeLevels = {
       channelCount: number;
       simulated: boolean;
     } | null;
+    dropouts?: {
+      callbacks: number;
+      blocks: number;
+    };
   };
   windowMs: number;
   inputs: Array<NodeInputLevel>;
@@ -544,6 +548,10 @@ export type LiveState = {
       simulated: boolean;
     } | null;
     observedAtUtc: string | null;
+    dropouts?: {
+      callbacks: number;
+      blocks: number;
+    };
   };
   receivers: {
     status:
@@ -680,6 +688,10 @@ export type LiveStateDelta = {
       simulated: boolean;
     } | null;
     observedAtUtc: string | null;
+    dropouts?: {
+      callbacks: number;
+      blocks: number;
+    };
   };
   receivers?: {
     status:
@@ -1952,6 +1964,25 @@ const nodeLevelsSchema = {
             },
           },
         },
+        dropouts: {
+          description:
+            "Audio the node lost since capture last started, as measured counts (CLAUDE.md: overruns surface as metrics). callbacks: device callbacks the capture process dropped because its queue was full. blocks: 10 ms blocks the media worker dropped because it could not keep up. Absent from nodes that do not report it.",
+          type: "object",
+          additionalProperties: false,
+          required: ["callbacks", "blocks"],
+          properties: {
+            callbacks: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            blocks: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+          },
+        },
       },
     },
     windowMs: {
@@ -2312,6 +2343,25 @@ const liveStateSchema = {
         observedAtUtc: {
           type: ["string", "null"],
           format: "date-time",
+        },
+        dropouts: {
+          description:
+            "Audio the node lost since capture last started, as reported by the node (see node-levels). Absent when the node does not report it or capture is not ready.",
+          type: "object",
+          additionalProperties: false,
+          required: ["callbacks", "blocks"],
+          properties: {
+            callbacks: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            blocks: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+          },
         },
       },
     },
@@ -3282,6 +3332,25 @@ const liveStateDeltaSchema = {
         observedAtUtc: {
           type: ["string", "null"],
           format: "date-time",
+        },
+        dropouts: {
+          description:
+            "Audio the node lost since capture last started, as reported by the node (see node-levels). Absent when the node does not report it or capture is not ready.",
+          type: "object",
+          additionalProperties: false,
+          required: ["callbacks", "blocks"],
+          properties: {
+            callbacks: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            blocks: {
+              type: "integer",
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+          },
         },
       },
     },

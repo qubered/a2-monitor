@@ -186,6 +186,21 @@ describe("ListenGateway metering", () => {
     });
   });
 
+  it("reports audio the node lost as counts in its level summary", async () => {
+    const { worker, base } = await startGateway(SIMULATED_DEVICE_NAME);
+    worker.emit({
+      type: "stats",
+      sessions: 1,
+      droppedCaptureBlocks: 2,
+      droppedCaptureCallbacks: 5,
+    });
+    await new Promise((resolve) => setImmediate(resolve));
+    const levels = parseNodeLevels(
+      await (await fetch(`${base}/audio/v0/levels`)).json(),
+    );
+    expect(levels.capture.dropouts).toEqual({ callbacks: 5, blocks: 2 });
+  });
+
   it("streams worker meter readings as SSE and summarises them for the backend", async () => {
     const { worker, base } = await startGateway(SIMULATED_DEVICE_NAME);
     await new Promise((resolve) => setImmediate(resolve));
@@ -239,6 +254,7 @@ describe("ListenGateway metering", () => {
         channelCount: 2,
         simulated: true,
       },
+      dropouts: { callbacks: 0, blocks: 0 },
     });
     expect(levels.inputs).toEqual([
       { index: 0, peakDbfs: -18, rmsDbfs: -21, clippedSamples: 0 },

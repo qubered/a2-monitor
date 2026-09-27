@@ -156,7 +156,12 @@ type WorkerEvent =
   | { type: "connected"; sessionId: string }
   | { type: "closed"; sessionId: string; reason: string }
   | ({ type: "meters" } & MeterReading)
-  | { type: "stats"; sessions: number; droppedCaptureBlocks: number }
+  | {
+      type: "stats";
+      sessions: number;
+      droppedCaptureBlocks: number;
+      droppedCaptureCallbacks: number;
+    }
   | {
       type: "output-ready";
       deviceName: string;
@@ -186,7 +191,12 @@ const EVENT_FIELDS: Readonly<Record<WorkerEvent["type"], readonly string[]>> = {
     "sequence",
     "type",
   ],
-  stats: ["droppedCaptureBlocks", "sessions", "type"],
+  stats: [
+    "droppedCaptureBlocks",
+    "droppedCaptureCallbacks",
+    "sessions",
+    "type",
+  ],
   "output-ready": ["channelCount", "deviceName", "outputRoutes", "type"],
   "output-stats": [
     "droppedBlocks",
@@ -393,7 +403,8 @@ export function parseWorkerEvent(line: string): WorkerEvent {
     default: {
       if (
         !isCount(record.sessions, 0, 1_000) ||
-        !isCount(record.droppedCaptureBlocks, 0, Number.MAX_SAFE_INTEGER)
+        !isCount(record.droppedCaptureBlocks, 0, Number.MAX_SAFE_INTEGER) ||
+        !isCount(record.droppedCaptureCallbacks, 0, Number.MAX_SAFE_INTEGER)
       ) {
         throw new Error("Media worker stats event is invalid.");
       }
@@ -401,6 +412,7 @@ export function parseWorkerEvent(line: string): WorkerEvent {
         type: "stats",
         sessions: record.sessions,
         droppedCaptureBlocks: record.droppedCaptureBlocks,
+        droppedCaptureCallbacks: record.droppedCaptureCallbacks,
       };
     }
   }
@@ -425,6 +437,7 @@ export class MediaWorkerManager extends EventEmitter {
   private readonly pending = new Map<string, PendingOpen>();
   private readonly sessions = new Set<string>();
   private droppedCaptureBlocks = 0;
+  private droppedCaptureCallbacks = 0;
   private readonly restartDelaysMs: readonly number[];
   private readonly now: () => number;
   private restartAttempt = 0;
@@ -480,6 +493,14 @@ export class MediaWorkerManager extends EventEmitter {
       schemaVersion: 0,
       status: "configuration-required",
       detail: "Set A2_AUDIO_DEVICE to an explicit capture device.",
+    };
+  }
+
+  /** Audio lost since the worker (and its capture) last started. */
+  getDropouts(): { callbacks: number; blocks: number } {
+    return {
+      callbacks: this.droppedCaptureCallbacks,
+      blocks: this.droppedCaptureBlocks,
     };
   }
 
@@ -846,7 +867,13 @@ export class MediaWorkerManager extends EventEmitter {
             `a2-listen-gateway: media worker dropped ${event.droppedCaptureBlocks - this.droppedCaptureBlocks} capture block(s)\n`,
           );
         }
+        if (event.droppedCaptureCallbacks > this.droppedCaptureCallbacks) {
+          process.stderr.write(
+            `a2-listen-gateway: capture dropped ${event.droppedCaptureCallbacks - this.droppedCaptureCallbacks} device callback(s)\n`,
+          );
+        }
         this.droppedCaptureBlocks = event.droppedCaptureBlocks;
+        this.droppedCaptureCallbacks = event.droppedCaptureCallbacks;
         break;
       case "output-ready":
         this.setOutputState({
