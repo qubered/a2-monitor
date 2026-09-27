@@ -58,16 +58,17 @@ node tools/latency/run.mjs --seconds 150 --out /tmp/webaudio.json
 
 Options:
 
-| Option                                  | Meaning                                                                                                                                                                 |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--chain webaudio`                      | Live's chain: muted `<audio>` + `MediaStreamAudioSourceNode` → gain → destination (default).                                                                            |
-| `--chain element`                       | Plain unmuted `<audio>`, no Web Audio.                                                                                                                                  |
-| `--jbt <ms>`                            | Set `RTCRtpReceiver.jitterBufferTarget`.                                                                                                                                |
-| `--mode switch`                         | Input 1 silent, input 2 a steady tone; alternate every second and time `PUT …/channel` → first tone sample at the sink.                                                 |
-| `--impair loss=1,jitter=2-8,stall=1:60` | Route media through a FIFO-preserving UDP relay: % loss, uniform extra delay in ms, % of packets starting a stall of up to N ms. Not a model of any named access point. |
-| `--extra <n>`                           | Open `n` more listen sessions (played muted) for CPU scaling.                                                                                                           |
-| `--worker <path>`                       | Media worker binary (default `target/release/pulse-media-worker`).                                                                                                      |
-| `--chromium <path>`                     | Browser binary (or `PULSE_CHROMIUM`).                                                                                                                                   |
+| Option                                  | Meaning                                                                                                                                                                        |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--chain webaudio`                      | Live's chain: muted `<audio>` + `MediaStreamAudioSourceNode` → gain → destination (default).                                                                                   |
+| `--chain element`                       | Plain unmuted `<audio>`, no Web Audio.                                                                                                                                         |
+| `--jbt <ms>`                            | Set `RTCRtpReceiver.jitterBufferTarget`.                                                                                                                                       |
+| `--mode switch`                         | Input 1 silent, input 2 a steady tone; alternate every second and time `PUT …/channel` → first tone sample at the sink.                                                        |
+| `--impair loss=1,jitter=2-8,stall=1:60` | Route media through a FIFO-preserving UDP relay: % loss, uniform extra delay in ms, % of packets starting a stall of up to N ms. Not a model of any named access point.        |
+| `--extra <n>`                           | Open `n` more listen sessions (played muted) for CPU scaling.                                                                                                                  |
+| `--worker <path>`                       | Media worker binary (default `target/release/pulse-media-worker`).                                                                                                             |
+| `--live <dir> --tap-after <s>`          | Serve a built Live (e.g. `apps/live/dist`) instead of the probe page; open it, wait, tap input 1's card as a user gesture, and time bursts from the tap. No autoplay override. |
+| `--chromium <path>`                     | Browser binary (or `PULSE_CHROMIUM`).                                                                                                                                          |
 
 Each run prints and optionally writes one JSON record: capture→sink
 percentiles, Chromium's estimate, a per-burst latency series against time since

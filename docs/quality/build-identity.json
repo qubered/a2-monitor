@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.4584399187614998",
-  "sourceSha256": "45843991876149984ff9d52ffb531bec487746378506f0899489f714d88c9625",
+  "buildId": "a2-0.0.0+sha256.594f7c372f58cf63",
+  "sourceSha256": "594f7c372f58cf63f5eaa7e7279d8bc00b316ec5e2d4608bb318a96ac004494e",
   "inputCount": 457,
   "inputs": [
     {
@@ -861,7 +861,7 @@
     },
     {
       "path": "docs/open-questions.md",
-      "sha256": "528e8be5a2c36ef488cf910c3bda37aa31423184bd2cf65ab9f104064695010b"
+      "sha256": "db6b3884adefe0d1054ab62fcb7ee5562aed885bd25c1708bf38c4dacfff88ac"
     },
     {
       "path": "docs/product/a1-a2-views-and-collaboration.md",
@@ -973,7 +973,7 @@
     },
     {
       "path": "docs/research/next-level-audit-2026-09-data/README.md",
-      "sha256": "0f446fea5902dd05cb39f55e0bc6b87db9ec08c4299632fd25db5d4ce8496aa1"
+      "sha256": "28756b28845eea2167817c45e62e394a3a5fcc08ebdd5e4785659c1cef035602"
     },
     {
       "path": "docs/research/next-level-audit-2026-09-data/S16.json",
@@ -1001,7 +1001,7 @@
     },
     {
       "path": "docs/research/next-level-audit-2026-09.md",
-      "sha256": "e70f0d72704fbe00dfc55b11b7577e4b7ce5c5129e8949793e1ba0756ef156ab"
+      "sha256": "61cf2cd27ec471c2af7148fb3ff7d7d6e977c7e0f2259d32852d5708c3fdec8d"
     },
     {
       "path": "docs/research/technology-stack-selection.md",
@@ -1817,7 +1817,7 @@
     },
     {
       "path": "tools/latency/README.md",
-      "sha256": "bda9463c18f1823b65ced984d4d084212734288f196c62cec15a389fc72db040"
+      "sha256": "d59565630e108653d4ecde94097ebe4ae58215dd266a2348a17a44b925d8be21"
     },
     {
       "path": "tools/latency/click-capture.mjs",
@@ -1829,11 +1829,11 @@
     },
     {
       "path": "tools/latency/page/probe.js",
-      "sha256": "265bf319332312f29261fb4270818aa2ea6adb55aca5b9c0021811306f278f18"
+      "sha256": "3bc29b885fb54ece2d2c9bc1b6f324b6ed47698d6c41e29fb58efd47ab2989e7"
     },
     {
       "path": "tools/latency/run.mjs",
-      "sha256": "19aa5536d5a2677ce883d5e15514b44ce93db7a523b4e3e2245b405b412925e2"
+      "sha256": "9529c5cc32842d64376e0ff3d1c84c4fbc5d7b6f7e0060b966589520e5e452f0"
     }
   ],
   "regenerationCommand": "node scripts/generate-build-identity.mjs"

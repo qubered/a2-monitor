@@ -92,7 +92,7 @@ raw data alongside it):
 | Path                                               | p50        | p95       | Notes                                                                              |
 | -------------------------------------------------- | ---------- | --------- | ---------------------------------------------------------------------------------- |
 | Clean loopback, steady state                       | 87–102 ms  | 92–117 ms | Across 5 identical-config runs; ~32 ms of it is the sink's reported output latency |
-| First seconds of a new session                     | 170–370 ms | —         | 13 of 14 sessions; drains over 5–10 s                                              |
+| Shipped Live app, tap → 25 s after                 | 117 ms     | 135 ms    | 6 runs, n = 151; no start-up transient (first burst after the tap 103–125 ms)      |
 | Relay: 1 % loss, 2–8 ms jitter, 1 % stalls ≤ 60 ms | 150 ms     | 157 ms    | steady state; 1.05 % concealed                                                     |
 | Relay: 5 % loss, 4–19 ms, 2 % stalls ≤ 120 ms      | 228 ms     | 249 ms    | steady state; 5.05 % concealed                                                     |
 

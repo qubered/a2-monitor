@@ -23,13 +23,15 @@ on the LAN, offline.**
 
 ## Summary
 
-- **The listen path is sound; its first seconds are not.** On a clean
-  same-host path, the measured path (capture pipe → worker → Opus →
-  Chromium → audio sink) is **~90–100 ms p50, ~100–120 ms p95** (Observed,
-  Chromium 141, Linux, synthetic; ~32 ms of it is the sink's output latency). But **a fresh listen session starts at
-  170–370 ms and takes 5–10 s to drain** — and Live opens a fresh session on
-  the first tap, and on every channel added to a multi-select. Fix by timing,
-  not by transport: open the session before the tap (G6 #1).
+- **The listen path is sound.** On a clean same-host path, the measured path
+  (capture pipe → worker → Opus → Chromium → audio sink) is **~90–100 ms p50,
+  ~100–120 ms p95** on the probe page, and the shipped Live app measured
+  **~110–120 ms p50 from the first burst after a tap** (Observed, Chromium 141,
+  Linux, synthetic; ~32 ms of either is the sink's output latency).
+  *Correction, 2026-09-27:* an earlier version of this document reported a
+  170–370 ms start-up transient in fresh sessions. It came from the harness's
+  probe page, not the product: the shipped Live app showed none in 8 of 8
+  runs (G4).
 - **Nothing measured beats the current transport.** 5 ms Opus frames saved
   nothing measurable and made Wi-Fi-like loss worse (p50 150 → 187 ms);
   2.5 ms was worse everywhere; `jitterBufferTarget = 0` changed nothing;
@@ -165,7 +167,6 @@ not operator cost; listed under "not doing" with a suggested follow-up.
 
 | Risk | Where | Effect |
 | --- | --- | --- |
-| **First seconds of every new listen session are 2–4× late.** 13 of 14 fresh sessions ran at 170–370 ms capture→sink in their first seconds and took 5–10 s to drain to ~100 ms (G4). | Browser jitter buffer at session start; Live opens a session on first tap | The first thing a new user hears is the worst latency the product has. |
 | **Multi-select = N peer connections + N AudioContexts.** Each has its own jitter buffer, so monitored channels are not time-aligned with each other; each added channel pays connection setup and the start-up transient; the node caps at `MAX_SESSIONS = 32` — 8 A2s × 4 channels exhausts it. | `App.tsx` playback slots; `audio-playback.ts` (one `AudioContext` per session); `pulse-media-worker/main.rs` | Contradicts latency.md ("one continuous stream per client, routing on the server"). |
 | **Capture overruns are counted and never reported.** `pulse-device-capture` increments `dropped_callbacks` when its queue is full but nothing reads it. The worker's `droppedCaptureBlocks` does reach the gateway. | `device-capture.rs` `PcmQueue::try_push` | CLAUDE.md: "surface underruns, overruns, and clock discontinuities as metrics". A silent dropout at the source is invisible. |
 | Capture writer thread polls with `thread::sleep(1 ms)`. | `device-capture.rs` | Up to ~1 ms added per chunk; on hosts with coarse timers more. Not on the RT callback, so no rule violation. Measure on Windows. |
@@ -422,7 +423,7 @@ synthetic profiles; **not a model of any access point**.
 
 | Other measurement | Result |
 | --- | --- |
-| Switch (`PUT …/channel` → first sample of the new input at the sink), n = 30 | p50 **103.5**, p95 258.5, max 430.1 ms. The tail is switches made inside the start-up transient; after it, a switch costs the path latency and nothing more. |
+| Switch (`PUT …/channel` → first sample of the new input at the sink), n = 30 | p50 **103.5**, p95 258.5, max 430.1 ms. The tail is switches made in the probe page's first seconds (a probe artefact, see #2 below); after them, a switch costs the path latency and nothing more. |
 | Offer → track unmuted (new session) | 53–94 ms across 14 runs |
 | Listeners 1 / 8 / 16 / 32 (node cap is 32) | worker CPU **3.2 / 8.4 / 13.4 / 24.4 %** of one core; RSS 8.4 / 9.7 / 11.3 / 14.7 MB; measured listener's steady p50 94–103 ms at every size. 8 listeners at 5 ms frames: 11.0 % (vs 8.4 %). |
 | Non-audio traffic per Live client, 64-channel sim | live state: the **whole snapshot (~70 KB) once a second** ≈ 594 kbit/s; meters: 20 Hz JSON ≈ 196 kbit/s; neither compressed. Audio: 128 kbit/s. |
@@ -436,14 +437,15 @@ synthetic profiles; **not a model of any access point**.
    10 ms playout chunks ~10 + Web Audio `baseLatency` 11.6 + this sink's
    `outputLatency` 32. **The part Pulse and the browser control is ~55–65 ms;**
    the rest is the output device.
-2. **The start-up transient is the largest avoidable delay.** In 13 of 14
-   fresh sessions the first seconds ran at 170–370 ms (jitter buffer
-   240–340 ms) and drained over 5–10 s. The one exception (run A) started at
-   121 ms. Live opens a session on the first tap, and multi-select opens one per
-   added channel, so **the first seconds a user hears are the worst**. Cause
-   (Inferred): media reaches the browser's jitter buffer before playout starts;
-   the buffer then time-compresses its way down. A session opened before the
-   tap spends the transient where nobody is listening.
+2. **The probe page has a start-up transient; Live does not.** In 13 of 14
+   probe-page sessions the first seconds ran at 170–370 ms (jitter buffer
+   240–340 ms) and drained over 5–10 s. The shipped Live app, driven by the
+   harness's `--live` mode (open Live, wait, tap the card as a user gesture),
+   showed **no transient in 8 of 8 runs**: first burst after the tap at
+   101–125 ms, 25 s after the tap p50 117 / p95 135 / max 142 ms (n = 151, six
+   runs, `L-live-*.json`). Attaching playback earlier in the probe and
+   allowing autoplay in Live did not change either result; the probe's cause
+   is **Unknown**. Treat the "First 10 s" column above as a harness property.
 3. **Smaller Opus frames do not pay.** 5 ms matched 10 ms within run-to-run
    drift on a clean path (steady p50 87.9 vs 87.1–102.4 across 10 ms runs)
    and was **worse under loss** (W5 vs W10: +38 ms p50, larger jitter buffer,
@@ -475,7 +477,7 @@ synthetic profiles; **not a model of any access point**.
 | --- | --- | --- |
 | Smaller Opus frames (2.5/5 ms) | F1, F2, W5 | **No.** No clean gain; worse under loss; more CPU. |
 | Uncompressed L16/PCM over RTP | Chromium's offer has no L16 (Observed) | **Not available** in the browser's WebRTC. A custom path (WebTransport/WebSocket + AudioWorklet) re-opens ADR 0021's problems for ~2.5 ms of Opus look-ahead. |
-| Jitter-buffer strategy | C (target 0 = no change); transient in 13/14 sessions | **Warm the session** instead (G6 #1). Firefox and Safari behaviour Unknown. |
+| Jitter-buffer strategy | C (target 0 = no change); Live has no start-up transient | **Leave to the browser.** Firefox and Safari behaviour Unknown. |
 | AudioWorklet vs default decode | B vs A: no measurable difference | **Keep the default decode + Web Audio gain.** A custom worklet jitter buffer only competes for the 20–35 ms NetEq uses on a clean path. |
 | Capture buffer sizing | Not measurable here (no device) | Keep 128 frames with fallback; measure on the reference Mac/Windows host. |
 | Switching / crossfade | Switch p50 103.5 ms = path latency | **Keep.** Server-side crossfade adds nothing measurable. |
@@ -487,9 +489,8 @@ synthetic profiles; **not a model of any access point**.
 **Keep** WebRTC/Opus CELT, 10 ms, 128 kbit/s, per-session encoder, server-side
 crossfade, browser adaptive jitter buffer, Web Audio gain chain.
 
-**Tune:** (1) open the listen session before the tap (G6 #1); (2) stop sending
-the whole show state every second (G6 #8); (3) show the listener how late the
-audio is (G6 #5). **Replace:** nothing — no measured alternative is better,
+**Tune:** stop sending the whole show state every second (G6 #8). (Opening
+the session before the tap, G6 #1, was tried and dropped — see there.) **Replace:** nothing — no measured alternative is better,
 and each replacement costs more than it could save.
 
 **Risk of this recommendation:** every number above is Chromium-on-Linux into a
@@ -636,7 +637,7 @@ current card layout as an option alongside the glance view.
 
 | Rank | Item | Kind | Effort | Decision |
 | --- | --- | --- | --- | --- |
-| 1 | Warm listen session | Tune | S | Approved |
+| 1 | Warm listen session | Tune | S | Approved, then **dropped after measurement** (see #1) |
 | 2 | Pressing a ringing card hears it | Change | S | Approved (DESIGN §10.3) |
 | 3 | No first-open modal | **Remove** | S | **Declined** — intentional |
 | 4 | Glance view: every channel on one screen | Change | M | Approved, with the card view kept as an option (DESIGN §10.1) |
@@ -648,6 +649,14 @@ current card layout as an option alongside the glance view.
 | 10 | Full keyboard operation | Change (rule) | M | Approved |
 
 ### 1. Warm listen session — the first tap sounds like every other tap · S
+
+> **Dropped after measurement, 2026-09-27.** Built and measured against the
+> shipped Live app (harness `--live`, tap 15 s after open, 6 runs each): the
+> shipped build had **no** start-up transient (first burst after the tap
+> 103–125 ms); the warm build measured 124–131 ms. The only saving left is the
+> ~50–90 ms connection setup on the first tap of a page, for one session held
+> open per page. Not worth it; not committed. The premise below came from a
+> probe-page artefact (G4 #2).
 
 - **Step:** listen. **Answers:** G4 — 13 of 14 fresh sessions ran at
   170–370 ms for their first 5–10 s, plus 53–94 ms to connect; Live opens one

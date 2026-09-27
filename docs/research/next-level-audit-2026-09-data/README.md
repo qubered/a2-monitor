@@ -10,6 +10,9 @@ Raw JSON records behind [G4 of the 2026-09 audit](../next-level-audit-2026-09.md
   The 5 ms and 2.5 ms runs used a scratch build with `FRAMES_PER_BLOCK` set to
   240 or 120 (and `METER_INTERVAL_BLOCKS` scaled to keep 50 ms meters); that
   change is not committed.
+- `L-live-*.json` time the shipped Live app itself (`--live <built Live>
+--tap-after 15 --seconds 25`, Live's own UI at build `5e10f51`), measured
+  from the tap on the card for input 1.
 - **Host:** Linux container, 4 vCPU Intel Xeon 2.8 GHz, 15 GB RAM, kernel
   6.18; Chromium 141.0.7390.37 headless; PulseAudio 16.1 null sink at 48 kHz.
   No physical network: loopback, or the harness's UDP impairment relay.

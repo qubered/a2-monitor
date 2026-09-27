@@ -45,8 +45,55 @@ async function main() {
     rtcpMuxPolicy: "require",
   });
   const transceiver = pc.addTransceiver("audio", { direction: "recvonly" });
+  // Everything the chain needs is ready before signalling, and playback is
+  // attached the moment the track arrives, as Live does. Attaching only after
+  // the track unmutes lets packets pile up in the jitter buffer first and
+  // shows a start-up delay Live does not have.
+  let tap;
+  if (chain === "webaudio") {
+    const blob = URL.createObjectURL(
+      new Blob([WORKLET], { type: "text/javascript" }),
+    );
+    await context.audioWorklet.addModule(blob);
+  }
   const trackReady = new Promise(
-    (resolve) => (pc.ontrack = (e) => resolve(e.track)),
+    (resolve) =>
+      (pc.ontrack = (e) => {
+        const stream = new MediaStream([e.track]);
+        const element = new Audio();
+        element.srcObject = stream;
+        if (chain === "webaudio") {
+          element.muted = true; // Live keeps the element muted; Web Audio is the audible path
+          void element.play().catch(() => undefined);
+          const source = context.createMediaStreamSource(stream);
+          const gain = context.createGain();
+          gain.gain.value = 1;
+          tap = new AudioWorkletNode(context, "onset");
+          source.connect(gain);
+          gain.connect(context.destination);
+          gain.connect(tap);
+          tap.port.onmessage = ({ data }) => {
+            const stamp = context.getOutputTimestamp();
+            const frameTime = data.frame / context.sampleRate;
+            results.detections.push({
+              // When the browser says this sample leaves for the output device.
+              outputWallMs:
+                performance.timeOrigin +
+                stamp.performanceTime +
+                (frameTime - stamp.contextTime) * 1000,
+              receivedWallMs: performance.timeOrigin + performance.now(),
+            });
+          };
+          void context.resume();
+        } else {
+          element.muted = false;
+          void element
+            .play()
+            .catch((error) => results.errors.push(String(error)));
+          void context.close();
+        }
+        resolve(e.track);
+      }),
   );
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
@@ -86,41 +133,6 @@ async function main() {
       : resolve(),
   );
   results.connectMs = performance.now() - t0;
-  const stream = new MediaStream([track]);
-  const element = new Audio();
-  element.srcObject = stream;
-  if (chain === "webaudio") {
-    element.muted = true; // Live keeps the element muted; Web Audio is the audible path
-    await element.play().catch(() => undefined);
-    const blob = URL.createObjectURL(
-      new Blob([WORKLET], { type: "text/javascript" }),
-    );
-    await context.audioWorklet.addModule(blob);
-    const source = context.createMediaStreamSource(stream);
-    const gain = context.createGain();
-    gain.gain.value = 1;
-    const tap = new AudioWorkletNode(context, "onset");
-    source.connect(gain);
-    gain.connect(context.destination);
-    gain.connect(tap);
-    tap.port.onmessage = ({ data }) => {
-      const stamp = context.getOutputTimestamp();
-      const frameTime = data.frame / context.sampleRate;
-      results.detections.push({
-        // When the browser says this sample leaves for the output device.
-        outputWallMs:
-          performance.timeOrigin +
-          stamp.performanceTime +
-          (frameTime - stamp.contextTime) * 1000,
-        receivedWallMs: performance.timeOrigin + performance.now(),
-      });
-    };
-    await context.resume();
-  } else {
-    element.muted = false;
-    await element.play().catch((e) => results.errors.push(String(e)));
-    await context.close();
-  }
   results.outputLatency = context.outputLatency ?? null;
   setInterval(async () => {
     const report = await pc.getStats();

@@ -39,6 +39,12 @@ const extra = Number(option("extra", "0"));
 //   --impair loss=1,jitter=2-8,stall=1:60   (1 % loss, 2–8 ms uniform extra
 //   delay, 1 % of packets start a stall of up to 60 ms). FIFO order is kept.
 const impair = option("impair", null);
+// Measure the real Live app instead of the probe page: serve a built Live
+// (e.g. apps/live/dist), open it, and after --tap-after seconds tap the card
+// for input 1 as a user would. Latency is then timed from that tap, and the
+// browser runs without the autoplay override, as a real one does.
+const liveDir = option("live", null);
+const tapAfter = Number(option("tap-after", "15"));
 const label = option("label", `${chain}${jbt === null ? "" : ` jbt=${jbt}`}`);
 const chromiumPath = option(
   "chromium",
@@ -75,7 +81,7 @@ const gateway = spawn(
       A2_AUDIO_DEVICE: device,
       A2_CAPTURE_BIN: join(here, "click-capture.mjs"),
       A2_MEDIA_WORKER_BIN: worker,
-      A2_LIVE_DIR: join(here, "page"),
+      A2_LIVE_DIR: liveDir ? resolve(liveDir) : join(here, "page"),
       PULSE_CLICK_LOG: clickLog,
       PULSE_CLICK_TONE: mode === "switch" ? "1" : "0",
       PULSE_CLICK_BURSTS: mode === "switch" ? "0" : "1",
@@ -236,6 +242,61 @@ function startRelay(spec) {
   };
 }
 
+/** Live-app mode: open, wait, tap input 1's card, time bursts from the tap. */
+async function runLive(page) {
+  // Live's default monitor level (−18 dB) would put the bursts under the
+  // onset threshold; an operator's saved 0 dB level is used instead.
+  await page.addInitScript(() => localStorage.setItem("pulse-gain-db", "0"));
+  await page.goto(`http://127.0.0.1:${port}/`);
+  const card = page.locator(
+    'button.card-hit-target[aria-label$=", channel 1"]',
+  );
+  await card.waitFor({ timeout: 30_000 });
+  await delay(tapAfter * 1000);
+  const tapWallMs = performance.timeOrigin + performance.now();
+  await card.click();
+  await delay(seconds * 1000);
+  if (process.env.PULSE_LIVE_SHOT) {
+    await page.screenshot({ path: process.env.PULSE_LIVE_SHOT });
+    console.error((await page.locator("body").innerText()).slice(0, 1200));
+  }
+  const clicks = readFileSync(clickLog, "utf8")
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => JSON.parse(line))
+    .filter(({ wallMs }) => wallMs > tapWallMs);
+  const series = [];
+  for (const click of clicks) {
+    const sinkAt = onsets.find(
+      (t) => t >= click.wallMs && t < click.wallMs + 800,
+    );
+    if (sinkAt !== undefined) {
+      series.push([
+        Number(((click.wallMs - tapWallMs) / 1000).toFixed(1)),
+        Number((sinkAt - click.wallMs).toFixed(1)),
+      ]);
+    }
+  }
+  const record = {
+    label,
+    mode: "live-app",
+    live: liveDir,
+    tapAfterSeconds: tapAfter,
+    clicksAfterTap: clicks.length,
+    captureToSinkMs: summary(series.map(([, v]) => v)),
+    firstFiveSecondsMaxMs:
+      series.filter(([t]) => t < 5).reduce((m, [, v]) => Math.max(m, v), 0) ||
+      null,
+    latencySeries: series,
+  };
+  console.log(JSON.stringify(record, null, 2));
+  if (outPath) writeFileSync(outPath, `${JSON.stringify(record, null, 2)}\n`);
+  await browser.close();
+  recorder.kill();
+  gateway.kill("SIGTERM");
+  await delay(500);
+}
+
 let browser;
 let relay = null;
 try {
@@ -243,7 +304,10 @@ try {
   browser = await chromium.launch({
     executablePath: chromiumPath,
     ignoreDefaultArgs: ["--mute-audio"],
-    args: ["--autoplay-policy=no-user-gesture-required"],
+    args:
+      liveDir && !process.env.PULSE_AUTOPLAY
+        ? []
+        : ["--autoplay-policy=no-user-gesture-required"],
     env: { ...process.env, PULSE_SERVER: pulseServer },
   });
   const page = await browser.newPage();
@@ -271,6 +335,10 @@ try {
   if (jbt !== null) query.set("jbt", jbt);
   if (extra) query.set("extra", String(extra));
   if (relayAddress) query.set("relay", relayAddress);
+  if (liveDir) {
+    await runLive(page);
+    process.exit(0);
+  }
   await page.goto(`http://127.0.0.1:${port}/?${query}`);
   await page.waitForFunction(
     () => window.results?.ready || window.results?.errors.length,
