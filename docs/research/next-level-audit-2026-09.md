@@ -809,3 +809,42 @@ current card layout as an option alongside the glance view.
    number is synthetic.
 4. **Latency gate tiers:** confirm or change the two tiers proposed in
    `docs/open-questions.md`.
+
+---
+
+## Phase C — What was built, and what it measured
+
+Built on this branch, one commit per item, 2026-09-27. Same setup as G1 (the
+64-channel theatre sim, headless Chromium 141, touch emulation). Agent runs,
+not user tests.
+
+| Item | Outcome | Commit |
+| --- | --- | --- |
+| 1 Warm listen session | **Dropped after measurement** — the shipped Live app has no start-up transient; see G6 #1 | `2adedc4` (correction) |
+| 2 Pressing a ringing card hears it | Built | `48f3033` |
+| 4 Glance view (Cards kept as an option) | Built | `516dfeb`, `c63891e` |
+| 5 Nothing above the grid that isn't needed | Built | `af90a92` |
+| 6 Colour only means trouble | Built | `50c57b0` |
+| 8 Send what changed, not the whole show | Built | `4989448` |
+| 9 Surface capture overruns | Built | `7b701fb` |
+| 10 Full keyboard operation | Built | `5ef2436` |
+
+### Zero-training walk, before and after
+
+| Task | Before (iPad / phone) | After (iPad / phone) |
+| --- | --- | --- |
+| T0 Open | Output prompt | Output prompt (kept by decision) |
+| T1 Anything wrong, on whom? | 8 / 4 of 64 cards on screen; 2 of 12 / 2 of 24 troubled channels visible | **64 / 28 of 64 on screen; 12 of 12 / 14 of 24 visible** |
+| T2 Listen to Glinda | Tap acknowledged an alert instead (iPad) / 1 tap | 1 tap, "Listening" in 0.34–0.43 s |
+| T3 Switch to Ensemble 27 | 2,534 / 5,209 px of scroll | **0 / 149 px** |
+| T4–T5 Mute; dim instead | 1 tap; 2 taps | Same |
+| T6 Hear the ringing channel | 2 presses | **1 press** |
+| T7 Stop listening | "Clear" (visible only through a bug) | **No visible control** for a single channel: Esc, a press on empty space, or Mute |
+| T8 Elphaba's frequency | Expand → detail | Tap tile → player **Details** → detail |
+| K Channel 40 by keyboard | 89 / 85 Tab presses | **13 / 9 keys** (Tab to the grid, type 40) |
+| Per-client JSON (64-channel sim) | 594 kbit/s state + 196 kbit/s meters | **234 kbit/s** state + 196 kbit/s meters |
+
+**New gap, T7.** Removing the single-selection bar (item 5) also removed the
+only visible stop control. Mute silences in one touch, and Esc or a press on
+empty space stops, but nothing on screen says "stop". Proposal, not built: a
+*Stop* button in the player beside Mute while something is playing. Your call.
