@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.1fa3acce190a59b8",
-  "sourceSha256": "1fa3acce190a59b8ac68077fb1827cbd57edcf9e9250673bc92285faf1fecdb5",
-  "inputCount": 436,
+  "buildId": "a2-0.0.0+sha256.da39b783ba36b77c",
+  "sourceSha256": "da39b783ba36b77c8fdb42c5287b96d765aeaebb26945b31434edb96dbf6ef32",
+  "inputCount": 441,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -1750,6 +1750,26 @@
     {
       "path": "tools/evidence/synthetic-capture-extractor.test.mjs",
       "sha256": "748dd3b0e993c6cc29619b3a3b2f912c579b8975ba7db774278fd0919b03fb69"
+    },
+    {
+      "path": "tools/latency/README.md",
+      "sha256": "fb2ebfa4e29cd1514b0c7b34b24dbd125fdf50403735373e551b6284db865310"
+    },
+    {
+      "path": "tools/latency/click-capture.mjs",
+      "sha256": "39bf8a5c61da71bab3c946dc521f0eeaa77b2182ce58bd2da462e01515cf55ba"
+    },
+    {
+      "path": "tools/latency/page/index.html",
+      "sha256": "463f5e6b25700cf5fbcb47a57bd7dcd699c82d722a26b203a4796f0b5c9fac80"
+    },
+    {
+      "path": "tools/latency/page/probe.js",
+      "sha256": "265bf319332312f29261fb4270818aa2ea6adb55aca5b9c0021811306f278f18"
+    },
+    {
+      "path": "tools/latency/run.mjs",
+      "sha256": "19aa5536d5a2677ce883d5e15514b44ce93db7a523b4e3e2245b405b412925e2"
     }
   ],
   "regenerationCommand": "node scripts/generate-build-identity.mjs"
