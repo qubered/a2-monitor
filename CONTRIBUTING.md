@@ -7,7 +7,7 @@
 3. Run `./scripts/check-repo.sh` and the checks for the component you touched.
 4. Open a pull request and squash-merge once checks pass.
 
-No ADR, roadmap, or evidence-ledger step is required — see AGENTS.md.
+No ADR, roadmap, or evidence-ledger step is required — see CLAUDE.md.
 
 ## Commits
 

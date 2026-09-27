@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.e075da04ae437317",
-  "sourceSha256": "e075da04ae4373173c782ec6be9cbb30c29e5e9a147f801b82c54092029d8e43",
+  "buildId": "a2-0.0.0+sha256.e95fc58a75bd7cd4",
+  "sourceSha256": "e95fc58a75bd7cd482b3d16137fbdb1ebe40a8ec6d8a4d29dc8c4682de93579e",
   "inputCount": 436,
   "inputs": [
     {
@@ -48,16 +48,16 @@
       "sha256": "73fb1b615e2043a933be1c0895cde4358036acc28d785692509b822aa53c761f"
     },
     {
-      "path": "AGENTS.md",
-      "sha256": "6db34449c1ecd9e132daf6e200a2a67fadce4ba9ba41321cb74ba4c79d4c7f87"
-    },
-    {
       "path": "CHANGELOG.md",
       "sha256": "ef947d58ffc98b87508521f7b99ab1e92375bdeb7c3c5447c0d4c7e841e143a0"
     },
     {
+      "path": "CLAUDE.md",
+      "sha256": "4435a18db6483c4a68a2adf72be55ba9d913ffe16cc192400c4102713f5df57b"
+    },
+    {
       "path": "CONTRIBUTING.md",
-      "sha256": "84e3c150e4c34442242f180a8c5457e0e6180e96bed858e4f8633907d99dfcd9"
+      "sha256": "36444fd988ae8d5776d68772e3663e5291066a34b8a5fe5c0e48aed476b492f2"
     },
     {
       "path": "Cargo.lock",
@@ -69,7 +69,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "4d4326862d2361fd50c3ad267ab32276ce7bd8b58f3a3c68eae3b907b6d10060"
+      "sha256": "aec2af1011e1677315bb620f518e88e36d5aae1eec665034e89e6f821b43a167"
     },
     {
       "path": "SECURITY.md",
@@ -557,7 +557,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256": "37dbddddebac528866dae88e886e4f6227802c8ac5336d0473941d188c77596b"
+      "sha256": "4907bbfb772d28a556f5d6d3c7900e0039173bf2067c14a4f4155a5082eace37"
     },
     {
       "path": "docs/api/show-management-and-control.md",
@@ -1409,7 +1409,7 @@
     },
     {
       "path": "scripts/check-repo.sh",
-      "sha256": "89c06f3238c957c30a728f0dea194e3741e3d06958c5d006750ebc6837424180"
+      "sha256": "a168cd748bef5189fc81541b9258e67ee8031f7240adcec2d8ca59eb7a80873c"
     },
     {
       "path": "scripts/dev.mjs",

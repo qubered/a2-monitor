@@ -26,7 +26,7 @@ identity.
 Pre-release and moving fast. The stack is Rust for the native audio node,
 TypeScript/Node/Fastify for the backend, React/Vite for Live and Manager, and
 SQLite for local authority. Build the change, run it, and see if it works —
-see [AGENTS.md](AGENTS.md) for the (short) list of things that aren't up for
+see [CLAUDE.md](CLAUDE.md) for the (short) list of things that aren't up for
 grabs: real-time audio safety and the component boundaries below.
 
 ## Product principles
@@ -62,7 +62,7 @@ grabs: real-time audio safety and the component boundaries below.
 
 See [the documentation index](docs/README.md) for what's left. Contributors and
 coding agents must also follow [CONTRIBUTING.md](CONTRIBUTING.md) and
-[AGENTS.md](AGENTS.md).
+[CLAUDE.md](CLAUDE.md).
 
 The default deployment may place all four components on one appliance, but
 their boundary is deliberate:

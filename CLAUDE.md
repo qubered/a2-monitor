@@ -1,6 +1,6 @@
 # Repository instructions for coding agents
 
-These rules apply to the entire repository. A more specific `AGENTS.md` may
+These rules apply to the entire repository. A more specific `CLAUDE.md` may
 add constraints inside a subdirectory but may not weaken the safety or quality
 requirements below.
 
@@ -64,8 +64,8 @@ Inside an audio callback or equivalent real-time path:
 - use preallocated buffers and lock-free handoff where practical;
 - surface underruns, overruns, and clock discontinuities as metrics.
 
-Any exception requires an ADR plus a benchmark demonstrating that the risk is
-acceptable.
+Any exception must be justified in the PR description with a benchmark
+demonstrating that the risk is acceptable.
 
 ## Change discipline
 

@@ -32,7 +32,7 @@ fi
 
 required_files=(
   README.md
-  AGENTS.md
+  CLAUDE.md
   CONTRIBUTING.md
   SECURITY.md
   docs/README.md
