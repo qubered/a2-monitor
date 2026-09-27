@@ -5,13 +5,18 @@ export type PlaybackUpdate = {
   detail: string;
 };
 
+/** One node input in the monitored mix, at its channel's showfile trim. */
+export type ListenSource = { channel: number; trimDb: number };
+
 export interface PlaybackSession {
-  setChannel(channel: number): void;
+  /**
+   * Retargets the one stream to this mix. The node sums the inputs sample-aligned,
+   * each at its trim, and crossfades the change; the connection is kept.
+   */
+  setSources(sources: readonly ListenSource[]): void;
   setMuted(muted: boolean): Promise<void>;
   setDimmed(dimmed: boolean): void;
   setGainDb(gainDb: number): void;
-  /** The channel's showfile trim: first in the chain, under the operator's level. */
-  setTrimDb(trimDb: number): void;
   close(): void;
 }
 
@@ -19,6 +24,8 @@ export const MIN_MONITOR_GAIN_DB = -60;
 export const MAX_MONITOR_GAIN_DB = 24;
 export const DEFAULT_MONITOR_GAIN_DB = -18;
 export const MAX_TRIM_DB = 24;
+/** The node mixes at most this many inputs into one stream. */
+export const MAX_LISTEN_SOURCES = 16;
 export const DIM_ATTENUATION_DB = -12;
 
 /** Retry spacing after a lost connection, e.g. a Wi-Fi roam or a sleeping phone. */
@@ -32,8 +39,39 @@ export function clampMonitorGainDb(value: number): number {
   return Math.min(MAX_MONITOR_GAIN_DB, Math.max(MIN_MONITOR_GAIN_DB, value));
 }
 
+/** Clamps trims and caps the mix at what the node accepts. */
+export function normalizeSources(
+  sources: readonly ListenSource[],
+): ListenSource[] {
+  return sources.slice(0, MAX_LISTEN_SOURCES).map(({ channel, trimDb }) => ({
+    channel,
+    trimDb: Math.min(MAX_TRIM_DB, Math.max(-MAX_TRIM_DB, trimDb)),
+  }));
+}
+
+function sameSources(
+  a: readonly ListenSource[],
+  b: readonly ListenSource[],
+): boolean {
+  return (
+    a.length === b.length &&
+    a.every(
+      (source, index) =>
+        source.channel === b[index]!.channel &&
+        source.trimDb === b[index]!.trimDb,
+    )
+  );
+}
+
+/** What the operator is hearing, in the words the status line uses. */
+export function describeSources(sources: readonly ListenSource[]): string {
+  return sources.length === 1
+    ? `input ${sources[0]!.channel + 1}`
+    : `${sources.length} inputs`;
+}
+
 export type PlaybackFactory = (options: {
-  channel: number;
+  sources: readonly ListenSource[];
   onUpdate: (update: PlaybackUpdate) => void;
 }) => PlaybackSession;
 
@@ -70,7 +108,7 @@ class SignalingError extends Error {
 
 async function postOffer(
   fetchImpl: typeof fetch,
-  channel: number,
+  sources: readonly ListenSource[],
   offer: string,
 ): Promise<{ sessionId: string; answer: string }> {
   let response: Response;
@@ -78,7 +116,7 @@ async function postOffer(
     response = await fetchImpl(LISTEN_SESSIONS_PATH, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ channel, offer }),
+      body: JSON.stringify({ sources, offer }),
     });
   } catch {
     throw new SignalingError(0, true, "Listen node is unreachable.");
@@ -106,8 +144,9 @@ async function postOffer(
 }
 
 /**
- * Plays one node-encoded Opus stream over WebRTC. The peer connection is kept across
- * input changes (the node switches and crossfades server-side) and rebuilt with backoff
+ * Plays one node-encoded Opus stream over WebRTC: a single input, or several mixed
+ * node-side so they stay sample-aligned. The peer connection is kept across input
+ * changes (the node switches and crossfades server-side) and rebuilt with backoff
  * when the network path is lost. The browser's adaptive jitter buffer is left at its
  * default minimum: it shrinks toward the network's real jitter on a quiet wired link and
  * grows under Wi-Fi contention instead of concealing constant underruns.
@@ -115,7 +154,7 @@ async function postOffer(
 export function createWebRtcPlaybackFactory(
   dependencies?: Dependencies,
 ): PlaybackFactory {
-  return ({ channel: initialChannel, onUpdate }) => {
+  return ({ sources: initialSources, onUpdate }) => {
     const AudioContextClass =
       dependencies?.AudioContext ??
       (window.AudioContext as unknown as AudioContextConstructor);
@@ -135,12 +174,11 @@ export function createWebRtcPlaybackFactory(
     const gain = context.createGain();
     gain.connect(context.destination);
 
-    let channel = initialChannel;
+    let sources = normalizeSources(initialSources);
     // Listening starts audible; mute and dim stay one touch away (DESIGN.md §2.7).
     let muted = false;
     let dimmed = false;
     let gainDb = DEFAULT_MONITOR_GAIN_DB;
-    let trimDb = 0;
     let closed = false;
     let generation = 0;
     let attempt = 0;
@@ -153,8 +191,7 @@ export function createWebRtcPlaybackFactory(
     let listening = false;
 
     function applyGain() {
-      const effectiveGainDb =
-        trimDb + gainDb + (dimmed ? DIM_ATTENUATION_DB : 0);
+      const effectiveGainDb = gainDb + (dimmed ? DIM_ATTENUATION_DB : 0);
       gain.gain.value = muted ? 0 : 10 ** (effectiveGainDb / 20);
     }
 
@@ -208,22 +245,24 @@ export function createWebRtcPlaybackFactory(
       }
     }
 
-    /** Moves the live session to `channel`; the node crossfades, no renegotiation. */
-    function pushChannel() {
+    const receiving = () => `Receiving ${describeSources(sources)}.`;
+
+    /** Moves the live session to `sources`; the node crossfades, no renegotiation. */
+    function pushSources() {
       const target = sessionId;
       if (target === undefined) return;
-      const requested = channel;
-      void fetchImpl(`${LISTEN_SESSIONS_PATH}/${target}/channel`, {
+      const requested = sources;
+      void fetchImpl(`${LISTEN_SESSIONS_PATH}/${target}/sources`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ channel: requested }),
+        body: JSON.stringify({ sources: requested }),
       })
         .then((response) => {
           if (target !== sessionId) return;
           if (!response.ok) {
             scheduleReconnect("Audio session expired; reconnecting.");
-          } else if (listening && requested === channel) {
-            update("listening", `Receiving input ${channel + 1}.`);
+          } else if (listening && requested === sources) {
+            update("listening", receiving());
           }
         })
         .catch(() => {
@@ -285,7 +324,7 @@ export function createWebRtcPlaybackFactory(
       source.connect(gain);
       const markListening = () => {
         attempt = 0;
-        update("listening", `Receiving input ${channel + 1}.`);
+        update("listening", receiving());
       };
       if (!track.muted) markListening();
       else track.addEventListener("unmute", markListening, { once: true });
@@ -294,7 +333,7 @@ export function createWebRtcPlaybackFactory(
     async function connect() {
       if (closed) return;
       const current = ++generation;
-      update("connecting", `Connecting to input ${channel + 1}.`);
+      update("connecting", `Connecting to ${describeSources(sources)}.`);
       const connection = new PeerConnection({
         bundlePolicy: "max-bundle",
         rtcpMuxPolicy: "require",
@@ -312,7 +351,7 @@ export function createWebRtcPlaybackFactory(
           // Recovered from a brief stall without rebuilding the connection.
           timers.clearTimeout(graceTimer);
           graceTimer = undefined;
-          if (source) update("listening", `Receiving input ${channel + 1}.`);
+          if (source) update("listening", receiving());
         } else if (state === "failed") {
           scheduleReconnect("Audio connection lost; reconnecting.");
         } else if (state === "disconnected" && graceTimer === undefined) {
@@ -330,7 +369,7 @@ export function createWebRtcPlaybackFactory(
         const offer = await connection.createOffer();
         await connection.setLocalDescription(offer);
         const offerSdp = connection.localDescription?.sdp ?? offer.sdp ?? "";
-        const requested = channel;
+        const requested = sources;
         const signaled = await postOffer(fetchImpl, requested, offerSdp);
         if (current !== generation) {
           // Superseded while signaling; release the node-side session at once.
@@ -346,7 +385,7 @@ export function createWebRtcPlaybackFactory(
           sdp: signaled.answer,
         });
         // The operator picked another input while the offer was in flight.
-        if (channel !== requested) pushChannel();
+        if (sources !== requested) pushSources();
       } catch (error) {
         if (current !== generation) return;
         if (error instanceof SignalingError && !error.retryable) {
@@ -375,10 +414,11 @@ export function createWebRtcPlaybackFactory(
     void connect();
 
     return {
-      setChannel(nextChannel) {
-        if (nextChannel === channel) return;
-        channel = nextChannel;
-        pushChannel();
+      setSources(nextSources) {
+        const next = normalizeSources(nextSources);
+        if (next.length === 0 || sameSources(next, sources)) return;
+        sources = next;
+        pushSources();
       },
       async setMuted(nextMuted) {
         muted = nextMuted;
@@ -391,10 +431,6 @@ export function createWebRtcPlaybackFactory(
       },
       setGainDb(nextGainDb) {
         gainDb = clampMonitorGainDb(nextGainDb);
-        applyGain();
-      },
-      setTrimDb(nextTrimDb) {
-        trimDb = Math.min(MAX_TRIM_DB, Math.max(-MAX_TRIM_DB, nextTrimDb));
         applyGain();
       },
       close() {

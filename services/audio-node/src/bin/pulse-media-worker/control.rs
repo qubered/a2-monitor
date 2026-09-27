@@ -12,6 +12,7 @@ use crate::Event;
 use crate::capture::CaptureHeader;
 use crate::host_output::{MAX_MONITOR_GAIN, OutputReport};
 use crate::meters::{METER_INTERVAL_MS, MeterReading};
+use crate::session::{MAX_SOURCES, Source};
 use a2_audio_node::monitor_output::{MAX_OUTPUT_ROUTES, parse_output_routes};
 
 const COMMAND_LIMIT_BYTES: usize = 128 * 1024;
@@ -21,15 +22,17 @@ const MAX_CHANNEL_INDEX: u64 = 255;
 
 #[derive(Debug, PartialEq)]
 pub enum Command {
+    /// Opens a listener on `sources` (one or more inputs, summed; none is silence).
     Open {
         session_id: String,
-        channel: usize,
+        sources: Vec<Source>,
         offer: String,
         candidate_ip: IpAddr,
     },
+    /// Changes what a listener hears, crossfaded.
     Select {
         session_id: String,
-        channel: usize,
+        sources: Vec<Source>,
     },
     Close {
         session_id: String,
@@ -74,6 +77,38 @@ fn session_id(record: &serde_json::Map<String, Value>) -> Result<String, String>
         .ok_or_else(|| "sessionId is invalid".to_owned())
 }
 
+/// Largest per-source gain: the +24 dB channel trim ceiling.
+const MAX_SOURCE_GAIN: f64 = 16.0;
+
+/// `sources`: up to `MAX_SOURCES` distinct inputs, each `{"channel": n, "gain": g}`.
+fn sources(record: &serde_json::Map<String, Value>) -> Result<Vec<Source>, String> {
+    let invalid = || "sources are invalid".to_owned();
+    let list = record
+        .get("sources")
+        .and_then(Value::as_array)
+        .filter(|list| !list.is_empty() && list.len() <= MAX_SOURCES)
+        .ok_or_else(invalid)?;
+    let mut parsed: Vec<Source> = Vec::with_capacity(list.len());
+    for entry in list {
+        let entry = entry.as_object().ok_or_else(invalid)?;
+        exact_keys(entry, &["channel", "gain"])?;
+        let channel = channel(entry)?;
+        let gain = entry
+            .get("gain")
+            .and_then(Value::as_f64)
+            .filter(|gain| gain.is_finite() && (0.0..=MAX_SOURCE_GAIN).contains(gain))
+            .ok_or_else(invalid)?;
+        if parsed.iter().any(|source| source.channel == channel) {
+            return Err(invalid());
+        }
+        parsed.push(Source {
+            channel,
+            gain: gain as f32,
+        });
+    }
+    Ok(parsed)
+}
+
 fn channel(record: &serde_json::Map<String, Value>) -> Result<usize, String> {
     record
         .get("channel")
@@ -93,7 +128,7 @@ pub fn parse_command(line: &str) -> Result<Command, String> {
         Some("open") => {
             exact_keys(
                 record,
-                &["type", "sessionId", "channel", "offer", "candidateAddress"],
+                &["type", "sessionId", "sources", "offer", "candidateAddress"],
             )?;
             let offer = record
                 .get("offer")
@@ -108,16 +143,16 @@ pub fn parse_command(line: &str) -> Result<Command, String> {
                 .ok_or_else(|| "candidateAddress is invalid".to_owned())?;
             Ok(Command::Open {
                 session_id: session_id(record)?,
-                channel: channel(record)?,
+                sources: sources(record)?,
                 offer: offer.to_owned(),
                 candidate_ip,
             })
         }
         Some("select") => {
-            exact_keys(record, &["type", "sessionId", "channel"])?;
+            exact_keys(record, &["type", "sessionId", "sources"])?;
             Ok(Command::Select {
                 session_id: session_id(record)?,
-                channel: channel(record)?,
+                sources: sources(record)?,
             })
         }
         Some("monitor") => {
@@ -322,20 +357,34 @@ mod tests {
     fn parses_the_three_commands_strictly() {
         assert_eq!(
             parse_command(
-                r#"{"type":"open","sessionId":"a-1","channel":3,"offer":"v=0","candidateAddress":"192.168.1.20"}"#
+                r#"{"type":"open","sessionId":"a-1","sources":[{"channel":3,"gain":1}],"offer":"v=0","candidateAddress":"192.168.1.20"}"#
             ),
             Ok(Command::Open {
                 session_id: "a-1".into(),
-                channel: 3,
+                sources: vec![Source {
+                    channel: 3,
+                    gain: 1.0
+                }],
                 offer: "v=0".into(),
                 candidate_ip: "192.168.1.20".parse().unwrap(),
             })
         );
         assert_eq!(
-            parse_command(r#"{"type":"select","sessionId":"a-1","channel":0}"#),
+            parse_command(
+                r#"{"type":"select","sessionId":"a-1","sources":[{"channel":0,"gain":1},{"channel":2,"gain":0.5}]}"#
+            ),
             Ok(Command::Select {
                 session_id: "a-1".into(),
-                channel: 0
+                sources: vec![
+                    Source {
+                        channel: 0,
+                        gain: 1.0
+                    },
+                    Source {
+                        channel: 2,
+                        gain: 0.5
+                    }
+                ]
             })
         );
         assert_eq!(
@@ -373,10 +422,16 @@ mod tests {
         for line in [
             r#"{"type":"close","sessionId":"a-1","extra":true}"#,
             r#"{"type":"close","sessionId":"a 1"}"#,
-            r#"{"type":"select","sessionId":"a-1","channel":-1}"#,
-            r#"{"type":"select","sessionId":"a-1","channel":256}"#,
-            r#"{"type":"open","sessionId":"a","channel":0,"offer":"v=0","candidateAddress":"0.0.0.0"}"#,
-            r#"{"type":"open","sessionId":"a","channel":0,"offer":"","candidateAddress":"127.0.0.1"}"#,
+            r#"{"type":"select","sessionId":"a-1","channel":0}"#,
+            r#"{"type":"select","sessionId":"a-1","sources":[{"channel":-1,"gain":1}]}"#,
+            r#"{"type":"select","sessionId":"a-1","sources":[{"channel":256,"gain":1}]}"#,
+            r#"{"type":"select","sessionId":"a-1","sources":[{"channel":0,"gain":17}]}"#,
+            r#"{"type":"select","sessionId":"a-1","sources":[{"channel":0,"gain":1},{"channel":0,"gain":1}]}"#,
+            r#"{"type":"select","sessionId":"a-1","sources":[{"channel":0}]}"#,
+            r#"{"type":"select","sessionId":"a-1","sources":[{"channel":0,"gain":1},{"channel":1,"gain":1},{"channel":2,"gain":1},{"channel":3,"gain":1},{"channel":4,"gain":1},{"channel":5,"gain":1},{"channel":6,"gain":1},{"channel":7,"gain":1},{"channel":8,"gain":1},{"channel":9,"gain":1},{"channel":10,"gain":1},{"channel":11,"gain":1},{"channel":12,"gain":1},{"channel":13,"gain":1},{"channel":14,"gain":1},{"channel":15,"gain":1},{"channel":16,"gain":1}]}"#,
+            r#"{"type":"select","sessionId":"a-1","sources":[]}"#,
+            r#"{"type":"open","sessionId":"a","sources":[{"channel":0,"gain":1}],"offer":"v=0","candidateAddress":"0.0.0.0"}"#,
+            r#"{"type":"open","sessionId":"a","sources":[{"channel":0,"gain":1}],"offer":"","candidateAddress":"127.0.0.1"}"#,
             r#"{"type":"restart"}"#,
             r#"{"type":"monitor","mix":0,"channel":0,"gain":300}"#,
             r#"{"type":"monitor","mix":0,"channel":0,"gain":-0.1}"#,

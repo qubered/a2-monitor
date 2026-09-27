@@ -211,14 +211,14 @@ impl<W: io::Write> Worker<W> {
         match command {
             Command::Open {
                 session_id,
-                channel,
+                sources,
                 offer,
                 candidate_ip,
             } => {
                 let Some(channel_count) = self.channel_count else {
                     return self.output.rejected(&session_id, "capture is not ready");
                 };
-                if channel >= channel_count {
+                if sources.iter().any(|source| source.channel >= channel_count) {
                     return self.output.rejected(&session_id, "channel is out of range");
                 }
                 if self.sessions.contains_key(&session_id) {
@@ -237,7 +237,7 @@ impl<W: io::Write> Worker<W> {
                             .rejected(&session_id, "media socket could not be bound");
                     }
                 };
-                match ListenSession::open(Arc::clone(&self.crypto), local, &offer, channel, now) {
+                match ListenSession::open(Arc::clone(&self.crypto), local, &offer, &sources, now) {
                     Ok((session, answer)) => {
                         self.sessions.insert(session_id.clone(), session);
                         self.output.answer(&session_id, &answer)
@@ -247,10 +247,14 @@ impl<W: io::Write> Worker<W> {
             }
             Command::Select {
                 session_id,
-                channel,
+                sources,
             } => match self.sessions.get_mut(&session_id) {
-                Some(session) if self.channel_count.is_some_and(|count| channel < count) => {
-                    session.select(channel);
+                Some(session)
+                    if self.channel_count.is_some_and(|count| {
+                        sources.iter().all(|source| source.channel < count)
+                    }) =>
+                {
+                    session.select(&sources);
                     Ok(())
                 }
                 Some(session) => {

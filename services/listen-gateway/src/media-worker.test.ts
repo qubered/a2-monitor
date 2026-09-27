@@ -123,7 +123,7 @@ describe("MediaWorkerManager", () => {
 
     const answer = media.openSession({
       sessionId: "s-1",
-      channel: 1,
+      sources: [{ channel: 1, gain: 1 }],
       offer: "v=0",
       candidateAddress: "192.168.1.20",
     });
@@ -132,7 +132,7 @@ describe("MediaWorkerManager", () => {
       {
         type: "open",
         sessionId: "s-1",
-        channel: 1,
+        sources: [{ channel: 1, gain: 1 }],
         offer: "v=0",
         candidateAddress: "192.168.1.20",
       },
@@ -140,13 +140,17 @@ describe("MediaWorkerManager", () => {
     child.emit({ type: "answer", sessionId: "s-1", answer: "v=0 answer" });
     await expect(answer).resolves.toBe("v=0 answer");
 
-    expect(media.selectChannel("s-1", 0)).toBe(true);
-    expect(media.selectChannel("unknown", 0)).toBe(false);
+    const mix = [
+      { channel: 0, gain: 1 },
+      { channel: 1, gain: 0.5 },
+    ];
+    expect(media.selectSources("s-1", mix)).toBe(true);
+    expect(media.selectSources("unknown", mix)).toBe(false);
     await flush();
     expect(child.commands.at(-1)).toEqual({
       type: "select",
       sessionId: "s-1",
-      channel: 0,
+      sources: mix,
     });
 
     const closed = vi.fn();
@@ -168,7 +172,7 @@ describe("MediaWorkerManager", () => {
 
     const opened = media.openSession({
       sessionId: "s-2",
-      channel: 0,
+      sources: [{ channel: 0, gain: 1 }],
       offer: "v=0",
       candidateAddress: "127.0.0.1",
     });
@@ -192,7 +196,7 @@ describe("MediaWorkerManager", () => {
     child.ready();
     const opened = media.openSession({
       sessionId: "s-3",
-      channel: 0,
+      sources: [{ channel: 0, gain: 1 }],
       offer: "v=0",
       candidateAddress: "127.0.0.1",
     });

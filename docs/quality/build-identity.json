@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.f48143f240f023e1",
-  "sourceSha256": "f48143f240f023e1878fad726aca718bb99269462ec260586ca21f5900d1bc04",
+  "buildId": "a2-0.0.0+sha256.27dc868be83467d2",
+  "sourceSha256": "27dc868be83467d28dcd3de4ec42cb707c160063529ac6b846f2eb8e6be58988",
   "inputCount": 470,
   "inputs": [
     {
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "2a0c6819a9280b783c4f6cb2101999ff42738409ff7bba777e8d15d9c6d5498b"
+      "sha256": "434c78fe1e196bd8bc74ed64b39c28cf386c784d5b7a2763c9e7d999d3c5ed04"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "5abbfdbd064185032a015ee4e02e12e04c3dedcad6ff2003881412f36bcb335a"
+      "sha256": "26710898dd079160ab4e7b302d6b618efae23dcc5a76faf327127b7d8554fec5"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -113,11 +113,11 @@
     },
     {
       "path": "apps/live/src/audio-playback.test.ts",
-      "sha256": "cbece5b8728a3d4a5b8da68a510ec12ceaf72ba0e9ab8d9b43c0012c7ff41d24"
+      "sha256": "c091e7cada7c019b186735a90eea066293494a3cbacd879f6ec348e65b71db12"
     },
     {
       "path": "apps/live/src/audio-playback.ts",
-      "sha256": "5d45b06e020c40d50a8ea5567672ce17a2af3412f4a346425c0a18e3ac6255c5"
+      "sha256": "8a6f1b0d5b59dc83bb6406df2955be923a1eb88b39ee86f0c934b27fd7e4f61e"
     },
     {
       "path": "apps/live/src/components/ChannelCard.test.tsx",
@@ -793,7 +793,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "e7ee54ac9407e59568ccd65d895e4443e5d3ca798f4d7dc15a4f78c5b5be07d1"
+      "sha256": "c9360992b148e926b291c4ed9c22b7cd8a17028ded9b1df9a027572eb4ce0888"
     },
     {
       "path": "docs/design/README.md",
@@ -1581,7 +1581,7 @@
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/control.rs",
-      "sha256": "142e3a7c8da200c8a03511bc9198963dafe44cb497f6ec7bcc9340d92fe7c575"
+      "sha256": "1a7db155fa08beee180064a5f8a0bfb76503742ddcb5f9d4cc7b4cb5bacedaa0"
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/host_output.rs",
@@ -1589,7 +1589,7 @@
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/main.rs",
-      "sha256": "a02ad23d60f94caeb8394a485306ce37fb713b64b5f8348ea496d9fc46f1d973"
+      "sha256": "40a2f2f4a7dbabb3e4f30e5258ac8ce8a75965c20b2d0d08a0c192398bb15a0a"
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/meters.rs",
@@ -1597,7 +1597,7 @@
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/session.rs",
-      "sha256": "cbb43fa6effb09d24ae008b5a1c423882c3e57822f16aa5fddb9058c664ecd41"
+      "sha256": "e7429acff4ff82b506c1f7b0b4843aa3adfc60471e2e26f4e6974429db8cb1b5"
     },
     {
       "path": "services/audio-node/src/bin/replay-smoke.rs",
@@ -1781,19 +1781,19 @@
     },
     {
       "path": "services/listen-gateway/src/media-worker.test.ts",
-      "sha256": "bbda3cff56c34251e1b584e124a481d9c0eb6fa12a09722d1fbd9d4f030faa35"
+      "sha256": "bab69b518d5718adee5ec93a81ebbfe6779f7663d464dc4abc2be2360b4a21c7"
     },
     {
       "path": "services/listen-gateway/src/media-worker.ts",
-      "sha256": "33a08d6f01efcf0fb29b95bb78f733169b0c3c2266dbb830bf1f21c1aed46202"
+      "sha256": "128799936522096ac3bb4a7aaa80eb1a94be30965d363147d8e8cd739e223bdf"
     },
     {
       "path": "services/listen-gateway/src/server.test.ts",
-      "sha256": "b76198f56ccaf6aa9a9b18c68ca8aed18deaeb53648a2d408ec3e9c4f8c66970"
+      "sha256": "6ac68d1da868be74d84037b171a8076f9a68ba6334da1e85a0f68c71f29f83a6"
     },
     {
       "path": "services/listen-gateway/src/server.ts",
-      "sha256": "3001bb19261233e20a19e9a1f526d6f1a09c2bcb02a01c26a06a481969975d1e"
+      "sha256": "a213fcc29179eda90e6f96a98df6e793a64fb76015dad569ed63ae228995cba8"
     },
     {
       "path": "services/listen-gateway/src/shure.test.ts",

@@ -1,6 +1,6 @@
 # Pulse — design language
 
-- **Version:** 2.13.0
+- **Version:** 2.14.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
 - **Last updated:** 2026-09-27
@@ -488,15 +488,25 @@ so it always needs a deliberate gesture, never a bigger target.
   to monitor them together" — with a **Clear** to stop monitoring everything
   and a **Done** to leave touch multi-select without stopping what is already
   playing.
+- The monitored channels play as **one mixed stream**: the audio node sums
+  them sample-aligned, each at its showfile trim, over the device's one
+  listen connection. Two mics on one source stay time-aligned instead of
+  combing against each other as separately buffered streams would. Adding,
+  removing or re-trimming a channel crossfades the mix in place; the
+  connection is kept. The sum is scaled by 1/√n so adding channels does not
+  pile up level: each channel plays about 3 dB quieter once a second joins.
+  The node mixes at most 16 inputs; past that the most recently added 16
+  play, and the rest read as not listening.
 - The bottom player ([§10.4](#104-the-player)) follows the most recently
   added channel for its meter, timeline and trim, and lists every monitored
-  channel as a small chip carrying its own honest listening/connecting/error
-  state — never one shared status standing in for several real ones. A chip
+  channel as a small chip. Each chip carries the one stream's
+  listening/connecting/error state, because that is the real state of every
+  channel in it; a channel left out of the mix shows as not listening. A chip
   can be pressed to become the one the player follows, or removed on its own
   without disturbing the rest.
 - Selected and Listening ([§10.1](#101-channel-card)) are card-level, not
-  grid-level: each monitored card shows its own state independently, so one
-  card waiting to connect never reads as every card waiting.
+  grid-level: a card reads Listening only while it is in the mix and the
+  stream is actually playing.
 
 ---
 
@@ -1103,6 +1113,12 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.14.0 — 2026-09-27.** Multi-select is one mixed stream
+([§8.4](#84-multi-select)): the node mixes the monitored channels, each at its
+trim, into the device's one listen session instead of opening a stream per
+channel. Chips share that stream's status. Implemented in Live, the listen
+gateway and the media worker alongside this entry; not operator-validated.
 
 **2.13.0 — 2026-09-27.** Keyboard operation ([§8.3](#83-keyboard)): the
 grid is a single Tab stop with arrow-key focus and type-to-jump by channel

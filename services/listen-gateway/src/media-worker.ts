@@ -73,9 +73,13 @@ export type MediaWorkerOptions = {
   now?: () => number;
 };
 
+/** One input in a listener's mix, at the linear gain of its channel trim. */
+export type ListenSource = { channel: number; gain: number };
+
 export type OpenSessionRequest = {
   sessionId: string;
-  channel: number;
+  /** What the listener hears: inputs summed on the node; none is silence. */
+  sources: ListenSource[];
   offer: string;
   candidateAddress: string;
 };
@@ -672,9 +676,10 @@ export class MediaWorkerManager extends EventEmitter {
     });
   }
 
-  selectChannel(sessionId: string, channel: number): boolean {
+  /** Changes what a listener hears; the node crossfades, nothing renegotiates. */
+  selectSources(sessionId: string, sources: ListenSource[]): boolean {
     if (!this.sessions.has(sessionId)) return false;
-    this.send({ type: "select", sessionId, channel });
+    this.send({ type: "select", sessionId, sources });
     return true;
   }
 

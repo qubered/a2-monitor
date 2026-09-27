@@ -37,6 +37,8 @@ import {
   type PlaybackFactory,
   type PlaybackSession,
   type PlaybackUpdate,
+  type ListenSource,
+  MAX_LISTEN_SOURCES,
 } from "./audio-playback";
 import { ChannelCard } from "./components/ChannelCard";
 import { ChannelDetail } from "./components/ChannelDetail";
@@ -355,6 +357,27 @@ function ConnectionNotice({
   );
 }
 
+/**
+ * What the one listen stream carries: every selected channel with a patched
+ * input, at its showfile trim. The node mixes at most MAX_LISTEN_SOURCES, so
+ * past that the most recent selections win.
+ */
+function listenMix(selected: readonly LiveStateChannel[]): {
+  ids: string[];
+  sources: ListenSource[];
+} {
+  const patched = selected
+    .filter((channel) => channel.input.index !== null)
+    .slice(-MAX_LISTEN_SOURCES);
+  return {
+    ids: patched.map((channel) => channel.id),
+    sources: patched.map((channel) => ({
+      channel: channel.input.index!,
+      trimDb: channel.trimDb ?? 0,
+    })),
+  };
+}
+
 export function App({
   liveStateSource = defaultLiveStateSource,
   audioDeviceSource = httpAudioDeviceSource,
@@ -461,18 +484,11 @@ export function App({
   const [muted, setMuted] = useState(false);
   const [dimmed, setDimmed] = useState(false);
   const [gainDb, setGainDb] = useState(readMonitorGainDb);
-  const [playbackByChannel, setPlaybackByChannel] = useState<
-    Record<string, PlaybackUpdate>
-  >({});
-  // A WebRTC session outlives any one channel: switching the single selection
-  // (or a multi-selection swapping one member for another) retargets a slot
-  // in place via `setChannel`, the same session and connection throughout,
-  // rather than tearing one down to open another. `channelId` is mutable for
-  // exactly that reuse; each session's `onUpdate` closes over its slot, not
-  // a channel id, so it keeps posting to the right key after a retarget.
-  const playbackSlots = useRef<
-    { channelId: string; session: PlaybackSession }[]
-  >([]);
+  const [playback, setPlayback] = useState<PlaybackUpdate | null>(null);
+  // One WebRTC session carries every selected channel, mixed node-side. It
+  // outlives any selection: changing what is monitored retargets it with
+  // `setSources`, the same connection throughout.
+  const playbackSession = useRef<PlaybackSession | null>(null);
   const outputState = useRef({ muted: false, dimmed: false, gainDb });
   const announcedCritical = useRef<Set<string> | null>(null);
 
@@ -593,98 +609,42 @@ export function App({
     }
   }, [selectedIds]);
 
-  // One WebRTC listen session per monitored channel, so several play at once.
-  // A slot no longer wanted is retargeted to a newly wanted channel with
-  // `setChannel` in place of tearing it down and reconnecting, exactly as a
-  // single selection has always moved server-side without renegotiating; a
-  // session is only actually closed when the wanted count shrinks. Each
-  // still reconnects on its own after a capture restart. Mute, dim and gain
-  // are one shared control for the whole monitor output, so every open
-  // session takes the same values.
+  // Every monitored channel plays through one listen session: the node sums
+  // them sample-aligned, each at its showfile trim, so a multi-selection is one
+  // time-aligned mix rather than several streams drifting against each other.
+  // Selecting, deselecting or re-trimming retargets that session in place; it
+  // opens with the first patched selection and closes with the last. Mute, dim
+  // and gain stay on the one monitor output.
+  const { ids: mixedIds, sources: wanted } = listenMix(
+    deviceMode && device ? selectedChannels : [],
+  );
   useEffect(() => {
-    const slots = playbackSlots.current;
-    if (!deviceMode || !device) {
-      if (slots.length) {
-        for (const slot of slots) slot.session.close();
-        slots.length = 0;
-        setPlaybackByChannel({});
+    const session = playbackSession.current;
+    if (wanted.length === 0) {
+      if (session) {
+        session.close();
+        playbackSession.current = null;
+        setPlayback(null);
       }
       return;
     }
-    const wanted = new Map<string, number>();
-    for (const channel of selectedChannels) {
-      if (channel.input.index !== null) {
-        wanted.set(channel.id, channel.input.index);
-      }
+    if (session) {
+      session.setSources(wanted);
+      return;
     }
-    const trimDbFor = (id: string) =>
-      channels.find((channel) => channel.id === id)?.trimDb ?? 0;
-    const dropPlayback = (id: string) =>
-      setPlaybackByChannel((prev) => {
-        if (!(id in prev)) return prev;
-        const next = { ...prev };
-        delete next[id];
-        return next;
-      });
+    const opened = playbackFactory({ sources: wanted, onUpdate: setPlayback });
+    playbackSession.current = opened;
+    opened.setGainDb(outputState.current.gainDb);
+    opened.setDimmed(outputState.current.dimmed);
+    void opened.setMuted(outputState.current.muted);
+    // `wanted` is rebuilt every render; the session ignores an unchanged mix.
+  }, [wanted, playbackFactory]);
 
-    // A slot already pointed at a still-wanted channel just refreshes.
-    for (const slot of slots) {
-      if (!wanted.has(slot.channelId)) continue;
-      slot.session.setChannel(wanted.get(slot.channelId)!);
-      slot.session.setTrimDb(trimDbFor(slot.channelId));
-    }
-
-    const staleSlots = slots.filter((slot) => !wanted.has(slot.channelId));
-    const newIds = [...wanted.keys()].filter(
-      (id) => !slots.some((slot) => slot.channelId === id),
-    );
-
-    while (staleSlots.length && newIds.length) {
-      const slot = staleSlots.pop()!;
-      const newId = newIds.pop()!;
-      const oldId = slot.channelId;
-      slot.channelId = newId;
-      slot.session.setChannel(wanted.get(newId)!);
-      slot.session.setTrimDb(trimDbFor(newId));
-      dropPlayback(oldId);
-    }
-
-    // Left over with no replacement: actually close it.
-    for (const slot of staleSlots) {
-      slot.session.close();
-      const index = slots.indexOf(slot);
-      if (index !== -1) slots.splice(index, 1);
-      dropPlayback(slot.channelId);
-    }
-
-    // Left over with no spare session: open a new one.
-    for (const id of newIds) {
-      const slot = {
-        channelId: id,
-        session: undefined as unknown as PlaybackSession,
-      };
-      const session = playbackFactory({
-        channel: wanted.get(id)!,
-        onUpdate: (update) =>
-          setPlaybackByChannel((prev) => ({
-            ...prev,
-            [slot.channelId]: update,
-          })),
-      });
-      slot.session = session;
-      session.setGainDb(outputState.current.gainDb);
-      session.setTrimDb(trimDbFor(id));
-      session.setDimmed(outputState.current.dimmed);
-      void session.setMuted(outputState.current.muted);
-      slots.push(slot);
-    }
-  }, [selectedChannels, deviceMode, device, channels, playbackFactory]);
-
-  // Sessions otherwise outlive this effect; only unmounting closes them all.
+  // The session otherwise outlives this effect; only unmounting closes it.
   useEffect(
     () => () => {
-      for (const slot of playbackSlots.current) slot.session.close();
-      playbackSlots.current.length = 0;
+      playbackSession.current?.close();
+      playbackSession.current = null;
     },
     [],
   );
@@ -696,10 +656,11 @@ export function App({
     } catch {
       // Gain still applies for this session.
     }
-    for (const slot of playbackSlots.current) {
-      slot.session.setGainDb(gainDb);
-      slot.session.setDimmed(dimmed);
-      void slot.session.setMuted(muted);
+    const session = playbackSession.current;
+    if (session) {
+      session.setGainDb(gainDb);
+      session.setDimmed(dimmed);
+      void session.setMuted(muted);
     }
   }, [dimmed, gainDb, muted]);
 
@@ -1429,6 +1390,9 @@ export function App({
                     status: "listening",
                     detail: `Input ${hostMonitor.input + 1} · ${describeOutputChannels(hostFeed.outputChannels)}`,
                   };
+  // Each chip reports the one shared stream, and only for channels in the mix.
+  const playbackByChannel: Record<string, PlaybackUpdate> = {};
+  if (playback) for (const id of mixedIds) playbackByChannel[id] = playback;
   const primaryPlayback: PlaybackUpdate =
     primarySelectedId !== null
       ? (playbackByChannel[primarySelectedId] ?? {

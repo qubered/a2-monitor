@@ -114,7 +114,7 @@ describe("ListenGateway WebRTC signaling", () => {
     // A loopback page load advertises the LAN address browsers can pair with.
     expect(worker.commands[0]).toMatchObject({
       type: "open",
-      channel: 1,
+      sources: [{ channel: 1, gain: 1 }],
       candidateAddress: "192.168.1.20",
     });
 
@@ -126,8 +126,50 @@ describe("ListenGateway WebRTC signaling", () => {
     expect(worker.commands.at(-1)).toEqual({
       type: "select",
       sessionId,
-      channel: 0,
+      sources: [{ channel: 0, gain: 1 }],
     });
+
+    // Several inputs mix node-side into this one stream, each at its trim.
+    const mixed = await fetch(
+      `${base}/audio/v0/listen/sessions/${sessionId}/sources`,
+      {
+        method: "PUT",
+        headers: json,
+        body: JSON.stringify({
+          sources: [
+            { channel: 0, trimDb: 0 },
+            { channel: 1, trimDb: -6 },
+          ],
+        }),
+      },
+    );
+    expect(mixed.status).toBe(204);
+    expect(worker.commands.at(-1)).toEqual({
+      type: "select",
+      sessionId,
+      sources: [
+        { channel: 0, gain: 1 },
+        { channel: 1, gain: expect.closeTo(10 ** (-6 / 20), 5) },
+      ],
+    });
+
+    for (const sources of [
+      [],
+      [
+        { channel: 0, trimDb: 0 },
+        { channel: 0, trimDb: 0 },
+      ],
+      [{ channel: 2, trimDb: 0 }],
+      [{ channel: 0, trimDb: 30 }],
+      [{ channel: 0 }],
+      [{ channel: 0, trimDb: 0, gain: 1 }],
+    ]) {
+      const bad = await fetch(
+        `${base}/audio/v0/listen/sessions/${sessionId}/sources`,
+        { method: "PUT", headers: json, body: JSON.stringify({ sources }) },
+      );
+      expect(bad.status).toBe(400);
+    }
 
     const outOfRange = await fetch(
       `${base}/audio/v0/listen/sessions/${sessionId}/channel`,
@@ -166,7 +208,41 @@ describe("ListenGateway WebRTC signaling", () => {
       body: JSON.stringify({ channel: 0, offer: "v=0", gain: 1 }),
     });
     expect(extra.status).toBe(400);
+
+    const both = await fetch(`${base}/audio/v0/listen/sessions`, {
+      method: "POST",
+      headers: json,
+      body: JSON.stringify({
+        channel: 0,
+        sources: [{ channel: 0, trimDb: 0 }],
+        offer: "v=0",
+      }),
+    });
+    expect(both.status).toBe(400);
     expect(worker.commands).toEqual([]);
+  });
+
+  it("opens a session on a mix of inputs", async () => {
+    const { worker, base } = await startGateway();
+    const created = await fetch(`${base}/audio/v0/listen/sessions`, {
+      method: "POST",
+      headers: json,
+      body: JSON.stringify({
+        sources: [
+          { channel: 1, trimDb: 6 },
+          { channel: 0, trimDb: 0 },
+        ],
+        offer: "v=0 offer",
+      }),
+    });
+    expect(created.status).toBe(201);
+    expect(worker.commands[0]).toMatchObject({
+      type: "open",
+      sources: [
+        { channel: 1, gain: expect.closeTo(10 ** (6 / 20), 5) },
+        { channel: 0, gain: 1 },
+      ],
+    });
   });
 });
 

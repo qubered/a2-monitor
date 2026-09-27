@@ -156,14 +156,17 @@ function setup(responses?: (url: string, init?: RequestInit) => Response) {
 describe("WebRTC Opus playback", () => {
   it("signals a recvonly offer, starts audible and applies dim safely", async () => {
     const { factory, calls, audio, updates } = setup();
-    const session = factory({ channel: 1, onUpdate: (u) => updates.push(u) });
+    const session = factory({
+      sources: [{ channel: 1, trimDb: 0 }],
+      onUpdate: (u) => updates.push(u),
+    });
     await settle();
 
     const peer = FakePeerConnection.instances[0];
     expect(peer?.transceivers).toEqual([["audio", { direction: "recvonly" }]]);
     expect(calls[0]?.url).toBe(LISTEN_SESSIONS_PATH);
     expect(JSON.parse(String(calls[0]?.init?.body))).toEqual({
-      channel: 1,
+      sources: [{ channel: 1, trimDb: 0 }],
       offer: "offer-1",
     });
     expect(peer?.remoteDescription).toEqual({ type: "answer", sdp: "answer" });
@@ -192,16 +195,6 @@ describe("WebRTC Opus playback", () => {
     session.setGainDb(6);
     expect(FakeAudioContext.latest.gain.gain.value).toBeCloseTo(1.995, 3);
 
-    // Trim sits first in the chain, so it adds to the operator's level and is bounded.
-    session.setTrimDb(-6);
-    expect(FakeAudioContext.latest.gain.gain.value).toBeCloseTo(1, 3);
-    session.setTrimDb(99);
-    expect(FakeAudioContext.latest.gain.gain.value).toBeCloseTo(
-      10 ** ((6 + 24) / 20),
-      3,
-    );
-    session.setTrimDb(0);
-
     session.close();
     expect(peer?.close).toHaveBeenCalledOnce();
     expect(calls.at(-1)).toMatchObject({
@@ -212,7 +205,10 @@ describe("WebRTC Opus playback", () => {
 
   it("says when the browser holds audio and starts it on the next touch", async () => {
     const { factory, gestures, updates } = setup();
-    const session = factory({ channel: 0, onUpdate: (u) => updates.push(u) });
+    const session = factory({
+      sources: [{ channel: 0, trimDb: 0 }],
+      onUpdate: (u) => updates.push(u),
+    });
     await settle();
     FakePeerConnection.instances[0]?.deliverTrack();
     const context = FakeAudioContext.latest;
@@ -244,28 +240,66 @@ describe("WebRTC Opus playback", () => {
 
   it("switches input on the live session without renegotiating", async () => {
     const { factory, calls, updates } = setup();
-    const session = factory({ channel: 0, onUpdate: (u) => updates.push(u) });
+    const session = factory({
+      sources: [{ channel: 0, trimDb: 0 }],
+      onUpdate: (u) => updates.push(u),
+    });
     await settle();
     FakePeerConnection.instances[0]?.deliverTrack();
 
-    session.setChannel(3);
+    session.setSources([{ channel: 3, trimDb: 0 }]);
     await settle();
 
     expect(FakePeerConnection.instances).toHaveLength(1);
     expect(calls.at(-1)).toMatchObject({
-      url: `${LISTEN_SESSIONS_PATH}/00000000-0000-4000-8000-000000000001/channel`,
-      init: { method: "PUT", body: JSON.stringify({ channel: 3 }) },
+      url: `${LISTEN_SESSIONS_PATH}/00000000-0000-4000-8000-000000000001/sources`,
+      init: {
+        method: "PUT",
+        body: JSON.stringify({ sources: [{ channel: 3, trimDb: 0 }] }),
+      },
     });
     expect(updates.at(-1)).toEqual({
       status: "listening",
       detail: "Receiving input 4.",
+    });
+
+    // A multi-selection is one mix on the same connection; trims are bounded
+    // and ride with it to the node, and an unchanged mix sends nothing.
+    session.setSources([
+      { channel: 3, trimDb: 0 },
+      { channel: 5, trimDb: 99 },
+    ]);
+    await settle();
+    const sent = calls.length;
+    session.setSources([
+      { channel: 3, trimDb: 0 },
+      { channel: 5, trimDb: 24 },
+    ]);
+    session.setSources([]);
+    await settle();
+    expect(calls).toHaveLength(sent);
+    expect(FakePeerConnection.instances).toHaveLength(1);
+    expect(JSON.parse(String(calls.at(-1)?.init?.body))).toEqual({
+      sources: [
+        { channel: 3, trimDb: 0 },
+        { channel: 5, trimDb: 24 },
+      ],
+    });
+    // Trim is node-side now: the local gain is only the operator's level.
+    expect(FakeAudioContext.latest.gain.gain.value).toBeCloseTo(0.1259, 4);
+    expect(updates.at(-1)).toEqual({
+      status: "listening",
+      detail: "Receiving 2 inputs.",
     });
     session.close();
   });
 
   it("rides out a short Wi-Fi stall, then rebuilds a lost connection", async () => {
     const { factory, clock, network, updates } = setup();
-    const session = factory({ channel: 0, onUpdate: (u) => updates.push(u) });
+    const session = factory({
+      sources: [{ channel: 0, trimDb: 0 }],
+      onUpdate: (u) => updates.push(u),
+    });
     await settle();
     const first = FakePeerConnection.instances[0];
     first?.deliverTrack();
@@ -300,7 +334,10 @@ describe("WebRTC Opus playback", () => {
     const { factory, clock, updates } = setup(
       () => new Response(null, { status }),
     );
-    const session = factory({ channel: 0, onUpdate: (u) => updates.push(u) });
+    const session = factory({
+      sources: [{ channel: 0, trimDb: 0 }],
+      onUpdate: (u) => updates.push(u),
+    });
     await settle();
     expect(updates.at(-1)).toEqual({
       status: "connecting",

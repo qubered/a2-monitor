@@ -409,12 +409,12 @@ describe("Live channel grid", () => {
 
   it("Ctrl-click adds a channel to the selection so both play at once", async () => {
     const user = userEvent.setup();
+    const setSources = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
-      setChannel: vi.fn(),
+      setSources,
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
-      setTrimDb: vi.fn(),
       close: vi.fn(),
     }));
     renderApp(stateWith(), { audioDeviceSource: readyDevice, playbackFactory });
@@ -437,7 +437,12 @@ describe("Live channel grid", () => {
       .closest("article")!;
     expect(marguerite.classList.contains("is-selected")).toBe(true);
     expect(talkbackCard.classList.contains("is-selected")).toBe(true);
-    expect(playbackFactory).toHaveBeenCalledTimes(2);
+    // Both play as one node-side mix over the one session.
+    expect(playbackFactory).toHaveBeenCalledOnce();
+    expect(setSources).toHaveBeenLastCalledWith([
+      expect.objectContaining({ channel: 0 }),
+      expect.objectContaining({ channel: 1 }),
+    ]);
     expect(screen.getByText("2 channels monitored together.")).toBeTruthy();
 
     // Ctrl-clicking the first again drops only that one from the selection.
@@ -448,18 +453,21 @@ describe("Live channel grid", () => {
     await user.keyboard("{/Control}");
     expect(marguerite.classList.contains("is-selected")).toBe(false);
     expect(talkbackCard.classList.contains("is-selected")).toBe(true);
+    expect(setSources).toHaveBeenLastCalledWith([
+      expect.objectContaining({ channel: 1 }),
+    ]);
     // One channel is what the player shows; the bar is only for several.
     expect(screen.queryByText(/monitored together/)).toBeNull();
   });
 
   it("Shift-click extends the selection to every channel between the last pick and this one", async () => {
     const user = userEvent.setup();
+    const setSources = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
-      setChannel: vi.fn(),
+      setSources,
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
-      setTrimDb: vi.fn(),
       close: vi.fn(),
     }));
     renderApp(stateWith(), { audioDeviceSource: readyDevice, playbackFactory });
@@ -487,20 +495,23 @@ describe("Live channel grid", () => {
       ).toBe(true);
     }
     expect(screen.getByText("3 channels monitored together.")).toBeTruthy();
-    // Spare has no patched input, so only the two patched channels listen.
-    expect(playbackFactory).toHaveBeenCalledTimes(2);
+    // Spare has no patched input, so only the two patched channels are mixed.
+    expect(playbackFactory).toHaveBeenCalledOnce();
+    expect(setSources).toHaveBeenLastCalledWith([
+      expect.objectContaining({ channel: 0 }),
+      expect.objectContaining({ channel: 1 }),
+    ]);
   });
 
   it("opens in the glance view: tiles listen, the player opens details, and Cards is remembered", async () => {
     window.localStorage.removeItem("pulse-grid-view");
     const user = userEvent.setup();
-    const setChannel = vi.fn();
+    const setSources = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
-      setChannel,
+      setSources,
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
-      setTrimDb: vi.fn(),
       close: vi.fn(),
     }));
     const { view } = renderApp(stateWith(), {
@@ -527,7 +538,9 @@ describe("Live channel grid", () => {
     );
     await vi.waitFor(() =>
       expect(playbackFactory).toHaveBeenCalledWith(
-        expect.objectContaining({ channel: 0 }),
+        expect.objectContaining({
+          sources: [expect.objectContaining({ channel: 0 })],
+        }),
       ),
     );
     await user.click(
@@ -545,13 +558,12 @@ describe("Live channel grid", () => {
 
   it("makes the grid one Tab stop with arrows, Space and type-to-jump", async () => {
     const user = userEvent.setup();
-    const setChannel = vi.fn();
+    const setSources = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
-      setChannel,
+      setSources,
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
-      setTrimDb: vi.fn(),
       close: vi.fn(),
     }));
     renderApp(stateWith(), { audioDeviceSource: readyDevice, playbackFactory });
@@ -581,7 +593,9 @@ describe("Live channel grid", () => {
     await user.keyboard(" ");
     await vi.waitFor(() =>
       expect(playbackFactory).toHaveBeenCalledWith(
-        expect.objectContaining({ channel: 1 }),
+        expect.objectContaining({
+          sources: [expect.objectContaining({ channel: 1 })],
+        }),
       ),
     );
     // A typed name jumps too; M alone is still mute, not a search.
@@ -720,11 +734,10 @@ describe("Live channel grid", () => {
     const user = userEvent.setup();
     window.localStorage.setItem("pulse-selected-channel", "ch-marguerite");
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
-      setChannel: vi.fn(),
+      setSources: vi.fn(),
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
-      setTrimDb: vi.fn(),
       close: vi.fn(),
     }));
     const { view } = renderApp(stateWith(), {
@@ -753,11 +766,10 @@ describe("Live channel grid", () => {
     renderApp(stateWith(), {
       audioDeviceSource: readyDevice,
       playbackFactory: vi.fn<PlaybackFactory>(() => ({
-        setChannel: vi.fn(),
+        setSources: vi.fn(),
         setMuted: vi.fn(async () => undefined),
         setDimmed: vi.fn(),
         setGainDb: vi.fn(),
-        setTrimDb: vi.fn(),
         close: vi.fn(),
       })),
     });
@@ -777,15 +789,14 @@ describe("Live channel grid", () => {
     expect(card().classList.contains("is-selected")).toBe(false);
   });
 
-  it("shows a channel's trim and applies it under the operator's level when listening", async () => {
+  it("shows a channel's trim and sends it to the node's mix when listening", async () => {
     const user = userEvent.setup();
-    const setTrimDb = vi.fn();
+    const setSources = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
-      setChannel: vi.fn(),
+      setSources,
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
-      setTrimDb,
       close: vi.fn(),
     }));
     const base = stateWith();
@@ -809,11 +820,17 @@ describe("Live channel grid", () => {
     await user.click(
       screen.getByRole("button", { name: "Select Marguerite, channel 1" }),
     );
-    await vi.waitFor(() => expect(setTrimDb).toHaveBeenLastCalledWith(6));
+    await vi.waitFor(() =>
+      expect(playbackFactory).toHaveBeenCalledWith(
+        expect.objectContaining({ sources: [{ channel: 0, trimDb: 6 }] }),
+      ),
+    );
     await user.click(
       screen.getByRole("button", { name: "Select Talkback, channel 2" }),
     );
-    await vi.waitFor(() => expect(setTrimDb).toHaveBeenLastCalledWith(0));
+    await vi.waitFor(() =>
+      expect(setSources).toHaveBeenLastCalledWith([{ channel: 1, trimDb: 0 }]),
+    );
   });
 
   it("clears a channel's alerts from its detail view and offers it only when something is raised", async () => {
@@ -1177,19 +1194,18 @@ describe("Live channel grid", () => {
   it("starts the first listen audible and keeps output state across channel changes", async () => {
     const user = userEvent.setup();
     const setMuted = vi.fn(async () => undefined);
-    const setChannel = vi.fn();
+    const setSources = vi.fn();
     const close = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>((options) => {
       options.onUpdate({
         status: "listening",
-        detail: `Receiving input ${options.channel + 1}.`,
+        detail: `Receiving input ${options.sources[0]!.channel + 1}.`,
       });
       return {
-        setChannel,
+        setSources,
         setMuted,
         setDimmed: vi.fn(),
         setGainDb: vi.fn(),
-        setTrimDb: vi.fn(),
         close,
       };
     });
@@ -1208,7 +1224,9 @@ describe("Live channel grid", () => {
     );
     await vi.waitFor(() =>
       expect(playbackFactory).toHaveBeenCalledWith(
-        expect.objectContaining({ channel: 1 }),
+        expect.objectContaining({
+          sources: [expect.objectContaining({ channel: 1 })],
+        }),
       ),
     );
     expect(setMuted).toHaveBeenCalledWith(false);
@@ -1228,7 +1246,9 @@ describe("Live channel grid", () => {
       screen.getByRole("button", { name: "Select Marguerite, channel 1" }),
     );
     // Switching input keeps the one WebRTC session and its unmuted output state.
-    expect(setChannel).toHaveBeenLastCalledWith(0);
+    expect(setSources).toHaveBeenLastCalledWith([
+      expect.objectContaining({ channel: 0 }),
+    ]);
     expect(playbackFactory).toHaveBeenCalledOnce();
     expect(close).not.toHaveBeenCalled();
     expect(screen.queryByText(/is muted|is dimmed/)).toBeNull();
@@ -1540,11 +1560,10 @@ describe("Live channel grid", () => {
   it("plays on this device when chosen, without touching the host output", async () => {
     const user = userEvent.setup();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
-      setChannel: vi.fn(),
+      setSources: vi.fn(),
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
-      setTrimDb: vi.fn(),
       close: vi.fn(),
     }));
     window.localStorage.setItem("pulse-selected-channel", "ch-talkback");
@@ -1569,7 +1588,9 @@ describe("Live channel grid", () => {
     );
     await vi.waitFor(() =>
       expect(playbackFactory).toHaveBeenCalledWith(
-        expect.objectContaining({ channel: 1 }),
+        expect.objectContaining({
+          sources: [expect.objectContaining({ channel: 1 })],
+        }),
       ),
     );
     expect(hostOutput.changes).toEqual([]);
