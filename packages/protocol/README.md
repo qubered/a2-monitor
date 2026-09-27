@@ -33,8 +33,7 @@ level history, node levels, meter frames, live state and the alert log. Shared
 alert-policy defaults live in `policy/alert-policy.ts`. None of these restores
 the withdrawn command, event, authority, or IPC schemas.
 Those contracts remain absent because the earlier `schema/v0` tree conflated
-bootstrap and Live authority and accepted unconstrained canonical data. See
-[open questions](../../docs/open-questions.md).
+bootstrap and Live authority and accepted unconstrained canonical data.
 
 Schemas are written against a runtime that exists. OpenAPI/AsyncAPI documents
 will be generated from the frozen domain schemas when concrete

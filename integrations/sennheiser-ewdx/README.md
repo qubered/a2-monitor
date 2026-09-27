@@ -22,6 +22,3 @@ state and capability descriptions, never credentials or raw vendor sessions.
 
 Fixtures derived from vendor schemas must be checked for redistribution rights
 before being committed.
-
-See the [full EW-DX specification](../../docs/integrations/sennheiser-ew-dx.md)
-and the [common integration standard](../../docs/integrations/README.md).

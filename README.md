@@ -23,22 +23,11 @@ identity.
 
 ## Project status
 
-The project is in **discovery**, and nothing has been measured. The first
-incremental Live application slice now runs with fabricated local data; it is a
-workflow prototype, not evidence that audio, browser latency, hardware support,
-or the wider architecture works. Everything in `docs` remains a hypothesis
-written ahead of evidence; read [open questions](docs/open-questions.md) before
-anything else.
-
-The latency and receiver-telemetry spikes remain required before any support or
-architecture claim. Current implementation work is proceeding as small,
-testable Live application slices so operator feedback can shape the product
-while those measurement questions remain visibly open.
-
-A proposed implementation stack is recorded (Rust for the native node,
-TypeScript/Node/Fastify for management, React/Vite for the web applications,
-SQLite for local authority) but no part of it has been validated, and the
-spike deliberately does not use it.
+Pre-release and moving fast. The stack is Rust for the native audio node,
+TypeScript/Node/Fastify for the backend, React/Vite for Live and Manager, and
+SQLite for local authority. Build the change, run it, and see if it works —
+see [AGENTS.md](AGENTS.md) for the (short) list of things that aren't up for
+grabs: real-time audio safety and the component boundaries below.
 
 ## Product principles
 
@@ -71,27 +60,9 @@ spike deliberately does not use it.
 | `tests` | Cross-component, hardware-in-loop, soak, and performance tests |
 | `docs` | Product, architecture, research, decisions, and runbooks |
 
-Read [the documentation index](docs/README.md) first. Contributors and coding
-agents must also follow [CONTRIBUTING.md](CONTRIBUTING.md) and
+See [the documentation index](docs/README.md) for what's left. Contributors and
+coding agents must also follow [CONTRIBUTING.md](CONTRIBUTING.md) and
 [AGENTS.md](AGENTS.md).
-
-## Near-term milestone
-
-The initial spike must prove:
-
-- stable 32–64 channel capture from one selected ASIO/WASAPI/Core Audio device
-  on Windows and macOS, including DVS and a representative hardware interface;
-- independent, uninterrupted server-side monitor mixes;
-- WebRTC/Opus playback in target browsers;
-- measured wired and Wi-Fi capture-to-ear latency;
-- foreground screen-awake client, camera/microphone/notification audio-route
-  tests and explicit native-client trigger;
-- secure EW-DX discovery, authentication, and live telemetry;
-- Shure command-string discovery, capability negotiation, and live telemetry
-  on a selected physical receiver;
-- active-node authority/control-ledger partition tests, a read-only QLab cue
-  observer spike, and combined collaboration/attachment overload shedding; and
-- a 12-hour run without an audio callback underrun.
 
 The default deployment may place all four components on one appliance, but
 their boundary is deliberate:
@@ -100,8 +71,6 @@ their boundary is deliberate:
 2. the backend owns configuration, auth, and show state;
 3. the Manager web app builds and administers shows; and
 4. the Live web app is the focused operator surface.
-
-See the [performance baselines](docs/quality/performance-baselines.md).
 
 ## Development
 
@@ -113,10 +82,7 @@ npm ci
 npm run dev --workspace @rvlt/pulse-live
 ```
 
-The proposed stack, its alternatives and its falsification gates are recorded
-in [technology stack selection](docs/research/technology-stack-selection.md)
-and ADRs 0014–0018, all of which remain unvalidated hypotheses. Run all current
-checks with:
+Run all current checks with:
 
 ```sh
 ./scripts/check-repo.sh

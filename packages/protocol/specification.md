@@ -1,7 +1,5 @@
 # Protocol v0 specification
 
-**Status:** Hypothesis; no supporting evidence. See [open questions](../../docs/open-questions.md).
-
 ## Scope
 
 These rules apply to node/backend control, normalized telemetry, Live node
@@ -9,10 +7,9 @@ control, show activation, and import/export envelopes. Control and durable event
 encoding is I-JSON. Hashes and signatures use RFC 8785 JCS bytes and SHA-256;
 Unicode is preserved exactly, duplicate names and nonfinite numbers are rejected,
 and counters/revisions outside safe small numeric ranges are canonical decimal
-strings. The only current machine schemas are the two Phase 0T HTTP response
-contracts for backend health and the fabricated Live snapshot. They do not
-define native IPC, commands, events, leases or production runtime state; see
-[open questions](../../docs/open-questions.md).
+strings. The only current machine schemas are the two HTTP response contracts
+for backend health and the fabricated Live snapshot. They do not yet define
+native IPC, commands, events, leases, or production runtime state.
 
 ## Phase 0T HTTP compatibility
 

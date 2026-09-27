@@ -6,71 +6,28 @@ requirements below.
 
 ## Before changing code
 
-- Read `README.md`, `docs/README.md`, and the relevant architecture documents.
-- Check `docs/decisions` for decisions that constrain the work.
-- No planning ceremony: there are no phase tracking issues, roadmaps or
-  evidence ledgers to create or update. Just build the change.
-- For UI or UX work, read `docs/design/DESIGN.md` in full and look at the
-  shipped Live and Manager apps directly before proposing or implementing a
-  design. The old `docs/design/mockups` and `docs/design/prototype/index.html`
-  are archived (`docs/design/archive/`) and no longer a current reference.
+- No planning ceremony: there are no phase tracking issues, roadmaps,
+  evidence ledgers, ADRs, or design-doc sign-off to create, update, or wait on.
+  Just build the change, run it, and see if it works.
+- For UI or UX work, look at the shipped Live and Manager apps directly — they
+  are the reference, not a spec document.
 - Inspect the working tree and preserve unrelated user changes.
-- If a change introduces a framework, persistent service, wire protocol,
-  database, or deployment dependency, add or update an ADR.
 
 ## UI and UX design
 
-- Treat `docs/design/DESIGN.md` as normative for visual language, interaction,
-  components, and product surfaces. As of DESIGN.md 2.0.0 it is Pulse's own
-  standalone design language, not a domain mapping over RVLT's; do not
-  reintroduce an RVLT dependency or treat RVLT's tokens/components as
-  authoritative for this product.
-- `docs/design/mockups` and `docs/design/prototype/index.html` are archived
-  (`docs/design/archive/`, RVLT-derived tokens, Archivo/Baloo 2/Hanken
-  Grotesk/Kalam, a Paper/dark toggle) and retired as a design reference, not
-  rebuilt against the current tokens. Never derive new UI from them. The
-  shipped Live and Manager apps are the visual target.
-- Treat mockup data as illustrative. Preserve the domain model, permissions,
-  versioned contracts, and architectural boundaries defined elsewhere in this
-  repository. If an architectural or safety requirement conflicts with the
-  design source, document the discrepancy and request a decision instead of
-  silently improvising.
-- Design for a one-second operational glance before a detailed investigation.
-  Keep cards sparse and put diagnostic depth in detail surfaces. Show every
-  independently failing status dimension so one fault never hides another.
+- The shipped Live and Manager apps are the visual and interaction reference.
+  Match their existing look rather than introducing a new one.
+- Pulse is dark-mode only; don't add a light/Paper theme or a theme switch.
 - Preserve the honesty grammar for observed, inferred, stale, and unknown data.
-  Never render unknown as zero or healthy, distinguish human-authored notes from
-  machine measurements, and keep RF level separate from link quality.
-- Use design tokens and the locked type, colour, spacing, shape, elevation,
-  icon, and motion rules from `docs/design/DESIGN.md`. Components must not
-  introduce raw visual values. Pulse is dark-mode only (DESIGN.md 2.1.0) —
-  there is no light/Paper theme and no theme switch to test.
-- Keep the documented refusals: no gradients, glow, glass effects, decorative
-  motion, emoji status icons, stock portraits, animated loading shimmer, or
-  enthusiastic filler copy. Use short, specific, present-tense language with
-  units, time references, and explicit uncertainty.
-- Preserve the distinction between Manager and Live. Live UI must remain
-  show-focused, resilient offline, and free of Manager-only screens and
-  dependencies.
+  Never render unknown as zero or healthy, distinguish human-authored notes
+  from machine measurements, and keep RF level separate from link quality.
+- Keep audio safety controls visible: mute and dim remain one touch away, and
+  listening starts unmuted.
 - Treat touch as the primary input while preserving full keyboard operation.
-  Meet the documented target sizes, spacing, focus, semantic-control, contrast,
-  and reduced-motion rules. Never make hover, precise dragging, colour, sound,
-  or motion the only way to understand or complete an action.
-- Keep audio safety controls visible: mute and dim remain one touch away.
-  Listening starts unmuted (ADR 0031). Make replay unmistakable, keep a one-action return to
-  live visible, and retain current critical alerts while viewing the past.
-- Implement the specific empty, loading, stale, degraded, offline, error, and
-  permission states defined by the design language. Name what the product is
-  waiting for or no longer knows; never imply unavailable work was completed.
-- Verify UI changes against DESIGN.md by running the actual app at
-  representative target viewports. Include screenshots of the running app or
-  equivalent visual-regression evidence, and run accessibility, touch,
-  keyboard, and interaction checks before handoff. There is no maintained
-  mockup or prototype build to check against — the running app is the
-  check.
-- The current design language is proposed rather than field-validated. Record
-  conformance separately from operator validation and do not claim that a UI is
-  validated without named A1/A2 testing and evidence.
+  Never make hover, precise dragging, colour, sound, or motion the only way to
+  understand or complete an action.
+- Verify UI changes by running the actual app and looking at it — that's the
+  check, not a document.
 
 ## Architectural invariants
 
@@ -114,26 +71,15 @@ acceptable.
 
 - Keep commits and pull requests narrowly scoped.
 - Do not mix mechanical refactors with behavior changes.
-- Add tests for new behavior and a regression test for every bug fix when
-  feasible.
-- Update docs in the same change when behavior, a contract, operations, or a
-  user workflow changes.
+- Add a test for new behavior or a bug fix when it's cheap to do so.
 - Never commit secrets, receiver passwords, certificates, show recordings,
   customer data, generated build output, or licensed SDK binaries.
 - Generated files must identify their source and regeneration command.
 
 ## Verification
 
-- Run `./scripts/check-repo.sh` before handoff.
-- Run all checks owned by the changed component.
-- For audio or networking changes, report the benchmark or soak-test setup and
-  results; "sounds fine" is not verification.
-- Do not weaken a performance threshold merely to make a check pass. Document
-  and investigate regressions.
-
-## Documentation style
-
-- Prefer short, direct Markdown.
-- Record durable decisions as ADRs, not only in pull-request discussion.
-- Mark assumptions, targets, and verified measurements distinctly.
-- Use UTC ISO 8601 timestamps in machine data; local time may be shown in UI.
+- Run `./scripts/check-repo.sh` and the checks owned by the component you
+  changed before opening a PR.
+- Test by running the app against real or synthetic input, not by writing
+  more documentation about it; "sounds fine"/"looks fine" without having run
+  it is not verification.
