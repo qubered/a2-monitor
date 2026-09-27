@@ -1,10 +1,11 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, MouseEvent } from "react";
 import type { LiveAlert, LiveStateChannel } from "@rvlt/pulse-protocol/http";
 import { overlayRemaining } from "../alerts";
 import type { MeterStore } from "../meters";
 import { formatTrim } from "../trim";
 import { MeterTrace } from "./MeterTrace";
 import { StatusStrip } from "./StatusStrip";
+import { useLongPress } from "./useLongPress";
 
 export type CardReportState = {
   /** Reports nobody has claimed yet; the card pulses while this is above zero. */
@@ -27,7 +28,13 @@ type ChannelCardProps = {
   meterStore: MeterStore;
   metersStale: boolean;
   onAcknowledge: (alert: LiveAlert) => void;
-  onSelect: () => void;
+  /** A press or click. Its `shiftKey`/`ctrlKey`/`metaKey` drive multi-select
+   * on a computer; Shift and Ctrl also reach here from a keyboard Enter or
+   * Space held with the same key (DESIGN.md §8.3). */
+  onSelect: (event: MouseEvent<HTMLButtonElement>) => void;
+  /** Present only where a long-press may start multi-select by touch; omit
+   * to leave the card's one hit target a plain press with no held gesture. */
+  onLongPressSelect?: () => void;
   onOpenDetail: () => void;
 };
 
@@ -142,12 +149,14 @@ export function ChannelCard({
   metersStale,
   onAcknowledge,
   onSelect,
+  onLongPressSelect,
   onOpenDetail,
 }: ChannelCardProps) {
   const alerting = alert !== null;
   const remaining = alert
     ? overlayRemaining(alert, overlayExpiryMs, nowMs)
     : null;
+  const longPress = useLongPress(() => onLongPressSelect?.());
   const classes = [
     "channel-card",
     selected ? "is-selected" : "",
@@ -156,6 +165,7 @@ export function ChannelCard({
     alert?.severity === "critical" ? "is-critical-alert" : "",
     report && report.unclaimed > 0 ? "is-reported" : "",
     channel.session?.inUse === false ? "is-idle" : "",
+    onLongPressSelect ? "can-multiselect" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -165,7 +175,13 @@ export function ChannelCard({
       <button
         className="card-hit-target"
         type="button"
-        onClick={onSelect}
+        onClick={(event) => {
+          // A long-press that already fired still dispatches a click on
+          // release; that click is not a second, separate press.
+          if (longPress.consumeFired()) return;
+          onSelect(event);
+        }}
+        {...(onLongPressSelect ? longPress.handlers : {})}
         aria-label={`${actionLabel} ${channel.name}, channel ${channel.number}`}
         aria-hidden={alerting || undefined}
         tabIndex={alerting ? -1 : 0}

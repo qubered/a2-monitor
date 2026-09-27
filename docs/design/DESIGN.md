@@ -1,6 +1,6 @@
 # Pulse — design language
 
-- **Version:** 2.8.2
+- **Version:** 2.9.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
 - **Last updated:** 2026-09-25
@@ -448,6 +448,42 @@ Everything reachable by touch is reachable by key. Arrow keys move channel focus
 `Space` listens, `Enter` latches, `Esc` clears; `1`–`8` press-to-listen groups;
 `M` mute, `D` dim, `R` return to live, `/` search. Focus rings are the 2px accent
 ring from [§5](#5-shape-and-elevation) and are never suppressed.
+
+### 8.4 Multi-select
+
+Several channels can be monitored together, so the A2 can hold two mics up
+against each other or catch a whole section at once instead of hopping one
+card at a time. This is audio-changing — [§8.1.7](#81-the-contract) applies —
+so it always needs a deliberate gesture, never a bigger target.
+
+- **Shift-click**, or **Shift-Enter** on a focused card, extends the selection
+  to every card between the last one picked and this one, in showfile order —
+  the ordinary range-select a mouse or keyboard already knows.
+- **Ctrl/Cmd-click** toggles one card into or out of the selection without
+  touching the rest.
+- On touch, where there is no held modifier key, a **long-press with visible
+  progress** ([§8.1.7](#81-the-contract)) on any card starts the same mode:
+  the ring around the card's one hit target ([§8.2](#82-card-targets)) fills
+  in over the hold, and once it completes every following tap toggles a card
+  instead of replacing the selection — the touch equivalent of holding
+  Ctrl/Cmd, made visible instead of assumed. [§8.1.6](#81-the-contract)'s "no
+  modifier-only action" is why both paths exist, not just the mouse one.
+- A plain press or tap, with no modifier held and multi-select not on,
+  replaces the selection with just that card, as it always has.
+- A thin bar above the grid names the count while more than one card is
+  selected, or while touch multi-select is on with none yet — "Tap channels
+  to monitor them together" — with a **Clear** to stop monitoring everything
+  and a **Done** to leave touch multi-select without stopping what is already
+  playing.
+- The bottom player ([§10.4](#104-the-player)) follows the most recently
+  added channel for its meter, timeline and trim, and lists every monitored
+  channel as a small chip carrying its own honest listening/connecting/error
+  state — never one shared status standing in for several real ones. A chip
+  can be pressed to become the one the player follows, or removed on its own
+  without disturbing the rest.
+- Selected and Listening ([§10.1](#101-channel-card)) are card-level, not
+  grid-level: each monitored card shows its own state independently, so one
+  card waiting to connect never reads as every card waiting.
 
 ---
 
@@ -1020,6 +1056,14 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.9.0 — 2026-09-25.** Adds multi-select ([§8.4](#84-multi-select)): Shift or
+Ctrl/Cmd-click on a computer, a long-press then tap on touch, to monitor
+several channels at once. Selected and Listening ([§10.1](#101-channel-card))
+become card-level rather than grid-level, and the player
+([§10.4](#104-the-player)) gains a per-channel chip row alongside its existing
+single-channel meter, timeline and trim. Implemented in Live alongside this
+entry; not operator-validated.
 
 **2.8.2 — 2026-09-25.** The mic-type fallback glyph
 ([§10.1](#101-channel-card)) drops the dashed-stroke treatment for an

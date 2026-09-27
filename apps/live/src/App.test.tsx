@@ -405,6 +405,89 @@ describe("Live channel grid", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("Ctrl-click adds a channel to the selection so both play at once", async () => {
+    const user = userEvent.setup();
+    const playbackFactory = vi.fn<PlaybackFactory>(() => ({
+      setChannel: vi.fn(),
+      setMuted: vi.fn(async () => undefined),
+      setDimmed: vi.fn(),
+      setGainDb: vi.fn(),
+      setTrimDb: vi.fn(),
+      close: vi.fn(),
+    }));
+    renderApp(stateWith(), { audioDeviceSource: readyDevice, playbackFactory });
+    await screen.findByRole("button", { name: "Mute", pressed: false });
+
+    await user.click(
+      screen.getByRole("button", { name: "Select Marguerite, channel 1" }),
+    );
+    await user.keyboard("{Control>}");
+    await user.click(
+      screen.getByRole("button", { name: "Select Talkback, channel 2" }),
+    );
+    await user.keyboard("{/Control}");
+
+    const marguerite = screen
+      .getByRole("button", { name: "Select Marguerite, channel 1" })
+      .closest("article")!;
+    const talkbackCard = screen
+      .getByRole("button", { name: "Select Talkback, channel 2" })
+      .closest("article")!;
+    expect(marguerite.classList.contains("is-selected")).toBe(true);
+    expect(talkbackCard.classList.contains("is-selected")).toBe(true);
+    expect(playbackFactory).toHaveBeenCalledTimes(2);
+    expect(screen.getByText("2 channels monitored together.")).toBeTruthy();
+
+    // Ctrl-clicking the first again drops only that one from the selection.
+    await user.keyboard("{Control>}");
+    await user.click(
+      screen.getByRole("button", { name: "Select Marguerite, channel 1" }),
+    );
+    await user.keyboard("{/Control}");
+    expect(marguerite.classList.contains("is-selected")).toBe(false);
+    expect(talkbackCard.classList.contains("is-selected")).toBe(true);
+    expect(screen.getByText("1 channel monitored together.")).toBeTruthy();
+  });
+
+  it("Shift-click extends the selection to every channel between the last pick and this one", async () => {
+    const user = userEvent.setup();
+    const playbackFactory = vi.fn<PlaybackFactory>(() => ({
+      setChannel: vi.fn(),
+      setMuted: vi.fn(async () => undefined),
+      setDimmed: vi.fn(),
+      setGainDb: vi.fn(),
+      setTrimDb: vi.fn(),
+      close: vi.fn(),
+    }));
+    renderApp(stateWith(), { audioDeviceSource: readyDevice, playbackFactory });
+    await screen.findByRole("button", { name: "Mute", pressed: false });
+
+    await user.click(
+      screen.getByRole("button", { name: "Select Marguerite, channel 1" }),
+    );
+    await user.keyboard("{Shift>}");
+    await user.click(
+      screen.getByRole("button", { name: "Select Spare, channel 3" }),
+    );
+    await user.keyboard("{/Shift}");
+
+    for (const name of [
+      "Select Marguerite, channel 1",
+      "Select Talkback, channel 2",
+      "Select Spare, channel 3",
+    ]) {
+      expect(
+        screen
+          .getByRole("button", { name })
+          .closest("article")!
+          .classList.contains("is-selected"),
+      ).toBe(true);
+    }
+    expect(screen.getByText("3 channels monitored together.")).toBeTruthy();
+    // Spare has no patched input, so only the two patched channels listen.
+    expect(playbackFactory).toHaveBeenCalledTimes(2);
+  });
+
   it("marks a card with the backend alert and acknowledges it as the named operator", async () => {
     const user = userEvent.setup();
     window.localStorage.setItem("pulse-operator-name", "Sam");

@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.58632c77ac95cfda",
-  "sourceSha256": "58632c77ac95cfdad92466dd48aab06f7291c1f385cb37ef704ae51490a5b9ea",
-  "inputCount": 434,
+  "buildId": "a2-0.0.0+sha256.a6df42da7b7f895e",
+  "sourceSha256": "a6df42da7b7f895e432c97d4a347a6df7b69c7b0dd248378b6cdf278df8ec1fb",
+  "inputCount": 436,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "918ef4be4815c20324e43d3c1c3a16c4b36d4724883ec0c426584b9731bacad7"
+      "sha256": "d959d56b00587bdda20d6d854a90a4ddb7f77bd4b880c7464f456631592bdb1b"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "77fffd85f3d1601b8cbbcc99f264dd0111c36c39723c003ff1bb2d034ca10b4c"
+      "sha256": "fdce6b65f452d06e680ab3de580e7fe80bebe3cbd8d09445732faeebf9a6da50"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -121,11 +121,11 @@
     },
     {
       "path": "apps/live/src/components/ChannelCard.test.tsx",
-      "sha256": "d1c439716c7be58453f88ed747add66c42b0d32bd3e751887c5b1f57850849f9"
+      "sha256": "7fb28fa2c8aa9958229754238a68e999e844443b4c9c3ebcc324c3ce0f2a3da5"
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
-      "sha256": "9aad8d92d5f7aa0e9f16fd1368384550e10358cf8f32794a30ec3426bbf295a6"
+      "sha256": "38e61865e75015a9c6f44b6b3ba6e3464e52cac1e797bd366097c764ab7bbde4"
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
@@ -161,7 +161,7 @@
     },
     {
       "path": "apps/live/src/components/Player.tsx",
-      "sha256": "a0490df6986a440d78168f864682d2a6452a1df9d76f88c9a18d2511b34d9e58"
+      "sha256": "4dde034c2686dd903a64d079b9606a0680ceae56419506336bac9481e8f72c3c"
     },
     {
       "path": "apps/live/src/components/ReportSheet.tsx",
@@ -176,6 +176,10 @@
       "sha256": "836532172386b13e4d46fd0909affca0613339dd98f7c336079dd4b90596f450"
     },
     {
+      "path": "apps/live/src/components/SelectionBar.tsx",
+      "sha256": "d72d698da241217b3b40061010d03ee8781eab23f9c4023df31dae6d2da65ae0"
+    },
+    {
       "path": "apps/live/src/components/SessionBar.tsx",
       "sha256": "43c53d30c406d41f817e5c5d6f13b3fc298777984013494901ed418d01bd1d3a"
     },
@@ -186,6 +190,10 @@
     {
       "path": "apps/live/src/components/StatusStrip.tsx",
       "sha256": "c09477741f1f1f0d239e906888a90c6749ee6665e7fd9da6ddd68e29f1300211"
+    },
+    {
+      "path": "apps/live/src/components/useLongPress.ts",
+      "sha256": "b3cc3b4b6fd4393e95f005fd112b2006ca49506f5403beecbd2f400424ce1a1d"
     },
     {
       "path": "apps/live/src/filter-fit.test.ts",
@@ -241,7 +249,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "e030ef00ab99bfbf775c2c20298f1eb4f555c6db34e57e6ab4ddd40311c6dc2a"
+      "sha256": "c1a8aa3e97408e56371ca2a42802e7fc118d3eac53ecb96234c93fde49a1df25"
     },
     {
       "path": "apps/live/src/trim.ts",
@@ -769,7 +777,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "3b79b6e6381da48b0d363cc844f679bf4a014baa03775eda54f551af71745394"
+      "sha256": "56f7feeeec0528bd1f56cd760e474371679ddc6dee1e47c4f1e92e60d02f81d6"
     },
     {
       "path": "docs/design/README.md",

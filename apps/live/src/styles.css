@@ -475,6 +475,24 @@ a:focus-visible {
   background: var(--paper);
 }
 
+.selection-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-6);
+  border-bottom: var(--size-1) solid var(--line-2);
+  background: var(--paper-2);
+  color: var(--ink-2);
+  font-size: var(--font-caption);
+}
+
+.selection-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 .filters {
   display: flex;
   flex: 1;
@@ -1007,6 +1025,35 @@ a:focus-visible {
   background: transparent;
 }
 
+/* A long-press starts multi-select by touch (DESIGN.md §8.1.7: an
+   audio-changing gesture needs visible progress, not just a bigger target).
+   The ring grows in over the hold's own 550ms via `:active`'s transition, so
+   letting go early reverses it with no extra state. */
+.channel-card.can-multiselect .card-hit-target {
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+.channel-card.can-multiselect .card-hit-target::after {
+  content: "";
+  position: absolute;
+  inset: calc(var(--space-1) * -1);
+  z-index: 2;
+  border: var(--size-2) solid var(--ink-2);
+  border-radius: var(--radius-large);
+  opacity: 0;
+  transform: scale(0.94);
+  transition:
+    opacity 550ms linear,
+    transform 550ms linear;
+  pointer-events: none;
+}
+
+.channel-card.can-multiselect .card-hit-target:active::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
 .channel-tile,
 .status-strip {
   pointer-events: none;
@@ -1375,6 +1422,73 @@ a:focus-visible {
   align-items: center;
   gap: var(--space-5);
   padding: var(--space-5) var(--space-6) var(--space-3);
+}
+
+/* Shown only past the first monitored channel: every channel the operator is
+   currently listening to together, each with its own honest status dot. */
+.monitor-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6) 0;
+  margin: 0;
+  list-style: none;
+}
+
+.monitor-list li {
+  display: flex;
+}
+
+.monitor-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--target);
+  padding: 0 var(--space-3);
+  border: var(--size-1) solid var(--line-2);
+  border-right: 0;
+  border-radius: var(--radius-pill) 0 0 var(--radius-pill);
+  background: var(--card);
+  color: var(--ink-2);
+  font-size: var(--font-caption);
+  font-weight: 600;
+}
+
+.monitor-chip.is-primary {
+  border-color: var(--ink-2);
+  color: var(--ink);
+}
+
+.monitor-chip i {
+  width: calc(var(--space-2) - var(--size-2));
+  height: calc(var(--space-2) - var(--size-2));
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+/* The one in your ears (§3.4), per chip: only a chip actually playing pulses red. */
+.monitor-chip.playback-listening i {
+  background: var(--red);
+  animation: pulse 1.7s ease-in-out infinite;
+}
+
+.monitor-chip.playback-error i {
+  background: var(--t-out);
+}
+
+.monitor-chip-remove {
+  display: grid;
+  place-items: center;
+  width: var(--target);
+  min-height: var(--target);
+  padding: 0;
+  border: var(--size-1) solid var(--line-2);
+  border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
+  background: var(--card);
+  color: var(--muted);
+  font-size: var(--font-card);
+  line-height: 1;
 }
 
 /* The player's timeline (design system §10.4): shared window, shared
