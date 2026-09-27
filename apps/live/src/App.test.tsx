@@ -543,6 +543,55 @@ describe("Live channel grid", () => {
     ).toBeTruthy();
   });
 
+  it("makes the grid one Tab stop with arrows, Space and type-to-jump", async () => {
+    const user = userEvent.setup();
+    const setChannel = vi.fn();
+    const playbackFactory = vi.fn<PlaybackFactory>(() => ({
+      setChannel,
+      setMuted: vi.fn(async () => undefined),
+      setDimmed: vi.fn(),
+      setGainDb: vi.fn(),
+      setTrimDb: vi.fn(),
+      close: vi.fn(),
+    }));
+    renderApp(stateWith(), { audioDeviceSource: readyDevice, playbackFactory });
+    const selectButtons = screen.getAllByRole("button", { name: /^Select / });
+    // Only one card is in the tab order; the rest are reached with arrows.
+    expect(
+      selectButtons.filter((button) => button.tabIndex === 0),
+    ).toHaveLength(1);
+
+    const first = screen.getByRole("button", {
+      name: "Select Marguerite, channel 1",
+    });
+    first.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Select Talkback, channel 2" }),
+    );
+    await user.keyboard("{End}");
+    await user.keyboard("{Home}");
+    expect(document.activeElement).toBe(first);
+
+    // Typing a channel's number jumps to it; Space listens, like a tap.
+    await user.keyboard("2");
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Select Talkback, channel 2" }),
+    );
+    await user.keyboard(" ");
+    await vi.waitFor(() =>
+      expect(playbackFactory).toHaveBeenCalledWith(
+        expect.objectContaining({ channel: 1 }),
+      ),
+    );
+    // A typed name jumps too; M alone is still mute, not a search.
+    await new Promise((resolve) => setTimeout(resolve, 850));
+    await user.keyboard("m");
+    expect(
+      screen.getByRole("button", { name: "Mute", pressed: true }),
+    ).toBeTruthy();
+  });
+
   it("counts audio the node lost in the header and calls out a fresh loss", () => {
     const withDropouts = (callbacks: number, revision: number) => {
       const base = stateWith({ revision });

@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.4c789e1109457541",
-  "sourceSha256": "4c789e1109457541f6eb7ec95df190280e5e50d5bf127d02928378d4c76ca32e",
-  "inputCount": 469,
+  "buildId": "a2-0.0.0+sha256.7404a960735f44fc",
+  "sourceSha256": "7404a960735f44fc1bf0f818617f196920a7834bededd8f7e21f3f0837935d9b",
+  "inputCount": 470,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "43a71b42bac3630372567452fa94c388287771352f0d644d7b5a6f61851a8172"
+      "sha256": "2a0c6819a9280b783c4f6cb2101999ff42738409ff7bba777e8d15d9c6d5498b"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "317dfe419bc6361aa75c65242b2da2fb41b8bb6243f0646a42ff6162e4c73a49"
+      "sha256": "5abbfdbd064185032a015ee4e02e12e04c3dedcad6ff2003881412f36bcb335a"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -125,7 +125,7 @@
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
-      "sha256": "95bd814bfd8ba4063a4f75f33718618f01413f389e198b8903d1d29124b7b9e2"
+      "sha256": "f61cb9165f227e24b894f74db6eee0aa836b2fd6ca26c444332e89f98a724489"
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
@@ -793,7 +793,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "e3aa70f1b848736db69fd07d23107116985bf0f58e5218750e8c20cf3c3a7a6f"
+      "sha256": "e7ee54ac9407e59568ccd65d895e4443e5d3ca798f4d7dc15a4f78c5b5be07d1"
     },
     {
       "path": "docs/design/README.md",
@@ -1606,6 +1606,10 @@
     {
       "path": "services/audio-node/src/bin/synthetic-capture.rs",
       "sha256": "a2dd56eb200cd56b332430fe391eaad12fb07c7483a6b27d929907a7987b00c7"
+    },
+    {
+      "path": "services/audio-node/src/capture_stats.rs",
+      "sha256": "8ee1a93270a6922cdfd118259abccf7d27749f10cd15e337ea9c75134959e202"
     },
     {
       "path": "services/audio-node/src/lib.rs",

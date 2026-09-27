@@ -6,6 +6,7 @@ import {
   useState,
   useLayoutEffect,
   useSyncExternalStore,
+  type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent,
 } from "react";
 import {
@@ -428,6 +429,10 @@ export function App({
     }
   };
   const mainRef = useRef<HTMLElement>(null);
+  /** The card holding the grid's roving focus: the grid's one Tab stop. */
+  const [focusId, setFocusId] = useState<string | null>(null);
+  /** Keys typed in quick succession on the grid: a channel number or name. */
+  const typeahead = useRef({ text: "", atMs: 0 });
   const [micCheckId, setMicCheckId] = useState<string | null>(null);
   const [exceptionsOpen, setExceptionsOpen] = useState(false);
   /** Room key of the run whose turnover sheet is open. */
@@ -1224,6 +1229,102 @@ export function App({
     [groups],
   );
 
+  const gridFocusId =
+    focusId !== null && orderedChannelIds.includes(focusId)
+      ? focusId
+      : (orderedChannelIds[0] ?? null);
+
+  /** Moves the grid's focus to a channel's card and keeps it in the tab order. */
+  function focusCard(channelId: string) {
+    setFocusId(channelId);
+    mainRef.current
+      ?.querySelector<HTMLElement>(
+        `[data-channel-id="${CSS.escape(channelId)}"] [data-card-target]`,
+      )
+      ?.focus();
+  }
+
+  /**
+   * Keyboard on the grid (DESIGN.md §8.3): arrows move between cards as they
+   * sit on screen, Home and End go to the ends, and typing a channel number
+   * or the start of a name jumps to it. Space and Enter press the focused
+   * card like a tap; Escape, M and D are handled for the whole page.
+   */
+  /** Whether a number or name is still being typed (keys under 800 ms apart). */
+  const typing = () => Date.now() - typeahead.current.atMs < 800;
+
+  function onGridKeyDown(event: ReactKeyboardEvent<HTMLElement>) {
+    const target = event.target as HTMLElement;
+    if (!target.matches("[data-card-target]")) return;
+    const current =
+      target.closest<HTMLElement>("[data-channel-id]")?.dataset.channelId;
+    if (!current) return;
+    const index = orderedChannelIds.indexOf(current);
+    let next: string | undefined;
+    if (event.key === "ArrowRight") next = orderedChannelIds[index + 1];
+    else if (event.key === "ArrowLeft") next = orderedChannelIds[index - 1];
+    else if (event.key === "Home") next = orderedChannelIds[0];
+    else if (event.key === "End") next = orderedChannelIds.at(-1);
+    else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      // The card in the next row down (or up) nearest in x, as laid out.
+      const cards = [
+        ...(mainRef.current?.querySelectorAll<HTMLElement>(
+          "[data-channel-id]",
+        ) ?? []),
+      ];
+      const here = cards
+        .find((card) => card.dataset.channelId === current)
+        ?.getBoundingClientRect();
+      if (here) {
+        const down = event.key === "ArrowDown";
+        const candidates = cards
+          .map((card) => ({ card, box: card.getBoundingClientRect() }))
+          .filter(({ box }) =>
+            down ? box.top >= here.bottom - 1 : box.bottom <= here.top + 1,
+          );
+        const rowEdge = down
+          ? Math.min(...candidates.map(({ box }) => box.top))
+          : Math.max(...candidates.map(({ box }) => box.bottom));
+        const x = here.left + here.width / 2;
+        next = candidates
+          .filter(({ box }) =>
+            down ? box.top === rowEdge : box.bottom === rowEdge,
+          )
+          .sort(
+            (a, b) =>
+              Math.abs(a.box.left + a.box.width / 2 - x) -
+              Math.abs(b.box.left + b.box.width / 2 - x),
+          )[0]?.card.dataset.channelId;
+      }
+    } else if (
+      event.key.length === 1 &&
+      /[\p{L}\p{N}]/u.test(event.key) &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey &&
+      // M and D stay mute and dim unless a name is already being typed.
+      !(!typing() && /^[mdMD]$/.test(event.key))
+    ) {
+      const text =
+        (typing() ? typeahead.current.text : "") + event.key.toLowerCase();
+      const now = Date.now();
+      typeahead.current = { text, atMs: now };
+      const visible = orderedChannelIds
+        .map((id) => channels.find((channel) => channel.id === id))
+        .filter((channel): channel is LiveStateChannel => Boolean(channel));
+      next = (
+        /^\d+$/.test(text)
+          ? visible.find(({ number }) => String(number) === text)
+          : visible.find(({ name }) => name.toLowerCase().startsWith(text))
+      )?.id;
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (next === undefined) return;
+    event.preventDefault();
+    focusCard(next);
+  }
+
   /**
    * Selects a channel to monitor. A plain press replaces the selection with
    * just this one; a Shift-click (or Shift-Enter on a focused card) extends
@@ -1698,6 +1799,7 @@ export function App({
         ref={mainRef}
         className={`channel-main${gridView === "glance" ? " is-glance" : ""}`}
         onClick={clearOnBlankPress}
+        onKeyDown={onGridKeyDown}
       >
         {channels.length ? (
           <>
@@ -1745,6 +1847,7 @@ export function App({
                       key={channel.id}
                       channel={channel}
                       density={gridView === "glance" ? "glance" : "card"}
+                      tabbable={channel.id === gridFocusId}
                       alert={
                         isA1
                           ? null
@@ -1780,6 +1883,7 @@ export function App({
                         }
                       }}
                       onSelect={(event) => {
+                        setFocusId(channel.id);
                         if (isA1) {
                           setFiledReportId(null);
                           setReportError(null);

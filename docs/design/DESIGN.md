@@ -1,6 +1,6 @@
 # Pulse — design language
 
-- **Version:** 2.12.0
+- **Version:** 2.13.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
 - **Last updated:** 2026-09-27
@@ -449,10 +449,18 @@ itself** — forgetting this makes acknowledgement unpressable.
 
 ### 8.3 Keyboard
 
-Everything reachable by touch is reachable by key. Arrow keys move channel focus;
-`Space` listens, `Enter` latches, `Esc` clears; `1`–`8` press-to-listen groups;
-`M` mute, `D` dim, `R` return to live, `/` search. Focus rings are the 2px accent
-ring from [§5](#5-shape-and-elevation) and are never suppressed.
+Everything reachable by touch is reachable by key. **The grid is one Tab
+stop**: only the card holding its focus is in the tab order (then that card's
+expand button, in the card layout), so the player is a Tab away however many
+channels there are. On the grid, arrow keys move between cards as they sit on
+screen; `Home` and `End` go to the ends; **typing a channel's number or the
+start of its name jumps to it** (keys under 800 ms apart build one search).
+`Space` and `Enter` press the focused card like a tap; `Shift` and
+`Ctrl`/`Cmd` extend or toggle as with a mouse ([§8.4](#84-multi-select)).
+Anywhere: `M` mute and `D` dim (unless a name is being typed on the grid),
+`Esc` closes a sheet or clears. Groups and replay are not built yet, so their
+keys (`1`–`8`, `R`) are not claimed. Focus rings are the 2px ring from
+[§5](#5-shape-and-elevation) and are never suppressed.
 
 ### 8.4 Multi-select
 
@@ -1095,6 +1103,12 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.13.0 — 2026-09-27.** Keyboard operation ([§8.3](#83-keyboard)): the
+grid is a single Tab stop with arrow-key focus and type-to-jump by channel
+number or name, replacing the unbuilt `/` search. Reaching channel 40 of 64
+went from 89 Tab presses to about a dozen keys. Implemented in Live alongside
+this entry; not operator-validated.
 
 **2.12.0 — 2026-09-27.** Colour only means trouble
 ([§3.4](#34-domain-mapping), [§10.2](#102-status-strip)): a healthy status

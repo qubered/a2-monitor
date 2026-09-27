@@ -25,6 +25,11 @@ type ChannelCardProps = {
    * (DESIGN.md §10.1): number, name, status strip and level, no photograph.
    */
   density?: "card" | "glance";
+  /**
+   * The grid is one Tab stop (DESIGN.md §8.3): only the card holding the
+   * grid's roving focus is in the tab order; arrows move it between cards.
+   */
+  tabbable?: boolean;
   overlayExpiryMs: number;
   nowMs: number;
   selected: boolean;
@@ -153,6 +158,7 @@ export function ChannelCard({
   report = null,
   actionLabel = "Select",
   density = "card",
+  tabbable = true,
   overlayExpiryMs,
   nowMs,
   selected,
@@ -198,7 +204,8 @@ export function ChannelCard({
         {...(onLongPressSelect ? longPress.handlers : {})}
         aria-label={`${actionLabel} ${channel.name}, channel ${channel.number}`}
         aria-hidden={alerting || undefined}
-        tabIndex={alerting ? -1 : 0}
+        tabIndex={alerting || !tabbable ? -1 : 0}
+        data-card-target={alerting ? undefined : ""}
       />
 
       {density === "glance" ? (
@@ -282,6 +289,7 @@ export function ChannelCard({
             ) : null}
             <button
               className="expand-button"
+              tabIndex={tabbable ? 0 : -1}
               type="button"
               onClick={onOpenDetail}
               aria-label={`Open details for ${channel.name}`}
@@ -327,6 +335,8 @@ export function ChannelCard({
       {alert ? (
         <button
           className={`alert-overlay alert-${alert.severity}`}
+          tabIndex={tabbable ? 0 : -1}
+          data-card-target=""
           type="button"
           onClick={(event) => onAcknowledge(alert, event)}
           aria-label={`${alert.label} on ${channel.name}, channel ${channel.number}. Press to listen and acknowledge.`}
