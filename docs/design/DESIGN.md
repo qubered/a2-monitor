@@ -1,6 +1,6 @@
 # Pulse — design language
 
-- **Version:** 2.11.0
+- **Version:** 2.12.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
 - **Last updated:** 2026-09-27
@@ -125,8 +125,10 @@ diagnosis is claimed before a labelled evidence base exists.
 
 **2.9 The brand is the good state.** Pulse's signal green is not a decoration
 borrowed for the logo — it is the same colour the product uses for _verified,
-healthy_ everywhere else ([§3.3](#33-accent-roles)). The mark on the icon and
-the tick on a channel card are the same claim: this is working.
+healthy_ and _listening_ ([§3.3](#33-accent-roles)). It is spent where it says
+something: the channel in your ears, a verified check, the live meter. A
+healthy status cell is a quiet neutral tick rather than a green block — on a
+grid of sixty-four channels, colour has to mean "look here" ([§10.2](#102-status-strip)).
 
 ### 2.10 Refusals
 
@@ -208,17 +210,20 @@ construction, on-brand.
 
 | Meaning                     | Role                          | Value     |
 | --------------------------- | ----------------------------- | --------- |
-| Live — what you are hearing | `--red`                       | `#e0363d` |
+| Live — what you are hearing | `--ok` ring                   | `#4fd888` |
 | Critical fault              | `--t-out` on `--out-soft`     | `#f26f73` |
 | Needs intervention          | `--warn` on `--warn-soft`     | `#eba53a` |
-| Verified, healthy           | `--ok` on `--ok-soft`         | `#4fd888` |
+| Verified, healthy           | `--ok`; a status cell is `--muted` | `#4fd888` |
 | Stale, unknown, disarmed    | `--rep` on `--rep-soft`       | `#b6ac9a` |
 | Replay                      | `--purple` on `--purple-soft` | `#9b82e6` |
 
-Red is reserved, strictly: active, live, alerts, and here that means **the
-channel you are hearing**, and nothing else. It never appears in the wordmark,
-the icon, a chart, or any chrome that is not saying one of those two things. A
-card with a red outline is the one in your ears.
+Red is reserved, strictly, for **a critical fault**, and nothing else. It never
+appears in the wordmark, the icon, a chart, focus, a pressed control or any
+chrome. The channel in your ears carries the signal-green ring: an earlier
+version made it red, which put the same colour on "you are listening" and "this
+is failing" on one grid, against the aviation and process-control practice of
+reserving alert colours for alerts (audit
+[G5](../research/next-level-audit-2026-09.md#g5--uiux-nobody-needs-to-learn-it), P2–P4).
 
 Groups use an eight-colour avatar ramp, carried over unchanged from before.
 Group colour is identity; it never carries a state and never appears on a
@@ -341,7 +346,7 @@ lose their shadow on press; they never translate.
 quiet. Selection and focus are a **2px accent ring, offset 2px from the edge**
 — never a thicker version of the same neutral border, because a thicker
 neutral border and a normal one are too easy to confuse at a glance. Which
-accent depends on context: `--red` for the channel in your ears and for
+accent depends on context: `--ok` for the channel in your ears, `--ink` for
 keyboard focus generally, `--ink-2` for "this is the one I have open."
 
 **Controls stay pills.** Buttons, filter chips and badges keep the fully
@@ -599,7 +604,7 @@ as a shape rather than parsed as text.
 
 | Verdict        | Glyph        | Colour                    | Meaning                            |
 | -------------- | ------------ | ------------------------- | ---------------------------------- |
-| Good           | `✓` tick     | `--ok` on `--ok-soft`     | Measured, within tolerance         |
+| Good           | `✓` tick     | `--muted`, no fill        | Measured, within tolerance         |
 | Fault          | `✕` cross    | `--t-out` on `--out-soft` | Measured, wrong now                |
 | Caution        | `⚠` triangle | `--warn` on `--warn-soft` | Needs someone, not failing yet     |
 | Unknown        | `–` dash     | `--rep` on `--rep-soft`   | Stale, disarmed, or never measured |
@@ -780,8 +785,8 @@ removes the motion; the amber outline stays.
 ### 10.8 Smaller parts
 
 - **Badges** — pill, 700 weight, 11px, soft-tinted, with a dot.
-- **Buttons** — `--red` primary is reserved for the one live or destructive
-  action in view; see [§5](#5-shape-and-elevation) for shape and press behaviour.
+- **Buttons** — `--red` primary is reserved for the one destructive action in
+  view (a Manager concern; Live has none); see [§5](#5-shape-and-elevation) for shape and press behaviour.
 - **Groups** — the transport's press-to-listen buttons come from two places.
   **Show groups** are authored in Manager with the show file: principals,
   ensemble, band, radio mics. They are stable across a run and identical for
@@ -1090,6 +1095,13 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.12.0 — 2026-09-27.** Colour only means trouble
+([§3.4](#34-domain-mapping), [§10.2](#102-status-strip)): a healthy status
+cell is a neutral tick with its word and no green fill; the channel in your
+ears is ringed in signal green, not red; keyboard focus and pressed controls
+are ink. Red is left meaning a critical fault. Implemented in Live alongside
+this entry (Manager unchanged); not operator-validated.
 
 **2.11.0 — 2026-09-27.** Adds the glance view
 ([§10.1.1](#1011-glance-view)): the default grid layout sizes tiles so every

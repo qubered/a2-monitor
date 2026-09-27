@@ -33,7 +33,8 @@ button:focus-visible,
 select:focus-visible,
 input:focus-visible,
 a:focus-visible {
-  outline: var(--size-2) solid var(--red);
+  /* Red means a critical fault and nothing else (DESIGN.md §3.4); focus is ink. */
+  outline: var(--size-2) solid var(--ink);
   outline-offset: var(--space-1);
 }
 
@@ -1016,9 +1017,10 @@ a:focus-visible {
   box-shadow: var(--shadow-hover), var(--card-lit);
 }
 
-/* The one in your ears (design system §3.4): a 2px red ring offset from the edge. */
+/* The one in your ears (design system §3.3): a 2px signal ring offset from the
+   edge. Signal, not red: red on the grid is only ever a critical fault. */
 .channel-card.is-listening {
-  outline: var(--size-2) solid var(--red);
+  outline: var(--size-2) solid var(--ok);
   outline-offset: var(--size-2);
 }
 
@@ -1202,8 +1204,8 @@ a:focus-visible {
   gap: var(--space-2);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-pill);
-  background: var(--red-soft);
-  color: var(--red);
+  background: var(--ok-soft);
+  color: var(--ok);
   font-size: var(--font-badge);
   font-weight: 700;
 }
@@ -1297,9 +1299,11 @@ a:focus-visible {
   stroke-linejoin: round;
 }
 
+/* Healthy is quiet (dark cockpit): a neutral tick and its word, no fill, so
+   the only coloured cells on a grid are the ones that need someone. */
 .status-good {
-  color: var(--ok);
-  background: var(--ok-soft);
+  color: var(--muted);
+  background: transparent;
 }
 
 .status-fault {
@@ -1473,9 +1477,9 @@ a:focus-visible {
   background: var(--muted);
 }
 
-/* The one in your ears (§3.4), per chip: only a chip actually playing pulses red. */
+/* The one in your ears (§3.3), per chip: only a chip actually playing pulses. */
 .monitor-chip.playback-listening i {
-  background: var(--red);
+  background: var(--ok);
   animation: pulse 1.7s ease-in-out infinite;
 }
 
@@ -1722,8 +1726,8 @@ a:focus-visible {
 }
 
 .control-button.is-active {
-  border-color: var(--red);
-  background: var(--red);
+  border-color: var(--ink);
+  background: var(--ink);
   color: var(--card);
   box-shadow: var(--shadow-button);
 }
@@ -1750,7 +1754,7 @@ a:focus-visible {
 .volume-control input {
   width: 100%;
   min-height: var(--target);
-  accent-color: var(--red);
+  accent-color: var(--ink);
   cursor: pointer;
 }
 

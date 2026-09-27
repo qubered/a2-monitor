@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.00ae9b95dfa80c9d",
-  "sourceSha256": "00ae9b95dfa80c9d87d86e86c051f09f162fd7523bfb1daef0c140facd687393",
-  "inputCount": 465,
+  "buildId": "a2-0.0.0+sha256.92e71fc2f4c75623",
+  "sourceSha256": "92e71fc2f4c75623da3bb50fcf3cd2a53c6600ffef2372aa3fe8f9ee2f4103f7",
+  "inputCount": 466,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -244,6 +244,10 @@
       "sha256": "64aaaffa29cc0acdd652d004560a6c4903511fdbde7580669f6d6b9f60f87783"
     },
     {
+      "path": "apps/live/src/rooms.test.ts",
+      "sha256": "f63f9c976d330b3bdc91494f07f5c522cbdb82365bc1c9ceae5c3708c256cc2e"
+    },
+    {
       "path": "apps/live/src/rooms.ts",
       "sha256": "ab2ec2b9fc28fcf57176d05f4fa48465bb3f66b755a23ba00abe338a1c8bedf6"
     },
@@ -257,7 +261,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "2eb52b3eba8978215a3faa176cfd31e2a3f6f9175941a0eaf88a8d034c4375a1"
+      "sha256": "acaa47022a622d07fb851f8b60e5f071d6156196d4200ac15577cc3aabcc7963"
     },
     {
       "path": "apps/live/src/trim.ts",
@@ -785,7 +789,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "b0124dc5e75a1bd22b15b39e05b8bd4059937a2131b1eae1506ef508c2ac8dc8"
+      "sha256": "e3aa70f1b848736db69fd07d23107116985bf0f58e5218750e8c20cf3c3a7a6f"
     },
     {
       "path": "docs/design/README.md",
