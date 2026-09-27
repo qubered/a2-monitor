@@ -341,6 +341,8 @@ beforeAll(() => {
 
 beforeEach(() => {
   window.localStorage.clear();
+  // Most tests cover the card layout's content; the glance tests clear this.
+  window.localStorage.setItem("pulse-grid-view", "cards");
 });
 
 afterEach(() => {
@@ -486,6 +488,58 @@ describe("Live channel grid", () => {
     expect(screen.getByText("3 channels monitored together.")).toBeTruthy();
     // Spare has no patched input, so only the two patched channels listen.
     expect(playbackFactory).toHaveBeenCalledTimes(2);
+  });
+
+  it("opens in the glance view: tiles listen, the player opens details, and Cards is remembered", async () => {
+    window.localStorage.removeItem("pulse-grid-view");
+    const user = userEvent.setup();
+    const setChannel = vi.fn();
+    const playbackFactory = vi.fn<PlaybackFactory>(() => ({
+      setChannel,
+      setMuted: vi.fn(async () => undefined),
+      setDimmed: vi.fn(),
+      setGainDb: vi.fn(),
+      setTrimDb: vi.fn(),
+      close: vi.fn(),
+    }));
+    const { view } = renderApp(stateWith(), {
+      audioDeviceSource: readyDevice,
+      playbackFactory,
+    });
+
+    expect(
+      screen.getByRole("button", { name: "Glance", pressed: true }),
+    ).toBeTruthy();
+    expect(
+      view.container.querySelector(".channel-main.is-glance"),
+    ).toBeTruthy();
+    // No photograph and no expand button on a glance tile.
+    expect(
+      screen.queryByRole("button", { name: "Open details for Marguerite" }),
+    ).toBeNull();
+    expect(
+      screen.getByText(/Status, left to right: RF · Audio · Battery/),
+    ).toBeTruthy();
+
+    await user.click(
+      screen.getByRole("button", { name: "Select Marguerite, channel 1" }),
+    );
+    await vi.waitFor(() =>
+      expect(playbackFactory).toHaveBeenCalledWith(
+        expect.objectContaining({ channel: 0 }),
+      ),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Details for Marguerite" }),
+    );
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+    await user.keyboard("{Escape}");
+
+    await user.click(screen.getByRole("button", { name: "Cards" }));
+    expect(window.localStorage.getItem("pulse-grid-view")).toBe("cards");
+    expect(
+      screen.getByRole("button", { name: "Open details for Marguerite" }),
+    ).toBeTruthy();
   });
 
   it("marks a card with the backend alert and acknowledges it as the named operator", async () => {

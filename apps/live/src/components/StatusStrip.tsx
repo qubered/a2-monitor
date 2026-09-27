@@ -27,8 +27,15 @@ function VerdictGlyph({ verdict }: { verdict: Verdict }) {
   return <path d="m4.5 11.5 7-7" />;
 }
 
-/** The card's measured dimensions. Mic-check progress lives in the channel detail, not on the card. */
-export function StatusStrip({ statuses }: Pick<LiveStateChannel, "statuses">) {
+/**
+ * The card's measured dimensions. Mic-check progress lives in the channel detail, not on the card.
+ * `compact` (the glance tile) keeps glyph, colour and fixed position but drops the visible word,
+ * which the grid's legend and each cell's accessible name carry instead.
+ */
+export function StatusStrip({
+  statuses,
+  compact = false,
+}: Pick<LiveStateChannel, "statuses"> & { compact?: boolean }) {
   const dimensions = [
     ["rf", "RF", "RF link"],
     ["audio", "Audio", "Audio"],
@@ -36,7 +43,11 @@ export function StatusStrip({ statuses }: Pick<LiveStateChannel, "statuses">) {
   ] as const;
 
   return (
-    <div className="status-strip" role="group" aria-label="Status by dimension">
+    <div
+      className={`status-strip${compact ? " is-compact" : ""}`}
+      role="group"
+      aria-label="Status by dimension"
+    >
       {dimensions.map(([key, label, accessibleLabel]) => {
         const verdict = statuses[key];
         return (
@@ -48,7 +59,7 @@ export function StatusStrip({ statuses }: Pick<LiveStateChannel, "statuses">) {
             <svg aria-hidden="true" viewBox="0 0 16 16">
               <VerdictGlyph verdict={verdict} />
             </svg>
-            <span>{label}</span>
+            {compact ? null : <span>{label}</span>}
             <span className="sr-only">
               {accessibleLabel}: {verdictLabels[verdict]}
             </span>

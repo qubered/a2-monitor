@@ -56,6 +56,8 @@ type PlayerProps = {
   alertMarks?: readonly LiveAlert[];
   nowMs: number;
   onExpandedChange?: (expanded: boolean) => void;
+  /** Opens the followed channel's detail; the glance tile has no expand button. */
+  onOpenDetail?: () => void;
   onToggleMute: () => void;
   onToggleDim: () => void;
   onGainChange: (gainDb: number) => void;
@@ -110,6 +112,7 @@ export function Player({
   alertMarks = [],
   nowMs,
   onExpandedChange,
+  onOpenDetail,
   onToggleMute,
   onToggleDim,
   onGainChange,
@@ -396,6 +399,16 @@ export function Player({
           <span className="output-level">
             {muted ? "−∞" : gainLabel.replace("-", "−")} dB
           </span>
+          {onOpenDetail ? (
+            <button
+              type="button"
+              className="control-button"
+              onClick={onOpenDetail}
+              aria-label={`Details for ${channel?.name ?? "this channel"}`}
+            >
+              Details
+            </button>
+          ) : null}
           <button
             type="button"
             className={`control-button ${expanded ? "is-active" : ""}`}

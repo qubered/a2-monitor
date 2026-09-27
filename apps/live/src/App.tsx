@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useLayoutEffect,
   useSyncExternalStore,
   type MouseEvent,
 } from "react";
@@ -78,6 +79,7 @@ import {
   type OutputDestination,
 } from "./host-output";
 import { MeterStore } from "./meters";
+import { fitGlance } from "./glance-layout";
 import {
   categoryIdInRoom,
   effectiveRoom,
@@ -405,6 +407,25 @@ export function App({
    * every following tap into a toggle instead of a plain select. */
   const [touchSelecting, setTouchSelecting] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  /** Glance fits every channel on one screen; cards are the photo layout. Per device. */
+  const [gridView, setGridView] = useState<"glance" | "cards">(() => {
+    try {
+      return window.localStorage.getItem("pulse-grid-view") === "cards"
+        ? "cards"
+        : "glance";
+    } catch {
+      return "glance";
+    }
+  });
+  const chooseGridView = (next: "glance" | "cards") => {
+    setGridView(next);
+    try {
+      window.localStorage.setItem("pulse-grid-view", next);
+    } catch {
+      // The layout is a per-device convenience.
+    }
+  };
+  const mainRef = useRef<HTMLElement>(null);
   const [micCheckId, setMicCheckId] = useState<string | null>(null);
   const [exceptionsOpen, setExceptionsOpen] = useState(false);
   /** Room key of the run whose turnover sheet is open. */
@@ -1120,6 +1141,64 @@ export function App({
     () => groupChannels(visibleChannels, rooms, room),
     [visibleChannels, rooms, room],
   );
+  // Glance view: size tiles so every channel in view fits between the top of
+  // the grid and the player, never below a touch target (then it scrolls).
+  const groupShape = groups
+    .map((group) => `${group.title ? 1 : 0}:${group.channels.length}`)
+    .join(",");
+  const fitGlanceGrid = useRef<() => void>(() => undefined);
+  function fitGrid() {
+    const main = mainRef.current;
+    if (gridView !== "glance" || !main) return;
+    const shape = groupShape
+      .split(",")
+      .filter(Boolean)
+      .map((entry) => {
+        const [titled, count] = entry.split(":");
+        return { titled: titled === "1", count: Number(count) };
+      });
+    const style = getComputedStyle(main);
+    const paddingX =
+      Number.parseFloat(style.paddingLeft) +
+      Number.parseFloat(style.paddingRight);
+    const firstGroup = main.querySelector(".channel-group");
+    const top =
+      (firstGroup ?? main).getBoundingClientRect().top + window.scrollY;
+    const player =
+      document.querySelector(".player")?.getBoundingClientRect().height ?? 0;
+    const fit = fitGlance({
+      width: main.clientWidth - paddingX,
+      height:
+        window.innerHeight -
+        top -
+        player -
+        Number.parseFloat(style.paddingBottom),
+      groups: shape,
+    });
+    main.style.setProperty("--glance-columns", String(fit.columns));
+    main.style.setProperty("--glance-tile-height", `${fit.tileHeight}px`);
+    // Tall enough for a second line: the alert's name under the channel's.
+    main.toggleAttribute("data-glance-roomy", fit.tileHeight >= 64);
+  }
+  // After every render: a notice or bar appearing above the grid moves it.
+  useLayoutEffect(() => {
+    fitGlanceGrid.current = fitGrid;
+    fitGrid();
+  });
+  useEffect(() => {
+    const apply = () => fitGlanceGrid.current();
+    window.addEventListener("resize", apply);
+    const player = document.querySelector(".player");
+    const observer =
+      typeof ResizeObserver === "undefined" || !player
+        ? null
+        : new ResizeObserver(apply);
+    if (player) observer?.observe(player);
+    return () => {
+      window.removeEventListener("resize", apply);
+      observer?.disconnect();
+    };
+  }, []);
 
   /** Every visible channel in on-screen order, for Shift range-select. */
   const orderedChannelIds = useMemo(
@@ -1518,6 +1597,23 @@ export function App({
             active={filter}
             onChoose={setFilter}
           />
+          <div className="view-switch" role="group" aria-label="Layout">
+            {(
+              [
+                ["glance", "Glance"],
+                ["cards", "Cards"],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={gridView === key}
+                onClick={() => chooseGridView(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       ) : null}
 
@@ -1552,7 +1648,11 @@ export function App({
         />
       ) : null}
 
-      <main className="channel-main" onClick={clearOnBlankPress}>
+      <main
+        ref={mainRef}
+        className={`channel-main${gridView === "glance" ? " is-glance" : ""}`}
+        onClick={clearOnBlankPress}
+      >
         {channels.length ? (
           <>
             {isA1 ? (
@@ -1577,6 +1677,11 @@ export function App({
                 ) : null}
               </>
             )}
+            {gridView === "glance" ? (
+              <p className="strip-legend" aria-hidden="true">
+                Status, left to right: RF · Audio · Battery
+              </p>
+            ) : null}
             {groups.map((group) => (
               <section
                 className="channel-group"
@@ -1593,6 +1698,7 @@ export function App({
                     <ChannelCard
                       key={channel.id}
                       channel={channel}
+                      density={gridView === "glance" ? "glance" : "card"}
                       alert={
                         isA1
                           ? null
@@ -1678,6 +1784,11 @@ export function App({
       ) : (
         <Player
           channel={selectedChannel}
+          onOpenDetail={
+            gridView === "glance" && selectedChannel
+              ? () => setDetailId(selectedChannel.id)
+              : undefined
+          }
           monitoredChannels={selectedChannels}
           playbackByChannel={playbackByChannel}
           onSelectPrimary={

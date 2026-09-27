@@ -20,6 +20,11 @@ type ChannelCardProps = {
   report?: CardReportState | null;
   /** The card's one action: select on the A2 grid, report on the A1 grid. */
   actionLabel?: string;
+  /**
+   * `glance` is the dense tile that lets a whole show fit one screen
+   * (DESIGN.md §10.1): number, name, status strip and level, no photograph.
+   */
+  density?: "card" | "glance";
   overlayExpiryMs: number;
   nowMs: number;
   selected: boolean;
@@ -147,6 +152,7 @@ export function ChannelCard({
   alert,
   report = null,
   actionLabel = "Select",
+  density = "card",
   overlayExpiryMs,
   nowMs,
   selected,
@@ -173,6 +179,7 @@ export function ChannelCard({
     report && report.unclaimed > 0 ? "is-reported" : "",
     channel.session?.inUse === false ? "is-idle" : "",
     onLongPressSelect ? "can-multiselect" : "",
+    density === "glance" ? "is-glance" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -194,98 +201,128 @@ export function ChannelCard({
         tabIndex={alerting ? -1 : 0}
       />
 
-      <div className="channel-tile">
-        <div className={`channel-photo ${channel.hasImage ? "has-photo" : ""}`}>
-          {channel.hasImage ? (
-            <img
-              src={`/api/v1/channels/${encodeURIComponent(channel.id)}/image?revision=${imageRevision}`}
-              alt=""
-              loading="lazy"
-              decoding="async"
-            />
-          ) : channel.micType === "handheld" ||
-            channel.micType === "beltpack" ? (
-            <span className="photo-fallback">
-              <MicTypeIcon micType={channel.micType} />
-              <span className="sr-only">
-                {channel.micTypeSource === "inferred"
-                  ? `Likely ${channel.micType}`
-                  : channel.micType === "handheld"
-                    ? "Handheld"
-                    : "Beltpack"}
-              </span>
+      {density === "glance" ? (
+        <div className="glance-tile">
+          <div className="glance-head">
+            <span className="channel-number">
+              {String(channel.number).padStart(2, "0")}
             </span>
-          ) : (
-            <span className="photo-missing">Photo not added</span>
-          )}
-          <span className="channel-number">
-            {String(channel.number).padStart(2, "0")}
-          </span>
-          {report ? (
+            <h2 title={channel.name}>{channel.name}</h2>
+          </div>
+          {alert ? (
             <span
-              className={`report-badge ${report.unclaimed > 0 ? "is-unclaimed" : ""}`}
+              className={`alert-band glance-band alert-${alert.severity}`}
+              aria-hidden="true"
             >
-              {report.unclaimed > 0
-                ? report.unclaimed > 1
-                  ? `Reported · ${report.unclaimed}`
-                  : "Reported"
-                : report.awaitingConfirmation
-                  ? "Fixed · A1 to confirm"
-                  : `Being worked · ${report.claimedBy ?? "A2"}`}
+              <strong>{alert.label}</strong>
+            </span>
+          ) : report && report.unclaimed > 0 ? (
+            <span className="report-badge glance-badge is-unclaimed">
+              Reported
             </span>
           ) : null}
-          {listening ? (
-            <span className="listening-badge">
-              <i aria-hidden="true" /> Listening
-            </span>
-          ) : selected ? (
-            <span className="selected-badge">
-              <i aria-hidden="true" /> Selected
-            </span>
-          ) : null}
-          <button
-            className="expand-button"
-            type="button"
-            onClick={onOpenDetail}
-            aria-label={`Open details for ${channel.name}`}
-          >
-            <ExpandIcon />
-          </button>
           <MeterTrace
             store={meterStore}
             input={channel.input.index}
             stale={metersStale}
+            className="glance-trace"
           />
-          {alert ? (
-            <span
-              className={`alert-band alert-${alert.severity}`}
-              aria-hidden="true"
+        </div>
+      ) : (
+        <div className="channel-tile">
+          <div
+            className={`channel-photo ${channel.hasImage ? "has-photo" : ""}`}
+          >
+            {channel.hasImage ? (
+              <img
+                src={`/api/v1/channels/${encodeURIComponent(channel.id)}/image?revision=${imageRevision}`}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+            ) : channel.micType === "handheld" ||
+              channel.micType === "beltpack" ? (
+              <span className="photo-fallback">
+                <MicTypeIcon micType={channel.micType} />
+                <span className="sr-only">
+                  {channel.micTypeSource === "inferred"
+                    ? `Likely ${channel.micType}`
+                    : channel.micType === "handheld"
+                      ? "Handheld"
+                      : "Beltpack"}
+                </span>
+              </span>
+            ) : (
+              <span className="photo-missing">Photo not added</span>
+            )}
+            <span className="channel-number">
+              {String(channel.number).padStart(2, "0")}
+            </span>
+            {report ? (
+              <span
+                className={`report-badge ${report.unclaimed > 0 ? "is-unclaimed" : ""}`}
+              >
+                {report.unclaimed > 0
+                  ? report.unclaimed > 1
+                    ? `Reported · ${report.unclaimed}`
+                    : "Reported"
+                  : report.awaitingConfirmation
+                    ? "Fixed · A1 to confirm"
+                    : `Being worked · ${report.claimedBy ?? "A2"}`}
+              </span>
+            ) : null}
+            {listening ? (
+              <span className="listening-badge">
+                <i aria-hidden="true" /> Listening
+              </span>
+            ) : selected ? (
+              <span className="selected-badge">
+                <i aria-hidden="true" /> Selected
+              </span>
+            ) : null}
+            <button
+              className="expand-button"
+              type="button"
+              onClick={onOpenDetail}
+              aria-label={`Open details for ${channel.name}`}
             >
-              <AlertIcon dimension={alert.dimension} />
-              <strong>{alert.label}</strong>
-              <span>Press to listen</span>
-              {remaining !== null ? (
-                <span
-                  className="alert-expiry"
-                  style={{ "--expiry-remaining": remaining } as CSSProperties}
-                />
-              ) : null}
-            </span>
-          ) : null}
-        </div>
+              <ExpandIcon />
+            </button>
+            <MeterTrace
+              store={meterStore}
+              input={channel.input.index}
+              stale={metersStale}
+            />
+            {alert ? (
+              <span
+                className={`alert-band alert-${alert.severity}`}
+                aria-hidden="true"
+              >
+                <AlertIcon dimension={alert.dimension} />
+                <strong>{alert.label}</strong>
+                <span>Press to listen</span>
+                {remaining !== null ? (
+                  <span
+                    className="alert-expiry"
+                    style={{ "--expiry-remaining": remaining } as CSSProperties}
+                  />
+                ) : null}
+              </span>
+            ) : null}
+          </div>
 
-        <div className="channel-identity">
-          <h2>{channel.name}</h2>
-          <p>{secondaryLine(channel)}</p>
-          {channel.trimDb ? (
-            <span className="trim-badge mono">
-              Trim {formatTrim(channel.trimDb)} dB
-            </span>
-          ) : null}
+          <div className="channel-identity">
+            <h2>{channel.name}</h2>
+            <p>{secondaryLine(channel)}</p>
+            {channel.trimDb ? (
+              <span className="trim-badge mono">
+                Trim {formatTrim(channel.trimDb)} dB
+              </span>
+            ) : null}
+          </div>
         </div>
-      </div>
-
-      <StatusStrip statuses={channel.statuses} />
+      )}
+      <StatusStrip statuses={channel.statuses} compact={density === "glance"} />
 
       {alert ? (
         <button

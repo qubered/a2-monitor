@@ -1,6 +1,6 @@
 # Pulse — design language
 
-- **Version:** 2.10.0
+- **Version:** 2.11.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
 - **Last updated:** 2026-09-27
@@ -559,6 +559,38 @@ The card carries **no sentence** and no acknowledged-alert row. The status strip
 already names what is wrong, and a row repeating it cost more height than it
 earned.
 
+### 10.1.1 Glance view
+
+The card above is right for a show that fits the screen and wrong for one that
+doesn't: at 64 channels an iPad showed 8 photographs and a phone 4, so "is
+anything wrong, and on whom" needed five screens of scrolling (audit
+[G1](../research/next-level-audit-2026-09.md#g1--what-ships-today-audited)).
+So the grid has two layouts, chosen per device with a **Glance · Cards**
+switch at the end of the filter row. **Glance is the default.**
+
+- **Every channel in view fits the space above the player.** The grid picks
+  the column count and tile height that fit them all, keeping tiles as wide as
+  that allows. A tile never drops below 48 px tall or 72 px wide; below that
+  the grid scrolls instead (a phone at 64 channels shows about 28 per screen).
+  Showfile order never changes.
+- **A tile is the card, reduced:** channel number and name on one line, the
+  status strip below it, the 10-second trace as a thin line along the bottom
+  edge. No photograph. Names truncate at small tile widths; the number and
+  the tile's place are what identify it then, and the accessible name is
+  always complete.
+- **The strip keeps glyph, colour and position but drops its words**, which
+  would not fit. One line above the grid names the cells — _Status, left to
+  right: RF · Audio · Battery_ — and every cell keeps its accessible
+  description. This is a narrow, deliberate exception to "every state carries
+  a word" ([§2.4](#2-principles)): the word is on screen once, not per cell.
+- **An alert rings and tints the whole tile** in its severity colour; its name
+  gets a second line only when tiles are tall enough, and otherwise lives in
+  the tile's accessible name and the exceptions sheet.
+- **One target.** The whole tile listens ([§8.2](#82-card-targets)); there is
+  no expand button at this size. The player's **Details** button opens the
+  detail of the channel it follows.
+- **Cards** is the layout above, unchanged, for anyone who wants faces.
+
 ### 10.2 Status strip
 
 The thing an operator reads first after the face. One cell per dimension that can
@@ -1058,6 +1090,13 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.11.0 — 2026-09-27.** Adds the glance view
+([§10.1.1](#1011-glance-view)): the default grid layout sizes tiles so every
+channel in view fits one screen, with the photo card kept as the **Cards**
+option. Glance tiles carry the strip's words once, above the grid, instead of
+per cell, and open detail from the player. Implemented in Live alongside this
+entry; not operator-validated.
 
 **2.10.0 — 2026-09-27.** Pressing a ringing card now listens to it as well
 as acknowledging it ([§10.3](#103-alert-overlay)); the band reads `Press to
