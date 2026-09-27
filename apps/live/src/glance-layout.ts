@@ -13,6 +13,8 @@ export type GlanceFitInput = {
   minTileWidth?: number;
   minTileHeight?: number;
   maxTileHeight?: number;
+  /** Past this width a tile only stretches its strip; more columns are fine. */
+  maxTileWidth?: number;
   gap?: number;
   headingHeight?: number;
   groupGap?: number;
@@ -28,6 +30,7 @@ export type GlanceFit = {
 export const GLANCE_MIN_TILE_WIDTH = 72;
 export const GLANCE_MIN_TILE_HEIGHT = 48;
 export const GLANCE_MAX_TILE_HEIGHT = 96;
+export const GLANCE_MAX_TILE_WIDTH = 200;
 
 export function fitGlance({
   width,
@@ -36,6 +39,7 @@ export function fitGlance({
   minTileWidth = GLANCE_MIN_TILE_WIDTH,
   minTileHeight = GLANCE_MIN_TILE_HEIGHT,
   maxTileHeight = GLANCE_MAX_TILE_HEIGHT,
+  maxTileWidth = GLANCE_MAX_TILE_WIDTH,
   gap = 8,
   headingHeight = 26,
   groupGap = 12,
@@ -58,19 +62,22 @@ export function fitGlance({
     return (height - fixed) / rows;
   };
   // The tallest tile any column count reaches, capped; then the fewest
-  // columns (widest tiles, longest names) that still reach it.
+  // columns (widest tiles, longest names) that still reach it, but not so few
+  // that tiles grow past the width a name and a strip can use.
   let best = -Infinity;
   for (let columns = 1; columns <= maxColumns; columns += 1) {
     best = Math.max(best, tileHeightFor(columns));
   }
   const target = Math.min(best, maxTileHeight);
-  let columns = maxColumns;
-  for (let candidate = 1; candidate <= maxColumns; candidate += 1) {
-    if (tileHeightFor(candidate) >= target - 0.5) {
-      columns = candidate;
-      break;
-    }
-  }
+  const tileWidthFor = (columns: number) =>
+    (width - (columns - 1) * gap) / columns;
+  const reaching = Array.from({ length: maxColumns }, (_, i) => i + 1).filter(
+    (candidate) => tileHeightFor(candidate) >= target - 0.5,
+  );
+  const columns =
+    reaching.find((candidate) => tileWidthFor(candidate) <= maxTileWidth) ??
+    reaching.at(-1) ??
+    maxColumns;
   const raw = Math.min(tileHeightFor(columns), maxTileHeight);
   return {
     columns,

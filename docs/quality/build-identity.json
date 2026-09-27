@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.c0a1861e2e4e6296",
-  "sourceSha256": "c0a1861e2e4e6296370d09acc1334d2bb5984f6ea460c5d11bd78770274dc18e",
-  "inputCount": 463,
+  "buildId": "a2-0.0.0+sha256.00ae9b95dfa80c9d",
+  "sourceSha256": "00ae9b95dfa80c9d87d86e86c051f09f162fd7523bfb1daef0c140facd687393",
+  "inputCount": 465,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "63752cb43e2a3a200c591da0cab4e6488e8102c861ad879ea040d59c5cc4e045"
+      "sha256": "3486b1321d1f1a9a60ba6bd1edf5cfebea9c673e9ade3f0e5bba3c35793974fb"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "1dfdc6de79f420fc6d23ae826bf059158c7a2db7c5b2890d0d0b39c6e0468f52"
+      "sha256": "10dcd3a3f270a2b2791cdb31a80b7f6104072adca8642ea6ddf4c35f5fd6d665"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -177,7 +177,7 @@
     },
     {
       "path": "apps/live/src/components/SelectionBar.tsx",
-      "sha256": "d72d698da241217b3b40061010d03ee8781eab23f9c4023df31dae6d2da65ae0"
+      "sha256": "9780027bdce925855401684e8d97d039af1d3536ad0bab502851cb57d8162ddc"
     },
     {
       "path": "apps/live/src/components/SessionBar.tsx",
@@ -202,6 +202,14 @@
     {
       "path": "apps/live/src/filter-fit.ts",
       "sha256": "85b42b76aee4cfb18edd1cfb3d3f1870b81d518704fe85594e7609ad11a18238"
+    },
+    {
+      "path": "apps/live/src/glance-layout.test.ts",
+      "sha256": "4780f85b97693fecb0f6f1f422877418146c87c1e78e35d1b2b894be2344b502"
+    },
+    {
+      "path": "apps/live/src/glance-layout.ts",
+      "sha256": "782c5a46c23acbf47a42a18dc4de3dfa8e7021bd95a439e86e12dc0798136300"
     },
     {
       "path": "apps/live/src/host-output.ts",
@@ -237,7 +245,7 @@
     },
     {
       "path": "apps/live/src/rooms.ts",
-      "sha256": "e496d7c104972745fce945e44528fa2a13bdf8d40acd643de744b7fdbde85043"
+      "sha256": "ab2ec2b9fc28fcf57176d05f4fa48465bb3f66b755a23ba00abe338a1c8bedf6"
     },
     {
       "path": "apps/live/src/sessions.test.ts",
@@ -249,7 +257,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "a954c828a687d14eac16ff5900378b6c41958dd0720094d3f4371d4b8af8b11d"
+      "sha256": "2eb52b3eba8978215a3faa176cfd31e2a3f6f9175941a0eaf88a8d034c4375a1"
     },
     {
       "path": "apps/live/src/trim.ts",

@@ -20,15 +20,16 @@ describe("fitGlance", () => {
     expect(rows * fit.tileHeight).toBeLessThanOrEqual(460);
   });
 
-  it("prefers wide tiles once the height cap is reached", () => {
+  it("prefers wide tiles once the height cap is reached, up to a width", () => {
     const fit = fitGlance({
       width: 1400,
       height: 800,
       groups: [{ count: 8, titled: false }],
     });
-    // One column would be 94 px tall; two reach the 96 px cap.
+    // Every count from two columns reaches the 96 px cap; seven is the
+    // fewest that keeps tiles within 200 px.
     expect(fit.tileHeight).toBe(96);
-    expect(fit.columns).toBe(2);
+    expect(fit.columns).toBe(7);
   });
 
   it("never goes below a touch target; it scrolls instead", () => {
