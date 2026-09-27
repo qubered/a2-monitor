@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.27dc868be83467d2",
-  "sourceSha256": "27dc868be83467d28dcd3de4ec42cb707c160063529ac6b846f2eb8e6be58988",
+  "buildId": "a2-0.0.0+sha256.f074a40717f53694",
+  "sourceSha256": "f074a40717f53694f8e1a23664fad524a9dfdc8e3e46203bd71619d812006f9e",
   "inputCount": 470,
   "inputs": [
     {
@@ -1041,7 +1041,7 @@
     },
     {
       "path": "docs/research/next-level-audit-2026-09.md",
-      "sha256": "f6a82c930b08efbd9ade32d90af0250133cc7682ce077f85450adfa7d9a2fead"
+      "sha256": "475d49322e5947f893760f59834974b4f446ee6e2fad8f621d1f3471782884c0"
     },
     {
       "path": "docs/research/technology-stack-selection.md",

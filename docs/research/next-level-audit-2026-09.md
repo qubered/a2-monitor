@@ -784,7 +784,7 @@ current card layout as an option alongside the glance view.
 | Opus 2.5/5 ms frames | Measured: no clean gain, worse under loss, more CPU (G4). |
 | L16/PCM, custom AudioWorklet jitter buffer, WebTransport | L16 not offered by Chromium; a custom path re-opens ADR 0021's problems to chase ~20–35 ms that NetEq uses on a clean path. Item 1 removes the big delay for free. |
 | `jitterBufferTarget` tuning | Measured: no effect in Chromium. |
-| Multi-select as one node-side mix | Real problems (N sessions, unaligned, 32-session cap), but multi-select is new and unvalidated. **Your call:** convert (M) or cut. |
+| ~~Multi-select as one node-side mix~~ | Decided 2026-09-27: convert. Built in Phase C (below). |
 | Replay / listen-back | The feature WAVETOOL users quote and the strongest next candidate — but it is a mode, a storage policy and a surface. Next pass. |
 | Opus RED for Wi-Fi | Promising (Chromium offers it); needs str0m support checked and a measurement first. |
 | Chat, voice notes, reactions | Competitors have them; comms is the authoritative urgent path. Fails "no feature because a competitor has it". |
@@ -802,7 +802,8 @@ current card layout as an option alongside the glance view.
 
 1. ~~Approve (or cut) the shortlist.~~ Decided 2026-09-27 (above). Items 2,
    4 and 6 update DESIGN.md in the same slice as the change.
-2. **Multi-select:** convert to one node-side mix, or cut it?
+2. ~~**Multi-select:** convert to one node-side mix, or cut it?~~ Decided
+   2026-09-27: one mixed stream. Built (Phase C).
 3. **Hardware for the physical capture-to-ear test:** which Mac or Windows
    host and interface (DVS or USB), which client devices (iPad model, an
    Android phone, a laptop), and which access point. Until then every G4
@@ -828,6 +829,7 @@ not user tests.
 | 8 Send what changed, not the whole show | Built | `4989448` |
 | 9 Surface capture overruns | Built | `7b701fb` |
 | 10 Full keyboard operation | Built | `5ef2436` |
+| Multi-select as one node-side mix (decision 2) | Built | `eee3f19` |
 
 ### Zero-training walk, before and after
 
@@ -847,4 +849,33 @@ not user tests.
 **New gap, T7.** Removing the single-selection bar (item 5) also removed the
 only visible stop control. Mute silences in one touch, and Esc or a press on
 empty space stops, but nothing on screen says "stop". Proposal, not built: a
-*Stop* button in the player beside Mute while something is playing. Your call.
+*Stop* button in the player beside Mute while something is playing.
+Decided 2026-09-27: not needed; no Stop button.
+
+### Multi-select as one mixed stream
+
+Live now keeps one listen session per device. Selecting, adding, removing or
+re-trimming a channel sends the whole selection to the node, which sums the
+inputs sample-aligned, each at its trim and scaled by 1/√n, and crossfades
+the change. Checked in the built Live against the harness's click capture
+(input 1: 2 kHz bursts; input 2: 1 kHz tone), Chromium driving the real UI
+(click, Ctrl-click), sink analysed per phase:
+
+| Phase | 1 kHz (input 2) | 2 kHz (input 1) | Signalling |
+| --- | --- | --- | --- |
+| Input 1 selected | −117 dB (absent) | present, peak 0.50 | 1 POST `{sources:[in 1]}` |
+| Ctrl-add input 2 | −21.1 dB | present | PUT `…/sources` `[in 1, in 2]` |
+| Ctrl-remove input 1 | −18.1 dB (+3 dB: now alone) | −113 dB (absent) | PUT `…/sources` `[in 2]` |
+
+One `RTCPeerConnection` for the whole run. Burst latency (bursts on input 1,
+input 2 silent, 60 s per phase, same onset method as G4):
+
+| Run | Input 1 alone | Inputs 1+2 mixed | Input 1 alone again |
+| --- | --- | --- | --- |
+| 1 | p50 83.8 / p95 94.8 ms | p50 103.4 / p95 117.5 ms | — |
+| 2 | p50 104.6 / p95 115.2 ms | p50 101.9 / p95 106.4 ms | p50 101.4 / p95 106.1 ms |
+
+Single-input p50 moves 84–105 ms between runs; the mix sits inside that
+spread. Mixing adds no measurable latency. The mix happens in the block
+already being encoded. The check was a scratch script, not committed; it
+reuses `click-capture.mjs` and the `run.mjs` onset detector.
