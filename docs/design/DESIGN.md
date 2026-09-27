@@ -1,9 +1,9 @@
 # Pulse — design language
 
-- **Version:** 2.9.0
+- **Version:** 2.10.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
-- **Last updated:** 2026-09-25
+- **Last updated:** 2026-09-27
 
 This is the whole design language in one document. It is normative: where it and
 anything else disagree, this document is the intent, and the implementation is
@@ -610,17 +610,19 @@ glow is a second cue, never the only one, and reduced motion removes the
 movement.
 
 **It names the problem and nothing else.** One icon, two words — _Low RF_, _No
-audio_, _Low battery_ — and `Press to acknowledge`. No explanation, no timestamp,
+audio_, _Low battery_ — and `Press to listen`. No explanation, no timestamp,
 no diagnosis, no action list. The operator troubleshoots; the product's job is to
 say which channel and which kind, fast, from across a wing. The words wrap
 rather than truncate; at phone width the icon drops so they fit.
 
 Behaviour:
 
-1. **Pressing the card acknowledges it, and nothing else.** There is no
-   Acknowledge button. The first press clears the alert and returns the card to
-   normal, so a **second press listens** — the same press that listens to any
-   other channel. One gesture, one consequence.
+1. **Pressing the card listens to it and acknowledges it.** There is no
+   Acknowledge button. The card that is ringing is the one the operator needs
+   to hear, so one press does both: the alert clears, the card returns to
+   normal, and its audio plays — hearing it is how someone shows they are on
+   it. A press never takes a channel out of what is already playing. On the
+   A1 view there is no overlay (§11.2).
 2. **The overlay expires; the alert does not** — except at critical, which does
    not expire at all. A critical alert (audio loss, RF loss) holds the card until
    somebody acknowledges it: a show-stopping fault that nobody has seen is
@@ -1056,6 +1058,14 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.10.0 — 2026-09-27.** Pressing a ringing card now listens to it as well
+as acknowledging it ([§10.3](#103-alert-overlay)); the band reads `Press to
+listen`. Previously the first press only acknowledged and a second listened,
+which made the ringing card the slowest one to hear and, in a zero-training
+walk, swallowed a tap meant to listen (audit
+[G5](../research/next-level-audit-2026-09.md#g5--uiux-nobody-needs-to-learn-it)).
+Implemented in Live alongside this entry; not operator-validated.
 
 **2.9.0 — 2026-09-25.** Adds multi-select ([§8.4](#84-multi-select)): Shift or
 Ctrl/Cmd-click on a computer, a long-press then tap on touch, to monitor

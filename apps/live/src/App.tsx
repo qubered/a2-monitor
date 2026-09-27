@@ -1616,7 +1616,17 @@ export function App({
                         (liveState !== null &&
                           liveState.node.status !== "ready")
                       }
-                      onAcknowledge={(alert) => void acknowledge(alert)}
+                      onAcknowledge={(alert, event) => {
+                        void acknowledge(alert);
+                        // The ringing card is the one to hear. Pressing it
+                        // never takes a channel out of what is playing.
+                        if (!effectiveSelectedIds.includes(channel.id)) {
+                          selectChannel(channel, {
+                            extend: event.shiftKey,
+                            toggle: event.ctrlKey || event.metaKey,
+                          });
+                        }
+                      }}
                       onSelect={(event) => {
                         if (isA1) {
                           setFiledReportId(null);

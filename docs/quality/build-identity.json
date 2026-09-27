@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.594f7c372f58cf63",
-  "sourceSha256": "594f7c372f58cf63f5eaa7e7279d8bc00b316ec5e2d4608bb318a96ac004494e",
-  "inputCount": 457,
+  "buildId": "a2-0.0.0+sha256.2a85b99a5971b711",
+  "sourceSha256": "2a85b99a5971b7113a32fe80018478bac385503a0784edae0b917ca06e041e38",
+  "inputCount": 463,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "d959d56b00587bdda20d6d854a90a4ddb7f77bd4b880c7464f456631592bdb1b"
+      "sha256": "25455bb8f33ebe818212eb7c47735121aad815bf199f69fb681c35f0cfb26e90"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "fdce6b65f452d06e680ab3de580e7fe80bebe3cbd8d09445732faeebf9a6da50"
+      "sha256": "01ec3af437840379d1cb15927028f29be6f446af0e4a56cdd549d6c22db198e0"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -125,7 +125,7 @@
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
-      "sha256": "38e61865e75015a9c6f44b6b3ba6e3464e52cac1e797bd366097c764ab7bbde4"
+      "sha256": "0bf487c0347907e9f1a5c15e52fa3827c39fdfd5cf3f02f9f3c8e3f553f2ef82"
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
@@ -777,7 +777,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "56f7feeeec0528bd1f56cd760e474371679ddc6dee1e47c4f1e92e60d02f81d6"
+      "sha256": "3db243ab4afc62aee693affb477d8b676df3ce60adda2e90b863db5139822e70"
     },
     {
       "path": "docs/design/README.md",
@@ -966,6 +966,30 @@
     {
       "path": "docs/research/next-level-audit-2026-09-data/G-debug.json",
       "sha256": "0ec084094f898f6ed7f0a999864f03b27bbf668ea85a9db1df2ced3717272f76"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/L-live-1.json",
+      "sha256": "1eb57981cacd93ebb8201a9f523edae6b9eada6f445071fa0d9b34d8fbbb5264"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/L-live-2.json",
+      "sha256": "3fce7923e3650e3e43a348ac7ebcd5f5286643cfd5de9d03ca20b0d38b2d89da"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/L-live-3.json",
+      "sha256": "7f421ad5c2336dea00ad0898b1c4b929a3892b2b77bd1eb03bca4eb33ecfa094"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/L-live-4.json",
+      "sha256": "8d4a30d1dac2799453b147ba007461c1cebe297a1e91e7c0cf30df7193fa28c6"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/L-live-5.json",
+      "sha256": "d4159f880f66573d592e71d972556b31f09b71e46e9b6007e654cb6f938c2c63"
+    },
+    {
+      "path": "docs/research/next-level-audit-2026-09-data/L-live-6.json",
+      "sha256": "2843483f32c348641bb9f8dd78f66cbc4a1666d4732f659a201e1db8cc8bec23"
     },
     {
       "path": "docs/research/next-level-audit-2026-09-data/P10.json",

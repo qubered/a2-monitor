@@ -522,7 +522,7 @@ describe("Live channel grid", () => {
     expect(bell.classList.contains("is-pulsing")).toBe(true);
     await user.click(
       screen.getByRole("button", {
-        name: "Battery critical on Marguerite, channel 1. Press to acknowledge.",
+        name: "Battery critical on Marguerite, channel 1. Press to listen and acknowledge.",
       }),
     );
 
@@ -540,13 +540,14 @@ describe("Live channel grid", () => {
     expect(seen.classList.contains("is-pulsing")).toBe(false);
     expect(alertedCard.classList.contains("is-critical-alert")).toBe(false);
     expect(
-      screen.queryByRole("button", { name: /Press to acknowledge/ }),
+      screen.queryByRole("button", { name: /Press to listen and acknowledge/ }),
     ).toBeNull();
+    // The same press listens: the ringing card is the one to hear.
     // Acknowledging is not fixing: the fault stays on the status strip.
     const card = screen
       .getByRole("button", { name: "Select Marguerite, channel 1" })
       .closest("article")!;
-    expect(card.classList.contains("is-selected")).toBe(false);
+    expect(card.classList.contains("is-selected")).toBe(true);
   });
 
   it("dismisses a report banner as a shared action, not a per-device preference", async () => {
@@ -768,7 +769,7 @@ describe("Live channel grid", () => {
       }),
     );
     expect(
-      screen.queryByRole("button", { name: /Press to acknowledge/ }),
+      screen.queryByRole("button", { name: /Press to listen and acknowledge/ }),
     ).toBeNull();
     const bell = screen.getByRole("button", { name: "1 to acknowledge" });
     // Only a critical alert glows.
@@ -844,7 +845,7 @@ describe("Live channel grid", () => {
       screen.getByRole("button", { name: "Alerts unavailable" }),
     ).toBeTruthy();
     expect(
-      screen.queryByRole("button", { name: /Press to acknowledge/ }),
+      screen.queryByRole("button", { name: /Press to listen and acknowledge/ }),
     ).toBeNull();
     const card = screen
       .getByRole("button", { name: "Select Marguerite, channel 1" })

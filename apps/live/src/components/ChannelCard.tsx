@@ -27,7 +27,14 @@ type ChannelCardProps = {
   imageRevision: number;
   meterStore: MeterStore;
   metersStale: boolean;
-  onAcknowledge: (alert: LiveAlert) => void;
+  /**
+   * A press on a card that is ringing. It acknowledges the alert and, on the
+   * A2 grid, listens: the ringing card is the one the operator needs to hear.
+   */
+  onAcknowledge: (
+    alert: LiveAlert,
+    event: MouseEvent<HTMLButtonElement>,
+  ) => void;
   /** A press or click. Its `shiftKey`/`ctrlKey`/`metaKey` drive multi-select
    * on a computer; Shift and Ctrl also reach here from a keyboard Enter or
    * Space held with the same key (DESIGN.md §8.3). */
@@ -256,7 +263,7 @@ export function ChannelCard({
             >
               <AlertIcon dimension={alert.dimension} />
               <strong>{alert.label}</strong>
-              <span>Press to acknowledge</span>
+              <span>Press to listen</span>
               {remaining !== null ? (
                 <span
                   className="alert-expiry"
@@ -284,8 +291,8 @@ export function ChannelCard({
         <button
           className={`alert-overlay alert-${alert.severity}`}
           type="button"
-          onClick={() => onAcknowledge(alert)}
-          aria-label={`${alert.label} on ${channel.name}, channel ${channel.number}. Press to acknowledge.`}
+          onClick={(event) => onAcknowledge(alert, event)}
+          aria-label={`${alert.label} on ${channel.name}, channel ${channel.number}. Press to listen and acknowledge.`}
         />
       ) : null}
     </article>
