@@ -11,45 +11,9 @@ shared test environment:
 - long-running soak and controlled network impairment; and
 - appliance upgrade/rollback tests.
 
-It is currently empty. Component-independent verifier-conformance tests live
-beside their dependency-free implementation in `tools/evidence`; they are not
-product or hardware evidence. That suite includes a fixed OpenSSL-generated
-ES256/JCS verification vector; it tests Node interoperability but is not a
-trusted signing identity or promotion artifact.
-
-The first runtime-specific fixture is the bounded synthetic capture JSONL trace
-under `tools/evidence/fixtures`. Rust tests require the smoke runtime to emit it
-byte-for-byte, while the dependency-free extractor binds the fixed 160 ms trial
-and derives metadata continuity, exact frame timing, discontinuity and xrun
-measurements from the verified bytes. This is
-metadata-only conformance evidence; the verifier re-derives and byte-compares
-the metrics, but PCM integrity and trusted production promotion remain open.
-
-The previous contents — an evidence catalogue, manifest schemas, protocol
-golden vectors and adversarial contract tests — were withdrawn along with the
-verifier they exercised. The original verifier did not read stored bytes; a
-later repair attempted that work, but no committed independent on-disk bundle
-proved the CLI end to end and caller-created summaries could still fabricate
-promotion. The evidence set did not support its claim.
-
-## What the replacement must do
-
-The current non-promotional foundation implements bounded artifact-byte
-verification and verifier-owned predicate evaluation. When evidence runners
-are written against a working runtime, production promotion must additionally
-do all of the following:
-
-- runners do not declare pass/fail. They emit signed results that reference an
-  exact artifact set including a mandatory metrics artifact;
-- the verifier reads files beneath a supplied artifact root, hashes their
-  actual bytes, evaluates catalogue predicates and returns normalized coverage
-  that a separate trusted promotion policy can consume; and
-- contract tests carry adversarial cases for changed bytes, fabricated
-  measurements, insufficient elapsed time, out-of-window faults and promotion
-  with an incomplete OS/device/browser matrix. Each must fail for the intended
-  reason, proven by a negative test.
-
-See [open questions](../docs/open-questions.md).
+It is currently empty. Component-independent conformance tests for the
+artifact-byte verifier in `tools/evidence` live beside their implementation
+there; they check parser/verifier behavior, not product or hardware evidence.
 
 Component-local unit tests should live beside their component. Generated audio,
 captures, logs, databases, and performance reports belong in ignored artifact

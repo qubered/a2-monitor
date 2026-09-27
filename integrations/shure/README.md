@@ -21,6 +21,3 @@ has not been established.
 The TCP 2202 transport is local to the audio node and is treated as plaintext,
 unauthenticated control. Monitoring is the initial scope; mutating commands are
 disabled unless separately designed, permissioned, and audited.
-
-See the [full Shure specification](../../docs/integrations/shure-wireless.md)
-and the [common integration standard](../../docs/integrations/README.md).

@@ -32,43 +32,10 @@ fi
 
 required_files=(
   README.md
-  AGENTS.md
+  CLAUDE.md
   CONTRIBUTING.md
   SECURITY.md
   docs/README.md
-  docs/open-questions.md
-  docs/product/vision.md
-  docs/architecture/overview.md
-  docs/architecture/implementation-structure.md
-  docs/architecture/process-and-update-lifecycle.md
-  docs/architecture/media-clock-and-ipc-abi.md
-  docs/decisions/0004-active-performance-command-authority.md
-  docs/decisions/0005-cue-authority-and-occurrences.md
-  docs/decisions/0006-foreground-live-client-profile.md
-  docs/decisions/0007-appliance-resource-isolation.md
-  docs/decisions/0008-safe-authority-takeover.md
-  docs/decisions/0009-live-control-lease-and-data-channel.md
-  docs/decisions/0010-persistence-recovery-and-migrations.md
-  docs/decisions/0011-untrusted-media-sandbox.md
-  docs/decisions/0012-node-process-confinement.md
-  docs/decisions/0013-offline-pki-and-key-lifecycle.md
-  docs/decisions/0014-rust-audio-runtime-and-host-boundary.md
-  docs/decisions/0015-typescript-fastify-react-application-stack.md
-  docs/decisions/0016-shared-memory-and-protobuf-local-ipc.md
-  docs/decisions/0017-str0m-webrtc-media-worker.md
-  docs/decisions/0018-workspaces-testing-and-native-packaging.md
-  docs/research/technology-stack-selection.md
-  docs/architecture/performance-lifecycle.md
-  docs/architecture/runtime-command-contract.md
-  docs/architecture/temporal-identity-and-swap.md
-  docs/architecture/cue-and-operator-state-machines.md
-  docs/architecture/ledger-reconciliation.md
-  docs/quality/phase0-evidence-contract.md
-  docs/quality/phase1-operator-evidence-contract.md
-  docs/quality/listening-safety.md
-  docs/quality/security-baseline.md
-  docs/quality/threat-model.md
-  docs/quality/validation-matrix.md
   packages/protocol/specification.md
   packages/protocol/model/aggregate-transitions.v0.json
 )

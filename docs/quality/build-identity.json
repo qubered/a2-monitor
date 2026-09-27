@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.a6df42da7b7f895e",
-  "sourceSha256": "a6df42da7b7f895e432c97d4a347a6df7b69c7b0dd248378b6cdf278df8ec1fb",
+  "buildId": "a2-0.0.0+sha256.e95fc58a75bd7cd4",
+  "sourceSha256": "e95fc58a75bd7cd482b3d16137fbdb1ebe40a8ec6d8a4d29dc8c4682de93579e",
   "inputCount": 436,
   "inputs": [
     {
@@ -48,16 +48,16 @@
       "sha256": "73fb1b615e2043a933be1c0895cde4358036acc28d785692509b822aa53c761f"
     },
     {
-      "path": "AGENTS.md",
-      "sha256": "03b4f9f3010dd057dc348315c687c24750cd955b2aabd4b578f161334928b38f"
-    },
-    {
       "path": "CHANGELOG.md",
       "sha256": "ef947d58ffc98b87508521f7b99ab1e92375bdeb7c3c5447c0d4c7e841e143a0"
     },
     {
+      "path": "CLAUDE.md",
+      "sha256": "4435a18db6483c4a68a2adf72be55ba9d913ffe16cc192400c4102713f5df57b"
+    },
+    {
       "path": "CONTRIBUTING.md",
-      "sha256": "d84354eed7c312ae29abe605e894d8c436d0af0bdd101623bf1f12aa240d2713"
+      "sha256": "36444fd988ae8d5776d68772e3663e5291066a34b8a5fe5c0e48aed476b492f2"
     },
     {
       "path": "Cargo.lock",
@@ -69,7 +69,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "7c5d8c52628b026eed581d41378dde525b674b291e9e07c8ff7a08a49066b551"
+      "sha256": "aec2af1011e1677315bb620f518e88e36d5aae1eec665034e89e6f821b43a167"
     },
     {
       "path": "SECURITY.md",
@@ -557,7 +557,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256": "15b216d3be9eef97d20a377f3cf76c632551181d1e2aa8f5f4e166ff93ddf3e2"
+      "sha256": "4907bbfb772d28a556f5d6d3c7900e0039173bf2067c14a4f4155a5082eace37"
     },
     {
       "path": "docs/api/show-management-and-control.md",
@@ -1045,11 +1045,11 @@
     },
     {
       "path": "integrations/sennheiser-ewdx/README.md",
-      "sha256": "9071827eb16c58eaf22b3873d9e2f426e7e7ace727491583a2233c0c33e73cc4"
+      "sha256": "14617aad2a20085510da0a02a7d57201a3c6e5a932236911a40df7dd7d5eb26b"
     },
     {
       "path": "integrations/shure/README.md",
-      "sha256": "de3dad54bb0ee02cc243cc85613eb526d2acfd4aaac21c42d7a0077508027284"
+      "sha256": "8f2e800a75812629ba6319ea977b2704f59eae38ae2d6608ab4c1484436d6a80"
     },
     {
       "path": "package-lock.json",
@@ -1061,7 +1061,7 @@
     },
     {
       "path": "packages/protocol/README.md",
-      "sha256": "1dec1183afac1a3733526ba0a5d6a08a389ef1a648bad9e21c589a58feee4e56"
+      "sha256": "3462867598845e21118660dc9154ffb6b648523f16e437e5c0546a03613bd84e"
     },
     {
       "path": "packages/protocol/fixtures/v0/http/current/alert-log.valid.json",
@@ -1321,7 +1321,7 @@
     },
     {
       "path": "packages/protocol/specification.md",
-      "sha256": "2622f1828388923c6bf4d0a92f0712443781956ca234b18d543a2c97f4b61358"
+      "sha256": "344c1fecb9d8ecacd52fd0fe7b0332bfa903f5ebcbc5f60968d1cd7ba914bcb1"
     },
     {
       "path": "packages/protocol/tests/generator.test.mjs",
@@ -1409,7 +1409,7 @@
     },
     {
       "path": "scripts/check-repo.sh",
-      "sha256": "c44dc356b74d3c9aec894ca8bacf86a80cb740461f989cba8835f3c2b0230559"
+      "sha256": "a168cd748bef5189fc81541b9258e67ee8031f7240adcec2d8ca59eb7a80873c"
     },
     {
       "path": "scripts/dev.mjs",
@@ -1701,7 +1701,7 @@
     },
     {
       "path": "tests/README.md",
-      "sha256": "af525b5d8cbc29b819cf58312dc1190fc2e40660b1beb447242aaf29bb8cf987"
+      "sha256": "61267f9f22c8fe6843c16e247f980e53965df2217612d99d7f5c6dbfc2052625"
     },
     {
       "path": "tools/evidence/README.md",
