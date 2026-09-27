@@ -5,9 +5,11 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   parseAlertLog,
   parseLiveState,
+  parseLiveStateDelta,
   parseMicChecks,
   type LiveState,
 } from "@rvlt/pulse-protocol/http";
+import { applyLiveStateDelta } from "@rvlt/pulse-protocol/live-state-delta";
 import { MemoryAlertPersistence } from "./alerts.js";
 import { LiveMonitor } from "./live-monitor.js";
 import {
@@ -183,12 +185,13 @@ describe("live monitoring routes", () => {
     expect(missing.statusCode).toBe(404);
   });
 
-  it("streams state events to a subscriber and ends them on shutdown", async () => {
-    const { server, advance } = await monitoredServer();
+  it("streams the full state once, then deltas that rebuild it, and ends on shutdown", async () => {
+    const { server, liveMonitor, advance } = await monitoredServer();
     await server.listen({ port: 0, host: "127.0.0.1" });
     const { port } = server.server.address() as AddressInfo;
 
     const events: LiveState[] = [];
+    const kinds: string[] = [];
     const response = await new Promise<import("node:http").IncomingMessage>(
       (resolve, reject) => {
         request(
@@ -211,10 +214,26 @@ describe("live monitoring routes", () => {
         while (boundary >= 0) {
           const block = buffer.slice(0, boundary);
           buffer = buffer.slice(boundary + 2);
-          const data = block
-            .split("\n")
-            .find((line) => line.startsWith("data: "));
-          if (data) events.push(parseLiveState(JSON.parse(data.slice(6))));
+          const lines = block.split("\n");
+          const kind = lines
+            .find((line) => line.startsWith("event: "))
+            ?.slice(7);
+          const data = lines.find((line) => line.startsWith("data: "));
+          if (kind && data) {
+            kinds.push(kind);
+            const body: unknown = JSON.parse(data.slice(6));
+            // A delta applies to the state this stream last delivered.
+            events.push(
+              kind === "delta"
+                ? parseLiveState(
+                    applyLiveStateDelta(
+                      events.at(-1)!,
+                      parseLiveStateDelta(body),
+                    ),
+                  )
+                : parseLiveState(body),
+            );
+          }
           if (events.length >= 2) resolve();
           boundary = buffer.indexOf("\n\n");
         }
@@ -224,7 +243,9 @@ describe("live monitoring routes", () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     await advance(1_000);
     await received;
+    expect(kinds.slice(0, 2)).toEqual(["state", "delta"]);
     expect(events[1]!.revision).toBeGreaterThan(events[0]!.revision);
+    expect(events[1]).toEqual(await liveMonitor.current().then((p) => p.state));
 
     const ended = once(response, "end");
     await server.close();

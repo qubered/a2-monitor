@@ -1,9 +1,9 @@
 # Pulse — design language
 
-- **Version:** 2.9.0
+- **Version:** 2.14.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
-- **Last updated:** 2026-09-25
+- **Last updated:** 2026-09-27
 
 This is the whole design language in one document. It is normative: where it and
 anything else disagree, this document is the intent, and the implementation is
@@ -125,8 +125,10 @@ diagnosis is claimed before a labelled evidence base exists.
 
 **2.9 The brand is the good state.** Pulse's signal green is not a decoration
 borrowed for the logo — it is the same colour the product uses for _verified,
-healthy_ everywhere else ([§3.3](#33-accent-roles)). The mark on the icon and
-the tick on a channel card are the same claim: this is working.
+healthy_ and _listening_ ([§3.3](#33-accent-roles)). It is spent where it says
+something: the channel in your ears, a verified check, the live meter. A
+healthy status cell is a quiet neutral tick rather than a green block — on a
+grid of sixty-four channels, colour has to mean "look here" ([§10.2](#102-status-strip)).
 
 ### 2.10 Refusals
 
@@ -208,17 +210,20 @@ construction, on-brand.
 
 | Meaning                     | Role                          | Value     |
 | --------------------------- | ----------------------------- | --------- |
-| Live — what you are hearing | `--red`                       | `#e0363d` |
+| Live — what you are hearing | `--ok` ring                   | `#4fd888` |
 | Critical fault              | `--t-out` on `--out-soft`     | `#f26f73` |
 | Needs intervention          | `--warn` on `--warn-soft`     | `#eba53a` |
-| Verified, healthy           | `--ok` on `--ok-soft`         | `#4fd888` |
+| Verified, healthy           | `--ok`; a status cell is `--muted` | `#4fd888` |
 | Stale, unknown, disarmed    | `--rep` on `--rep-soft`       | `#b6ac9a` |
 | Replay                      | `--purple` on `--purple-soft` | `#9b82e6` |
 
-Red is reserved, strictly: active, live, alerts, and here that means **the
-channel you are hearing**, and nothing else. It never appears in the wordmark,
-the icon, a chart, or any chrome that is not saying one of those two things. A
-card with a red outline is the one in your ears.
+Red is reserved, strictly, for **a critical fault**, and nothing else. It never
+appears in the wordmark, the icon, a chart, focus, a pressed control or any
+chrome. The channel in your ears carries the signal-green ring: an earlier
+version made it red, which put the same colour on "you are listening" and "this
+is failing" on one grid, against the aviation and process-control practice of
+reserving alert colours for alerts (audit
+[G5](../research/next-level-audit-2026-09.md#g5--uiux-nobody-needs-to-learn-it), P2–P4).
 
 Groups use an eight-colour avatar ramp, carried over unchanged from before.
 Group colour is identity; it never carries a state and never appears on a
@@ -341,7 +346,7 @@ lose their shadow on press; they never translate.
 quiet. Selection and focus are a **2px accent ring, offset 2px from the edge**
 — never a thicker version of the same neutral border, because a thicker
 neutral border and a normal one are too easy to confuse at a glance. Which
-accent depends on context: `--red` for the channel in your ears and for
+accent depends on context: `--ok` for the channel in your ears, `--ink` for
 keyboard focus generally, `--ink-2` for "this is the one I have open."
 
 **Controls stay pills.** Buttons, filter chips and badges keep the fully
@@ -444,10 +449,18 @@ itself** — forgetting this makes acknowledgement unpressable.
 
 ### 8.3 Keyboard
 
-Everything reachable by touch is reachable by key. Arrow keys move channel focus;
-`Space` listens, `Enter` latches, `Esc` clears; `1`–`8` press-to-listen groups;
-`M` mute, `D` dim, `R` return to live, `/` search. Focus rings are the 2px accent
-ring from [§5](#5-shape-and-elevation) and are never suppressed.
+Everything reachable by touch is reachable by key. **The grid is one Tab
+stop**: only the card holding its focus is in the tab order (then that card's
+expand button, in the card layout), so the player is a Tab away however many
+channels there are. On the grid, arrow keys move between cards as they sit on
+screen; `Home` and `End` go to the ends; **typing a channel's number or the
+start of its name jumps to it** (keys under 800 ms apart build one search).
+`Space` and `Enter` press the focused card like a tap; `Shift` and
+`Ctrl`/`Cmd` extend or toggle as with a mouse ([§8.4](#84-multi-select)).
+Anywhere: `M` mute and `D` dim (unless a name is being typed on the grid),
+`Esc` closes a sheet or clears. Groups and replay are not built yet, so their
+keys (`1`–`8`, `R`) are not claimed. Focus rings are the 2px ring from
+[§5](#5-shape-and-elevation) and are never suppressed.
 
 ### 8.4 Multi-select
 
@@ -475,15 +488,25 @@ so it always needs a deliberate gesture, never a bigger target.
   to monitor them together" — with a **Clear** to stop monitoring everything
   and a **Done** to leave touch multi-select without stopping what is already
   playing.
+- The monitored channels play as **one mixed stream**: the audio node sums
+  them sample-aligned, each at its showfile trim, over the device's one
+  listen connection. Two mics on one source stay time-aligned instead of
+  combing against each other as separately buffered streams would. Adding,
+  removing or re-trimming a channel crossfades the mix in place; the
+  connection is kept. The sum is scaled by 1/√n so adding channels does not
+  pile up level: each channel plays about 3 dB quieter once a second joins.
+  The node mixes at most 16 inputs; past that the most recently added 16
+  play, and the rest read as not listening.
 - The bottom player ([§10.4](#104-the-player)) follows the most recently
   added channel for its meter, timeline and trim, and lists every monitored
-  channel as a small chip carrying its own honest listening/connecting/error
-  state — never one shared status standing in for several real ones. A chip
+  channel as a small chip. Each chip carries the one stream's
+  listening/connecting/error state, because that is the real state of every
+  channel in it; a channel left out of the mix shows as not listening. A chip
   can be pressed to become the one the player follows, or removed on its own
   without disturbing the rest.
 - Selected and Listening ([§10.1](#101-channel-card)) are card-level, not
-  grid-level: each monitored card shows its own state independently, so one
-  card waiting to connect never reads as every card waiting.
+  grid-level: a card reads Listening only while it is in the mix and the
+  stream is actually playing.
 
 ---
 
@@ -559,6 +582,38 @@ The card carries **no sentence** and no acknowledged-alert row. The status strip
 already names what is wrong, and a row repeating it cost more height than it
 earned.
 
+### 10.1.1 Glance view
+
+The card above is right for a show that fits the screen and wrong for one that
+doesn't: at 64 channels an iPad showed 8 photographs and a phone 4, so "is
+anything wrong, and on whom" needed five screens of scrolling (audit
+[G1](../research/next-level-audit-2026-09.md#g1--what-ships-today-audited)).
+So the grid has two layouts, chosen per device with a **Glance · Cards**
+switch at the end of the filter row. **Glance is the default.**
+
+- **Every channel in view fits the space above the player.** The grid picks
+  the column count and tile height that fit them all, keeping tiles as wide as
+  that allows. A tile never drops below 48 px tall or 72 px wide; below that
+  the grid scrolls instead (a phone at 64 channels shows about 28 per screen).
+  Showfile order never changes.
+- **A tile is the card, reduced:** channel number and name on one line, the
+  status strip below it, the 10-second trace as a thin line along the bottom
+  edge. No photograph. Names truncate at small tile widths; the number and
+  the tile's place are what identify it then, and the accessible name is
+  always complete.
+- **The strip keeps glyph, colour and position but drops its words**, which
+  would not fit. One line above the grid names the cells — _Status, left to
+  right: RF · Audio · Battery_ — and every cell keeps its accessible
+  description. This is a narrow, deliberate exception to "every state carries
+  a word" ([§2.4](#2-principles)): the word is on screen once, not per cell.
+- **An alert rings and tints the whole tile** in its severity colour; its name
+  gets a second line only when tiles are tall enough, and otherwise lives in
+  the tile's accessible name and the exceptions sheet.
+- **One target.** The whole tile listens ([§8.2](#82-card-targets)); there is
+  no expand button at this size. The player's **Details** button opens the
+  detail of the channel it follows.
+- **Cards** is the layout above, unchanged, for anyone who wants faces.
+
 ### 10.2 Status strip
 
 The thing an operator reads first after the face. One cell per dimension that can
@@ -567,7 +622,7 @@ as a shape rather than parsed as text.
 
 | Verdict        | Glyph        | Colour                    | Meaning                            |
 | -------------- | ------------ | ------------------------- | ---------------------------------- |
-| Good           | `✓` tick     | `--ok` on `--ok-soft`     | Measured, within tolerance         |
+| Good           | `✓` tick     | `--muted`, no fill        | Measured, within tolerance         |
 | Fault          | `✕` cross    | `--t-out` on `--out-soft` | Measured, wrong now                |
 | Caution        | `⚠` triangle | `--warn` on `--warn-soft` | Needs someone, not failing yet     |
 | Unknown        | `–` dash     | `--rep` on `--rep-soft`   | Stale, disarmed, or never measured |
@@ -610,17 +665,19 @@ glow is a second cue, never the only one, and reduced motion removes the
 movement.
 
 **It names the problem and nothing else.** One icon, two words — _Low RF_, _No
-audio_, _Low battery_ — and `Press to acknowledge`. No explanation, no timestamp,
+audio_, _Low battery_ — and `Press to listen`. No explanation, no timestamp,
 no diagnosis, no action list. The operator troubleshoots; the product's job is to
 say which channel and which kind, fast, from across a wing. The words wrap
 rather than truncate; at phone width the icon drops so they fit.
 
 Behaviour:
 
-1. **Pressing the card acknowledges it, and nothing else.** There is no
-   Acknowledge button. The first press clears the alert and returns the card to
-   normal, so a **second press listens** — the same press that listens to any
-   other channel. One gesture, one consequence.
+1. **Pressing the card listens to it and acknowledges it.** There is no
+   Acknowledge button. The card that is ringing is the one the operator needs
+   to hear, so one press does both: the alert clears, the card returns to
+   normal, and its audio plays — hearing it is how someone shows they are on
+   it. A press never takes a channel out of what is already playing. On the
+   A1 view there is no overlay (§11.2).
 2. **The overlay expires; the alert does not** — except at critical, which does
    not expire at all. A critical alert (audio loss, RF loss) holds the card until
    somebody acknowledges it: a show-stopping fault that nobody has seen is
@@ -746,8 +803,8 @@ removes the motion; the amber outline stays.
 ### 10.8 Smaller parts
 
 - **Badges** — pill, 700 weight, 11px, soft-tinted, with a dot.
-- **Buttons** — `--red` primary is reserved for the one live or destructive
-  action in view; see [§5](#5-shape-and-elevation) for shape and press behaviour.
+- **Buttons** — `--red` primary is reserved for the one destructive action in
+  view (a Manager concern; Live has none); see [§5](#5-shape-and-elevation) for shape and press behaviour.
 - **Groups** — the transport's press-to-listen buttons come from two places.
   **Show groups** are authored in Manager with the show file: principals,
   ensemble, band, radio mics. They are stable across a run and identical for
@@ -1056,6 +1113,40 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.14.0 — 2026-09-27.** Multi-select is one mixed stream
+([§8.4](#84-multi-select)): the node mixes the monitored channels, each at its
+trim, into the device's one listen session instead of opening a stream per
+channel. Chips share that stream's status. Implemented in Live, the listen
+gateway and the media worker alongside this entry; not operator-validated.
+
+**2.13.0 — 2026-09-27.** Keyboard operation ([§8.3](#83-keyboard)): the
+grid is a single Tab stop with arrow-key focus and type-to-jump by channel
+number or name, replacing the unbuilt `/` search. Reaching channel 40 of 64
+went from 89 Tab presses to about a dozen keys. Implemented in Live alongside
+this entry; not operator-validated.
+
+**2.12.0 — 2026-09-27.** Colour only means trouble
+([§3.4](#34-domain-mapping), [§10.2](#102-status-strip)): a healthy status
+cell is a neutral tick with its word and no green fill; the channel in your
+ears is ringed in signal green, not red; keyboard focus and pressed controls
+are ink. Red is left meaning a critical fault. Implemented in Live alongside
+this entry (Manager unchanged); not operator-validated.
+
+**2.11.0 — 2026-09-27.** Adds the glance view
+([§10.1.1](#1011-glance-view)): the default grid layout sizes tiles so every
+channel in view fits one screen, with the photo card kept as the **Cards**
+option. Glance tiles carry the strip's words once, above the grid, instead of
+per cell, and open detail from the player. Implemented in Live alongside this
+entry; not operator-validated.
+
+**2.10.0 — 2026-09-27.** Pressing a ringing card now listens to it as well
+as acknowledging it ([§10.3](#103-alert-overlay)); the band reads `Press to
+listen`. Previously the first press only acknowledged and a second listened,
+which made the ringing card the slowest one to hear and, in a zero-training
+walk, swallowed a tap meant to listen (audit
+[G5](../research/next-level-audit-2026-09.md#g5--uiux-nobody-needs-to-learn-it)).
+Implemented in Live alongside this entry; not operator-validated.
 
 **2.9.0 — 2026-09-25.** Adds multi-select ([§8.4](#84-multi-select)): Shift or
 Ctrl/Cmd-click on a computer, a long-press then tap on touch, to monitor

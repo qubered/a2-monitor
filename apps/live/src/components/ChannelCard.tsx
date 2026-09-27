@@ -20,6 +20,16 @@ type ChannelCardProps = {
   report?: CardReportState | null;
   /** The card's one action: select on the A2 grid, report on the A1 grid. */
   actionLabel?: string;
+  /**
+   * `glance` is the dense tile that lets a whole show fit one screen
+   * (DESIGN.md §10.1): number, name, status strip and level, no photograph.
+   */
+  density?: "card" | "glance";
+  /**
+   * The grid is one Tab stop (DESIGN.md §8.3): only the card holding the
+   * grid's roving focus is in the tab order; arrows move it between cards.
+   */
+  tabbable?: boolean;
   overlayExpiryMs: number;
   nowMs: number;
   selected: boolean;
@@ -27,7 +37,14 @@ type ChannelCardProps = {
   imageRevision: number;
   meterStore: MeterStore;
   metersStale: boolean;
-  onAcknowledge: (alert: LiveAlert) => void;
+  /**
+   * A press on a card that is ringing. It acknowledges the alert and, on the
+   * A2 grid, listens: the ringing card is the one the operator needs to hear.
+   */
+  onAcknowledge: (
+    alert: LiveAlert,
+    event: MouseEvent<HTMLButtonElement>,
+  ) => void;
   /** A press or click. Its `shiftKey`/`ctrlKey`/`metaKey` drive multi-select
    * on a computer; Shift and Ctrl also reach here from a keyboard Enter or
    * Space held with the same key (DESIGN.md §8.3). */
@@ -140,6 +157,8 @@ export function ChannelCard({
   alert,
   report = null,
   actionLabel = "Select",
+  density = "card",
+  tabbable = true,
   overlayExpiryMs,
   nowMs,
   selected,
@@ -166,6 +185,7 @@ export function ChannelCard({
     report && report.unclaimed > 0 ? "is-reported" : "",
     channel.session?.inUse === false ? "is-idle" : "",
     onLongPressSelect ? "can-multiselect" : "",
+    density === "glance" ? "is-glance" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -184,108 +204,142 @@ export function ChannelCard({
         {...(onLongPressSelect ? longPress.handlers : {})}
         aria-label={`${actionLabel} ${channel.name}, channel ${channel.number}`}
         aria-hidden={alerting || undefined}
-        tabIndex={alerting ? -1 : 0}
+        tabIndex={alerting || !tabbable ? -1 : 0}
+        data-card-target={alerting ? undefined : ""}
       />
 
-      <div className="channel-tile">
-        <div className={`channel-photo ${channel.hasImage ? "has-photo" : ""}`}>
-          {channel.hasImage ? (
-            <img
-              src={`/api/v1/channels/${encodeURIComponent(channel.id)}/image?revision=${imageRevision}`}
-              alt=""
-              loading="lazy"
-              decoding="async"
-            />
-          ) : channel.micType === "handheld" ||
-            channel.micType === "beltpack" ? (
-            <span className="photo-fallback">
-              <MicTypeIcon micType={channel.micType} />
-              <span className="sr-only">
-                {channel.micTypeSource === "inferred"
-                  ? `Likely ${channel.micType}`
-                  : channel.micType === "handheld"
-                    ? "Handheld"
-                    : "Beltpack"}
-              </span>
+      {density === "glance" ? (
+        <div className="glance-tile">
+          <div className="glance-head">
+            <span className="channel-number">
+              {String(channel.number).padStart(2, "0")}
             </span>
-          ) : (
-            <span className="photo-missing">Photo not added</span>
-          )}
-          <span className="channel-number">
-            {String(channel.number).padStart(2, "0")}
-          </span>
-          {report ? (
+            <h2 title={channel.name}>{channel.name}</h2>
+          </div>
+          {alert ? (
             <span
-              className={`report-badge ${report.unclaimed > 0 ? "is-unclaimed" : ""}`}
+              className={`alert-band glance-band alert-${alert.severity}`}
+              aria-hidden="true"
             >
-              {report.unclaimed > 0
-                ? report.unclaimed > 1
-                  ? `Reported · ${report.unclaimed}`
-                  : "Reported"
-                : report.awaitingConfirmation
-                  ? "Fixed · A1 to confirm"
-                  : `Being worked · ${report.claimedBy ?? "A2"}`}
+              <strong>{alert.label}</strong>
+            </span>
+          ) : report && report.unclaimed > 0 ? (
+            <span className="report-badge glance-badge is-unclaimed">
+              Reported
             </span>
           ) : null}
-          {listening ? (
-            <span className="listening-badge">
-              <i aria-hidden="true" /> Listening
-            </span>
-          ) : selected ? (
-            <span className="selected-badge">
-              <i aria-hidden="true" /> Selected
-            </span>
-          ) : null}
-          <button
-            className="expand-button"
-            type="button"
-            onClick={onOpenDetail}
-            aria-label={`Open details for ${channel.name}`}
-          >
-            <ExpandIcon />
-          </button>
           <MeterTrace
             store={meterStore}
             input={channel.input.index}
             stale={metersStale}
+            className="glance-trace"
           />
-          {alert ? (
-            <span
-              className={`alert-band alert-${alert.severity}`}
-              aria-hidden="true"
+        </div>
+      ) : (
+        <div className="channel-tile">
+          <div
+            className={`channel-photo ${channel.hasImage ? "has-photo" : ""}`}
+          >
+            {channel.hasImage ? (
+              <img
+                src={`/api/v1/channels/${encodeURIComponent(channel.id)}/image?revision=${imageRevision}`}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+            ) : channel.micType === "handheld" ||
+              channel.micType === "beltpack" ? (
+              <span className="photo-fallback">
+                <MicTypeIcon micType={channel.micType} />
+                <span className="sr-only">
+                  {channel.micTypeSource === "inferred"
+                    ? `Likely ${channel.micType}`
+                    : channel.micType === "handheld"
+                      ? "Handheld"
+                      : "Beltpack"}
+                </span>
+              </span>
+            ) : (
+              <span className="photo-missing">Photo not added</span>
+            )}
+            <span className="channel-number">
+              {String(channel.number).padStart(2, "0")}
+            </span>
+            {report ? (
+              <span
+                className={`report-badge ${report.unclaimed > 0 ? "is-unclaimed" : ""}`}
+              >
+                {report.unclaimed > 0
+                  ? report.unclaimed > 1
+                    ? `Reported · ${report.unclaimed}`
+                    : "Reported"
+                  : report.awaitingConfirmation
+                    ? "Fixed · A1 to confirm"
+                    : `Being worked · ${report.claimedBy ?? "A2"}`}
+              </span>
+            ) : null}
+            {listening ? (
+              <span className="listening-badge">
+                <i aria-hidden="true" /> Listening
+              </span>
+            ) : selected ? (
+              <span className="selected-badge">
+                <i aria-hidden="true" /> Selected
+              </span>
+            ) : null}
+            <button
+              className="expand-button"
+              tabIndex={tabbable ? 0 : -1}
+              type="button"
+              onClick={onOpenDetail}
+              aria-label={`Open details for ${channel.name}`}
             >
-              <AlertIcon dimension={alert.dimension} />
-              <strong>{alert.label}</strong>
-              <span>Press to acknowledge</span>
-              {remaining !== null ? (
-                <span
-                  className="alert-expiry"
-                  style={{ "--expiry-remaining": remaining } as CSSProperties}
-                />
-              ) : null}
-            </span>
-          ) : null}
-        </div>
+              <ExpandIcon />
+            </button>
+            <MeterTrace
+              store={meterStore}
+              input={channel.input.index}
+              stale={metersStale}
+            />
+            {alert ? (
+              <span
+                className={`alert-band alert-${alert.severity}`}
+                aria-hidden="true"
+              >
+                <AlertIcon dimension={alert.dimension} />
+                <strong>{alert.label}</strong>
+                <span>Press to listen</span>
+                {remaining !== null ? (
+                  <span
+                    className="alert-expiry"
+                    style={{ "--expiry-remaining": remaining } as CSSProperties}
+                  />
+                ) : null}
+              </span>
+            ) : null}
+          </div>
 
-        <div className="channel-identity">
-          <h2>{channel.name}</h2>
-          <p>{secondaryLine(channel)}</p>
-          {channel.trimDb ? (
-            <span className="trim-badge mono">
-              Trim {formatTrim(channel.trimDb)} dB
-            </span>
-          ) : null}
+          <div className="channel-identity">
+            <h2>{channel.name}</h2>
+            <p>{secondaryLine(channel)}</p>
+            {channel.trimDb ? (
+              <span className="trim-badge mono">
+                Trim {formatTrim(channel.trimDb)} dB
+              </span>
+            ) : null}
+          </div>
         </div>
-      </div>
-
-      <StatusStrip statuses={channel.statuses} />
+      )}
+      <StatusStrip statuses={channel.statuses} compact={density === "glance"} />
 
       {alert ? (
         <button
           className={`alert-overlay alert-${alert.severity}`}
+          tabIndex={tabbable ? 0 : -1}
+          data-card-target=""
           type="button"
-          onClick={() => onAcknowledge(alert)}
-          aria-label={`${alert.label} on ${channel.name}, channel ${channel.number}. Press to acknowledge.`}
+          onClick={(event) => onAcknowledge(alert, event)}
+          aria-label={`${alert.label} on ${channel.name}, channel ${channel.number}. Press to listen and acknowledge.`}
         />
       ) : null}
     </article>

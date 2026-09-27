@@ -33,7 +33,8 @@ button:focus-visible,
 select:focus-visible,
 input:focus-visible,
 a:focus-visible {
-  outline: var(--size-2) solid var(--red);
+  /* Red means a critical fault and nothing else (DESIGN.md §3.4); focus is ink. */
+  outline: var(--size-2) solid var(--ink);
   outline-offset: var(--space-1);
 }
 
@@ -137,6 +138,15 @@ a:focus-visible {
   color: var(--ok);
   font-family: var(--font-mono);
   font-size: var(--font-ui);
+}
+
+/* Audio the node lost since capture started: a caution, counted. */
+.node-state em {
+  color: var(--warn);
+  font-family: var(--font-mono);
+  font-size: var(--font-badge);
+  font-style: normal;
+  font-weight: 600;
 }
 
 .node-waiting strong,
@@ -611,16 +621,19 @@ a:focus-visible {
   display: flex;
   align-items: center;
   gap: var(--space-6);
-  padding: var(--space-3) var(--space-6);
+  padding: var(--space-1) var(--space-6);
   border-bottom: var(--size-1) solid var(--line-2);
   background: var(--paper-2);
 }
 
+/* One line per slot, so the run of show costs one row above the grid. */
 .session-slot {
   min-width: 0;
   display: flex;
-  flex-direction: column;
+  align-items: baseline;
+  gap: var(--space-2);
   line-height: 1.3;
+  white-space: nowrap;
 }
 
 .session-slot + .session-slot {
@@ -643,8 +656,10 @@ a:focus-visible {
 }
 
 .session-meta {
+  overflow: hidden;
   color: var(--muted);
   font-size: var(--font-caption);
+  text-overflow: ellipsis;
 }
 
 .session-meta.is-action {
@@ -822,7 +837,8 @@ a:focus-visible {
    stay at full strength. */
 .channel-card.is-idle .channel-photo img,
 .channel-card.is-idle .photo-missing,
-.channel-card.is-idle .channel-identity h2 {
+.channel-card.is-idle .channel-identity h2,
+.channel-card.is-idle .glance-head h2 {
   opacity: 0.55;
 }
 
@@ -1010,9 +1026,10 @@ a:focus-visible {
   box-shadow: var(--shadow-hover), var(--card-lit);
 }
 
-/* The one in your ears (design system §3.4): a 2px red ring offset from the edge. */
+/* The one in your ears (design system §3.3): a 2px signal ring offset from the
+   edge. Signal, not red: red on the grid is only ever a critical fault. */
 .channel-card.is-listening {
-  outline: var(--size-2) solid var(--red);
+  outline: var(--size-2) solid var(--ok);
   outline-offset: var(--size-2);
 }
 
@@ -1196,8 +1213,8 @@ a:focus-visible {
   gap: var(--space-2);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-pill);
-  background: var(--red-soft);
-  color: var(--red);
+  background: var(--ok-soft);
+  color: var(--ok);
   font-size: var(--font-badge);
   font-weight: 700;
 }
@@ -1291,9 +1308,11 @@ a:focus-visible {
   stroke-linejoin: round;
 }
 
+/* Healthy is quiet (dark cockpit): a neutral tick and its word, no fill, so
+   the only coloured cells on a grid are the ones that need someone. */
 .status-good {
-  color: var(--ok);
-  background: var(--ok-soft);
+  color: var(--muted);
+  background: transparent;
 }
 
 .status-fault {
@@ -1467,9 +1486,9 @@ a:focus-visible {
   background: var(--muted);
 }
 
-/* The one in your ears (§3.4), per chip: only a chip actually playing pulses red. */
+/* The one in your ears (§3.3), per chip: only a chip actually playing pulses. */
 .monitor-chip.playback-listening i {
-  background: var(--red);
+  background: var(--ok);
   animation: pulse 1.7s ease-in-out infinite;
 }
 
@@ -1716,8 +1735,8 @@ a:focus-visible {
 }
 
 .control-button.is-active {
-  border-color: var(--red);
-  background: var(--red);
+  border-color: var(--ink);
+  background: var(--ink);
   color: var(--card);
   box-shadow: var(--shadow-button);
 }
@@ -1744,7 +1763,7 @@ a:focus-visible {
 .volume-control input {
   width: 100%;
   min-height: var(--target);
-  accent-color: var(--red);
+  accent-color: var(--ink);
   cursor: pointer;
 }
 
@@ -2946,4 +2965,178 @@ a:focus-visible {
 
 .output-option:active {
   background: var(--elev);
+}
+
+/* Glance view (DESIGN.md §10.1): every channel in view on one screen. The
+   grid's column count and tile height come from `fitGlance` in App.tsx, which
+   budgets the headings, gaps and player with the same tokens used here. A
+   tile is one line of number and name over the status strip, with the level
+   along its bottom edge; the alert's name gets a line only when tiles are
+   tall enough (`data-glance-roomy`), and otherwise lives in the tile's
+   accessible name, its ring and its tint. */
+.channel-main.is-glance {
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+}
+
+.channel-main.is-glance .channel-group + .channel-group {
+  margin-top: var(--space-3);
+}
+
+.channel-main.is-glance .group-heading {
+  margin-bottom: var(--space-2);
+  font-size: var(--font-ui);
+  line-height: 1.25;
+}
+
+.channel-main.is-glance .channel-grid {
+  grid-template-columns: repeat(var(--glance-columns, 8), minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.strip-legend {
+  margin: 0 0 var(--space-2);
+  color: var(--muted);
+  font-size: var(--font-caption);
+}
+
+.channel-card.is-glance {
+  height: var(--glance-tile-height, auto);
+  min-height: var(--target);
+  justify-content: space-between;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-1) calc(var(--space-1) + var(--size-2));
+  border-radius: var(--radius);
+}
+
+.channel-card.is-glance:hover {
+  transform: none;
+}
+
+.channel-card.is-glance .card-hit-target {
+  border-radius: var(--radius);
+}
+
+.channel-card.is-glance.has-alert {
+  background: var(--warn-soft);
+}
+
+.channel-card.is-glance.has-alert.is-critical-alert {
+  background: var(--out-soft);
+}
+
+.glance-tile {
+  min-height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.glance-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  padding: 0 var(--space-1);
+}
+
+.glance-head .channel-number {
+  position: static;
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: var(--font-caption);
+}
+
+.glance-head h2 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: var(--font-ui);
+  font-weight: 600;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meter-trace.glance-trace {
+  top: auto;
+  bottom: 0;
+  height: calc(var(--space-1) - var(--size-1));
+  background: none;
+}
+
+.alert-band.glance-band {
+  position: static;
+  display: none;
+  min-height: 0;
+  margin-top: var(--space-1);
+  padding: 0 var(--space-1);
+  border-radius: calc(var(--radius) / 3);
+  font-size: var(--font-badge);
+  white-space: nowrap;
+}
+
+.channel-main[data-glance-roomy] .alert-band.glance-band {
+  display: block;
+}
+
+.alert-band.glance-band strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.report-badge.glance-badge {
+  display: none;
+}
+
+.channel-main[data-glance-roomy] .report-badge.glance-badge {
+  position: static;
+  display: inline-block;
+  margin-top: var(--space-1);
+}
+
+.status-strip.is-compact {
+  min-height: var(--space-4);
+  flex: none;
+}
+
+.status-strip.is-compact .status-cell {
+  flex-direction: row;
+}
+
+.status-strip.is-compact .status-cell svg {
+  width: var(--space-3);
+  height: var(--space-3);
+}
+
+.view-switch {
+  display: flex;
+  flex: none;
+  margin-left: auto;
+  overflow: hidden;
+  border: var(--size-1) solid var(--line-2);
+  border-radius: var(--radius-pill);
+}
+
+.view-switch button {
+  min-height: var(--target);
+  padding: 0 var(--space-4);
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--font-ui);
+  font-weight: 600;
+}
+
+.view-switch button + button {
+  border-left: var(--size-1) solid var(--line-2);
+}
+
+.view-switch button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
 }

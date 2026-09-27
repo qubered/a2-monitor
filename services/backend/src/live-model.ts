@@ -154,6 +154,7 @@ function evaluateNode(
     detail: levels.capture.detail,
     device: levels.capture.device,
     observedAtUtc: iso(levelsAtMs),
+    ...(levels.capture.dropouts ? { dropouts: levels.capture.dropouts } : {}),
   };
 }
 

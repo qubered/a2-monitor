@@ -119,6 +119,27 @@
             "null"
           ],
           "format": "date-time"
+        },
+        "dropouts": {
+          "description": "Audio the node lost since capture last started, as reported by the node (see node-levels). Absent when the node does not report it or capture is not ready.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "callbacks",
+            "blocks"
+          ],
+          "properties": {
+            "callbacks": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "blocks": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          }
         }
       }
     },

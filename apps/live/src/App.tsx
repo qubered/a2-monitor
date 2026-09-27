@@ -4,7 +4,9 @@ import {
   useMemo,
   useRef,
   useState,
+  useLayoutEffect,
   useSyncExternalStore,
+  type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent,
 } from "react";
 import {
@@ -35,6 +37,8 @@ import {
   type PlaybackFactory,
   type PlaybackSession,
   type PlaybackUpdate,
+  type ListenSource,
+  MAX_LISTEN_SOURCES,
 } from "./audio-playback";
 import { ChannelCard } from "./components/ChannelCard";
 import { ChannelDetail } from "./components/ChannelDetail";
@@ -78,6 +82,7 @@ import {
   type OutputDestination,
 } from "./host-output";
 import { MeterStore } from "./meters";
+import { fitGlance } from "./glance-layout";
 import {
   categoryIdInRoom,
   effectiveRoom,
@@ -115,6 +120,8 @@ import { useNow } from "./useNow";
 type Filter = string;
 
 const ALERT_LOG_REFRESH_MS = 5_000;
+/** How long a fresh capture dropout is called out above the grid. */
+const DROPOUT_NOTICE_MS = 60_000;
 const defaultLiveStateSource = createEventSourceLiveState();
 const defaultHostOutputSource = createHttpHostOutputSource();
 
@@ -350,6 +357,27 @@ function ConnectionNotice({
   );
 }
 
+/**
+ * What the one listen stream carries: every selected channel with a patched
+ * input, at its showfile trim. The node mixes at most MAX_LISTEN_SOURCES, so
+ * past that the most recent selections win.
+ */
+function listenMix(selected: readonly LiveStateChannel[]): {
+  ids: string[];
+  sources: ListenSource[];
+} {
+  const patched = selected
+    .filter((channel) => channel.input.index !== null)
+    .slice(-MAX_LISTEN_SOURCES);
+  return {
+    ids: patched.map((channel) => channel.id),
+    sources: patched.map((channel) => ({
+      channel: channel.input.index!,
+      trimDb: channel.trimDb ?? 0,
+    })),
+  };
+}
+
 export function App({
   liveStateSource = defaultLiveStateSource,
   audioDeviceSource = httpAudioDeviceSource,
@@ -405,6 +433,29 @@ export function App({
    * every following tap into a toggle instead of a plain select. */
   const [touchSelecting, setTouchSelecting] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  /** Glance fits every channel on one screen; cards are the photo layout. Per device. */
+  const [gridView, setGridView] = useState<"glance" | "cards">(() => {
+    try {
+      return window.localStorage.getItem("pulse-grid-view") === "cards"
+        ? "cards"
+        : "glance";
+    } catch {
+      return "glance";
+    }
+  });
+  const chooseGridView = (next: "glance" | "cards") => {
+    setGridView(next);
+    try {
+      window.localStorage.setItem("pulse-grid-view", next);
+    } catch {
+      // The layout is a per-device convenience.
+    }
+  };
+  const mainRef = useRef<HTMLElement>(null);
+  /** The card holding the grid's roving focus: the grid's one Tab stop. */
+  const [focusId, setFocusId] = useState<string | null>(null);
+  /** Keys typed in quick succession on the grid: a channel number or name. */
+  const typeahead = useRef({ text: "", atMs: 0 });
   const [micCheckId, setMicCheckId] = useState<string | null>(null);
   const [exceptionsOpen, setExceptionsOpen] = useState(false);
   /** Room key of the run whose turnover sheet is open. */
@@ -427,21 +478,17 @@ export function App({
   const [reportBusy, setReportBusy] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
+  /** When the node's lost-audio count last went up while this page watched. */
+  const [dropoutAtMs, setDropoutAtMs] = useState<number | null>(null);
+  const seenDropouts = useRef<number | null>(null);
   const [muted, setMuted] = useState(false);
   const [dimmed, setDimmed] = useState(false);
   const [gainDb, setGainDb] = useState(readMonitorGainDb);
-  const [playbackByChannel, setPlaybackByChannel] = useState<
-    Record<string, PlaybackUpdate>
-  >({});
-  // A WebRTC session outlives any one channel: switching the single selection
-  // (or a multi-selection swapping one member for another) retargets a slot
-  // in place via `setChannel`, the same session and connection throughout,
-  // rather than tearing one down to open another. `channelId` is mutable for
-  // exactly that reuse; each session's `onUpdate` closes over its slot, not
-  // a channel id, so it keeps posting to the right key after a retarget.
-  const playbackSlots = useRef<
-    { channelId: string; session: PlaybackSession }[]
-  >([]);
+  const [playback, setPlayback] = useState<PlaybackUpdate | null>(null);
+  // One WebRTC session carries every selected channel, mixed node-side. It
+  // outlives any selection: changing what is monitored retargets it with
+  // `setSources`, the same connection throughout.
+  const playbackSession = useRef<PlaybackSession | null>(null);
   const outputState = useRef({ muted: false, dimmed: false, gainDb });
   const announcedCritical = useRef<Set<string> | null>(null);
 
@@ -562,98 +609,42 @@ export function App({
     }
   }, [selectedIds]);
 
-  // One WebRTC listen session per monitored channel, so several play at once.
-  // A slot no longer wanted is retargeted to a newly wanted channel with
-  // `setChannel` in place of tearing it down and reconnecting, exactly as a
-  // single selection has always moved server-side without renegotiating; a
-  // session is only actually closed when the wanted count shrinks. Each
-  // still reconnects on its own after a capture restart. Mute, dim and gain
-  // are one shared control for the whole monitor output, so every open
-  // session takes the same values.
+  // Every monitored channel plays through one listen session: the node sums
+  // them sample-aligned, each at its showfile trim, so a multi-selection is one
+  // time-aligned mix rather than several streams drifting against each other.
+  // Selecting, deselecting or re-trimming retargets that session in place; it
+  // opens with the first patched selection and closes with the last. Mute, dim
+  // and gain stay on the one monitor output.
+  const { ids: mixedIds, sources: wanted } = listenMix(
+    deviceMode && device ? selectedChannels : [],
+  );
   useEffect(() => {
-    const slots = playbackSlots.current;
-    if (!deviceMode || !device) {
-      if (slots.length) {
-        for (const slot of slots) slot.session.close();
-        slots.length = 0;
-        setPlaybackByChannel({});
+    const session = playbackSession.current;
+    if (wanted.length === 0) {
+      if (session) {
+        session.close();
+        playbackSession.current = null;
+        setPlayback(null);
       }
       return;
     }
-    const wanted = new Map<string, number>();
-    for (const channel of selectedChannels) {
-      if (channel.input.index !== null) {
-        wanted.set(channel.id, channel.input.index);
-      }
+    if (session) {
+      session.setSources(wanted);
+      return;
     }
-    const trimDbFor = (id: string) =>
-      channels.find((channel) => channel.id === id)?.trimDb ?? 0;
-    const dropPlayback = (id: string) =>
-      setPlaybackByChannel((prev) => {
-        if (!(id in prev)) return prev;
-        const next = { ...prev };
-        delete next[id];
-        return next;
-      });
+    const opened = playbackFactory({ sources: wanted, onUpdate: setPlayback });
+    playbackSession.current = opened;
+    opened.setGainDb(outputState.current.gainDb);
+    opened.setDimmed(outputState.current.dimmed);
+    void opened.setMuted(outputState.current.muted);
+    // `wanted` is rebuilt every render; the session ignores an unchanged mix.
+  }, [wanted, playbackFactory]);
 
-    // A slot already pointed at a still-wanted channel just refreshes.
-    for (const slot of slots) {
-      if (!wanted.has(slot.channelId)) continue;
-      slot.session.setChannel(wanted.get(slot.channelId)!);
-      slot.session.setTrimDb(trimDbFor(slot.channelId));
-    }
-
-    const staleSlots = slots.filter((slot) => !wanted.has(slot.channelId));
-    const newIds = [...wanted.keys()].filter(
-      (id) => !slots.some((slot) => slot.channelId === id),
-    );
-
-    while (staleSlots.length && newIds.length) {
-      const slot = staleSlots.pop()!;
-      const newId = newIds.pop()!;
-      const oldId = slot.channelId;
-      slot.channelId = newId;
-      slot.session.setChannel(wanted.get(newId)!);
-      slot.session.setTrimDb(trimDbFor(newId));
-      dropPlayback(oldId);
-    }
-
-    // Left over with no replacement: actually close it.
-    for (const slot of staleSlots) {
-      slot.session.close();
-      const index = slots.indexOf(slot);
-      if (index !== -1) slots.splice(index, 1);
-      dropPlayback(slot.channelId);
-    }
-
-    // Left over with no spare session: open a new one.
-    for (const id of newIds) {
-      const slot = {
-        channelId: id,
-        session: undefined as unknown as PlaybackSession,
-      };
-      const session = playbackFactory({
-        channel: wanted.get(id)!,
-        onUpdate: (update) =>
-          setPlaybackByChannel((prev) => ({
-            ...prev,
-            [slot.channelId]: update,
-          })),
-      });
-      slot.session = session;
-      session.setGainDb(outputState.current.gainDb);
-      session.setTrimDb(trimDbFor(id));
-      session.setDimmed(outputState.current.dimmed);
-      void session.setMuted(outputState.current.muted);
-      slots.push(slot);
-    }
-  }, [selectedChannels, deviceMode, device, channels, playbackFactory]);
-
-  // Sessions otherwise outlive this effect; only unmounting closes them all.
+  // The session otherwise outlives this effect; only unmounting closes it.
   useEffect(
     () => () => {
-      for (const slot of playbackSlots.current) slot.session.close();
-      playbackSlots.current.length = 0;
+      playbackSession.current?.close();
+      playbackSession.current = null;
     },
     [],
   );
@@ -665,10 +656,11 @@ export function App({
     } catch {
       // Gain still applies for this session.
     }
-    for (const slot of playbackSlots.current) {
-      slot.session.setGainDb(gainDb);
-      slot.session.setDimmed(dimmed);
-      void slot.session.setMuted(muted);
+    const session = playbackSession.current;
+    if (session) {
+      session.setGainDb(gainDb);
+      session.setDimmed(dimmed);
+      void session.setMuted(muted);
     }
   }, [dimmed, gainDb, muted]);
 
@@ -750,6 +742,19 @@ export function App({
       );
     }
   }, [liveState, offline]);
+
+  // A rise in the node's count is a fresh loss; the first reading, or a lower
+  // one after capture restarts, is only a baseline.
+  const nodeDropouts = liveState?.node.dropouts;
+  const nodeDropoutTotal = nodeDropouts
+    ? nodeDropouts.callbacks + nodeDropouts.blocks
+    : null;
+  useEffect(() => {
+    if (nodeDropoutTotal === null) return;
+    const seen = seenDropouts.current;
+    seenDropouts.current = nodeDropoutTotal;
+    if (seen !== null && nodeDropoutTotal > seen) setDropoutAtMs(Date.now());
+  }, [nodeDropoutTotal]);
 
   const wantsAlertLog = exceptionsOpen || detailId !== null || timelineOpen;
   useEffect(() => {
@@ -1120,12 +1125,166 @@ export function App({
     () => groupChannels(visibleChannels, rooms, room),
     [visibleChannels, rooms, room],
   );
+  // Glance view: size tiles so every channel in view fits between the top of
+  // the grid and the player, never below a touch target (then it scrolls).
+  const groupShape = groups
+    .map((group) => `${group.title ? 1 : 0}:${group.channels.length}`)
+    .join(",");
+  const fitGlanceGrid = useRef<() => void>(() => undefined);
+  function fitGrid() {
+    const main = mainRef.current;
+    if (gridView !== "glance" || !main) return;
+    const shape = groupShape
+      .split(",")
+      .filter(Boolean)
+      .map((entry) => {
+        const [titled, count] = entry.split(":");
+        return { titled: titled === "1", count: Number(count) };
+      });
+    const style = getComputedStyle(main);
+    const paddingX =
+      Number.parseFloat(style.paddingLeft) +
+      Number.parseFloat(style.paddingRight);
+    const firstGroup = main.querySelector(".channel-group");
+    const top =
+      (firstGroup ?? main).getBoundingClientRect().top + window.scrollY;
+    const player =
+      document.querySelector(".player")?.getBoundingClientRect().height ?? 0;
+    const fit = fitGlance({
+      width: main.clientWidth - paddingX,
+      height:
+        window.innerHeight -
+        top -
+        player -
+        Number.parseFloat(style.paddingBottom),
+      groups: shape,
+    });
+    main.style.setProperty("--glance-columns", String(fit.columns));
+    main.style.setProperty("--glance-tile-height", `${fit.tileHeight}px`);
+    // Tall enough for a second line: the alert's name under the channel's.
+    main.toggleAttribute("data-glance-roomy", fit.tileHeight >= 64);
+  }
+  // After every render: a notice or bar appearing above the grid moves it.
+  useLayoutEffect(() => {
+    fitGlanceGrid.current = fitGrid;
+    fitGrid();
+  });
+  useEffect(() => {
+    const apply = () => fitGlanceGrid.current();
+    window.addEventListener("resize", apply);
+    const player = document.querySelector(".player");
+    const observer =
+      typeof ResizeObserver === "undefined" || !player
+        ? null
+        : new ResizeObserver(apply);
+    if (player) observer?.observe(player);
+    return () => {
+      window.removeEventListener("resize", apply);
+      observer?.disconnect();
+    };
+  }, []);
 
   /** Every visible channel in on-screen order, for Shift range-select. */
   const orderedChannelIds = useMemo(
     () => groups.flatMap((group) => group.channels.map(({ id }) => id)),
     [groups],
   );
+
+  const gridFocusId =
+    focusId !== null && orderedChannelIds.includes(focusId)
+      ? focusId
+      : (orderedChannelIds[0] ?? null);
+
+  /** Moves the grid's focus to a channel's card and keeps it in the tab order. */
+  function focusCard(channelId: string) {
+    setFocusId(channelId);
+    mainRef.current
+      ?.querySelector<HTMLElement>(
+        `[data-channel-id="${CSS.escape(channelId)}"] [data-card-target]`,
+      )
+      ?.focus();
+  }
+
+  /**
+   * Keyboard on the grid (DESIGN.md §8.3): arrows move between cards as they
+   * sit on screen, Home and End go to the ends, and typing a channel number
+   * or the start of a name jumps to it. Space and Enter press the focused
+   * card like a tap; Escape, M and D are handled for the whole page.
+   */
+  /** Whether a number or name is still being typed (keys under 800 ms apart). */
+  const typing = () => Date.now() - typeahead.current.atMs < 800;
+
+  function onGridKeyDown(event: ReactKeyboardEvent<HTMLElement>) {
+    const target = event.target as HTMLElement;
+    if (!target.matches("[data-card-target]")) return;
+    const current =
+      target.closest<HTMLElement>("[data-channel-id]")?.dataset.channelId;
+    if (!current) return;
+    const index = orderedChannelIds.indexOf(current);
+    let next: string | undefined;
+    if (event.key === "ArrowRight") next = orderedChannelIds[index + 1];
+    else if (event.key === "ArrowLeft") next = orderedChannelIds[index - 1];
+    else if (event.key === "Home") next = orderedChannelIds[0];
+    else if (event.key === "End") next = orderedChannelIds.at(-1);
+    else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      // The card in the next row down (or up) nearest in x, as laid out.
+      const cards = [
+        ...(mainRef.current?.querySelectorAll<HTMLElement>(
+          "[data-channel-id]",
+        ) ?? []),
+      ];
+      const here = cards
+        .find((card) => card.dataset.channelId === current)
+        ?.getBoundingClientRect();
+      if (here) {
+        const down = event.key === "ArrowDown";
+        const candidates = cards
+          .map((card) => ({ card, box: card.getBoundingClientRect() }))
+          .filter(({ box }) =>
+            down ? box.top >= here.bottom - 1 : box.bottom <= here.top + 1,
+          );
+        const rowEdge = down
+          ? Math.min(...candidates.map(({ box }) => box.top))
+          : Math.max(...candidates.map(({ box }) => box.bottom));
+        const x = here.left + here.width / 2;
+        next = candidates
+          .filter(({ box }) =>
+            down ? box.top === rowEdge : box.bottom === rowEdge,
+          )
+          .sort(
+            (a, b) =>
+              Math.abs(a.box.left + a.box.width / 2 - x) -
+              Math.abs(b.box.left + b.box.width / 2 - x),
+          )[0]?.card.dataset.channelId;
+      }
+    } else if (
+      event.key.length === 1 &&
+      /[\p{L}\p{N}]/u.test(event.key) &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey &&
+      // M and D stay mute and dim unless a name is already being typed.
+      !(!typing() && /^[mdMD]$/.test(event.key))
+    ) {
+      const text =
+        (typing() ? typeahead.current.text : "") + event.key.toLowerCase();
+      const now = Date.now();
+      typeahead.current = { text, atMs: now };
+      const visible = orderedChannelIds
+        .map((id) => channels.find((channel) => channel.id === id))
+        .filter((channel): channel is LiveStateChannel => Boolean(channel));
+      next = (
+        /^\d+$/.test(text)
+          ? visible.find(({ number }) => String(number) === text)
+          : visible.find(({ name }) => name.toLowerCase().startsWith(text))
+      )?.id;
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (next === undefined) return;
+    event.preventDefault();
+    focusCard(next);
+  }
 
   /**
    * Selects a channel to monitor. A plain press replaces the selection with
@@ -1231,6 +1390,9 @@ export function App({
                     status: "listening",
                     detail: `Input ${hostMonitor.input + 1} · ${describeOutputChannels(hostFeed.outputChannels)}`,
                   };
+  // Each chip reports the one shared stream, and only for channels in the mix.
+  const playbackByChannel: Record<string, PlaybackUpdate> = {};
+  if (playback) for (const id of mixedIds) playbackByChannel[id] = playback;
   const primaryPlayback: PlaybackUpdate =
     primarySelectedId !== null
       ? (playbackByChannel[primarySelectedId] ?? {
@@ -1287,6 +1449,15 @@ export function App({
       ];
     }),
   );
+  // Audio the node lost since capture started (CLAUDE.md: overruns are
+  // metrics). The header carries the count; a notice marks a fresh loss.
+  const dropouts =
+    liveState && !offline && liveState.node.status === "ready"
+      ? liveState.node.dropouts
+      : undefined;
+  const dropoutCount = dropouts ? dropouts.callbacks + dropouts.blocks : 0;
+  const recentDropout =
+    dropoutAtMs !== null && nowMs - dropoutAtMs < DROPOUT_NOTICE_MS;
   const summary = liveState?.summary;
   const alertLabel =
     !summary || offline
@@ -1338,7 +1509,7 @@ export function App({
                 : "Waiting for validated data"}
           </span>
         </div>
-        {rooms.length && shownRoom ? (
+        {roomOptions.length > 2 && shownRoom ? (
           <button
             className="room-switch"
             type="button"
@@ -1381,7 +1552,7 @@ export function App({
                     liveState.node.status === "error"
                   ? "offline"
                   : "waiting"
-          }`}
+          }${dropoutCount > 0 ? " has-dropouts" : ""}`}
         >
           <span>Node</span>
           <strong>
@@ -1395,6 +1566,11 @@ export function App({
                     ? "Failed"
                     : "Waiting"}
           </strong>
+          {dropoutCount > 0 ? (
+            <em>
+              {dropoutCount} dropout{dropoutCount === 1 ? "" : "s"}
+            </em>
+          ) : null}
         </div>
         {nodeDevice?.simulated ? (
           <span className="simulated-badge">Simulated test signal</span>
@@ -1477,6 +1653,20 @@ export function App({
         device={device}
       />
       {liveState && !offline ? <NodeNotice state={liveState} /> : null}
+      {recentDropout && dropoutAtMs !== null ? (
+        <section className="snapshot-notice snapshot-waiting" role="status">
+          <div>
+            <strong>
+              Audio capture dropped audio at{" "}
+              {formatClock(new Date(dropoutAtMs).toISOString())}.
+            </strong>
+            <span>
+              Listening and meters had a gap. {dropoutCount} since capture
+              started; the node could not keep up with the device.
+            </span>
+          </div>
+        </section>
+      ) : null}
       {liveState && !offline ? <ReceiverNotice state={liveState} /> : null}
       {liveState?.node.status === "ready" && meterConnection !== "live" ? (
         <section className="snapshot-notice snapshot-waiting">
@@ -1518,6 +1708,23 @@ export function App({
             active={filter}
             onChoose={setFilter}
           />
+          <div className="view-switch" role="group" aria-label="Layout">
+            {(
+              [
+                ["glance", "Glance"],
+                ["cards", "Cards"],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={gridView === key}
+                onClick={() => chooseGridView(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       ) : null}
 
@@ -1552,7 +1759,12 @@ export function App({
         />
       ) : null}
 
-      <main className="channel-main" onClick={clearOnBlankPress}>
+      <main
+        ref={mainRef}
+        className={`channel-main${gridView === "glance" ? " is-glance" : ""}`}
+        onClick={clearOnBlankPress}
+        onKeyDown={onGridKeyDown}
+      >
         {channels.length ? (
           <>
             {isA1 ? (
@@ -1577,6 +1789,11 @@ export function App({
                 ) : null}
               </>
             )}
+            {gridView === "glance" ? (
+              <p className="strip-legend" aria-hidden="true">
+                Status, left to right: RF · Audio · Battery
+              </p>
+            ) : null}
             {groups.map((group) => (
               <section
                 className="channel-group"
@@ -1593,6 +1810,8 @@ export function App({
                     <ChannelCard
                       key={channel.id}
                       channel={channel}
+                      density={gridView === "glance" ? "glance" : "card"}
+                      tabbable={channel.id === gridFocusId}
                       alert={
                         isA1
                           ? null
@@ -1616,8 +1835,19 @@ export function App({
                         (liveState !== null &&
                           liveState.node.status !== "ready")
                       }
-                      onAcknowledge={(alert) => void acknowledge(alert)}
+                      onAcknowledge={(alert, event) => {
+                        void acknowledge(alert);
+                        // The ringing card is the one to hear. Pressing it
+                        // never takes a channel out of what is playing.
+                        if (!effectiveSelectedIds.includes(channel.id)) {
+                          selectChannel(channel, {
+                            extend: event.shiftKey,
+                            toggle: event.ctrlKey || event.metaKey,
+                          });
+                        }
+                      }}
                       onSelect={(event) => {
+                        setFocusId(channel.id);
                         if (isA1) {
                           setFiledReportId(null);
                           setReportError(null);
@@ -1668,6 +1898,11 @@ export function App({
       ) : (
         <Player
           channel={selectedChannel}
+          onOpenDetail={
+            gridView === "glance" && selectedChannel
+              ? () => setDetailId(selectedChannel.id)
+              : undefined
+          }
           monitoredChannels={selectedChannels}
           playbackByChannel={playbackByChannel}
           onSelectPrimary={

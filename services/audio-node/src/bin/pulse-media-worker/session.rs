@@ -39,8 +39,11 @@ pub struct ListenSession {
     encoder: Encoder,
     audio_mid: Mid,
     opus_pt: Pt,
-    channel: usize,
-    fade_from: Option<usize>,
+    /// What this listener hears: one or more inputs, summed.
+    sources: Vec<Source>,
+    /// The sources a pending change fades from, crossfaded over the next block.
+    fade_from: Vec<Source>,
+    fading: bool,
     connected: bool,
     closed: Option<&'static str>,
     connect_deadline: Instant,
@@ -91,6 +94,51 @@ pub fn mix_block(
     }
 }
 
+/// The most inputs one listener can hear at once.
+pub const MAX_SOURCES: usize = 16;
+
+/// One input in a listener's mix, at the linear gain of its channel trim.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Source {
+    pub channel: usize,
+    pub gain: f32,
+}
+
+/// One frame of a listener's mix: the sources summed, each at its trim, the sum at
+/// −3 dB per doubling of sources so several speaking together stay near one's level.
+/// No sources is silence; an input beyond the device is silent too.
+fn mix_frame(block: &CaptureBlock, sources: &[Source], frame: usize) -> f32 {
+    if sources.is_empty() {
+        return 0.0;
+    }
+    let sum: f32 = sources
+        .iter()
+        .filter(|source| source.channel < block.channel_count)
+        .map(|source| block.sample(frame, source.channel) * source.gain)
+        .sum();
+    sum / (sources.len() as f32).sqrt()
+}
+
+/// Writes one mono block of `sources`. A pending change fades linearly from the previous
+/// mix across the block, so adding, removing or switching inputs never steps.
+pub fn mix_sources(
+    block: &CaptureBlock,
+    sources: &[Source],
+    fade_from: Option<&[Source]>,
+    output: &mut [f32],
+) {
+    for (frame, value) in output.iter_mut().enumerate().take(FRAMES_PER_BLOCK) {
+        let next = mix_frame(block, sources, frame);
+        *value = match fade_from {
+            Some(previous) => {
+                let gain = (frame as f32 + 0.5) / FRAMES_PER_BLOCK as f32;
+                mix_frame(block, previous, frame) * (1.0 - gain) + next * gain
+            }
+            None => next,
+        };
+    }
+}
+
 /// Finds the `a=mid` of the first audio section whose answered direction lets this node send.
 fn sending_audio_mid(answer: &str) -> Option<Mid> {
     let mut sections = answer.split("\r\nm=").skip(1);
@@ -111,7 +159,7 @@ impl ListenSession {
         crypto: Arc<CryptoProvider>,
         local: SocketAddr,
         offer_sdp: &str,
-        channel: usize,
+        sources: &[Source],
         now: Instant,
     ) -> Result<(Self, String), String> {
         let offer = SdpOffer::from_sdp_string(offer_sdp)
@@ -158,8 +206,13 @@ impl ListenSession {
             encoder,
             audio_mid: mid,
             opus_pt,
-            channel,
-            fade_from: None,
+            sources: {
+                let mut owned = Vec::with_capacity(MAX_SOURCES);
+                owned.extend_from_slice(&sources[..sources.len().min(MAX_SOURCES)]);
+                owned
+            },
+            fade_from: Vec::with_capacity(MAX_SOURCES),
+            fading: false,
             connected: false,
             closed: None,
             connect_deadline: now + CONNECT_TIMEOUT,
@@ -178,10 +231,14 @@ impl ListenSession {
         }
     }
 
-    pub fn select(&mut self, channel: usize) {
-        if channel != self.channel {
-            self.fade_from = Some(self.channel);
-            self.channel = channel;
+    /// Changes what this listener hears. The switch is crossfaded, never renegotiated.
+    pub fn select(&mut self, sources: &[Source]) {
+        if sources != self.sources.as_slice() {
+            self.fade_from.clear();
+            self.fade_from.extend_from_slice(&self.sources);
+            self.sources.clear();
+            self.sources.extend_from_slice(sources);
+            self.fading = true;
         }
     }
 
@@ -227,7 +284,9 @@ impl ListenSession {
         if !self.connected || self.closed.is_some() {
             return;
         }
-        mix_block(block, self.channel, self.fade_from.take(), &mut self.mono);
+        let fade_from = self.fading.then_some(self.fade_from.as_slice());
+        mix_sources(block, &self.sources, fade_from, &mut self.mono);
+        self.fading = false;
         let Ok(length) = self.encoder.encode_float(&self.mono, &mut self.packet) else {
             self.close("encoder-error");
             return;
@@ -320,6 +379,42 @@ mod tests {
         assert!(output.iter().all(|sample| *sample == 0.0));
     }
 
+    #[test]
+    fn sums_several_sources_at_their_trims_and_crossfades_a_change() {
+        let source = block(0, 3, |_, channel| [0.4, 0.2, -0.3][channel]);
+        let one = |channel, gain| Source { channel, gain };
+        let mut output = vec![0.0; FRAMES_PER_BLOCK];
+
+        mix_sources(&source, &[one(0, 1.0)], None, &mut output);
+        assert!(output.iter().all(|sample| (*sample - 0.4).abs() < 1e-6));
+
+        // Two sources: summed, each at its trim, the sum at -3 dB.
+        mix_sources(&source, &[one(0, 1.0), one(1, 2.0)], None, &mut output);
+        let expected = (0.4 + 0.2 * 2.0) / 2.0_f32.sqrt();
+        assert!(
+            output
+                .iter()
+                .all(|sample| (*sample - expected).abs() < 1e-6)
+        );
+
+        // Nothing selected, or an input the device lacks, is silence.
+        mix_sources(&source, &[], None, &mut output);
+        assert!(output.iter().all(|sample| *sample == 0.0));
+        mix_sources(&source, &[one(9, 1.0)], None, &mut output);
+        assert!(output.iter().all(|sample| *sample == 0.0));
+
+        // Adding an input fades from the old mix to the new one over the block.
+        mix_sources(
+            &source,
+            &[one(0, 1.0), one(2, 1.0)],
+            Some(&[one(0, 1.0)]),
+            &mut output,
+        );
+        assert!((output[0] - 0.4).abs() < 0.01);
+        let after = (0.4 - 0.3) / 2.0_f32.sqrt();
+        assert!((output[FRAMES_PER_BLOCK - 1] - after).abs() < 0.01);
+    }
+
     type Datagram = (SocketAddr, SocketAddr, Vec<u8>);
 
     fn drive_server(
@@ -357,8 +452,17 @@ mod tests {
         change.add_media(MediaKind::Audio, Direction::RecvOnly, None, None, None);
         let (offer, pending) = change.apply().unwrap();
 
-        let (mut session, answer) =
-            ListenSession::open(crypto, server_addr, &offer.to_sdp_string(), 1, start).unwrap();
+        let (mut session, answer) = ListenSession::open(
+            crypto,
+            server_addr,
+            &offer.to_sdp_string(),
+            &[Source {
+                channel: 1,
+                gain: 1.0,
+            }],
+            start,
+        )
+        .unwrap();
         assert!(answer.contains("opus/48000/2"));
         assert!(answer.contains("a=ice-lite"));
         client
@@ -430,7 +534,10 @@ mod tests {
             client.handle_input(Input::Timeout(now)).unwrap();
 
             if decoded.len() == 30 && !switched {
-                session.select(0);
+                session.select(&[Source {
+                    channel: 0,
+                    gain: 1.0,
+                }]);
                 switched = true;
             }
             if decoded.len() >= 60 {

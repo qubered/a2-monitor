@@ -75,8 +75,10 @@ export function groupChannels(
   const push = (key: string, title: string, members: LiveStateChannel[]) => {
     if (members.length) groups.push({ key, title, channels: members });
   };
+  // A room's name only tells channels apart when there is more than one room.
+  const named = choice === "all" && rooms.length > 1;
   const withRoom = (room: Room, label: string) =>
-    choice === "all" ? `${room.name} · ${label}` : label;
+    named ? `${room.name} · ${label}` : label;
 
   for (const room of rooms) {
     if (choice !== "all" && choice !== room.id) continue;
@@ -102,7 +104,7 @@ export function groupChannels(
       `${room.id}/none`,
       room.categories.length
         ? withRoom(room, "No category")
-        : choice === "all"
+        : named
           ? room.name
           : "All channels",
       members

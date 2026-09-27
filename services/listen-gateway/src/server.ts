@@ -25,6 +25,7 @@ import { LEVEL_WINDOW_MS, LevelBank, type MeterReading } from "./levels.js";
 import {
   MediaWorkerManager,
   SessionRejectedError,
+  type ListenSource,
   type MediaWorkerOptions,
 } from "./media-worker.js";
 import { handleWebRequest, type WebHostOptions } from "./web-host.js";
@@ -42,6 +43,12 @@ const FEED_OUTPUT_PATH = /^\/audio\/v0\/output\/feeds\/([^/]{1,192})$/;
 const SESSION_PATH = /^\/audio\/v0\/listen\/sessions\/([0-9a-f-]{36})$/;
 const SESSION_CHANNEL_PATH =
   /^\/audio\/v0\/listen\/sessions\/([0-9a-f-]{36})\/channel$/;
+const SESSION_SOURCES_PATH =
+  /^\/audio\/v0\/listen\/sessions\/([0-9a-f-]{36})\/sources$/;
+/** The most inputs one listener can hear at once (the worker's limit). */
+const MAX_LISTEN_SOURCES = 16;
+/** Channel trim bounds, as in the showfile. */
+const MAX_TRIM_DB = 24;
 
 export type ListenGatewayOptions = MediaWorkerOptions &
   WebHostOptions & {
@@ -150,6 +157,42 @@ export function candidateAddressFor(
     }
   }
   return "127.0.0.1";
+}
+
+/**
+ * A listener's mix: `[{channel, trimDb}]`, distinct inputs, each trim within
+ * the showfile's ±24 dB, sent to the worker as linear gains.
+ */
+function sourcesFrom(value: unknown, channelCount: number): ListenSource[] {
+  if (
+    !Array.isArray(value) ||
+    value.length === 0 ||
+    value.length > MAX_LISTEN_SOURCES
+  ) {
+    throw new HttpError(400, "invalid-sources");
+  }
+  const seen = new Set<number>();
+  return value.map((entry: unknown) => {
+    if (
+      typeof entry !== "object" ||
+      entry === null ||
+      Object.keys(entry).sort().join(",") !== "channel,trimDb"
+    ) {
+      throw new HttpError(400, "invalid-sources");
+    }
+    const { channel: rawChannel, trimDb } = entry as Record<string, unknown>;
+    const channel = channelFrom(rawChannel, channelCount);
+    if (
+      seen.has(channel) ||
+      typeof trimDb !== "number" ||
+      !Number.isFinite(trimDb) ||
+      Math.abs(trimDb) > MAX_TRIM_DB
+    ) {
+      throw new HttpError(400, "invalid-sources");
+    }
+    seen.add(channel);
+    return { channel, gain: Number((10 ** (trimDb / 20)).toFixed(6)) };
+  });
 }
 
 function channelFrom(value: unknown, channelCount: number): number {
@@ -337,10 +380,23 @@ export class ListenGateway {
   ): Promise<void> {
     const path = request.url ?? "";
     if (path === "/audio/v0/listen/sessions" && request.method === "POST") {
-      const body = await readJsonObject(request, ["channel", "offer"]);
+      // One input (`channel`), or a mix (`sources`), never both.
+      const body = await readJsonObject(request);
+      const keys = Object.keys(body).sort().join(",");
+      if (keys !== "channel,offer" && keys !== "offer,sources") {
+        throw new HttpError(400, "invalid-body");
+      }
       const state = this.media.getState();
       if (state.status !== "ready") throw new HttpError(503, "audio-not-ready");
-      const channel = channelFrom(body.channel, state.device.channelCount);
+      const sources =
+        "sources" in body
+          ? sourcesFrom(body.sources, state.device.channelCount)
+          : [
+              {
+                channel: channelFrom(body.channel, state.device.channelCount),
+                gain: 1,
+              },
+            ];
       if (typeof body.offer !== "string" || body.offer.length === 0) {
         throw new HttpError(400, "invalid-offer");
       }
@@ -348,7 +404,7 @@ export class ListenGateway {
       try {
         const answer = await this.media.openSession({
           sessionId,
-          channel,
+          sources,
           offer: body.offer,
           candidateAddress: candidateAddressFor(
             request.socket.localAddress,
@@ -374,7 +430,20 @@ export class ListenGateway {
       const state = this.media.getState();
       if (state.status !== "ready") throw new HttpError(503, "audio-not-ready");
       const channel = channelFrom(body.channel, state.device.channelCount);
-      if (!this.media.selectChannel(channelMatch[1], channel)) {
+      if (!this.media.selectSources(channelMatch[1], [{ channel, gain: 1 }])) {
+        throw new HttpError(404, "unknown-session");
+      }
+      response.writeHead(204, { "Cache-Control": "no-store" }).end();
+      return;
+    }
+
+    const sourcesMatch = SESSION_SOURCES_PATH.exec(path);
+    if (sourcesMatch?.[1] && request.method === "PUT") {
+      const body = await readJsonObject(request, ["sources"]);
+      const state = this.media.getState();
+      if (state.status !== "ready") throw new HttpError(503, "audio-not-ready");
+      const sources = sourcesFrom(body.sources, state.device.channelCount);
+      if (!this.media.selectSources(sourcesMatch[1], sources)) {
         throw new HttpError(404, "unknown-session");
       }
       response.writeHead(204, { "Cache-Control": "no-store" }).end();
@@ -488,6 +557,9 @@ export class ListenGateway {
                 simulated: this.media.simulated,
               }
             : null,
+        ...(state.status === "ready"
+          ? { dropouts: this.media.getDropouts() }
+          : {}),
       },
       windowMs: LEVEL_WINDOW_MS,
       inputs:

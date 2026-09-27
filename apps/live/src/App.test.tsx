@@ -341,6 +341,8 @@ beforeAll(() => {
 
 beforeEach(() => {
   window.localStorage.clear();
+  // Most tests cover the card layout's content; the glance tests clear this.
+  window.localStorage.setItem("pulse-grid-view", "cards");
 });
 
 afterEach(() => {
@@ -407,12 +409,12 @@ describe("Live channel grid", () => {
 
   it("Ctrl-click adds a channel to the selection so both play at once", async () => {
     const user = userEvent.setup();
+    const setSources = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
-      setChannel: vi.fn(),
+      setSources,
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
-      setTrimDb: vi.fn(),
       close: vi.fn(),
     }));
     renderApp(stateWith(), { audioDeviceSource: readyDevice, playbackFactory });
@@ -435,7 +437,12 @@ describe("Live channel grid", () => {
       .closest("article")!;
     expect(marguerite.classList.contains("is-selected")).toBe(true);
     expect(talkbackCard.classList.contains("is-selected")).toBe(true);
-    expect(playbackFactory).toHaveBeenCalledTimes(2);
+    // Both play as one node-side mix over the one session.
+    expect(playbackFactory).toHaveBeenCalledOnce();
+    expect(setSources).toHaveBeenLastCalledWith([
+      expect.objectContaining({ channel: 0 }),
+      expect.objectContaining({ channel: 1 }),
+    ]);
     expect(screen.getByText("2 channels monitored together.")).toBeTruthy();
 
     // Ctrl-clicking the first again drops only that one from the selection.
@@ -446,17 +453,21 @@ describe("Live channel grid", () => {
     await user.keyboard("{/Control}");
     expect(marguerite.classList.contains("is-selected")).toBe(false);
     expect(talkbackCard.classList.contains("is-selected")).toBe(true);
-    expect(screen.getByText("1 channel monitored together.")).toBeTruthy();
+    expect(setSources).toHaveBeenLastCalledWith([
+      expect.objectContaining({ channel: 1 }),
+    ]);
+    // One channel is what the player shows; the bar is only for several.
+    expect(screen.queryByText(/monitored together/)).toBeNull();
   });
 
   it("Shift-click extends the selection to every channel between the last pick and this one", async () => {
     const user = userEvent.setup();
+    const setSources = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
-      setChannel: vi.fn(),
+      setSources,
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
-      setTrimDb: vi.fn(),
       close: vi.fn(),
     }));
     renderApp(stateWith(), { audioDeviceSource: readyDevice, playbackFactory });
@@ -484,8 +495,133 @@ describe("Live channel grid", () => {
       ).toBe(true);
     }
     expect(screen.getByText("3 channels monitored together.")).toBeTruthy();
-    // Spare has no patched input, so only the two patched channels listen.
-    expect(playbackFactory).toHaveBeenCalledTimes(2);
+    // Spare has no patched input, so only the two patched channels are mixed.
+    expect(playbackFactory).toHaveBeenCalledOnce();
+    expect(setSources).toHaveBeenLastCalledWith([
+      expect.objectContaining({ channel: 0 }),
+      expect.objectContaining({ channel: 1 }),
+    ]);
+  });
+
+  it("opens in the glance view: tiles listen, the player opens details, and Cards is remembered", async () => {
+    window.localStorage.removeItem("pulse-grid-view");
+    const user = userEvent.setup();
+    const setSources = vi.fn();
+    const playbackFactory = vi.fn<PlaybackFactory>(() => ({
+      setSources,
+      setMuted: vi.fn(async () => undefined),
+      setDimmed: vi.fn(),
+      setGainDb: vi.fn(),
+      close: vi.fn(),
+    }));
+    const { view } = renderApp(stateWith(), {
+      audioDeviceSource: readyDevice,
+      playbackFactory,
+    });
+
+    expect(
+      screen.getByRole("button", { name: "Glance", pressed: true }),
+    ).toBeTruthy();
+    expect(
+      view.container.querySelector(".channel-main.is-glance"),
+    ).toBeTruthy();
+    // No photograph and no expand button on a glance tile.
+    expect(
+      screen.queryByRole("button", { name: "Open details for Marguerite" }),
+    ).toBeNull();
+    expect(
+      screen.getByText(/Status, left to right: RF · Audio · Battery/),
+    ).toBeTruthy();
+
+    await user.click(
+      screen.getByRole("button", { name: "Select Marguerite, channel 1" }),
+    );
+    await vi.waitFor(() =>
+      expect(playbackFactory).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sources: [expect.objectContaining({ channel: 0 })],
+        }),
+      ),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Details for Marguerite" }),
+    );
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+    await user.keyboard("{Escape}");
+
+    await user.click(screen.getByRole("button", { name: "Cards" }));
+    expect(window.localStorage.getItem("pulse-grid-view")).toBe("cards");
+    expect(
+      screen.getByRole("button", { name: "Open details for Marguerite" }),
+    ).toBeTruthy();
+  });
+
+  it("makes the grid one Tab stop with arrows, Space and type-to-jump", async () => {
+    const user = userEvent.setup();
+    const setSources = vi.fn();
+    const playbackFactory = vi.fn<PlaybackFactory>(() => ({
+      setSources,
+      setMuted: vi.fn(async () => undefined),
+      setDimmed: vi.fn(),
+      setGainDb: vi.fn(),
+      close: vi.fn(),
+    }));
+    renderApp(stateWith(), { audioDeviceSource: readyDevice, playbackFactory });
+    const selectButtons = screen.getAllByRole("button", { name: /^Select / });
+    // Only one card is in the tab order; the rest are reached with arrows.
+    expect(
+      selectButtons.filter((button) => button.tabIndex === 0),
+    ).toHaveLength(1);
+
+    const first = screen.getByRole("button", {
+      name: "Select Marguerite, channel 1",
+    });
+    first.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Select Talkback, channel 2" }),
+    );
+    await user.keyboard("{End}");
+    await user.keyboard("{Home}");
+    expect(document.activeElement).toBe(first);
+
+    // Typing a channel's number jumps to it; Space listens, like a tap.
+    await user.keyboard("2");
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Select Talkback, channel 2" }),
+    );
+    await user.keyboard(" ");
+    await vi.waitFor(() =>
+      expect(playbackFactory).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sources: [expect.objectContaining({ channel: 1 })],
+        }),
+      ),
+    );
+    // A typed name jumps too; M alone is still mute, not a search.
+    await new Promise((resolve) => setTimeout(resolve, 850));
+    await user.keyboard("m");
+    expect(
+      screen.getByRole("button", { name: "Mute", pressed: true }),
+    ).toBeTruthy();
+  });
+
+  it("counts audio the node lost in the header and calls out a fresh loss", () => {
+    const withDropouts = (callbacks: number, revision: number) => {
+      const base = stateWith({ revision });
+      return {
+        ...base,
+        node: { ...base.node, dropouts: { callbacks, blocks: 0 } },
+      };
+    };
+    const { source } = renderApp(withDropouts(2, 10));
+    // Losses before this page watched are counted, not announced.
+    expect(screen.getByText("2 dropouts")).toBeTruthy();
+    expect(screen.queryByText(/Audio capture dropped audio at/)).toBeNull();
+
+    act(() => source.push(withDropouts(3, 11)));
+    expect(screen.getByText("3 dropouts")).toBeTruthy();
+    expect(screen.getByText(/Audio capture dropped audio at/)).toBeTruthy();
   });
 
   it("marks a card with the backend alert and acknowledges it as the named operator", async () => {
@@ -522,7 +658,7 @@ describe("Live channel grid", () => {
     expect(bell.classList.contains("is-pulsing")).toBe(true);
     await user.click(
       screen.getByRole("button", {
-        name: "Battery critical on Marguerite, channel 1. Press to acknowledge.",
+        name: "Battery critical on Marguerite, channel 1. Press to listen and acknowledge.",
       }),
     );
 
@@ -540,13 +676,14 @@ describe("Live channel grid", () => {
     expect(seen.classList.contains("is-pulsing")).toBe(false);
     expect(alertedCard.classList.contains("is-critical-alert")).toBe(false);
     expect(
-      screen.queryByRole("button", { name: /Press to acknowledge/ }),
+      screen.queryByRole("button", { name: /Press to listen and acknowledge/ }),
     ).toBeNull();
+    // The same press listens: the ringing card is the one to hear.
     // Acknowledging is not fixing: the fault stays on the status strip.
     const card = screen
       .getByRole("button", { name: "Select Marguerite, channel 1" })
       .closest("article")!;
-    expect(card.classList.contains("is-selected")).toBe(false);
+    expect(card.classList.contains("is-selected")).toBe(true);
   });
 
   it("dismisses a report banner as a shared action, not a per-device preference", async () => {
@@ -597,11 +734,10 @@ describe("Live channel grid", () => {
     const user = userEvent.setup();
     window.localStorage.setItem("pulse-selected-channel", "ch-marguerite");
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
-      setChannel: vi.fn(),
+      setSources: vi.fn(),
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
-      setTrimDb: vi.fn(),
       close: vi.fn(),
     }));
     const { view } = renderApp(stateWith(), {
@@ -630,11 +766,10 @@ describe("Live channel grid", () => {
     renderApp(stateWith(), {
       audioDeviceSource: readyDevice,
       playbackFactory: vi.fn<PlaybackFactory>(() => ({
-        setChannel: vi.fn(),
+        setSources: vi.fn(),
         setMuted: vi.fn(async () => undefined),
         setDimmed: vi.fn(),
         setGainDb: vi.fn(),
-        setTrimDb: vi.fn(),
         close: vi.fn(),
       })),
     });
@@ -654,15 +789,14 @@ describe("Live channel grid", () => {
     expect(card().classList.contains("is-selected")).toBe(false);
   });
 
-  it("shows a channel's trim and applies it under the operator's level when listening", async () => {
+  it("shows a channel's trim and sends it to the node's mix when listening", async () => {
     const user = userEvent.setup();
-    const setTrimDb = vi.fn();
+    const setSources = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
-      setChannel: vi.fn(),
+      setSources,
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
-      setTrimDb,
       close: vi.fn(),
     }));
     const base = stateWith();
@@ -686,11 +820,17 @@ describe("Live channel grid", () => {
     await user.click(
       screen.getByRole("button", { name: "Select Marguerite, channel 1" }),
     );
-    await vi.waitFor(() => expect(setTrimDb).toHaveBeenLastCalledWith(6));
+    await vi.waitFor(() =>
+      expect(playbackFactory).toHaveBeenCalledWith(
+        expect.objectContaining({ sources: [{ channel: 0, trimDb: 6 }] }),
+      ),
+    );
     await user.click(
       screen.getByRole("button", { name: "Select Talkback, channel 2" }),
     );
-    await vi.waitFor(() => expect(setTrimDb).toHaveBeenLastCalledWith(0));
+    await vi.waitFor(() =>
+      expect(setSources).toHaveBeenLastCalledWith([{ channel: 1, trimDb: 0 }]),
+    );
   });
 
   it("clears a channel's alerts from its detail view and offers it only when something is raised", async () => {
@@ -768,7 +908,7 @@ describe("Live channel grid", () => {
       }),
     );
     expect(
-      screen.queryByRole("button", { name: /Press to acknowledge/ }),
+      screen.queryByRole("button", { name: /Press to listen and acknowledge/ }),
     ).toBeNull();
     const bell = screen.getByRole("button", { name: "1 to acknowledge" });
     // Only a critical alert glows.
@@ -844,7 +984,7 @@ describe("Live channel grid", () => {
       screen.getByRole("button", { name: "Alerts unavailable" }),
     ).toBeTruthy();
     expect(
-      screen.queryByRole("button", { name: /Press to acknowledge/ }),
+      screen.queryByRole("button", { name: /Press to listen and acknowledge/ }),
     ).toBeNull();
     const card = screen
       .getByRole("button", { name: "Select Marguerite, channel 1" })
@@ -1054,19 +1194,18 @@ describe("Live channel grid", () => {
   it("starts the first listen audible and keeps output state across channel changes", async () => {
     const user = userEvent.setup();
     const setMuted = vi.fn(async () => undefined);
-    const setChannel = vi.fn();
+    const setSources = vi.fn();
     const close = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>((options) => {
       options.onUpdate({
         status: "listening",
-        detail: `Receiving input ${options.channel + 1}.`,
+        detail: `Receiving input ${options.sources[0]!.channel + 1}.`,
       });
       return {
-        setChannel,
+        setSources,
         setMuted,
         setDimmed: vi.fn(),
         setGainDb: vi.fn(),
-        setTrimDb: vi.fn(),
         close,
       };
     });
@@ -1085,7 +1224,9 @@ describe("Live channel grid", () => {
     );
     await vi.waitFor(() =>
       expect(playbackFactory).toHaveBeenCalledWith(
-        expect.objectContaining({ channel: 1 }),
+        expect.objectContaining({
+          sources: [expect.objectContaining({ channel: 1 })],
+        }),
       ),
     );
     expect(setMuted).toHaveBeenCalledWith(false);
@@ -1105,7 +1246,9 @@ describe("Live channel grid", () => {
       screen.getByRole("button", { name: "Select Marguerite, channel 1" }),
     );
     // Switching input keeps the one WebRTC session and its unmuted output state.
-    expect(setChannel).toHaveBeenLastCalledWith(0);
+    expect(setSources).toHaveBeenLastCalledWith([
+      expect.objectContaining({ channel: 0 }),
+    ]);
     expect(playbackFactory).toHaveBeenCalledOnce();
     expect(close).not.toHaveBeenCalled();
     expect(screen.queryByText(/is muted|is dimmed/)).toBeNull();
@@ -1417,11 +1560,10 @@ describe("Live channel grid", () => {
   it("plays on this device when chosen, without touching the host output", async () => {
     const user = userEvent.setup();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
-      setChannel: vi.fn(),
+      setSources: vi.fn(),
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
-      setTrimDb: vi.fn(),
       close: vi.fn(),
     }));
     window.localStorage.setItem("pulse-selected-channel", "ch-talkback");
@@ -1446,7 +1588,9 @@ describe("Live channel grid", () => {
     );
     await vi.waitFor(() =>
       expect(playbackFactory).toHaveBeenCalledWith(
-        expect.objectContaining({ channel: 1 }),
+        expect.objectContaining({
+          sources: [expect.objectContaining({ channel: 1 })],
+        }),
       ),
     );
     expect(hostOutput.changes).toEqual([]);

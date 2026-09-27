@@ -19,7 +19,9 @@ export function SelectionBar({
   onDone,
   onClear,
 }: SelectionBarProps) {
-  if (count === 0 && !touchSelecting) return null;
+  // One channel is just what the player shows; the bar is for several
+  // (DESIGN.md §8.4) and for the touch mode that picks them.
+  if (count < 2 && !touchSelecting) return null;
   return (
     <section className="selection-bar" aria-live="polite">
       <span>

@@ -2,7 +2,7 @@
 
 **Status:** Live working list
 
-**Last updated:** 2026-09-20
+**Last updated:** 2026-09-27
 
 This file carries the findings that were still open when the review documents
 were withdrawn, plus the questions that block the plan. It replaces the
@@ -82,6 +82,38 @@ escape hatch for no product reason.
 
 **Open:** define a `target` tier and a `ship-acceptable` tier, with the
 native-client trigger bound to the second, *before* Phase 0B measures anything.
+
+**Measured, 2026-09-27 (synthetic, not capture-to-ear).** The
+[latency harness](../tools/latency/README.md) timed the shipped path from the
+capture pipe to a PulseAudio sink through headless Chromium 141 on a Linux
+container ([audit G4](research/next-level-audit-2026-09.md#g4--the-audio-core),
+raw data alongside it):
+
+| Path                                               | p50        | p95       | Notes                                                                              |
+| -------------------------------------------------- | ---------- | --------- | ---------------------------------------------------------------------------------- |
+| Clean loopback, steady state                       | 87–102 ms  | 92–117 ms | Across 5 identical-config runs; ~32 ms of it is the sink's reported output latency |
+| Shipped Live app, tap → 25 s after                 | 117 ms     | 135 ms    | 6 runs, n = 151; no start-up transient (first burst after the tap 103–125 ms)      |
+| Relay: 1 % loss, 2–8 ms jitter, 1 % stalls ≤ 60 ms | 150 ms     | 157 ms    | steady state; 1.05 % concealed                                                     |
+| Relay: 5 % loss, 4–19 ms, 2 % stalls ≤ 120 ms      | 228 ms     | 249 ms    | steady state; 5.05 % concealed                                                     |
+
+Inferred from these: the part Pulse and the browser control is ~55–65 ms on a
+clean path, so wired p50 ≤ 50 ms is not reachable once any real input and
+output buffering is added, and the Wi-Fi p50 ≤ 80 ms gate fails under even the
+mild relay profile. A user-stated ceiling for phone listening is "≤ 200 ms"
+([ShowStack issue 74](https://github.com/chazw661/ShowStack/issues/74),
+accessed 2026-09-27).
+
+**Proposed tiers (not decided):**
+
+- `target` — wired, reference host and client: capture-to-ear p50 ≤ 80 ms,
+  p95 ≤ 100 ms, max ≤ 150 ms.
+- `ship-acceptable` — wired p95 ≤ 120 ms; declared venue-Wi-Fi profile
+  p95 ≤ 200 ms with no single audible interruption over 250 ms. The
+  native-client trigger binds to missing this tier on physical hardware.
+
+Still unmeasured: Safari/iOS, Firefox, a physical interface and output device,
+and a real access point. The physical test in
+[latency.md](architecture/latency.md#test-method) remains the gate.
 
 ## Carried-forward contract findings
 

@@ -206,7 +206,15 @@ mod supported {
 
         let mut samples = vec![0.0_f32; WRITER_SAMPLES];
         let mut bytes = vec![0_u8; WRITER_SAMPLES * size_of::<f32>()];
+        let mut reported_drops = 0;
         loop {
+            // Overruns are counted on the callback and reported from here, the
+            // writer thread, so the media worker can surface them as a metric.
+            let drops = consumer.dropped_callbacks();
+            if drops != reported_drops {
+                reported_drops = drops;
+                eprintln!("{}", a2_audio_node::capture_stats::stats_line(drops));
+            }
             let count = consumer.try_pop(&mut samples);
             if count == 0 {
                 if stream_failed.load(Ordering::Acquire) {
@@ -379,6 +387,11 @@ mod supported {
     }
 
     impl Consumer {
+        /// Callbacks the queue has had to drop since capture started.
+        fn dropped_callbacks(&self) -> u64 {
+            self.queue.dropped_callbacks.load(Ordering::Relaxed)
+        }
+
         fn try_pop(&mut self, output: &mut [f32]) -> usize {
             let read = self.queue.read.load(Ordering::Relaxed);
             let write = self.queue.write.load(Ordering::Acquire);
