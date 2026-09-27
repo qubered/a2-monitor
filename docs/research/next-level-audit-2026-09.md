@@ -630,18 +630,22 @@ Ten items, ranked by impact on the core job ÷ effort. Effort: **S** ≤ 1 day,
 (2) the finding it answers, (3) why removal alone won't do, (4) what it costs
 the operator — where the target is zero or negative.
 
-| Rank | Item | Kind | Effort | Needs your decision |
+**Decision, 2026-09-27:** approved except #3 (the first-open output prompt is
+intentional) and #7 (operators don't need a latency readout). #4 keeps the
+current card layout as an option alongside the glance view.
+
+| Rank | Item | Kind | Effort | Decision |
 | --- | --- | --- | --- | --- |
-| 1 | Warm listen session | Tune | S | — |
-| 2 | Pressing a ringing card hears it | Change | S | DESIGN §10.3 |
-| 3 | No first-open modal | **Remove** | S | DESIGN §10.4 / ADR 0031 |
-| 4 | Glance view: every channel on one screen | Change | M | DESIGN §10.1 |
-| 5 | Nothing above the grid that isn't needed now | **Remove** | S | — |
-| 6 | Colour only means trouble | **Simplify** | S | DESIGN §2.9, §3.4 |
-| 7 | Show how late the audio is | Add | S | — |
-| 8 | Stop sending the whole show every second | **Remove** (traffic) | M | — |
-| 9 | Surface capture overruns | Add (rule) | S | — |
-| 10 | Full keyboard operation | Change (rule) | M | — |
+| 1 | Warm listen session | Tune | S | Approved |
+| 2 | Pressing a ringing card hears it | Change | S | Approved (DESIGN §10.3) |
+| 3 | No first-open modal | **Remove** | S | **Declined** — intentional |
+| 4 | Glance view: every channel on one screen | Change | M | Approved, with the card view kept as an option (DESIGN §10.1) |
+| 5 | Nothing above the grid that isn't needed now | **Remove** | S | Approved |
+| 6 | Colour only means trouble | **Simplify** | S | Approved (DESIGN §2.9, §3.4) |
+| 7 | Show how late the audio is | Add | S | **Declined** — not needed by operators |
+| 8 | Stop sending the whole show every second | **Remove** (traffic) | M | Approved |
+| 9 | Surface capture overruns | Add (rule) | S | Approved |
+| 10 | Full keyboard operation | Change (rule) | M | Approved |
 
 ### 1. Warm listen session — the first tap sounds like every other tap · S
 
@@ -787,9 +791,8 @@ the operator — where the target is zero or negative.
 
 ## Decisions I need
 
-1. **Approve (or cut) the shortlist.** Items 2, 3, 4 and 6 change DESIGN.md
-   (§10.3, §10.4, §10.1, §2.9/§3.4); I will update DESIGN.md in the same slice
-   as each change.
+1. ~~Approve (or cut) the shortlist.~~ Decided 2026-09-27 (above). Items 2,
+   4 and 6 update DESIGN.md in the same slice as the change.
 2. **Multi-select:** convert to one node-side mix, or cut it?
 3. **Hardware for the physical capture-to-ear test:** which Mac or Windows
    host and interface (DVS or USB), which client devices (iPad model, an
