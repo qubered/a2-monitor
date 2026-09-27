@@ -15,9 +15,11 @@ import type {
   ChannelLevelHistory,
   HealthResponse,
   LiveSnapshot,
+  LiveState,
   ProductionList,
   Showfile,
 } from "@rvlt/pulse-protocol/http";
+import { diffLiveState } from "@rvlt/pulse-protocol/live-state-delta";
 import {
   createStrictAjv2020,
   stringifyValidatedJson,
@@ -211,6 +213,29 @@ function stateEvent({ state, json }: PublishedState): string {
   return `event: state\nid: ${state.revision}\ndata: ${json}\n\n`;
 }
 
+/**
+ * The event that brings a stream from the state it last received to `next`:
+ * a `delta` naming only what changed, or the full state when a delta cannot
+ * say it. Streams on the same base share one delta per published state.
+ */
+const deltaCache = new WeakMap<LiveState, { base: LiveState; event: string }>();
+function nextEvent(base: LiveState | null, next: PublishedState): string {
+  if (!base) return stateEvent(next);
+  const cached = deltaCache.get(next.state);
+  if (cached?.base === base) return cached.event;
+  const delta = diffLiveState(
+    base,
+    base.revision,
+    next.state,
+    next.state.revision,
+  );
+  const event = delta
+    ? `event: delta\nid: ${next.state.revision}\ndata: ${JSON.stringify(delta)}\n\n`
+    : stateEvent(next);
+  deltaCache.set(next.state, { base, event });
+  return event;
+}
+
 export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
   const server = Fastify({ logger: options.logger ?? false });
   const ajv = createStrictAjv2020();
@@ -311,10 +336,18 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     });
     stream.write(`retry: 2000\n\n${stateEvent(initial)}`);
     eventStreams.add(stream);
+    // A connection gets the full state once, then only what changed (the
+    // client applies each delta to the state it last received from here).
+    let sent: LiveState | null = initial.state;
     const onState = (published: PublishedState) => {
-      // A client that cannot keep up misses intermediate states, never the latest.
-      if (stream.writableLength > 1024 * 1024) return;
-      stream.write(stateEvent(published));
+      // A client that cannot keep up misses intermediate states, never the
+      // latest; having missed one, it needs the next in full.
+      if (stream.writableLength > 1024 * 1024) {
+        sent = null;
+        return;
+      }
+      stream.write(nextEvent(sent, published));
+      sent = published.state;
     };
     const heartbeat = setInterval(
       () => stream.write(": heartbeat\n\n"),

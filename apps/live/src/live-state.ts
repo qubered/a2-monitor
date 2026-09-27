@@ -1,4 +1,9 @@
-import { parseLiveState, type LiveState } from "@rvlt/pulse-protocol/http";
+import {
+  parseLiveState,
+  parseLiveStateDelta,
+  type LiveState,
+} from "@rvlt/pulse-protocol/http";
+import { applyLiveStateDelta } from "@rvlt/pulse-protocol/live-state-delta";
 
 export type LiveStateConnection =
   "connecting" | "live" | "reconnecting" | "offline";
@@ -29,9 +34,11 @@ export function createEventSourceLiveState(
 ): LiveStateSource {
   return {
     subscribe({ onState, onConnection }) {
-      const source = new EventSourceClass("/api/v1/live/events");
+      let source: EventSource;
       let receivedAny = false;
       let offlineTimer: number | undefined;
+      /** The state this connection last delivered, which a delta applies to. */
+      let streamed: { sequence: number; state: LiveState } | null = null;
       const armOffline = () => {
         if (offlineTimer !== undefined) window.clearTimeout(offlineTimer);
         offlineTimer = window.setTimeout(
@@ -39,24 +46,54 @@ export function createEventSourceLiveState(
           OFFLINE_AFTER_MS,
         );
       };
+      const deliver = (sequence: number, state: LiveState) => {
+        streamed = { sequence, state };
+        receivedAny = true;
+        armOffline();
+        onConnection("live");
+        onState(state);
+      };
+      // The backend sends the full state once per connection, then deltas.
+      // A delta that does not fit what this side holds, or whose result
+      // fails the contract, is never shown: reconnecting gets a full state.
+      const open = () => {
+        streamed = null;
+        source = new EventSourceClass("/api/v1/live/events");
+        source.addEventListener("state", (event) => {
+          try {
+            const message = event as MessageEvent<string>;
+            deliver(
+              Number(message.lastEventId),
+              parseLiveState(JSON.parse(message.data)),
+            );
+          } catch {
+            // A state that fails its contract is never shown.
+          }
+        });
+        source.addEventListener("delta", (event) => {
+          try {
+            const delta = parseLiveStateDelta(
+              JSON.parse((event as MessageEvent<string>).data),
+            );
+            if (!streamed || delta.baseSequence !== streamed.sequence) {
+              throw new Error("Delta does not follow the last state.");
+            }
+            deliver(
+              delta.sequence,
+              parseLiveState(applyLiveStateDelta(streamed.state, delta)),
+            );
+          } catch {
+            source.close();
+            open();
+          }
+        });
+        source.onerror = () => {
+          onConnection(receivedAny ? "reconnecting" : "connecting");
+        };
+      };
       onConnection("connecting");
       armOffline();
-      source.addEventListener("state", (event) => {
-        try {
-          const state = parseLiveState(
-            JSON.parse((event as MessageEvent<string>).data),
-          );
-          receivedAny = true;
-          armOffline();
-          onConnection("live");
-          onState(state);
-        } catch {
-          // A state that fails its contract is never shown.
-        }
-      });
-      source.onerror = () => {
-        onConnection(receivedAny ? "reconnecting" : "connecting");
-      };
+      open();
       return () => {
         if (offlineTimer !== undefined) window.clearTimeout(offlineTimer);
         source.close();

@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.92e71fc2f4c75623",
-  "sourceSha256": "92e71fc2f4c75623da3bb50fcf3cd2a53c6600ffef2372aa3fe8f9ee2f4103f7",
+  "buildId": "a2-0.0.0+sha256.a9d4f62162960e69",
+  "sourceSha256": "a9d4f62162960e699e2e344a4efcf9860b0c1ccb11e71d58d3b66720d5a0f1a4",
   "inputCount": 466,
   "inputs": [
     {
@@ -217,7 +217,7 @@
     },
     {
       "path": "apps/live/src/live-state.ts",
-      "sha256": "52f7d8a1195dcbd43cf129440dbd4a733530f443b9afc80b5b965501d9edada6"
+      "sha256": "b797eab80c4077aa0939eef1f8b5faca2314545c94af72a003e59a72a8821ed5"
     },
     {
       "path": "apps/live/src/main.tsx",
@@ -1345,7 +1345,7 @@
     },
     {
       "path": "packages/protocol/generated/http-contracts.ts",
-      "sha256": "c3462cdb5916d4e1a262af5b005b53d417c744b75618949276694211edae4d1a"
+      "sha256": "5fa17e76b1584260a6a3ab8f17fd9ed22f8a7cb793d502037e87cc4b8cc15645"
     },
     {
       "path": "packages/protocol/model/aggregate-transitions.v0.json",
@@ -1353,7 +1353,7 @@
     },
     {
       "path": "packages/protocol/package.json",
-      "sha256": "8839811e8123cb25fb36406a7c52a20820556a811984b8d0f7f807c92f65bc72"
+      "sha256": "029a6725acdfa71782616b030493b50b3def2b79c6fa8db9d7d90fa837e661a4"
     },
     {
       "path": "packages/protocol/policy/alert-policy.ts",
@@ -1413,7 +1413,7 @@
     },
     {
       "path": "packages/protocol/scripts/generate-http-contracts.mjs",
-      "sha256": "7c6c8c3297d1ffee85f78fc29a4b03c3fbf3fa68da597de8be09f1f2e73d4cbf"
+      "sha256": "123e494d4215c85da4d6478cb1ee908a830ec3431fb8ab658c6fc0e098c4296b"
     },
     {
       "path": "packages/protocol/scripts/validate-http-contract-fixtures.mjs",
@@ -1669,7 +1669,7 @@
     },
     {
       "path": "services/backend/src/live-routes.test.ts",
-      "sha256": "3c1dc72e2577bebea43006426e441babf2cb753a8e6004367ea691881206e958"
+      "sha256": "10eb5d9605d21042d64a7dfd7fb32eb9747553d3eb77cdea208f7bfb73912a76"
     },
     {
       "path": "services/backend/src/monitoring.test-support.ts",
@@ -1709,7 +1709,7 @@
     },
     {
       "path": "services/backend/src/server.ts",
-      "sha256": "824246539ad394d292e4ac6bb7b5a9d79432827b84a3cb52902f344a4e62cbd5"
+      "sha256": "70affd06a58a79406ab2436ffbcb35eb08aec82006c6923e5ed855170c7ce490"
     },
     {
       "path": "services/backend/src/sessions.test.ts",

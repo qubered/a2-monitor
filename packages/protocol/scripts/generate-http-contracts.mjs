@@ -73,6 +73,24 @@ const contracts = [
     },
   },
   {
+    // Derived, not a file: generated from live-state.schema.json by
+    // `liveStateDelta` below, so it cannot drift from the state it patches.
+    schemaPath: "schema/v0/http/live-state.schema.json",
+    derive: liveStateDelta,
+    typeName: "LiveStateDelta",
+    parserName: "parseLiveStateDelta",
+    definitionNames: {
+      verdict: "LiveStateVerdict",
+      availability: "LiveStateAvailability",
+      receiverUnit: "LiveStateReceiverUnit",
+      channel: "LiveStateChannel",
+      channelPatch: "LiveStateChannelPatch",
+      alert: "LiveAlert",
+      faultReport: "FaultReport",
+      reportedFault: "ReportedFault",
+    },
+  },
+  {
     schemaPath: "schema/v0/http/alert-log.schema.json",
     typeName: "AlertLog",
     parserName: "parseAlertLog",
@@ -90,6 +108,47 @@ const contracts = [
     },
   },
 ];
+
+/**
+ * The data of one `delta` event on /api/v1/live/events, derived from the live
+ * state it patches: every top-level section except the channels, optional and
+ * typed exactly as in the state, plus channel patches that carry an `id` and
+ * only the channel fields that changed. The client applies it to the state
+ * whose SSE event id is `baseSequence` and validates the result as a LiveState.
+ */
+export function liveStateDelta(state) {
+  const unpatched = new Set(["schemaVersion", "generatedAtUtc", "channels"]);
+  const sections = Object.fromEntries(
+    Object.entries(state.properties).filter(([name]) => !unpatched.has(name)),
+  );
+  const sequence = { type: "integer", minimum: 0, maximum: 9007199254740991 };
+  return {
+    $schema: state.$schema,
+    $id: "https://pulse.local/schema/v0/http/live-state-delta.schema.json",
+    title: "Live state delta",
+    description:
+      "Derived from live-state.schema.json by scripts/generate-http-contracts.mjs. What changed on /api/v1/live/events since the event whose SSE id is baseSequence: a present section replaces the client's; a channel patch replaces the named fields of the channel with that id. Applied, the result must validate as a LiveState.",
+    type: "object",
+    additionalProperties: false,
+    required: ["schemaVersion", "sequence", "baseSequence", "generatedAtUtc"],
+    properties: {
+      schemaVersion: state.properties.schemaVersion,
+      sequence,
+      baseSequence: sequence,
+      generatedAtUtc: state.properties.generatedAtUtc,
+      ...sections,
+      channels: {
+        type: "array",
+        maxItems: state.properties.channels.maxItems,
+        items: { $ref: "#/$defs/channelPatch" },
+      },
+    },
+    $defs: {
+      ...state.$defs,
+      channelPatch: { ...state.$defs.channel, required: ["id"] },
+    },
+  };
+}
 
 const outputPath = path.join(packageRoot, "generated/http-contracts.ts");
 const generatorPath = fileURLToPath(import.meta.url);
@@ -185,7 +244,12 @@ function typeFor(schema, definitions) {
   throw new Error(`Unsupported schema shape: ${JSON.stringify(schema)}`);
 }
 
-function emitTypes(schema, rootName, definitionNames = {}) {
+function emitTypes(
+  schema,
+  rootName,
+  definitionNames = {},
+  emitted = new Set(),
+) {
   const definitions = Object.fromEntries(
     Object.entries(schema.$defs ?? {}).map(([name, definition]) => [
       name,
@@ -193,6 +257,8 @@ function emitTypes(schema, rootName, definitionNames = {}) {
     ]),
   );
   const definitionTypes = Object.values(definitions)
+    // A derived contract shares its source's definitions; emit each type once.
+    .filter(({ typeName }) => !emitted.has(typeName) && emitted.add(typeName))
     .map(
       (definition) =>
         `export type ${definition.typeName} = ${typeFor(definition, definitions)};`,
@@ -208,7 +274,8 @@ async function render() {
         path.join(packageRoot, contract.schemaPath),
         "utf8",
       );
-      const schema = JSON.parse(schemaText);
+      const parsed = JSON.parse(schemaText);
+      const schema = contract.derive ? contract.derive(parsed) : parsed;
       assertSupportedSchema(schema);
       return { ...contract, schemaText, schema };
     }),
@@ -217,9 +284,10 @@ async function render() {
   const sources = loaded
     .map(({ schemaPath }) => `//   - ${schemaPath}`)
     .join("\n");
+  const emitted = new Set();
   const types = loaded
     .map(({ schema, typeName, definitionNames }) =>
-      emitTypes(schema, typeName, definitionNames),
+      emitTypes(schema, typeName, definitionNames, emitted),
     )
     .join("\n\n");
   const schemas = loaded

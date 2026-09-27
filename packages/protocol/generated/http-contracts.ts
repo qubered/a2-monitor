@@ -10,12 +10,13 @@
 //   - schema/v0/http/meter-frame.schema.json
 //   - schema/v0/http/host-output.schema.json
 //   - schema/v0/http/live-state.schema.json
+//   - schema/v0/http/live-state.schema.json
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: c87a474a7e37b6676f8bf2184796d20ce39d43491dbb32bd3c1c62c8033514b8
-// Generator-SHA256: 7c6c8c3297d1ffee85f78fc29a4b03c3fbf3fa68da597de8be09f1f2e73d4cbf
-// Body-SHA256: 8848c0995f5055783a2b14c1bf71b18e080c18bd7f65b2601cecd5a68bf8ec93
+// Schema-SHA256: 695c1700a69577b779877d3e1df5addeea7fb4c65e2d448c43f6bb509b66701f
+// Generator-SHA256: 123e494d4215c85da4d6478cb1ee908a830ec3431fb8ab658c6fc0e098c4296b
+// Body-SHA256: cf146165697fb58af715b55f1e9784411e8ebfd3cb50727625723ba76b1370b0
 
 export type HealthResponse = {
   status: "ok";
@@ -566,6 +567,142 @@ export type LiveState = {
   };
   rooms?: Array<Room>;
   runs?: Array<SessionRun>;
+};
+
+export type LiveStateChannelPatch = {
+  id: string;
+  number?: number;
+  name?: string;
+  performer?: string | null;
+  kind?: "wireless" | "wired";
+  trimDb?: number;
+  micType?:
+    | "lavalier"
+    | "headset"
+    | "handheld"
+    | "beltpack"
+    | "boundary"
+    | "instrument"
+    | "other"
+    | null;
+  micTypeSource?: "operator" | "inferred" | null;
+  hasImage?: boolean;
+  input?: {
+    index: number | null;
+    label: string;
+  };
+  receiver?: {
+    id: string;
+    name: string;
+    model: string | null;
+    channelIndex: number;
+    status: "connecting" | "ready" | "stale" | "error" | "missing";
+    frequencyRaw: string | null;
+    groupChannelRaw: string | null;
+  } | null;
+  monitor?: {
+    battery: boolean;
+    rf: boolean;
+    audio: boolean;
+  };
+  statuses?: {
+    rf: LiveStateVerdict;
+    audio: LiveStateVerdict;
+    battery: LiveStateVerdict;
+    check: LiveStateVerdict;
+  };
+  audio?: {
+    availability: LiveStateAvailability;
+    peakDbfs: number | null;
+    rmsDbfs: number | null;
+    silentForMs: number | null;
+    clipping: boolean;
+  };
+  rf?: {
+    availability: LiveStateAvailability;
+    levelDbm: number | null;
+    linkQualityPercent: number | null;
+    activeAntenna: "A" | "B" | "C" | "D" | null;
+    interference: "none" | "detected" | "unavailable";
+    transmitterPresent: boolean | null;
+  };
+  battery?: {
+    availability: LiveStateAvailability;
+    percent: number | null;
+    bars: number | null;
+    runtimeMinutes: number | null;
+    type: string | null;
+  };
+  transmitter?: {
+    type: string | null;
+    name: string | null;
+    muted: boolean | null;
+    observedAtUtc: string | null;
+  };
+  check?: {
+    passed: number;
+    failed: number;
+    waiting: number;
+    total: 8;
+    stale: boolean;
+    updatedAtUtc: string;
+  } | null;
+  session?: {
+    inUse: boolean | null;
+    nextInUse: boolean | null;
+    nextPresenter: string | null;
+  } | null;
+  rooms?: Array<{
+    roomId: string;
+    categoryId: string | null;
+  }>;
+};
+
+export type LiveStateDelta = {
+  schemaVersion: "0";
+  sequence: number;
+  baseSequence: number;
+  generatedAtUtc: string;
+  revision?: number;
+  show?: {
+    name: string;
+    showfileRevision: number;
+    overlayExpiryMs: number;
+  };
+  node?: {
+    status:
+      "ready" | "starting" | "configuration-required" | "error" | "unreachable";
+    detail: string;
+    device: {
+      name: string;
+      sampleRateHz: number;
+      channelCount: number;
+      simulated: boolean;
+    } | null;
+    observedAtUtc: string | null;
+  };
+  receivers?: {
+    status:
+      | "unconfigured"
+      | "connecting"
+      | "ready"
+      | "degraded"
+      | "stale"
+      | "error"
+      | "unavailable";
+    detail: string;
+    units: Array<LiveStateReceiverUnit>;
+  };
+  alerts?: Array<LiveAlert>;
+  reports?: Array<FaultReport>;
+  summary?: {
+    active: number;
+    outstanding: number;
+    outstandingCritical: number;
+  };
+  rooms?: Array<Room>;
+  runs?: Array<SessionRun>;
+  channels?: Array<LiveStateChannelPatch>;
 };
 
 export type LoggedAlert = {
@@ -3044,6 +3181,1339 @@ const liveStateSchema = {
   },
 } as const;
 
+const liveStateDeltaSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://pulse.local/schema/v0/http/live-state-delta.schema.json",
+  title: "Live state delta",
+  description:
+    "Derived from live-state.schema.json by scripts/generate-http-contracts.mjs. What changed on /api/v1/live/events since the event whose SSE id is baseSequence: a present section replaces the client's; a channel patch replaces the named fields of the channel with that id. Applied, the result must validate as a LiveState.",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "sequence", "baseSequence", "generatedAtUtc"],
+  properties: {
+    schemaVersion: {
+      const: "0",
+    },
+    sequence: {
+      type: "integer",
+      minimum: 0,
+      maximum: 9007199254740991,
+    },
+    baseSequence: {
+      type: "integer",
+      minimum: 0,
+      maximum: 9007199254740991,
+    },
+    generatedAtUtc: {
+      type: "string",
+      format: "date-time",
+    },
+    revision: {
+      type: "integer",
+      minimum: 0,
+      maximum: 9007199254740991,
+    },
+    show: {
+      type: "object",
+      additionalProperties: false,
+      required: ["name", "showfileRevision", "overlayExpiryMs"],
+      properties: {
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        showfileRevision: {
+          type: "integer",
+          minimum: 0,
+          maximum: 2147483647,
+        },
+        overlayExpiryMs: {
+          type: "integer",
+          minimum: 60000,
+          maximum: 3600000,
+        },
+      },
+    },
+    node: {
+      type: "object",
+      additionalProperties: false,
+      required: ["status", "detail", "device", "observedAtUtc"],
+      properties: {
+        status: {
+          enum: [
+            "ready",
+            "starting",
+            "configuration-required",
+            "error",
+            "unreachable",
+          ],
+        },
+        detail: {
+          type: "string",
+          minLength: 1,
+          maxLength: 240,
+        },
+        device: {
+          type: ["object", "null"],
+          additionalProperties: false,
+          required: ["name", "sampleRateHz", "channelCount", "simulated"],
+          properties: {
+            name: {
+              type: "string",
+              minLength: 1,
+              maxLength: 512,
+            },
+            sampleRateHz: {
+              type: "integer",
+              minimum: 8000,
+              maximum: 384000,
+            },
+            channelCount: {
+              type: "integer",
+              minimum: 1,
+              maximum: 256,
+            },
+            simulated: {
+              type: "boolean",
+            },
+          },
+        },
+        observedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+      },
+    },
+    receivers: {
+      type: "object",
+      additionalProperties: false,
+      required: ["status", "detail", "units"],
+      properties: {
+        status: {
+          enum: [
+            "unconfigured",
+            "connecting",
+            "ready",
+            "degraded",
+            "stale",
+            "error",
+            "unavailable",
+          ],
+        },
+        detail: {
+          type: "string",
+          minLength: 1,
+          maxLength: 240,
+        },
+        units: {
+          type: "array",
+          maxItems: 64,
+          items: {
+            $ref: "#/$defs/receiverUnit",
+          },
+        },
+      },
+    },
+    alerts: {
+      type: "array",
+      maxItems: 512,
+      items: {
+        $ref: "#/$defs/alert",
+      },
+    },
+    reports: {
+      description:
+        "A1 fault reports that are open, being worked, awaiting the A1's confirmation, or closed within the last few minutes.",
+      type: "array",
+      maxItems: 256,
+      items: {
+        $ref: "#/$defs/faultReport",
+      },
+    },
+    summary: {
+      type: "object",
+      additionalProperties: false,
+      required: ["active", "outstanding", "outstandingCritical"],
+      properties: {
+        active: {
+          type: "integer",
+          minimum: 0,
+          maximum: 512,
+        },
+        outstanding: {
+          type: "integer",
+          minimum: 0,
+          maximum: 512,
+        },
+        outstandingCritical: {
+          type: "integer",
+          minimum: 0,
+          maximum: 512,
+        },
+      },
+    },
+    rooms: {
+      description:
+        "Rooms and their categories, in showfile order. Absent from producers that predate rooms.",
+      type: "array",
+      maxItems: 32,
+      items: {
+        $ref: "#/$defs/room",
+      },
+    },
+    runs: {
+      description:
+        "One run of show per room that has sessions: which session is running there and what is next. Absent from producers that predate sessions.",
+      type: "array",
+      maxItems: 33,
+      items: {
+        $ref: "#/$defs/sessionRun",
+      },
+    },
+    channels: {
+      type: "array",
+      maxItems: 128,
+      items: {
+        $ref: "#/$defs/channelPatch",
+      },
+    },
+  },
+  $defs: {
+    verdict: {
+      enum: ["good", "fault", "caution", "unknown", "not-applicable"],
+    },
+    availability: {
+      enum: ["observed", "stale", "unknown"],
+    },
+    receiverUnit: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "name", "model", "status", "detail"],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        model: {
+          type: ["string", "null"],
+          maxLength: 64,
+        },
+        status: {
+          enum: ["connecting", "ready", "stale", "error"],
+        },
+        detail: {
+          type: "string",
+          minLength: 1,
+          maxLength: 240,
+        },
+      },
+    },
+    channel: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "id",
+        "number",
+        "name",
+        "performer",
+        "kind",
+        "micType",
+        "hasImage",
+        "input",
+        "receiver",
+        "monitor",
+        "statuses",
+        "audio",
+        "rf",
+        "battery",
+        "transmitter",
+        "check",
+      ],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        number: {
+          type: "integer",
+          minimum: 1,
+          maximum: 999,
+        },
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        performer: {
+          type: ["string", "null"],
+          maxLength: 120,
+        },
+        kind: {
+          enum: ["wireless", "wired"],
+        },
+        trimDb: {
+          description:
+            "Monitor trim in dB, applied to this channel's input before the operator's level and before any host output feed. Absent means 0. It never changes meters, alerts or the captured audio.",
+          type: "number",
+          minimum: -24,
+          maximum: 24,
+        },
+        micType: {
+          enum: [
+            "lavalier",
+            "headset",
+            "handheld",
+            "beltpack",
+            "boundary",
+            "instrument",
+            "other",
+            null,
+          ],
+        },
+        micTypeSource: {
+          description:
+            "Who set micType: the operator in Manager, or inferred from Shure transmitter telemetry because the operator hasn't set one yet. Null when micType itself is null.",
+          enum: ["operator", "inferred", null],
+        },
+        hasImage: {
+          type: "boolean",
+        },
+        input: {
+          type: "object",
+          additionalProperties: false,
+          required: ["index", "label"],
+          properties: {
+            index: {
+              type: ["integer", "null"],
+              minimum: 0,
+              maximum: 255,
+            },
+            label: {
+              type: "string",
+              minLength: 1,
+              maxLength: 160,
+            },
+          },
+        },
+        receiver: {
+          type: ["object", "null"],
+          additionalProperties: false,
+          required: [
+            "id",
+            "name",
+            "model",
+            "channelIndex",
+            "status",
+            "frequencyRaw",
+            "groupChannelRaw",
+          ],
+          properties: {
+            id: {
+              type: "string",
+              minLength: 1,
+              maxLength: 64,
+            },
+            name: {
+              type: "string",
+              minLength: 1,
+              maxLength: 120,
+            },
+            model: {
+              type: ["string", "null"],
+              maxLength: 64,
+            },
+            channelIndex: {
+              type: "integer",
+              minimum: 0,
+              maximum: 127,
+            },
+            status: {
+              enum: ["connecting", "ready", "stale", "error", "missing"],
+            },
+            frequencyRaw: {
+              type: ["string", "null"],
+              maxLength: 16,
+            },
+            groupChannelRaw: {
+              type: ["string", "null"],
+              maxLength: 16,
+            },
+          },
+        },
+        monitor: {
+          type: "object",
+          additionalProperties: false,
+          required: ["battery", "rf", "audio"],
+          properties: {
+            battery: {
+              type: "boolean",
+            },
+            rf: {
+              type: "boolean",
+            },
+            audio: {
+              type: "boolean",
+            },
+          },
+        },
+        statuses: {
+          type: "object",
+          additionalProperties: false,
+          required: ["rf", "audio", "battery", "check"],
+          properties: {
+            rf: {
+              $ref: "#/$defs/verdict",
+            },
+            audio: {
+              $ref: "#/$defs/verdict",
+            },
+            battery: {
+              $ref: "#/$defs/verdict",
+            },
+            check: {
+              $ref: "#/$defs/verdict",
+            },
+          },
+        },
+        audio: {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "availability",
+            "peakDbfs",
+            "rmsDbfs",
+            "silentForMs",
+            "clipping",
+          ],
+          properties: {
+            availability: {
+              $ref: "#/$defs/availability",
+            },
+            peakDbfs: {
+              type: ["number", "null"],
+              minimum: -120,
+              maximum: 0,
+            },
+            rmsDbfs: {
+              type: ["number", "null"],
+              minimum: -120,
+              maximum: 0,
+            },
+            silentForMs: {
+              type: ["integer", "null"],
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            clipping: {
+              type: "boolean",
+            },
+          },
+        },
+        rf: {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "availability",
+            "levelDbm",
+            "linkQualityPercent",
+            "activeAntenna",
+            "interference",
+            "transmitterPresent",
+          ],
+          properties: {
+            availability: {
+              $ref: "#/$defs/availability",
+            },
+            levelDbm: {
+              type: ["number", "null"],
+              minimum: -160,
+              maximum: 0,
+            },
+            linkQualityPercent: {
+              type: ["number", "null"],
+              minimum: 0,
+              maximum: 100,
+            },
+            activeAntenna: {
+              enum: ["A", "B", "C", "D", null],
+            },
+            interference: {
+              enum: ["none", "detected", "unavailable"],
+            },
+            transmitterPresent: {
+              type: ["boolean", "null"],
+            },
+          },
+        },
+        battery: {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "availability",
+            "percent",
+            "bars",
+            "runtimeMinutes",
+            "type",
+          ],
+          properties: {
+            availability: {
+              $ref: "#/$defs/availability",
+            },
+            percent: {
+              type: ["integer", "null"],
+              minimum: 0,
+              maximum: 100,
+            },
+            bars: {
+              type: ["integer", "null"],
+              minimum: 0,
+              maximum: 5,
+            },
+            runtimeMinutes: {
+              type: ["integer", "null"],
+              minimum: 0,
+              maximum: 1440,
+            },
+            type: {
+              type: ["string", "null"],
+              maxLength: 32,
+            },
+          },
+        },
+        transmitter: {
+          type: "object",
+          additionalProperties: false,
+          required: ["type", "name", "muted", "observedAtUtc"],
+          properties: {
+            type: {
+              type: ["string", "null"],
+              maxLength: 64,
+            },
+            name: {
+              type: ["string", "null"],
+              maxLength: 64,
+            },
+            muted: {
+              type: ["boolean", "null"],
+            },
+            observedAtUtc: {
+              type: ["string", "null"],
+              format: "date-time",
+            },
+          },
+        },
+        check: {
+          description:
+            "Summary of this channel's guided mic check against its current subject; null when no check exists.",
+          type: ["object", "null"],
+          additionalProperties: false,
+          required: [
+            "passed",
+            "failed",
+            "waiting",
+            "total",
+            "stale",
+            "updatedAtUtc",
+          ],
+          properties: {
+            passed: {
+              type: "integer",
+              minimum: 0,
+              maximum: 8,
+            },
+            failed: {
+              type: "integer",
+              minimum: 0,
+              maximum: 8,
+            },
+            waiting: {
+              type: "integer",
+              minimum: 0,
+              maximum: 8,
+            },
+            total: {
+              const: 8,
+            },
+            stale: {
+              type: "boolean",
+            },
+            updatedAtUtc: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+        },
+        session: {
+          description:
+            "This channel's part in the active and next session; null when no session is active and none is next.",
+          type: ["object", "null"],
+          additionalProperties: false,
+          required: ["inUse", "nextInUse", "nextPresenter"],
+          properties: {
+            inUse: {
+              type: ["boolean", "null"],
+            },
+            nextInUse: {
+              type: ["boolean", "null"],
+            },
+            nextPresenter: {
+              type: ["string", "null"],
+              maxLength: 120,
+            },
+          },
+        },
+        rooms: {
+          description:
+            "The rooms this channel belongs to, each with its own category in that room (ADR 0035). Empty means no room.",
+          type: "array",
+          maxItems: 8,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["roomId", "categoryId"],
+            properties: {
+              roomId: {
+                type: "string",
+                minLength: 1,
+                maxLength: 64,
+              },
+              categoryId: {
+                type: ["string", "null"],
+                minLength: 1,
+                maxLength: 64,
+              },
+            },
+          },
+        },
+      },
+    },
+    alert: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "id",
+        "kind",
+        "dimension",
+        "severity",
+        "label",
+        "detail",
+        "channelId",
+        "channelNumber",
+        "channelName",
+        "receiverId",
+        "raisedAtUtc",
+        "acknowledgedAtUtc",
+        "acknowledgedBy",
+        "clearedAtUtc",
+        "overlayExpiresAtUtc",
+      ],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        kind: {
+          enum: [
+            "battery-low",
+            "battery-critical",
+            "rf-low",
+            "rf-lost",
+            "link-quality-low",
+            "interference",
+            "encryption-mismatch",
+            "tx-muted",
+            "no-audio",
+            "clipping",
+            "receiver-offline",
+            "capture-error",
+            "node-unreachable",
+          ],
+        },
+        dimension: {
+          enum: ["RF", "Audio", "Battery", "System"],
+        },
+        severity: {
+          enum: ["critical", "caution"],
+        },
+        label: {
+          type: "string",
+          minLength: 1,
+          maxLength: 40,
+        },
+        detail: {
+          type: "string",
+          minLength: 1,
+          maxLength: 240,
+        },
+        channelId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        channelNumber: {
+          type: ["integer", "null"],
+          minimum: 1,
+          maximum: 999,
+        },
+        channelName: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 120,
+        },
+        receiverId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        raisedAtUtc: {
+          type: "string",
+          format: "date-time",
+        },
+        acknowledgedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        acknowledgedBy: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 80,
+        },
+        clearedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        overlayExpiresAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+      },
+    },
+    faultReport: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "id",
+        "channelId",
+        "channelNumber",
+        "channelName",
+        "performer",
+        "faults",
+        "note",
+        "urgent",
+        "incident",
+        "incidentReason",
+        "status",
+        "requestedBy",
+        "requestedAtUtc",
+        "undoUntilUtc",
+        "claimedBy",
+        "claimedAtUtc",
+        "resolvedBy",
+        "resolvedAtUtc",
+        "closedAtUtc",
+        "dismissedBy",
+        "dismissedAtUtc",
+      ],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        channelId: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        channelNumber: {
+          type: "integer",
+          minimum: 1,
+          maximum: 999,
+        },
+        channelName: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        performer: {
+          type: ["string", "null"],
+          maxLength: 120,
+        },
+        faults: {
+          type: "array",
+          maxItems: 9,
+          items: {
+            $ref: "#/$defs/reportedFault",
+          },
+        },
+        note: {
+          type: ["string", "null"],
+          maxLength: 200,
+        },
+        urgent: {
+          type: "boolean",
+        },
+        incident: {
+          type: "boolean",
+        },
+        incidentReason: {
+          enum: ["urgent", "telemetry", null],
+        },
+        status: {
+          enum: [
+            "open",
+            "claimed",
+            "awaiting-confirmation",
+            "closed",
+            "cancelled",
+          ],
+        },
+        requestedBy: {
+          type: "string",
+          minLength: 1,
+          maxLength: 80,
+        },
+        requestedAtUtc: {
+          type: "string",
+          format: "date-time",
+        },
+        undoUntilUtc: {
+          type: "string",
+          format: "date-time",
+        },
+        claimedBy: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 80,
+        },
+        claimedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        resolvedBy: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 80,
+        },
+        resolvedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        closedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        dismissedBy: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 80,
+        },
+        dismissedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+      },
+    },
+    reportedFault: {
+      enum: [
+        "dropping-out",
+        "crackling",
+        "distorted",
+        "too-quiet",
+        "clothing-noise",
+        "popping",
+        "hum-buzz",
+        "nothing-at-all",
+        "other",
+      ],
+    },
+    sessionSummary: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "name", "startMinute", "channelCount"],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        startMinute: {
+          type: ["integer", "null"],
+          minimum: 0,
+          maximum: 1439,
+        },
+        channelCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 128,
+        },
+      },
+    },
+    sessionRun: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "roomId",
+        "activeId",
+        "nextId",
+        "startedAtUtc",
+        "startedBy",
+        "sessions",
+      ],
+      properties: {
+        roomId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+          description:
+            "The room this run of show belongs to; null for channels in no room.",
+        },
+        activeId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        nextId: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 64,
+        },
+        startedAtUtc: {
+          type: ["string", "null"],
+          format: "date-time",
+        },
+        startedBy: {
+          type: ["string", "null"],
+          minLength: 1,
+          maxLength: 80,
+        },
+        sessions: {
+          type: "array",
+          maxItems: 100,
+          items: {
+            $ref: "#/$defs/sessionSummary",
+          },
+        },
+      },
+    },
+    room: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "name", "categories"],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        categories: {
+          type: "array",
+          maxItems: 32,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["id", "name"],
+            properties: {
+              id: {
+                type: "string",
+                minLength: 1,
+                maxLength: 64,
+              },
+              name: {
+                type: "string",
+                minLength: 1,
+                maxLength: 120,
+              },
+            },
+          },
+        },
+      },
+    },
+    channelPatch: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id"],
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          maxLength: 64,
+        },
+        number: {
+          type: "integer",
+          minimum: 1,
+          maximum: 999,
+        },
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        performer: {
+          type: ["string", "null"],
+          maxLength: 120,
+        },
+        kind: {
+          enum: ["wireless", "wired"],
+        },
+        trimDb: {
+          description:
+            "Monitor trim in dB, applied to this channel's input before the operator's level and before any host output feed. Absent means 0. It never changes meters, alerts or the captured audio.",
+          type: "number",
+          minimum: -24,
+          maximum: 24,
+        },
+        micType: {
+          enum: [
+            "lavalier",
+            "headset",
+            "handheld",
+            "beltpack",
+            "boundary",
+            "instrument",
+            "other",
+            null,
+          ],
+        },
+        micTypeSource: {
+          description:
+            "Who set micType: the operator in Manager, or inferred from Shure transmitter telemetry because the operator hasn't set one yet. Null when micType itself is null.",
+          enum: ["operator", "inferred", null],
+        },
+        hasImage: {
+          type: "boolean",
+        },
+        input: {
+          type: "object",
+          additionalProperties: false,
+          required: ["index", "label"],
+          properties: {
+            index: {
+              type: ["integer", "null"],
+              minimum: 0,
+              maximum: 255,
+            },
+            label: {
+              type: "string",
+              minLength: 1,
+              maxLength: 160,
+            },
+          },
+        },
+        receiver: {
+          type: ["object", "null"],
+          additionalProperties: false,
+          required: [
+            "id",
+            "name",
+            "model",
+            "channelIndex",
+            "status",
+            "frequencyRaw",
+            "groupChannelRaw",
+          ],
+          properties: {
+            id: {
+              type: "string",
+              minLength: 1,
+              maxLength: 64,
+            },
+            name: {
+              type: "string",
+              minLength: 1,
+              maxLength: 120,
+            },
+            model: {
+              type: ["string", "null"],
+              maxLength: 64,
+            },
+            channelIndex: {
+              type: "integer",
+              minimum: 0,
+              maximum: 127,
+            },
+            status: {
+              enum: ["connecting", "ready", "stale", "error", "missing"],
+            },
+            frequencyRaw: {
+              type: ["string", "null"],
+              maxLength: 16,
+            },
+            groupChannelRaw: {
+              type: ["string", "null"],
+              maxLength: 16,
+            },
+          },
+        },
+        monitor: {
+          type: "object",
+          additionalProperties: false,
+          required: ["battery", "rf", "audio"],
+          properties: {
+            battery: {
+              type: "boolean",
+            },
+            rf: {
+              type: "boolean",
+            },
+            audio: {
+              type: "boolean",
+            },
+          },
+        },
+        statuses: {
+          type: "object",
+          additionalProperties: false,
+          required: ["rf", "audio", "battery", "check"],
+          properties: {
+            rf: {
+              $ref: "#/$defs/verdict",
+            },
+            audio: {
+              $ref: "#/$defs/verdict",
+            },
+            battery: {
+              $ref: "#/$defs/verdict",
+            },
+            check: {
+              $ref: "#/$defs/verdict",
+            },
+          },
+        },
+        audio: {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "availability",
+            "peakDbfs",
+            "rmsDbfs",
+            "silentForMs",
+            "clipping",
+          ],
+          properties: {
+            availability: {
+              $ref: "#/$defs/availability",
+            },
+            peakDbfs: {
+              type: ["number", "null"],
+              minimum: -120,
+              maximum: 0,
+            },
+            rmsDbfs: {
+              type: ["number", "null"],
+              minimum: -120,
+              maximum: 0,
+            },
+            silentForMs: {
+              type: ["integer", "null"],
+              minimum: 0,
+              maximum: 9007199254740991,
+            },
+            clipping: {
+              type: "boolean",
+            },
+          },
+        },
+        rf: {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "availability",
+            "levelDbm",
+            "linkQualityPercent",
+            "activeAntenna",
+            "interference",
+            "transmitterPresent",
+          ],
+          properties: {
+            availability: {
+              $ref: "#/$defs/availability",
+            },
+            levelDbm: {
+              type: ["number", "null"],
+              minimum: -160,
+              maximum: 0,
+            },
+            linkQualityPercent: {
+              type: ["number", "null"],
+              minimum: 0,
+              maximum: 100,
+            },
+            activeAntenna: {
+              enum: ["A", "B", "C", "D", null],
+            },
+            interference: {
+              enum: ["none", "detected", "unavailable"],
+            },
+            transmitterPresent: {
+              type: ["boolean", "null"],
+            },
+          },
+        },
+        battery: {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "availability",
+            "percent",
+            "bars",
+            "runtimeMinutes",
+            "type",
+          ],
+          properties: {
+            availability: {
+              $ref: "#/$defs/availability",
+            },
+            percent: {
+              type: ["integer", "null"],
+              minimum: 0,
+              maximum: 100,
+            },
+            bars: {
+              type: ["integer", "null"],
+              minimum: 0,
+              maximum: 5,
+            },
+            runtimeMinutes: {
+              type: ["integer", "null"],
+              minimum: 0,
+              maximum: 1440,
+            },
+            type: {
+              type: ["string", "null"],
+              maxLength: 32,
+            },
+          },
+        },
+        transmitter: {
+          type: "object",
+          additionalProperties: false,
+          required: ["type", "name", "muted", "observedAtUtc"],
+          properties: {
+            type: {
+              type: ["string", "null"],
+              maxLength: 64,
+            },
+            name: {
+              type: ["string", "null"],
+              maxLength: 64,
+            },
+            muted: {
+              type: ["boolean", "null"],
+            },
+            observedAtUtc: {
+              type: ["string", "null"],
+              format: "date-time",
+            },
+          },
+        },
+        check: {
+          description:
+            "Summary of this channel's guided mic check against its current subject; null when no check exists.",
+          type: ["object", "null"],
+          additionalProperties: false,
+          required: [
+            "passed",
+            "failed",
+            "waiting",
+            "total",
+            "stale",
+            "updatedAtUtc",
+          ],
+          properties: {
+            passed: {
+              type: "integer",
+              minimum: 0,
+              maximum: 8,
+            },
+            failed: {
+              type: "integer",
+              minimum: 0,
+              maximum: 8,
+            },
+            waiting: {
+              type: "integer",
+              minimum: 0,
+              maximum: 8,
+            },
+            total: {
+              const: 8,
+            },
+            stale: {
+              type: "boolean",
+            },
+            updatedAtUtc: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+        },
+        session: {
+          description:
+            "This channel's part in the active and next session; null when no session is active and none is next.",
+          type: ["object", "null"],
+          additionalProperties: false,
+          required: ["inUse", "nextInUse", "nextPresenter"],
+          properties: {
+            inUse: {
+              type: ["boolean", "null"],
+            },
+            nextInUse: {
+              type: ["boolean", "null"],
+            },
+            nextPresenter: {
+              type: ["string", "null"],
+              maxLength: 120,
+            },
+          },
+        },
+        rooms: {
+          description:
+            "The rooms this channel belongs to, each with its own category in that room (ADR 0035). Empty means no room.",
+          type: "array",
+          maxItems: 8,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["roomId", "categoryId"],
+            properties: {
+              roomId: {
+                type: "string",
+                minLength: 1,
+                maxLength: 64,
+              },
+              categoryId: {
+                type: ["string", "null"],
+                minLength: 1,
+                maxLength: 64,
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+} as const;
+
 const alertLogSchema = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
   $id: "https://pulse.local/schema/v0/http/alert-log.schema.json",
@@ -3560,6 +5030,14 @@ export function parseHostOutput(value: unknown): HostOutput {
 
 export function parseLiveState(value: unknown): LiveState {
   return parseWithSchema<LiveState>(value, liveStateSchema, "LiveState");
+}
+
+export function parseLiveStateDelta(value: unknown): LiveStateDelta {
+  return parseWithSchema<LiveStateDelta>(
+    value,
+    liveStateDeltaSchema,
+    "LiveStateDelta",
+  );
 }
 
 export function parseAlertLog(value: unknown): AlertLog {
