@@ -1,9 +1,9 @@
 # Pulse — design language
 
-- **Version:** 2.14.0
+- **Version:** 2.15.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
-- **Last updated:** 2026-09-27
+- **Last updated:** 2026-09-28
 
 This is the whole design language in one document. It is normative: where it and
 anything else disagree, this document is the intent, and the implementation is
@@ -1113,6 +1113,13 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.15.0 — 2026-09-28.** Glance tiles grow to fill the space above the player
+([§10.1.1](#1011-glance-view)): the height cap that pinned a small show's
+tiles to 96px regardless of how much room the screen had raises to 160px, and
+the status strip now flexes to fill the taller tile instead of leaving the
+tile mostly blank above a thin strip. Implemented in Live alongside this
+entry; not operator-validated.
 
 **2.14.0 — 2026-09-27.** Multi-select is one mixed stream
 ([§8.4](#84-multi-select)): the node mixes the monitored channels, each at its

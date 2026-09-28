@@ -3077,7 +3077,7 @@ a:focus-visible {
 
 .status-strip.is-compact {
   min-height: var(--space-4);
-  flex: none;
+  flex: 1 1 auto;
 }
 
 .status-strip.is-compact .status-cell {
@@ -3087,6 +3087,14 @@ a:focus-visible {
 .status-strip.is-compact .status-cell svg {
   width: var(--space-3);
   height: var(--space-3);
+}
+
+/* A tall tile (`data-glance-roomy`, GLANCE_MAX_TILE_HEIGHT) grows the strip
+   with it (`flex: 1 1 auto` above); scale the glyph to match so a taller
+   tile reads as a bigger status cell, not a small tick in empty colour. */
+.channel-main[data-glance-roomy] .status-strip.is-compact .status-cell svg {
+  width: var(--icon);
+  height: var(--icon);
 }
 
 .view-switch {
