@@ -436,11 +436,11 @@ export function App({
   /** Glance fits every channel on one screen; cards are the photo layout. Per device. */
   const [gridView, setGridView] = useState<"glance" | "cards">(() => {
     try {
-      return window.localStorage.getItem("pulse-grid-view") === "cards"
-        ? "cards"
-        : "glance";
+      return window.localStorage.getItem("pulse-grid-view") === "glance"
+        ? "glance"
+        : "cards";
     } catch {
-      return "glance";
+      return "cards";
     }
   });
   const chooseGridView = (next: "glance" | "cards") => {
@@ -1711,8 +1711,8 @@ export function App({
           <div className="view-switch" role="group" aria-label="Layout">
             {(
               [
-                ["glance", "Glance"],
                 ["cards", "Cards"],
+                ["glance", "Glance"],
               ] as const
             ).map(([key, label]) => (
               <button
