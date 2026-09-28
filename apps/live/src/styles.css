@@ -1308,10 +1308,12 @@ a:focus-visible {
   stroke-linejoin: round;
 }
 
-/* Healthy is quiet (dark cockpit): a neutral tick and its word, no fill, so
-   the only coloured cells on a grid are the ones that need someone. */
+/* Healthy is signal green (DESIGN.md §3.3/§3.4, §10.2): the same accent as
+   the listening ring, so a fully-good card reads as good at a glance rather
+   than blending into the strip's neutral chrome. No fill, so the coloured
+   *background* cells on a grid are still only the ones that need someone. */
 .status-good {
-  color: var(--muted);
+  color: var(--ok);
   background: transparent;
 }
 
@@ -1440,7 +1442,7 @@ a:focus-visible {
   display: flex;
   align-items: center;
   gap: var(--space-5);
-  padding: var(--space-5) var(--space-6) var(--space-3);
+  padding: var(--space-4) var(--space-6);
 }
 
 /* Shown only past the first monitored channel: every channel the operator is
@@ -1615,28 +1617,6 @@ a:focus-visible {
   font-family: var(--font-ui);
   font-size: var(--font-ui);
   font-weight: 600;
-}
-
-.player-selection-rail {
-  position: absolute;
-  top: var(--space-3);
-  right: var(--space-6);
-  left: var(--space-6);
-  height: var(--space-2);
-  border-radius: var(--radius-pill);
-  background: var(--rep);
-}
-
-.player-selection-rail span {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  width: var(--space-5);
-  height: var(--space-5);
-  border: var(--size-1) solid var(--rep);
-  border-radius: 50%;
-  background: var(--card);
-  transform: translateY(-50%);
 }
 
 .player-source {
@@ -2743,7 +2723,6 @@ a:focus-visible {
   .player-transport {
     flex-wrap: wrap;
     gap: var(--space-3);
-    padding-top: var(--space-6);
   }
 
   .player-source {
@@ -3100,7 +3079,7 @@ a:focus-visible {
 
 .status-strip.is-compact {
   min-height: var(--space-4);
-  flex: none;
+  flex: 1 1 auto;
 }
 
 .status-strip.is-compact .status-cell {
@@ -3110,6 +3089,14 @@ a:focus-visible {
 .status-strip.is-compact .status-cell svg {
   width: var(--space-3);
   height: var(--space-3);
+}
+
+/* A tall tile (`data-glance-roomy`, GLANCE_MAX_TILE_HEIGHT) grows the strip
+   with it (`flex: 1 1 auto` above); scale the glyph to match so a taller
+   tile reads as a bigger status cell, not a small tick in empty colour. */
+.channel-main[data-glance-roomy] .status-strip.is-compact .status-cell svg {
+  width: var(--icon);
+  height: var(--icon);
 }
 
 .view-switch {

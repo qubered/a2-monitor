@@ -29,7 +29,7 @@ export type GlanceFit = {
 
 export const GLANCE_MIN_TILE_WIDTH = 72;
 export const GLANCE_MIN_TILE_HEIGHT = 48;
-export const GLANCE_MAX_TILE_HEIGHT = 96;
+export const GLANCE_MAX_TILE_HEIGHT = 160;
 export const GLANCE_MAX_TILE_WIDTH = 200;
 
 export function fitGlance({

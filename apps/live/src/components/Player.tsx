@@ -298,9 +298,6 @@ export function Player({
         </ul>
       ) : null}
       <div className="player-transport">
-        <div className="player-selection-rail" aria-hidden="true">
-          <span />
-        </div>
         <div className="player-source">
           <div className="player-art" aria-hidden="true" />
           <div>
