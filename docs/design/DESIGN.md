@@ -1,6 +1,6 @@
 # Pulse — design language
 
-- **Version:** 2.16.0
+- **Version:** 2.17.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
 - **Last updated:** 2026-09-28
@@ -590,8 +590,9 @@ The card above is right for a show that fits the screen and wrong for one that
 doesn't: at 64 channels an iPad showed 8 photographs and a phone 4, so "is
 anything wrong, and on whom" needed five screens of scrolling (audit
 [G1](../research/next-level-audit-2026-09.md#g1--what-ships-today-audited)).
-So the grid has two layouts, chosen per device with a **Glance · Cards**
-switch at the end of the filter row. **Glance is the default.**
+So the grid has two layouts, chosen per device with a **Cards · Glance**
+switch at the end of the filter row. **Cards is the default; Glance is there
+for a show too large to fit as photographs.**
 
 - **Every channel in view fits the space above the player.** The grid picks
   the column count and tile height that fit them all, keeping tiles as wide as
@@ -1115,6 +1116,15 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.17.0 — 2026-09-28.** Cards is the default view again
+([§10.1.1](#1011-glance-view)): 2.11.0 made Glance the default so a 64-channel
+show didn't open to five screens of scrolling photographs. Most shows are
+smaller than that, and operator feedback was that opening to unlabelled tiles
+instead of faces cost more than the scrolling it saved. The switch is now
+**Cards · Glance**, Cards first; Glance stays one tap away and is still the
+better choice once a show stops fitting the screen as photographs.
+Implemented in Live alongside this entry; not operator-validated.
 
 **2.16.0 — 2026-09-28.** Healthy is green again
 ([§2.9](#2-principles), [§3.4](#34-domain-mapping), [§10.2](#102-status-strip)):

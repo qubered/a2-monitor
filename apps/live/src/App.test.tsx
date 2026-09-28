@@ -503,7 +503,7 @@ describe("Live channel grid", () => {
     ]);
   });
 
-  it("opens in the glance view: tiles listen, the player opens details, and Cards is remembered", async () => {
+  it("opens in the cards view; Glance tiles listen, the player opens details, and the choice is remembered", async () => {
     window.localStorage.removeItem("pulse-grid-view");
     const user = userEvent.setup();
     const setSources = vi.fn();
@@ -520,8 +520,15 @@ describe("Live channel grid", () => {
     });
 
     expect(
-      screen.getByRole("button", { name: "Glance", pressed: true }),
+      screen.getByRole("button", { name: "Cards", pressed: true }),
     ).toBeTruthy();
+    expect(view.container.querySelector(".channel-main.is-glance")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Open details for Marguerite" }),
+    ).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "Glance" }));
+    expect(window.localStorage.getItem("pulse-grid-view")).toBe("glance");
     expect(
       view.container.querySelector(".channel-main.is-glance"),
     ).toBeTruthy();
@@ -548,12 +555,6 @@ describe("Live channel grid", () => {
     );
     expect(await screen.findByRole("dialog")).toBeTruthy();
     await user.keyboard("{Escape}");
-
-    await user.click(screen.getByRole("button", { name: "Cards" }));
-    expect(window.localStorage.getItem("pulse-grid-view")).toBe("cards");
-    expect(
-      screen.getByRole("button", { name: "Open details for Marguerite" }),
-    ).toBeTruthy();
   });
 
   it("makes the grid one Tab stop with arrows, Space and type-to-jump", async () => {
