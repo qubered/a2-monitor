@@ -1308,10 +1308,12 @@ a:focus-visible {
   stroke-linejoin: round;
 }
 
-/* Healthy is quiet (dark cockpit): a neutral tick and its word, no fill, so
-   the only coloured cells on a grid are the ones that need someone. */
+/* Healthy is signal green (DESIGN.md §3.3/§3.4, §10.2): the same accent as
+   the listening ring, so a fully-good card reads as good at a glance rather
+   than blending into the strip's neutral chrome. No fill, so the coloured
+   *background* cells on a grid are still only the ones that need someone. */
 .status-good {
-  color: var(--muted);
+  color: var(--ok);
   background: transparent;
 }
 

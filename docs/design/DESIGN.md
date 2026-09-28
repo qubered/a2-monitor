@@ -1,6 +1,6 @@
 # Pulse — design language
 
-- **Version:** 2.15.0
+- **Version:** 2.16.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
 - **Last updated:** 2026-09-28
@@ -126,9 +126,11 @@ diagnosis is claimed before a labelled evidence base exists.
 **2.9 The brand is the good state.** Pulse's signal green is not a decoration
 borrowed for the logo — it is the same colour the product uses for _verified,
 healthy_ and _listening_ ([§3.3](#33-accent-roles)). It is spent where it says
-something: the channel in your ears, a verified check, the live meter. A
-healthy status cell is a quiet neutral tick rather than a green block — on a
-grid of sixty-four channels, colour has to mean "look here" ([§10.2](#102-status-strip)).
+something: the channel in your ears, a verified check, the live meter, a
+healthy status tick. A fault or caution cell still tints its whole background,
+so on a grid of sixty-four channels a *fill* is what means "look here"; the
+tick's own colour says whether that one dimension is fine
+([§10.2](#102-status-strip)).
 
 ### 2.10 Refusals
 
@@ -213,7 +215,7 @@ construction, on-brand.
 | Live — what you are hearing | `--ok` ring                   | `#4fd888` |
 | Critical fault              | `--t-out` on `--out-soft`     | `#f26f73` |
 | Needs intervention          | `--warn` on `--warn-soft`     | `#eba53a` |
-| Verified, healthy           | `--ok`; a status cell is `--muted` | `#4fd888` |
+| Verified, healthy           | `--ok`, tick and ring alike   | `#4fd888` |
 | Stale, unknown, disarmed    | `--rep` on `--rep-soft`       | `#b6ac9a` |
 | Replay                      | `--purple` on `--purple-soft` | `#9b82e6` |
 
@@ -622,7 +624,7 @@ as a shape rather than parsed as text.
 
 | Verdict        | Glyph        | Colour                    | Meaning                            |
 | -------------- | ------------ | ------------------------- | ---------------------------------- |
-| Good           | `✓` tick     | `--muted`, no fill        | Measured, within tolerance         |
+| Good           | `✓` tick     | `--ok`, no fill           | Measured, within tolerance         |
 | Fault          | `✕` cross    | `--t-out` on `--out-soft` | Measured, wrong now                |
 | Caution        | `⚠` triangle | `--warn` on `--warn-soft` | Needs someone, not failing yet     |
 | Unknown        | `–` dash     | `--rep` on `--rep-soft`   | Stale, disarmed, or never measured |
@@ -1113,6 +1115,16 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 ---
 
 ## 14. Changelog
+
+**2.16.0 — 2026-09-28.** Healthy is green again
+([§2.9](#2-principles), [§3.4](#34-domain-mapping), [§10.2](#102-status-strip)):
+a status-strip tick reads `--ok` on all clear, matching the channel-in-your-ears
+ring. 2.12.0 kept the tick neutral specifically to avoid reusing the ring's
+colour; that traded scan speed for the separation, and operator feedback said
+the trade wasn't worth it on a live grid. Colour still only fills a cell's
+*background* for fault or caution, so "look here" still means a filled cell,
+not a green one. Implemented in Live alongside this entry (Manager unchanged);
+not operator-validated.
 
 **2.15.0 — 2026-09-28.** Glance tiles grow to fill the space above the player
 ([§10.1.1](#1011-glance-view)): the height cap that pinned a small show's
