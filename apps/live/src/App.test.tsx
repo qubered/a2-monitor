@@ -522,9 +522,7 @@ describe("Live channel grid", () => {
     expect(
       screen.getByRole("button", { name: "Cards", pressed: true }),
     ).toBeTruthy();
-    expect(
-      view.container.querySelector(".channel-main.is-glance"),
-    ).toBeNull();
+    expect(view.container.querySelector(".channel-main.is-glance")).toBeNull();
     expect(
       screen.getByRole("button", { name: "Open details for Marguerite" }),
     ).toBeTruthy();
