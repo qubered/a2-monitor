@@ -68,6 +68,18 @@ built the app, which is what makes them easy to reintroduce:
   crashes on launch with `ERR_MODULE_NOT_FOUND` for `generated/http-contracts.ts`.
   Always hand off `Pulse-macos-arm64.zip`, not a copied `Pulse.app` folder.
 
+A third variant of that same `ERR_MODULE_NOT_FOUND` crash — module missing
+entirely, not just the symlink to it — used to come from the build script
+itself: it only copied a hand-picked list of `packages/protocol` subdirectories
+into the bundle, and `delta/live-state-delta.ts` shipped without ever being
+added to that list (services/backend imported it fine everywhere except the
+packaged app). The script no longer keeps that list by hand: it derives the
+set of subdirectories to copy from `packages/protocol/package.json`'s
+`exports` map at build time, so a new export target is bundled automatically
+the moment it's added there, whichever subdirectory it lives in. Nothing to
+remember here going forward — if this class of crash comes back, the bug is in
+that derivation, not in a forgotten list entry.
+
 At launch, the app opens an Pulse window: pick an observed 48 kHz input
 device and whether the page is available only on the host or on its local
 network, then click Start Server. The app opens the local page in the default
