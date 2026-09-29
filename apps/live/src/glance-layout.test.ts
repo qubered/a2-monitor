@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fitGlance } from "./glance-layout";
+import { fitGlance, GLANCE_MAX_TILE_HEIGHT } from "./glance-layout";
 
 const theatre = [
   { count: 12, titled: true },
@@ -26,9 +26,9 @@ describe("fitGlance", () => {
       height: 800,
       groups: [{ count: 8, titled: false }],
     });
-    // Every count from two columns reaches the 96 px cap; seven is the
-    // fewest that keeps tiles within 200 px.
-    expect(fit.tileHeight).toBe(96);
+    // Every count from two columns reaches the cap; seven is the fewest
+    // that keeps tiles within 200 px.
+    expect(fit.tileHeight).toBe(GLANCE_MAX_TILE_HEIGHT);
     expect(fit.columns).toBe(7);
   });
 
