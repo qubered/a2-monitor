@@ -89,9 +89,28 @@ cp -R apps/live/dist "$app/Contents/Resources/app/apps/live/dist"
 cp apps/live/package.json "$app/Contents/Resources/app/apps/live/package.json"
 cp -R apps/manager/dist "$app/Contents/Resources/app/apps/manager/dist"
 cp apps/manager/package.json "$app/Contents/Resources/app/apps/manager/package.json"
-cp -R packages/protocol/schema packages/protocol/validation packages/protocol/generated \
-  packages/protocol/receivers packages/protocol/policy \
-  "$app/Contents/Resources/app/packages/protocol/"
+# Bundle exactly the packages/protocol subdirectories that package.json's
+# "exports" map can resolve into, instead of a hand-maintained list: a
+# hardcoded list silently drifts the moment a new export target lands in a new
+# subdirectory (it did for delta/live-state-delta.ts), and the app then
+# crashes on the destination Mac with ERR_MODULE_NOT_FOUND for a file that was
+# never copied. See infra/appliance/macos/README.md.
+protocol_export_dirs="$("$node_bin" -e '
+  const fs = require("fs");
+  const pkg = JSON.parse(fs.readFileSync("packages/protocol/package.json", "utf8"));
+  const dirs = new Set();
+  for (const target of Object.values(pkg.exports)) {
+    for (const path of typeof target === "string" ? [target] : Object.values(target)) {
+      dirs.add(path.replace(/^\.\//, "").split("/")[0]);
+    }
+  }
+  process.stdout.write([...dirs].sort().join(" "));
+')"
+protocol_dir_paths=""
+for dir in $protocol_export_dirs; do
+  protocol_dir_paths="$protocol_dir_paths packages/protocol/$dir"
+done
+cp -R $protocol_dir_paths "$app/Contents/Resources/app/packages/protocol/"
 cp packages/protocol/package.json "$app/Contents/Resources/app/packages/protocol/package.json"
 cp -R "$runtime_root/packages/protocol/node_modules" \
   "$app/Contents/Resources/app/packages/protocol/node_modules"

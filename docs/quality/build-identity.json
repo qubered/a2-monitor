@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.de7f09b7ce591c09",
-  "sourceSha256": "de7f09b7ce591c0963590f66865d6b848a7165297c552721b74921ea071da33e",
-  "inputCount": 470,
+  "buildId": "a2-0.0.0+sha256.a209c1ce823ac882",
+  "sourceSha256": "a209c1ce823ac882bb730a3d37fb0e3342811ab079e068d02902a4e2403a1e39",
+  "inputCount": 471,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -1097,11 +1097,11 @@
     },
     {
       "path": "infra/appliance/macos/README.md",
-      "sha256": "fc0c9c140dfaf6f630d559cd3ed951b13adfbc79839f216abee649ad663bca22"
+      "sha256": "a0de262149e3743221907c03c60e1b579286eb0720a688636db7eb49f01f3bd1"
     },
     {
       "path": "infra/appliance/macos/build-mvp-app.sh",
-      "sha256": "2f314477c2cef053086cbce57e79011844407fc8beef3ba7c49c9d77b4ed93b7"
+      "sha256": "e908ab180d87f8b94afd21b8c04db16129d6e75e4d3beb7004a0a522707c846e"
     },
     {
       "path": "infra/appliance/macos/build-unsigned-pkg.sh",
@@ -1130,6 +1130,10 @@
     {
       "path": "infra/appliance/macos/mvp-app/svg-to-png.swift",
       "sha256": "5209cee9a93acf5aa6a1dca2e2d6b029d354b8323b3486ddad5474c609458149"
+    },
+    {
+      "path": "infra/appliance/macos/pull-and-build.sh",
+      "sha256": "b7f362d900c19e5b82599a55f00e78475586f15371af639146c0269fab48028e"
     },
     {
       "path": "infra/appliance/macos/test-unsigned-pkg.sh",
