@@ -808,6 +808,8 @@ describe("Live channel grid", () => {
       audioDeviceSource: readyDevice,
       playbackFactory: vi.fn<PlaybackFactory>(() => ({
         setSources: vi.fn(),
+        playRecorded: vi.fn(async () => "started" as const),
+        returnToLive: vi.fn(),
         setMuted: vi.fn(async () => undefined),
         setDimmed: vi.fn(),
         setGainDb: vi.fn(),
