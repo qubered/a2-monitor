@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   ChannelLevelSample,
   LiveAlert,
   LiveStateChannel,
+  RecordingSpan,
 } from "@rvlt/pulse-protocol/http";
 import {
   MultiLaneTimeline,
@@ -10,7 +11,7 @@ import {
   type TimelineMark,
 } from "@rvlt/pulse-ui/visualization";
 import { formatClock } from "../alerts";
-import type { PlaybackUpdate } from "../audio-playback";
+import type { PlaybackUpdate, ReplayOutcome } from "../audio-playback";
 import {
   DIM_ATTENUATION_DB,
   MAX_MONITOR_GAIN_DB,
@@ -18,13 +19,28 @@ import {
 } from "../audio-playback";
 import type { MeterReading, MeterStore } from "../meters";
 import { useChannelHistory } from "../useChannelHistory";
+import { spanAt, useRecordedAudio } from "../useRecordedAudio";
 
 const DEFAULT_TIMELINE_WINDOW_MS = 30 * 60 * 1000;
 const AUDIO_RANGE_DBFS = { min: -60, max: 0 };
 const RF_RANGE_DBM = { min: -120, max: 0 };
 const PERCENT_RANGE = { min: 0, max: 100 };
 const NO_SAMPLES: readonly ChannelLevelSample[] = [];
+const NO_SPANS: readonly RecordingSpan[] = [];
 const READOUT_REFRESH_MS = 200;
+const HISTORY_INTERVAL_MS = 1000;
+/** Scrubbing while replaying seeks once the finger or key settles. */
+const SEEK_SETTLE_MS = 300;
+/** A replay this close to live is just live; the recording trails the present. */
+const MIN_REPLAY_OFFSET_MS = 3_000;
+/** Replay past the end of the recording would be silence; go back to live. */
+const REPLAY_PAST_END_GRACE_MS = 2_000;
+
+const REPLAY_MESSAGES: Record<Exclude<ReplayOutcome, "started">, string> = {
+  "nothing-recorded": "Nothing was recorded at that time.",
+  "recording-unavailable": "This node is not recording.",
+  failed: "Listening back did not start. Live audio is unchanged.",
+};
 
 type PlayerProps = {
   /** The primary channel: the meter, timeline and trim below follow this one. */
@@ -58,6 +74,13 @@ type PlayerProps = {
   onExpandedChange?: (expanded: boolean) => void;
   /** Opens the followed channel's detail; the glance tile has no expand button. */
   onOpenDetail?: () => void;
+  /** Set while the player is playing recorded audio: how far behind live. */
+  replay?: { offsetMs: number } | null;
+  /** Plays the primary channel's recording from a UTC time. Absent when this
+   * output cannot listen back (shared host output, or nothing connected). */
+  onPlayRecorded?: (atUtcMs: number) => Promise<ReplayOutcome>;
+  /** Back to the live mix. Always one touch away while replaying. */
+  onReturnToLive?: () => void;
   onToggleMute: () => void;
   onToggleDim: () => void;
   onGainChange: (gainDb: number) => void;
@@ -113,6 +136,9 @@ export function Player({
   nowMs,
   onExpandedChange,
   onOpenDetail,
+  replay = null,
+  onPlayRecorded,
+  onReturnToLive,
   onToggleMute,
   onToggleDim,
   onGainChange,
@@ -138,6 +164,23 @@ export function Player({
     1000,
   );
 
+  const recorded = useRecordedAudio(
+    channel?.input.index ?? null,
+    expanded && onPlayRecorded !== undefined,
+  );
+  const spans = recorded.status === "ready" ? recorded.spans : NO_SPANS;
+  const [replayNotice, setReplayNotice] = useState<string | null>(null);
+  const [seekTarget, setSeekTarget] = useState<number | null>(null);
+  const seekTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(seekTimer.current), []);
+  // Replay trails the present by a fixed offset, so its playhead holds still
+  // on the right-anchored timeline while the audio advances.
+  const replayRatio = replay
+    ? Math.min(1, Math.max(0, 1 - replay.offsetMs / windowMs))
+    : null;
+  const shownRatio = seekTarget ?? replayRatio ?? scrubRatio;
+  const playheadMs = nowMs - (1 - shownRatio) * windowMs;
+
   const observed =
     history.status === "ready" ? history.history.samples : NO_SAMPLES;
   // Anchor the time axis to the window: samples sit at the right (now) and
@@ -157,7 +200,7 @@ export function Player({
     [observed, slots],
   );
   const playheadIndex =
-    samples.length > 0 ? Math.round(scrubRatio * (samples.length - 1)) : -1;
+    samples.length > 0 ? Math.round(shownRatio * (samples.length - 1)) : -1;
   const atPlayhead =
     playheadIndex >= 0 ? (samples[playheadIndex] ?? undefined) : undefined;
   const wireless = channel?.receiver !== null && channel !== null;
@@ -175,6 +218,38 @@ export function Player({
         })),
         readoutLabel: formatMeasured(atPlayhead?.audioDbfs, " dBFS", 1),
       },
+      ...(onPlayRecorded
+        ? [
+            {
+              key: "recorded",
+              label: "Recorded audio",
+              variant: "bars" as const,
+              min: 0,
+              max: 1,
+              samples: samples.map((_, index) => {
+                const at =
+                  nowMs - (samples.length - 1 - index) * HISTORY_INTERVAL_MS;
+                const held = spanAt(spans, at) !== undefined;
+                return {
+                  value: held ? 1 : null,
+                  availability: held
+                    ? ("observed" as const)
+                    : ("unknown" as const),
+                };
+              }),
+              readoutLabel:
+                recorded.status !== "ready"
+                  ? "Unknown"
+                  : !recorded.recording.enabled
+                    ? "Recording off"
+                    : shownRatio >= 1
+                      ? "Live"
+                      : spanAt(spans, playheadMs)
+                        ? "Recorded"
+                        : "No recording",
+            },
+          ]
+        : []),
       ...(wireless
         ? [
             {
@@ -216,7 +291,16 @@ export function Player({
           ]
         : []),
     ],
-    [samples, atPlayhead, wireless],
+    [
+      samples,
+      atPlayhead,
+      wireless,
+      onPlayRecorded,
+      recorded,
+      spans,
+      nowMs,
+      playheadMs,
+    ],
   );
 
   const marks = useMemo<TimelineMark[]>(() => {
@@ -231,8 +315,70 @@ export function Player({
       .filter(({ ratio }) => ratio >= 0 && ratio <= 1);
   }, [alertMarks, nowMs, windowMs]);
 
-  const timeCodeLabel =
-    scrubRatio >= 1 ? "Now" : formatTimeCode((1 - scrubRatio) * windowMs);
+  const timeCodeLabel = replay
+    ? `Replay ${formatTimeCode(replay.offsetMs)}`
+    : shownRatio >= 1
+      ? "Now"
+      : formatTimeCode((1 - shownRatio) * windowMs);
+
+  async function listenFrom(atMs: number) {
+    if (!onPlayRecorded) return;
+    setReplayNotice(null);
+    const outcome = await onPlayRecorded(atMs);
+    setSeekTarget(null);
+    if (outcome !== "started") setReplayNotice(REPLAY_MESSAGES[outcome]);
+  }
+
+  function scrub(ratio: number) {
+    setScrubRatio(ratio);
+    if (!replay) return;
+    // Scrubbing during replay seeks; wait for the drag to settle.
+    setSeekTarget(ratio);
+    window.clearTimeout(seekTimer.current);
+    seekTimer.current = window.setTimeout(() => {
+      const at = nowMs - (1 - ratio) * windowMs;
+      if (nowMs - at < MIN_REPLAY_OFFSET_MS) {
+        setSeekTarget(null);
+        onReturnToLive?.();
+      } else void listenFrom(at);
+    }, SEEK_SETTLE_MS);
+  }
+
+  // Replay carries on only while there is recording to hear.
+  const lastRecordedMs = spans.length
+    ? Date.parse(spans[spans.length - 1]!.endUtc)
+    : null;
+  const recordingEnded =
+    replay !== null &&
+    recorded.status === "ready" &&
+    (!recorded.recording.enabled ||
+      (lastRecordedMs !== null &&
+        nowMs - replay.offsetMs > lastRecordedMs + REPLAY_PAST_END_GRACE_MS));
+  const [stoppedByEnd, setStoppedByEnd] = useState(false);
+  if (recordingEnded && !stoppedByEnd) setStoppedByEnd(true);
+  if (replay && !recordingEnded && stoppedByEnd) setStoppedByEnd(false);
+  useEffect(() => {
+    if (recordingEnded) onReturnToLive?.();
+  }, [recordingEnded, onReturnToLive]);
+
+  const playheadSpan = spanAt(spans, playheadMs);
+  const canListenFromHere =
+    onPlayRecorded !== undefined &&
+    recorded.status === "ready" &&
+    recorded.recording.enabled &&
+    playheadSpan !== undefined &&
+    nowMs - playheadMs >= MIN_REPLAY_OFFSET_MS;
+  const listenHint = !onPlayRecorded
+    ? "Listening back needs this device's monitor output."
+    : recorded.status !== "ready"
+      ? "The node's recording state is unknown."
+      : !recorded.recording.enabled
+        ? "Recording is off. Turn it on in Manager to listen back."
+        : playheadSpan === undefined
+          ? "Nothing was recorded at this time."
+          : nowMs - playheadMs < MIN_REPLAY_OFFSET_MS
+            ? "Move the playhead further back to listen."
+            : null;
   const sourceMeta = channel
     ? [
         channel.receiver
@@ -258,12 +404,48 @@ export function Player({
           lanes={lanes}
           windowMs={windowMs}
           onWindowChange={setWindowMs}
-          playheadRatio={scrubRatio}
-          onScrub={setScrubRatio}
-          onBackToLive={() => setScrubRatio(1)}
+          playheadRatio={shownRatio}
+          onScrub={scrub}
+          onBackToLive={() => {
+            setScrubRatio(1);
+            if (replay) onReturnToLive?.();
+          }}
           timeCodeLabel={timeCodeLabel}
           marks={marks}
         />
+      ) : null}
+      {replay ? (
+        <div className="replay-bar is-replaying" role="status">
+          <strong>
+            Listening back to {channel?.name ?? "this channel"},{" "}
+            {formatTimeCode(replay.offsetMs)} behind live
+          </strong>
+          <span>Live audio is paused.</span>
+          <button
+            type="button"
+            className="control-button"
+            onClick={() => onReturnToLive?.()}
+          >
+            Back to live
+          </button>
+        </div>
+      ) : expanded && channel && onPlayRecorded && shownRatio < 1 ? (
+        <div className="replay-bar">
+          <button
+            type="button"
+            className="control-button"
+            disabled={!canListenFromHere}
+            onClick={() => void listenFrom(playheadMs)}
+          >
+            Listen from here ({formatTimeCode(nowMs - playheadMs)})
+          </button>
+          {listenHint ? <span>{listenHint}</span> : null}
+        </div>
+      ) : null}
+      {replayNotice || (stoppedByEnd && !replay) ? (
+        <p className="replay-notice" role="alert">
+          {replayNotice ?? "Replay stopped: the recording ended."}
+        </p>
       ) : null}
       {monitoredChannels.length > 1 ? (
         <ul className="monitor-list" aria-label="Channels being monitored">

@@ -354,4 +354,111 @@ describe("WebRTC Opus playback", () => {
     expect(clock.pending.size).toBe(0);
     session.close();
   });
+
+  it("plays recorded audio on the live session and returns to live", async () => {
+    const { factory, calls, updates } = setup();
+    const ended = vi.fn();
+    const session = factory({
+      sources: [{ channel: 2, trimDb: 6 }],
+      onUpdate: (u) => updates.push(u),
+      onReplayEnded: ended,
+    });
+    await settle();
+    FakePeerConnection.instances[0]?.deliverTrack();
+
+    await expect(
+      session.playRecorded({
+        channel: 2,
+        trimDb: 6,
+        atUtc: "2026-10-01T10:00:00.000Z",
+      }),
+    ).resolves.toBe("started");
+    expect(calls.at(-1)).toMatchObject({
+      url: `${LISTEN_SESSIONS_PATH}/00000000-0000-4000-8000-000000000001/replay`,
+      init: { method: "PUT" },
+    });
+    expect(JSON.parse(String(calls.at(-1)?.init?.body))).toEqual({
+      channel: 2,
+      atUtc: "2026-10-01T10:00:00.000Z",
+      gain: 1.995262,
+    });
+    expect(updates.at(-1)?.detail).toBe("Playing from the recording.");
+    // The same output chain: nothing here bypasses mute, dim or level.
+    expect(FakePeerConnection.instances).toHaveLength(1);
+
+    session.returnToLive();
+    await settle();
+    expect(ended).toHaveBeenCalledTimes(1);
+    expect(calls.at(-1)).toMatchObject({
+      url: `${LISTEN_SESSIONS_PATH}/00000000-0000-4000-8000-000000000001/sources`,
+    });
+    expect(updates.at(-1)?.detail).toBe("Receiving input 3.");
+    session.close();
+  });
+
+  it("ends replay when the mix changes or the connection is rebuilt", async () => {
+    const { factory, clock, updates } = setup();
+    const ended = vi.fn();
+    const session = factory({
+      sources: [{ channel: 0, trimDb: 0 }],
+      onUpdate: (u) => updates.push(u),
+      onReplayEnded: ended,
+    });
+    await settle();
+    FakePeerConnection.instances[0]?.deliverTrack();
+    const request = { channel: 0, trimDb: 0, atUtc: "2026-10-01T10:00:00Z" };
+
+    await session.playRecorded(request);
+    session.setSources([{ channel: 4, trimDb: 0 }]);
+    expect(ended).toHaveBeenCalledTimes(1);
+
+    await session.playRecorded(request);
+    FakePeerConnection.instances[0]?.setState("failed");
+    expect(ended).toHaveBeenCalledTimes(2);
+    clock.runAll();
+    session.close();
+  });
+
+  it("reports why replay could not start and leaves live audio alone", async () => {
+    const replies: Array<Response> = [
+      new Response(JSON.stringify({ error: "nothing-recorded" }), {
+        status: 409,
+      }),
+      new Response(JSON.stringify({ error: "recording-not-available" }), {
+        status: 409,
+      }),
+      new Response(null, { status: 503 }),
+    ];
+    const { factory, updates } = setup((url) =>
+      url === LISTEN_SESSIONS_PATH
+        ? new Response(
+            JSON.stringify({
+              sessionId: "00000000-0000-4000-8000-000000000001",
+              answer: "answer",
+            }),
+            { status: 201 },
+          )
+        : (replies.shift() ?? new Response(null, { status: 204 })),
+    );
+    const ended = vi.fn();
+    const session = factory({
+      sources: [{ channel: 0, trimDb: 0 }],
+      onUpdate: (u) => updates.push(u),
+      onReplayEnded: ended,
+    });
+    await settle();
+    FakePeerConnection.instances[0]?.deliverTrack();
+    const request = { channel: 0, trimDb: 0, atUtc: "2026-10-01T10:00:00Z" };
+    await expect(session.playRecorded(request)).resolves.toBe(
+      "nothing-recorded",
+    );
+    await expect(session.playRecorded(request)).resolves.toBe(
+      "recording-unavailable",
+    );
+    await expect(session.playRecorded(request)).resolves.toBe("failed");
+    session.returnToLive(); // nothing to undo
+    expect(ended).not.toHaveBeenCalled();
+    expect(updates.at(-1)?.detail).toBe("Receiving input 1.");
+    session.close();
+  });
 });

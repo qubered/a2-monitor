@@ -19,6 +19,9 @@ const SAMPLES_PER_MS: u64 = SAMPLE_RATE_HZ as u64 / 1_000;
 /// Consecutive segments are written by separate blocks, so their times differ by a few
 /// milliseconds. Gaps this short are treated as continuous.
 const CONTINUOUS_GAP_MS: u64 = 100;
+/// Replay may start this far before the next recorded audio, as silence. Further back there is
+/// nothing to listen to, and a long silent lead-in would only look like a fault.
+const MAX_LEADING_GAP_MS: u64 = 5_000;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Read {
@@ -102,7 +105,11 @@ impl ReplayReader {
         else {
             return Ok(None);
         };
-        reader.silent_samples = next_start.saturating_sub(at_utc_ms) * SAMPLES_PER_MS;
+        let lead_in_ms = next_start.saturating_sub(at_utc_ms);
+        if lead_in_ms > MAX_LEADING_GAP_MS {
+            return Ok(None);
+        }
+        reader.silent_samples = lead_in_ms * SAMPLES_PER_MS;
         reader.current = Some(load(next_start, next_path)?);
         Ok(Some(reader))
     }

@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.2d234e9d9775b22a",
-  "sourceSha256": "2d234e9d9775b22a13ad9f850600b1a4833154a79b04ccdf99479084235f4283",
-  "inputCount": 488,
+  "buildId": "a2-0.0.0+sha256.676a35b1915c38e5",
+  "sourceSha256": "676a35b1915c38e5dac9a58883762458c9701837832fec3193d07fdc046a028d",
+  "inputCount": 489,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "aee64688bec107a3a1bfeb0303cc39cc827ff8b5a6fc883b9b86f6bcec020c72"
+      "sha256": "631f30cae436a34f5f936af740ab3684b274ac98fc854d15676e11fb7883f099"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "271cf8dde1c13eafa7ee172b369cb6b4140e63ea97839360db879ca3dc529357"
+      "sha256": "7aae49dd2db7971e57b09e9adc06c088209160687195cdab99bfe96e8c91fbb4"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -113,11 +113,11 @@
     },
     {
       "path": "apps/live/src/audio-playback.test.ts",
-      "sha256": "c091e7cada7c019b186735a90eea066293494a3cbacd879f6ec348e65b71db12"
+      "sha256": "13d85c12f6e844446269ad602739957535897889ff7c340926bdcd8f1849f581"
     },
     {
       "path": "apps/live/src/audio-playback.ts",
-      "sha256": "8a6f1b0d5b59dc83bb6406df2955be923a1eb88b39ee86f0c934b27fd7e4f61e"
+      "sha256": "f3a1d3ada4e232c883c3dccb258d7bf945610aef543dcdc0a42dcde2b63910f0"
     },
     {
       "path": "apps/live/src/components/ChannelCard.test.tsx",
@@ -161,7 +161,7 @@
     },
     {
       "path": "apps/live/src/components/Player.tsx",
-      "sha256": "9b82eae23cf49e811a60aa66a6dc783cc2e8a4f3fb44a2b6abb38db978c8467f"
+      "sha256": "8eb9d95e9ae14cb7d24a0893baa482b0b1f17ae17643c1bf8ca2e087af5d0e2c"
     },
     {
       "path": "apps/live/src/components/ReportSheet.tsx",
@@ -265,7 +265,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "50e582d5007fbaecb31f046a72953530d115f5a623dc17fe35c36916a7f1c0d8"
+      "sha256": "fdb236e4d9d8e17e722ddfe8adb0bf1cf63150068939016c7353c619731b8ad4"
     },
     {
       "path": "apps/live/src/trim.ts",
@@ -286,6 +286,10 @@
     {
       "path": "apps/live/src/useNow.ts",
       "sha256": "2f9388e092de1f7a2047e95b1675a0c6101b9174f6cad34837a9c704bf345355"
+    },
+    {
+      "path": "apps/live/src/useRecordedAudio.ts",
+      "sha256": "fa3ecdb87f48dd3cd7ce223af0ed4ec1280645cc3a6baa1c33ced960a86f6a75"
     },
     {
       "path": "apps/live/src/vite-env.d.ts",
@@ -1677,7 +1681,7 @@
     },
     {
       "path": "services/audio-node/src/replay_reader.rs",
-      "sha256": "c495b1e4a8d7bd8651657d8f125bbd73c49e9941b45aef383af2794ebcdcd624"
+      "sha256": "0c021d27a6445a009d6cc3f279129596b4ee646c17fca9da031d3722bd2e773e"
     },
     {
       "path": "services/audio-node/src/test_signal.rs",

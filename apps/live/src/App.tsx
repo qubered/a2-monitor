@@ -35,6 +35,7 @@ import {
   DEFAULT_MONITOR_GAIN_DB,
   webRtcPlaybackFactory,
   type PlaybackFactory,
+  type ReplayOutcome,
   type PlaybackSession,
   type PlaybackUpdate,
   type ListenSource,
@@ -489,6 +490,9 @@ export function App({
   // outlives any selection: changing what is monitored retargets it with
   // `setSources`, the same connection throughout.
   const playbackSession = useRef<PlaybackSession | null>(null);
+  // Set while the listen session plays recorded audio of the primary channel
+  // instead of live: how far behind live the playback is.
+  const [replayOffsetMs, setReplayOffsetMs] = useState<number | null>(null);
   const outputState = useRef({ muted: false, dimmed: false, gainDb });
   const announcedCritical = useRef<Set<string> | null>(null);
 
@@ -632,13 +636,37 @@ export function App({
       session.setSources(wanted);
       return;
     }
-    const opened = playbackFactory({ sources: wanted, onUpdate: setPlayback });
+    const opened = playbackFactory({
+      sources: wanted,
+      onUpdate: setPlayback,
+      onReplayEnded: () => setReplayOffsetMs(null),
+    });
     playbackSession.current = opened;
     opened.setGainDb(outputState.current.gainDb);
     opened.setDimmed(outputState.current.dimmed);
     void opened.setMuted(outputState.current.muted);
     // `wanted` is rebuilt every render; the session ignores an unchanged mix.
   }, [wanted, playbackFactory]);
+
+  const playRecorded = useCallback(
+    async (atUtcMs: number): Promise<ReplayOutcome> => {
+      const session = playbackSession.current;
+      const input = selectedChannel?.input.index;
+      if (!session || input === null || input === undefined) return "failed";
+      const outcome = await session.playRecorded({
+        channel: input,
+        trimDb: selectedChannel?.trimDb ?? 0,
+        atUtc: new Date(atUtcMs).toISOString(),
+      });
+      if (outcome === "started") setReplayOffsetMs(Date.now() - atUtcMs);
+      return outcome;
+    },
+    [selectedChannel],
+  );
+  const returnToLive = useCallback(() => {
+    playbackSession.current?.returnToLive();
+    setReplayOffsetMs(null);
+  }, []);
 
   // The session otherwise outlives this effect; only unmounting closes it.
   useEffect(
@@ -1920,6 +1948,11 @@ export function App({
               ? undefined
               : (id) => setSelectedIds((prev) => prev.filter((x) => x !== id))
           }
+          replay={replayOffsetMs === null ? null : { offsetMs: replayOffsetMs }}
+          onPlayRecorded={
+            deviceMode && playback !== null ? playRecorded : undefined
+          }
+          onReturnToLive={returnToLive}
           muted={shownMuted}
           dimmed={shownDimmed}
           gainDb={shownGainDb}
