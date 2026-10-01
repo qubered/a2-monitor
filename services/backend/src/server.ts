@@ -40,6 +40,7 @@ import {
 } from "./reports.js";
 import type { SessionPersistence } from "./sessions.js";
 import { fabricatedLiveSnapshot } from "./fixtures/live-snapshot.js";
+import type { LevelHistoryStore } from "./level-history.js";
 import { LiveMonitor, type PublishedState } from "./live-monitor.js";
 import type { NodeSource } from "./node-observer.js";
 import {
@@ -203,6 +204,7 @@ type BuildServerOptions = {
   checkPersistence?: CheckPersistence;
   reportPersistence?: ReportPersistence;
   sessionPersistence?: SessionPersistence;
+  history?: LevelHistoryStore;
   liveMonitor?: LiveMonitor;
   logger?: boolean;
 };
@@ -294,6 +296,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
       checkPersistence: options.checkPersistence,
       reportPersistence: options.reportPersistence,
       sessionPersistence: options.sessionPersistence,
+      history: options.history,
       onError: (error) => server.log.error(error),
     });
   const eventStreams = new Set<ServerResponse>();

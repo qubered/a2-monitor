@@ -158,6 +158,7 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
       } catch (error) {
         this.onError(error);
       }
+      this.history.restore(this.now());
       this.nodeSource.start();
       await this.tick();
       this.timer = setInterval(() => {

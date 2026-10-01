@@ -97,3 +97,39 @@ describe("LevelHistoryStore", () => {
     expect(store.has("ch-talkback")).toBe(false);
   });
 });
+
+describe("LevelHistoryStore persistence", () => {
+  it("restores the window after a restart and marks downtime as unknown", async () => {
+    const { SqliteLevelHistory } = await import("./level-history-db.js");
+    const db = new SqliteLevelHistory(":memory:");
+    const first = new LevelHistoryStore({ persistence: db });
+    first.record(T0, channelsAt(T0, -12));
+    first.record(T0 + 1000, channelsAt(T0 + 1000, -13));
+
+    // Backend down for 4 s, then a fresh store restores from the same db.
+    const second = new LevelHistoryStore({ persistence: db });
+    second.restore(T0 + 5000);
+    const window = second.getWindow("ch-marguerite", 60_000);
+    expect(window.map((s) => s.availability)).toEqual([
+      "observed",
+      "observed",
+      "unknown",
+      "unknown",
+      "unknown",
+    ]);
+    expect(window[0]!.audioDbfs).toBe(-12);
+    expect(window[1]!.audioDbfs).toBe(-13);
+  });
+
+  it("prunes samples older than the capacity window", async () => {
+    const { SqliteLevelHistory } = await import("./level-history-db.js");
+    const db = new SqliteLevelHistory(":memory:");
+    const store = new LevelHistoryStore({
+      persistence: db,
+      capacityMs: 10_000,
+    });
+    store.record(T0, channelsAt(T0, -12));
+    db.prune(T0 + 1);
+    expect(db.load(0)).toEqual([]);
+  });
+});
