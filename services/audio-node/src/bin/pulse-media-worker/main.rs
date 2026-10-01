@@ -13,6 +13,7 @@ mod capture;
 mod control;
 mod host_output;
 mod meters;
+mod recorder;
 mod session;
 
 use std::collections::HashMap;
@@ -30,6 +31,7 @@ use capture::{CaptureBlock, CaptureHeader};
 use control::{Command, EventWriter};
 use host_output::{HostOutput, OutputArgs, OutputEvent};
 use meters::MeterBank;
+use recorder::{Recorder, RecordingConfig};
 use session::{ListenSession, SessionEvent};
 use socket2::{Domain, Protocol, Socket, Type};
 
@@ -59,6 +61,7 @@ struct Args {
     capture_binary: OsString,
     device_name: OsString,
     output: Option<OutputArgs>,
+    recording_dir: Option<OsString>,
 }
 
 fn parse_args<I>(args: I) -> Result<Args, &'static str>
@@ -66,18 +69,20 @@ where
     I: Iterator<Item = OsString>,
 {
     const USAGE: &str = "usage: pulse-media-worker --capture-bin <path> --device <exact-device-name> \
-         [--output-bin <path> --output-device <exact-device-name> --output-routes <n[,n…][;…]>]";
+         [--output-bin <path> --output-device <exact-device-name> --output-routes <n[,n…][;…]>] \
+         [--recording-dir <path>]";
     let args: Vec<OsString> = args.collect();
     if !args.len().is_multiple_of(2) {
         return Err(USAGE);
     }
-    let mut values: [Option<OsString>; 5] = Default::default();
-    const FLAGS: [&str; 5] = [
+    let mut values: [Option<OsString>; 6] = Default::default();
+    const FLAGS: [&str; 6] = [
         "--capture-bin",
         "--device",
         "--output-bin",
         "--output-device",
         "--output-routes",
+        "--recording-dir",
     ];
     for pair in args.as_chunks::<2>().0 {
         let index = FLAGS
@@ -95,6 +100,7 @@ where
         output_binary,
         output_device,
         output_routes,
+        recording_dir,
     ] = values;
     let (Some(capture_binary), Some(device_name)) = (capture_binary, device_name) else {
         return Err(USAGE);
@@ -112,6 +118,7 @@ where
         capture_binary,
         device_name,
         output,
+        recording_dir,
     })
 }
 
@@ -200,6 +207,7 @@ struct Worker<W: io::Write> {
     channel_count: Option<usize>,
     meters: Option<MeterBank>,
     host_output: Option<HostOutput>,
+    recorder: Recorder,
     recycle: Sender<Vec<f32>>,
     dropped_blocks: Arc<AtomicU64>,
     /// Device callbacks `pulse-device-capture` dropped, from its stats lines.
@@ -283,6 +291,16 @@ impl<W: io::Write> Worker<W> {
                     None => Ok(()),
                 }
             }
+            Command::Recording {
+                enabled,
+                retention_minutes,
+            } => {
+                self.recorder.apply(RecordingConfig {
+                    enabled,
+                    retention_minutes,
+                });
+                self.output.recording(&self.recorder.report())
+            }
             Command::Close { session_id } => match self.sessions.get_mut(&session_id) {
                 Some(session) => {
                     session.close("requested");
@@ -300,6 +318,7 @@ impl<W: io::Write> Worker<W> {
         if let Some(output) = &mut self.host_output {
             output.write_block(&block);
         }
+        self.recorder.write_block(&block, utc_now_ms());
         let reading = self
             .meters
             .as_mut()
@@ -383,6 +402,12 @@ impl<W: io::Write> Worker<W> {
     }
 }
 
+fn utc_now_ms() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |elapsed| elapsed.as_millis() as u64)
+}
+
 fn spawn_capture(args: &Args) -> io::Result<Child> {
     ProcessCommand::new(&args.capture_binary)
         .arg("--device")
@@ -453,6 +478,7 @@ fn run(args: &Args) -> Result<(), String> {
         channel_count: None,
         meters: None,
         host_output,
+        recorder: Recorder::new(args.recording_dir.clone().map(Into::into)),
         recycle: recycle_tx,
         dropped_blocks,
         dropped_callbacks,
@@ -464,6 +490,7 @@ fn run(args: &Args) -> Result<(), String> {
     if let Some(output) = &mut worker.host_output {
         output.shutdown();
     }
+    worker.recorder.shutdown();
     let _ = child.kill();
     let _ = child.wait();
     result
@@ -493,7 +520,12 @@ fn event_loop<W: io::Write>(
             Ok(Event::CaptureReady(header)) => {
                 worker.channel_count = Some(header.channel_count);
                 worker.meters = Some(MeterBank::new(header.channel_count));
+                worker.recorder.capture_ready(header.channel_count);
                 worker.output.ready(&header).map_err(io_error)?;
+                worker
+                    .output
+                    .recording(&worker.recorder.report())
+                    .map_err(io_error)?;
             }
             Ok(Event::Capture(block)) => worker
                 .handle_block(block, Instant::now())
@@ -528,6 +560,10 @@ fn event_loop<W: io::Write>(
                     worker.dropped_callbacks.load(Ordering::Relaxed),
                 )
                 .map_err(io_error)?;
+            worker
+                .output
+                .recording(&worker.recorder.report())
+                .map_err(io_error)?;
         }
     }
 }
@@ -558,6 +594,7 @@ mod tests {
                 capture_binary: "/bin/capture".into(),
                 device_name: "DVS".into(),
                 output: None,
+                recording_dir: None,
             })
         );
         assert_eq!(
@@ -581,6 +618,7 @@ mod tests {
                     device_name: "DVS".into(),
                     routes: "3,4;5".into(),
                 }),
+                recording_dir: None,
             })
         );
         assert!(

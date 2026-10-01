@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.3ff4e1307490686f",
-  "sourceSha256": "3ff4e1307490686fd6c1a82189a37807e5ab1e808c5c8dc986823f915e669e18",
-  "inputCount": 472,
+  "buildId": "a2-0.0.0+sha256.9cfd25c48af389ca",
+  "sourceSha256": "9cfd25c48af389ca1777753b77b819ccf410a5c02fadb992e88d63490280372c",
+  "inputCount": 474,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -1585,7 +1585,7 @@
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/control.rs",
-      "sha256": "1a7db155fa08beee180064a5f8a0bfb76503742ddcb5f9d4cc7b4cb5bacedaa0"
+      "sha256": "c6e92d76b89307fe6fc5058f79650e0b5d7a7fa0968c0ec52060b1b7ced44245"
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/host_output.rs",
@@ -1593,11 +1593,15 @@
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/main.rs",
-      "sha256": "40a2f2f4a7dbabb3e4f30e5258ac8ce8a75965c20b2d0d08a0c192398bb15a0a"
+      "sha256": "97397314d6f1911a97ca184edda70f6006d14a5c66a7b83fe1206fbf64b8821e"
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/meters.rs",
       "sha256": "2168ee3d4ebb6d062f035d5af1428ec4f9342530b862737ed2827d065ff1cba5"
+    },
+    {
+      "path": "services/audio-node/src/bin/pulse-media-worker/recorder.rs",
+      "sha256": "99d1fc1c15a651e79a015bbc8c3324fda4ab4dcf62ebea54de8644d3d7470629"
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/session.rs",
@@ -1617,11 +1621,15 @@
     },
     {
       "path": "services/audio-node/src/lib.rs",
-      "sha256": "ac894950c32e737b50081c3958c8b7119ce454955e0d7d7f6b92bd191b48bb38"
+      "sha256": "b603fb5485b9e1b97db1e29e2d7bcc3822f0b131d164987cf69e3938557e44c3"
     },
     {
       "path": "services/audio-node/src/monitor_output.rs",
       "sha256": "1fce0d776ab4714e13f4f64ef6007cf9f839c7995c623169b171448662b7fece"
+    },
+    {
+      "path": "services/audio-node/src/recording.rs",
+      "sha256": "28620fdcffc6e463183b29498eed68a77c5751c4d706a66a55c71b0b82bbdf06"
     },
     {
       "path": "services/audio-node/src/test_signal.rs",

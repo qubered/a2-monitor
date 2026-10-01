@@ -12,8 +12,10 @@ use crate::Event;
 use crate::capture::CaptureHeader;
 use crate::host_output::{MAX_MONITOR_GAIN, OutputReport};
 use crate::meters::{METER_INTERVAL_MS, MeterReading};
+use crate::recorder::RecorderReport;
 use crate::session::{MAX_SOURCES, Source};
 use a2_audio_node::monitor_output::{MAX_OUTPUT_ROUTES, parse_output_routes};
+use a2_audio_node::recording::MAX_RETENTION_MINUTES;
 
 const COMMAND_LIMIT_BYTES: usize = 128 * 1024;
 const OFFER_LIMIT_BYTES: usize = 64 * 1024;
@@ -47,6 +49,11 @@ pub enum Command {
     /// e.g. a production's saved feeds (ADR 0031). Validated like `--output-routes`.
     OutputRoutes {
         routes: String,
+    },
+    /// Turns recording of every input on or off and sets how many minutes are kept.
+    Recording {
+        enabled: bool,
+        retention_minutes: u32,
     },
 }
 
@@ -196,6 +203,23 @@ pub fn parse_command(line: &str) -> Result<Command, String> {
                 .ok_or_else(|| "routes are invalid".to_owned())?;
             Ok(Command::OutputRoutes { routes })
         }
+        Some("recording") => {
+            exact_keys(record, &["type", "enabled", "retentionMinutes"])?;
+            let enabled = record
+                .get("enabled")
+                .and_then(Value::as_bool)
+                .ok_or_else(|| "enabled is invalid".to_owned())?;
+            let retention_minutes = record
+                .get("retentionMinutes")
+                .and_then(Value::as_u64)
+                .filter(|minutes| (1..=u64::from(MAX_RETENTION_MINUTES)).contains(minutes))
+                .ok_or_else(|| "retentionMinutes is invalid".to_owned())?
+                as u32;
+            Ok(Command::Recording {
+                enabled,
+                retention_minutes,
+            })
+        }
         Some("close") => {
             exact_keys(record, &["type", "sessionId"])?;
             Ok(Command::Close {
@@ -334,6 +358,18 @@ impl<W: Write> EventWriter<W> {
 
     /// Periodic health: listeners, 10 ms blocks this worker dropped on a full
     /// queue, and device callbacks the capture process dropped (its overruns).
+    pub fn recording(&mut self, report: &RecorderReport) -> std::io::Result<()> {
+        self.emit(json!({
+            "type": "recording",
+            "available": report.available,
+            "enabled": report.config.enabled,
+            "retentionMinutes": report.config.retention_minutes,
+            "active": report.active,
+            "droppedBlocks": report.dropped_blocks,
+            "writeErrors": report.write_errors,
+        }))
+    }
+
     pub fn stats(
         &mut self,
         sessions: usize,
@@ -352,6 +388,25 @@ impl<W: Write> EventWriter<W> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn parses_recording_strictly() {
+        assert_eq!(
+            parse_command(r#"{"type":"recording","enabled":true,"retentionMinutes":60}"#),
+            Ok(Command::Recording {
+                enabled: true,
+                retention_minutes: 60
+            })
+        );
+        for bad in [
+            r#"{"type":"recording","enabled":true,"retentionMinutes":61}"#,
+            r#"{"type":"recording","enabled":true,"retentionMinutes":0}"#,
+            r#"{"type":"recording","enabled":1,"retentionMinutes":5}"#,
+            r#"{"type":"recording","enabled":true}"#,
+        ] {
+            assert!(parse_command(bad).is_err(), "{bad}");
+        }
+    }
 
     #[test]
     fn parses_the_three_commands_strictly() {
