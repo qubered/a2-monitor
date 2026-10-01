@@ -51,6 +51,14 @@ pub enum Command {
     OutputRoutes {
         routes: String,
     },
+    /// Plays recorded audio of one input on one host output feed's mix from `at_utc_ms`, or,
+    /// with no time, goes back to live. The feed's other controls are unchanged.
+    MonitorReplay {
+        mix: usize,
+        channel: usize,
+        gain: f32,
+        at_utc_ms: Option<u64>,
+    },
     /// Plays recorded audio of one input to a listener, from `at_utc_ms`, at `gain`.
     Replay {
         session_id: String,
@@ -210,6 +218,35 @@ pub fn parse_command(line: &str) -> Result<Command, String> {
                 .filter(|routes| parse_output_routes(routes).is_ok())
                 .ok_or_else(|| "routes are invalid".to_owned())?;
             Ok(Command::OutputRoutes { routes })
+        }
+        Some("monitor-replay") => {
+            exact_keys(record, &["type", "mix", "channel", "gain", "atUtcMs"])?;
+            let mix = record
+                .get("mix")
+                .and_then(Value::as_u64)
+                .filter(|mix| *mix < MAX_OUTPUT_ROUTES as u64)
+                .ok_or_else(|| "mix is invalid".to_owned())? as usize;
+            let gain = record
+                .get("gain")
+                .and_then(Value::as_f64)
+                .filter(|gain| (0.0..=f64::from(MAX_MONITOR_GAIN)).contains(gain))
+                .ok_or_else(|| "gain is invalid".to_owned())? as f32;
+            let at_utc_ms = match record.get("atUtcMs") {
+                Some(Value::Null) => None,
+                Some(value) => Some(
+                    value
+                        .as_u64()
+                        .filter(|at| *at <= MAX_SAFE_INTEGER)
+                        .ok_or_else(|| "atUtcMs is invalid".to_owned())?,
+                ),
+                None => return Err("atUtcMs is invalid".to_owned()),
+            };
+            Ok(Command::MonitorReplay {
+                mix,
+                channel: channel(record)?,
+                gain,
+                at_utc_ms,
+            })
         }
         Some("replay") => {
             exact_keys(record, &["type", "sessionId", "channel", "gain", "atUtcMs"])?;
@@ -385,6 +422,19 @@ impl<W: Write> EventWriter<W> {
 
     /// Periodic health: listeners, 10 ms blocks this worker dropped on a full
     /// queue, and device callbacks the capture process dropped (its overruns).
+    pub fn monitor_replay_started(&mut self, mix: usize) -> std::io::Result<()> {
+        self.emit(json!({ "type": "monitor-replay-started", "mix": mix }))
+    }
+
+    pub fn monitor_replay_rejected(&mut self, mix: usize, detail: &str) -> std::io::Result<()> {
+        self.emit(json!({ "type": "monitor-replay-rejected", "mix": mix, "detail": detail }))
+    }
+
+    /// A feed's replay ran out of recording and the feed is live again.
+    pub fn monitor_replay_ended(&mut self, mix: usize) -> std::io::Result<()> {
+        self.emit(json!({ "type": "monitor-replay-ended", "mix": mix }))
+    }
+
     pub fn replay_started(&mut self, session_id: &str) -> std::io::Result<()> {
         self.emit(json!({ "type": "replay-started", "sessionId": session_id }))
     }
@@ -428,6 +478,39 @@ impl<W: Write> EventWriter<W> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn parses_monitor_replay_strictly() {
+        assert_eq!(
+            parse_command(
+                r#"{"type":"monitor-replay","mix":1,"channel":2,"gain":0.5,"atUtcMs":1700000000000}"#
+            ),
+            Ok(Command::MonitorReplay {
+                mix: 1,
+                channel: 2,
+                gain: 0.5,
+                at_utc_ms: Some(1_700_000_000_000)
+            })
+        );
+        assert_eq!(
+            parse_command(
+                r#"{"type":"monitor-replay","mix":0,"channel":0,"gain":1,"atUtcMs":null}"#
+            ),
+            Ok(Command::MonitorReplay {
+                mix: 0,
+                channel: 0,
+                gain: 1.0,
+                at_utc_ms: None
+            })
+        );
+        for bad in [
+            r#"{"type":"monitor-replay","mix":99,"channel":0,"gain":1,"atUtcMs":null}"#,
+            r#"{"type":"monitor-replay","mix":0,"channel":0,"gain":1}"#,
+            r#"{"type":"monitor-replay","mix":0,"channel":0,"gain":1,"atUtcMs":-5}"#,
+        ] {
+            assert!(parse_command(bad).is_err(), "{bad}");
+        }
+    }
 
     #[test]
     fn parses_replay_strictly() {

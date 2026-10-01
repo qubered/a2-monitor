@@ -294,6 +294,48 @@ impl<W: io::Write> Worker<W> {
                     None => Ok(()),
                 }
             }
+            Command::MonitorReplay {
+                mix,
+                channel,
+                gain,
+                at_utc_ms,
+            } => {
+                let Some(at_utc_ms) = at_utc_ms else {
+                    if let Some(output) = &mut self.host_output {
+                        output.stop_replay(mix);
+                    }
+                    return Ok(());
+                };
+                let directory = self.recorder.directory().map(Path::to_path_buf);
+                let (Some(directory), Some(output)) = (directory, self.host_output.as_mut()) else {
+                    return self
+                        .output
+                        .monitor_replay_rejected(mix, "recording is not available");
+                };
+                if self.channel_count.is_none_or(|count| channel >= count) {
+                    return self
+                        .output
+                        .monitor_replay_rejected(mix, "channel is out of range");
+                }
+                match ReplayReader::open(&channel_directory(&directory, channel), at_utc_ms) {
+                    Ok(Some(reader)) => {
+                        // The feed plays this input; replay then replaces its live audio.
+                        output.set_monitor(mix, Some(channel), gain);
+                        if output.start_replay(mix, reader) {
+                            self.output.monitor_replay_started(mix)
+                        } else {
+                            self.output
+                                .monitor_replay_rejected(mix, "the feed does not exist")
+                        }
+                    }
+                    Ok(None) => self
+                        .output
+                        .monitor_replay_rejected(mix, "nothing was recorded at that time"),
+                    Err(_) => self
+                        .output
+                        .monitor_replay_rejected(mix, "the recording could not be read"),
+                }
+            }
             Command::Replay {
                 session_id,
                 channel,
@@ -381,6 +423,11 @@ impl<W: io::Write> Worker<W> {
     }
 
     fn drive(&mut self, now: Instant) -> io::Result<()> {
+        if let Some(output) = &mut self.host_output {
+            for mix in output.take_replay_ended() {
+                self.output.monitor_replay_ended(mix)?;
+            }
+        }
         let mut transitions = Vec::new();
         for (id, session) in &mut self.sessions {
             if session.take_replay_ended() {

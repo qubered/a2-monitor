@@ -197,10 +197,7 @@
       "channelNumber": 1,
       "channelName": "Marguerite",
       "performer": "Eleanor Vance",
-      "faults": [
-        "crackling",
-        "clothing-noise"
-      ],
+      "faults": ["crackling", "clothing-noise"],
       "note": null,
       "urgent": false,
       "incident": true,

@@ -182,9 +182,7 @@
       "channelNumber": 1,
       "channelName": "Marguerite",
       "performer": "Eleanor Vance",
-      "faults": [
-        "gremlins"
-      ],
+      "faults": ["gremlins"],
       "note": null,
       "urgent": false,
       "incident": true,

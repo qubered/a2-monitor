@@ -16,9 +16,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: dffe4aef68afebfe218b49df346a0fe683cc3a294421660df4875e6c291f15eb
+// Schema-SHA256: be55c2dc54fc23b277d79708cb8177a314ed3c99247c1852f2d7d9241bc8963d
 // Generator-SHA256: 764dac3e31a4b771de757ea8bc931bfc69133da4cf08f256b30b14f991151fb9
-// Body-SHA256: 56ef5205dec073906fd3b6d84326e30092f341c4427d7e4309b29394377a4ab4
+// Body-SHA256: 6ca6137cda37c1796b1caf50ada30e8f926a481c7f4b5bbe5efbd782dd986f5f
 
 export type HealthResponse = {
   status: "ok";
@@ -332,6 +332,7 @@ export type HostOutput = {
       dimmed: boolean;
       gainDb: number;
       changedBy: string | null;
+      replayOffsetMs?: number | null;
       changedAtUtc: string | null;
     };
   }>;
@@ -2252,6 +2253,13 @@ const hostOutputSchema = {
                 type: ["string", "null"],
                 minLength: 1,
                 maxLength: 80,
+              },
+              replayOffsetMs: {
+                description:
+                  "Set while the feed plays recorded audio of the selected input instead of live: how far behind live it is, constant while it plays. Absent or null when the feed is live. Everyone in the feed hears it, and choosing another input or going back to live ends it.",
+                type: ["integer", "null"],
+                minimum: 0,
+                maximum: 3600000,
               },
               changedAtUtc: {
                 type: ["string", "null"],

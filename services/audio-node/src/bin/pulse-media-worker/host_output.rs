@@ -22,6 +22,7 @@ use crate::Event;
 use crate::capture::{CaptureBlock, FRAMES_PER_BLOCK};
 use crate::session::mix_block;
 use a2_audio_node::monitor_output::parse_output_routes;
+use a2_audio_node::replay_reader::{Read as ReplayRead, ReplayReader};
 
 /// Highest accepted linear gain: +48 dB, a +24 dB trim under a +24 dB level.
 pub const MAX_MONITOR_GAIN: f32 = 251.188_65;
@@ -79,6 +80,11 @@ pub enum OutputEvent {
 /// The shared monitor mix: one input (or none) at one gain. Gain changes ramp across one
 /// block and input changes crossfade across one block, so neither clicks.
 pub struct MonitorMix {
+    /// Recorded audio of `channel` playing instead of live, until stopped or it runs out.
+    replay: Option<ReplayReader>,
+    /// Ramp the next block in, so entering or leaving replay never steps.
+    ramp_in: bool,
+    replay_ended: bool,
     channel: Option<usize>,
     fade_from: Option<usize>,
     releasing: bool,
@@ -90,6 +96,9 @@ pub struct MonitorMix {
 impl MonitorMix {
     pub fn new() -> Self {
         Self {
+            replay: None,
+            ramp_in: false,
+            replay_ended: false,
             channel: None,
             fade_from: None,
             releasing: false,
@@ -104,7 +113,11 @@ impl MonitorMix {
         match channel {
             Some(next) => {
                 match self.channel {
-                    Some(current) if current != next => self.fade_from = Some(current),
+                    Some(current) if current != next => {
+                        // Another input is live again; replay belonged to the old one.
+                        self.replay = None;
+                        self.fade_from = Some(current);
+                    }
                     // Starting from silence ramps the gain up instead of crossfading.
                     None => self.gain = 0.0,
                     _ => {}
@@ -114,10 +127,34 @@ impl MonitorMix {
                 self.target_gain = gain.clamp(0.0, MAX_MONITOR_GAIN);
             }
             None => {
+                self.replay = None;
                 self.releasing = self.channel.is_some();
                 self.target_gain = 0.0;
             }
         }
+    }
+
+    /// Plays `reader` (recorded audio of the selected input) instead of live. False when no
+    /// input is selected.
+    pub fn start_replay(&mut self, reader: ReplayReader) -> bool {
+        if self.channel.is_none() {
+            return false;
+        }
+        self.replay = Some(reader);
+        self.ramp_in = true;
+        true
+    }
+
+    /// Back to the selected input's live audio.
+    pub fn stop_replay(&mut self) {
+        if self.replay.take().is_some() {
+            self.ramp_in = true;
+        }
+    }
+
+    /// True once after replay ran out of recording and the mix went back to live.
+    pub fn take_replay_ended(&mut self) -> bool {
+        std::mem::take(&mut self.replay_ended)
     }
 
     /// Renders one 10 ms mono block into `output`.
@@ -126,7 +163,21 @@ impl MonitorMix {
             output.fill(0.0);
             return;
         };
-        mix_block(block, channel, self.fade_from.take(), &mut self.mono);
+        if let Some(replay) = self.replay.as_mut() {
+            self.fade_from = None;
+            if replay.read_block(&mut self.mono) == ReplayRead::EndOfRecording {
+                self.replay = None;
+                self.replay_ended = true;
+                self.ramp_in = true;
+            }
+        } else {
+            mix_block(block, channel, self.fade_from.take(), &mut self.mono);
+        }
+        if std::mem::take(&mut self.ramp_in) {
+            for (frame, sample) in self.mono.iter_mut().enumerate() {
+                *sample *= (frame as f32 + 0.5) / FRAMES_PER_BLOCK as f32;
+            }
+        }
         let start = self.gain;
         let step = (self.target_gain - start) / FRAMES_PER_BLOCK as f32;
         for (frame, (slot, sample)) in output.iter_mut().zip(&self.mono).enumerate() {
@@ -369,6 +420,28 @@ impl HostOutput {
         }
     }
 
+    /// Plays recorded audio on one feed's mix instead of its live input.
+    pub fn start_replay(&mut self, mix: usize, reader: ReplayReader) -> bool {
+        self.mixes
+            .get_mut(mix)
+            .is_some_and(|target| target.start_replay(reader))
+    }
+
+    pub fn stop_replay(&mut self, mix: usize) {
+        if let Some(target) = self.mixes.get_mut(mix) {
+            target.stop_replay();
+        }
+    }
+
+    /// Feeds whose replay just ran out of recording and went back to live.
+    pub fn take_replay_ended(&mut self) -> Vec<usize> {
+        self.mixes
+            .iter_mut()
+            .enumerate()
+            .filter_map(|(mix, target)| target.take_replay_ended().then_some(mix))
+            .collect()
+    }
+
     /// Starts the child. A spawn failure is reported like any other failure.
     pub fn start(&mut self, now: Instant) -> Option<OutputReport> {
         self.restart_at = None;
@@ -521,6 +594,10 @@ impl HostOutput {
             return None;
         }
         self.args.routes = routes.into();
+        // The output reopens, so no feed keeps playing a recording.
+        for mix in &mut self.mixes {
+            mix.stop_replay();
+        }
         self.mixes
             .resize_with(route_count(&self.args.routes), MonitorMix::new);
         // Blocks of the old width must not reach the new child.
@@ -614,6 +691,97 @@ mod tests {
         assert!(output[0] > 0.2 && output[FRAMES_PER_BLOCK - 1].abs() < 1e-6);
         mix.render(&block, &mut output);
         assert!(output.iter().all(|sample| *sample == 0.0));
+    }
+
+    #[test]
+    fn replay_replaces_live_until_stopped_or_another_input_is_chosen() {
+        use a2_audio_node::recording::{SegmentHeader, SegmentWriter, channel_directory};
+        use opus::{Application, Channels, Encoder};
+        let root = std::env::temp_dir().join(format!("pulse-mix-replay-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let mut encoder = Encoder::new(48_000, Channels::Mono, Application::Audio).unwrap();
+        let mut writer = SegmentWriter::create(
+            &root,
+            SegmentHeader {
+                channel: 0,
+                first_frame: 0,
+                start_utc_ms: 1_700_000_000_000,
+            },
+        )
+        .unwrap();
+        let mut out = [0_u8; 1_275];
+        for packet in 0..100_usize {
+            // A 1 kHz tone at 0.5: Opus drops a constant offset, so a tone is the honest fixture.
+            let pcm: Vec<f32> = (0..960)
+                .map(|n| {
+                    let t = (packet * 960 + n) as f32 / 48_000.0;
+                    0.5 * (2.0 * std::f32::consts::PI * 1_000.0 * t).sin()
+                })
+                .collect();
+            let length = encoder.encode_float(&pcm, &mut out).unwrap();
+            writer.write_packet(&out[..length]).unwrap();
+        }
+        writer.finish().unwrap();
+        let reader = || {
+            ReplayReader::open(&channel_directory(&root, 0), 1_700_000_000_000)
+                .unwrap()
+                .unwrap()
+        };
+
+        let live = constant_block(1, &[-0.25]);
+        let mut mix = MonitorMix::new();
+        let mut output = vec![0.0; FRAMES_PER_BLOCK];
+        assert!(!mix.start_replay(reader()), "needs a selected input");
+        mix.set(Some(0), 1.0);
+        for _ in 0..5 {
+            mix.render(&live, &mut output);
+        }
+        assert!((output[0] + 0.25).abs() < 1e-3, "live first");
+
+        assert!(mix.start_replay(reader()));
+        mix.render(&live, &mut output); // ramps in
+        for _ in 0..20 {
+            mix.render(&live, &mut output);
+        }
+        let peak = |block: &[f32]| block.iter().fold(0.0_f32, |peak, s| peak.max(*s));
+        assert!(
+            peak(&output) > 0.4,
+            "the recorded tone replaces constant live"
+        );
+        // A gain change on the same input keeps replay going.
+        mix.set(Some(0), 0.5);
+        mix.render(&live, &mut output);
+        mix.render(&live, &mut output);
+        let halved = peak(&output);
+        assert!(
+            (0.2..0.3).contains(&halved),
+            "gain still applies, peak {halved}"
+        );
+
+        mix.stop_replay();
+        mix.render(&live, &mut output);
+        mix.render(&live, &mut output);
+        assert!(output[100] < 0.0, "live again");
+        assert!(!mix.take_replay_ended());
+
+        // Choosing another input also ends it.
+        assert!(mix.start_replay(reader()));
+        mix.set(Some(1), 1.0);
+        let two = constant_block(2, &[0.5, -0.5]);
+        mix.render(&two, &mut output);
+        mix.render(&two, &mut output);
+        assert!((output[100] + 0.5).abs() < 1e-3);
+
+        // Running out of recording returns to live and says so once.
+        mix.set(Some(0), 1.0);
+        assert!(mix.start_replay(reader()));
+        for _ in 0..1_100 {
+            mix.render(&live, &mut output);
+        }
+        assert!(mix.take_replay_ended());
+        assert!(!mix.take_replay_ended());
+        assert!(output[100] < 0.0, "back on live");
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

@@ -31,9 +31,19 @@ export type HostMonitorChange = {
   dimmed?: boolean;
   gainDb?: number;
   changedBy?: string | null;
+  /**
+   * Play recorded audio of the selected input from `atUtcMs` instead of live,
+   * or `null` to go back to live. It travels alone: it is not a selection or
+   * level change.
+   */
+  replay?: { atUtcMs: number } | null;
 };
 
+/** What a client may not change in the same request as a replay. */
+const REPLAY_EXCLUDES = ["channelId", "input", "muted", "dimmed", "gainDb"];
+
 const CHANGE_KEYS = new Set([
+  "replay",
   "channelId",
   "input",
   "muted",
@@ -65,10 +75,34 @@ export function parseMonitorChange(
   ) {
     throw new MonitorChangeError("invalid-body");
   }
+  if ("replay" in value && REPLAY_EXCLUDES.some((key) => key in value)) {
+    throw new MonitorChangeError("replay-must-be-alone");
+  }
   if ("channelId" in value !== "input" in value) {
     throw new MonitorChangeError("channel-and-input-required");
   }
   const change: HostMonitorChange = {};
+  if ("replay" in value) {
+    const { replay } = value;
+    if (replay === null) {
+      change.replay = null;
+    } else {
+      const atUtc =
+        typeof replay === "object" && !Array.isArray(replay)
+          ? (replay as Record<string, unknown>)
+          : null;
+      const atUtcMs =
+        atUtc !== null &&
+        Object.keys(atUtc).length === 1 &&
+        typeof atUtc.atUtc === "string"
+          ? Date.parse(atUtc.atUtc)
+          : Number.NaN;
+      if (!Number.isFinite(atUtcMs)) {
+        throw new MonitorChangeError("invalid-replay");
+      }
+      change.replay = { atUtcMs };
+    }
+  }
   if ("input" in value) {
     const { channelId, input } = value;
     if (input === null) {
@@ -177,17 +211,42 @@ export class SharedHostMonitor extends EventEmitter {
     return this.revision;
   }
 
-  apply(change: HostMonitorChange): HostMonitor {
-    const { changedBy, ...fields } = change;
+  /**
+   * Applies a change for everyone in the feed. `replayOffsetMs` is set only
+   * after the node has started (or stopped) replay; choosing a different input
+   * ends replay, as the node does.
+   */
+  apply(
+    change: Omit<HostMonitorChange, "replay"> & {
+      replayOffsetMs?: number | null;
+    },
+  ): HostMonitor {
+    const { changedBy, replayOffsetMs, ...fields } = change;
+    const reselected =
+      this.monitor.replayOffsetMs != null &&
+      fields.input !== undefined &&
+      fields.input !== this.monitor.input;
     this.monitor = {
       ...this.monitor,
       ...fields,
+      ...(replayOffsetMs !== undefined
+        ? { replayOffsetMs }
+        : reselected
+          ? { replayOffsetMs: null }
+          : {}),
       changedBy: changedBy ?? null,
       changedAtUtc: this.now().toISOString(),
     };
     this.revision += 1;
     this.emit("change", this.monitor);
     return this.monitor;
+  }
+
+  /** Ends replay when the node can no longer be playing it (it restarted or reopened). */
+  clearReplay(): void {
+    if (this.monitor.replayOffsetMs != null) {
+      this.apply({ replayOffsetMs: null, changedBy: null });
+    }
   }
 
   /** Clears a selection whose input no longer exists on the running device. */
@@ -284,6 +343,11 @@ export class HostOutputFeeds extends EventEmitter {
   /** Clears selections whose input no longer exists on the running device. */
   constrain(channelCount: number): void {
     for (const { monitor } of this.feeds) monitor.constrain(channelCount);
+  }
+
+  /** Ends every feed's replay: the node reopened its output or restarted. */
+  clearReplay(): void {
+    for (const { monitor } of this.feeds) monitor.clearReplay();
   }
 }
 

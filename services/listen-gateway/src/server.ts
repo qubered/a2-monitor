@@ -16,6 +16,7 @@ import type {
 import {
   hostOutputDocument,
   type HostMonitor,
+  type HostMonitorChange,
   MonitorChangeError,
   monitorCommand,
   parseMonitorChange,
@@ -278,8 +279,14 @@ export class ListenGateway {
       const state = this.media.getState();
       if (state.status === "ready") {
         this.hostFeeds.constrain(state.device.channelCount);
+      } else {
+        // A node that stopped is not playing a recording any more.
+        this.hostFeeds.clearReplay();
       }
     });
+    this.media.on("monitor-replay-ended", (mix: number) =>
+      this.hostFeeds.list()[mix]?.monitor.clearReplay(),
+    );
     this.media.on("output", () => this.broadcastOutput());
     this.hostFeeds.on("monitor", (mix: number) => {
       const feed = this.hostFeeds.list()[mix];
@@ -287,6 +294,8 @@ export class ListenGateway {
       this.broadcastOutput();
     });
     this.hostFeeds.on("feeds", () => {
+      // Reopening the output ends any replay on it.
+      this.hostFeeds.clearReplay();
       // Routes first, so the worker has one mix per feed before the mixes.
       this.media.setOutputRoutes(this.hostFeeds.routes());
       this.hostFeeds
@@ -566,12 +575,15 @@ export class ListenGateway {
     const body = await readJsonObject(request);
     const state = this.media.getState();
     try {
-      feed.monitor.apply(
-        parseMonitorChange(
-          body,
-          state.status === "ready" ? state.device.channelCount : null,
-        ),
+      const change = parseMonitorChange(
+        body,
+        state.status === "ready" ? state.device.channelCount : null,
       );
+      if (change.replay !== undefined) {
+        await this.applyReplay(feed, change);
+      } else {
+        feed.monitor.apply(change);
+      }
     } catch (error) {
       if (error instanceof MonitorChangeError) {
         throw new HttpError(
@@ -647,6 +659,50 @@ export class ListenGateway {
       throw new HttpError(503, "audio-not-ready");
     }
     sendJson(response, 200, this.media.getRecordingState());
+  }
+
+  /**
+   * Starts or stops replay on a feed. Everyone in the feed hears recorded audio
+   * of its selected input, so the shared state changes only after the node has
+   * confirmed it is playing; a refusal changes nothing.
+   */
+  private async applyReplay(
+    feed: NonNullable<ReturnType<HostOutputFeeds["find"]>>,
+    change: HostMonitorChange,
+  ): Promise<void> {
+    const monitor = feed.monitor.get();
+    const mix = this.hostFeeds.indexOf(feed.id);
+    if (monitor.input === null || mix < 0) {
+      throw new HttpError(409, "no-channel-selected");
+    }
+    const command = monitorCommand(
+      monitor,
+      this.inputTrimDb.get(monitor.input) ?? 0,
+    );
+    const changedBy = change.changedBy ?? null;
+    if (change.replay === null || change.replay === undefined) {
+      await this.media.setMonitorReplay(mix, command, null).catch(() => {
+        // No node to stop: the shared state still ends.
+      });
+      feed.monitor.apply({ replayOffsetMs: null, changedBy });
+      return;
+    }
+    const offsetMs = Date.now() - change.replay.atUtcMs;
+    if (offsetMs < 0 || offsetMs > RECORDING_SPAN_WINDOW_MS) {
+      throw new HttpError(400, "invalid-replay");
+    }
+    if (!this.media.getRecordingState().available) {
+      throw new HttpError(409, "recording-not-available");
+    }
+    try {
+      await this.media.setMonitorReplay(mix, command, change.replay.atUtcMs);
+    } catch (error) {
+      if (error instanceof ReplayRejectedError) {
+        throw new HttpError(409, "nothing-recorded");
+      }
+      throw new HttpError(503, "media-worker-unavailable");
+    }
+    feed.monitor.apply({ replayOffsetMs: Math.round(offsetMs), changedBy });
   }
 
   /** Server-Sent Events: the `host-output` document on connect and after every change. */

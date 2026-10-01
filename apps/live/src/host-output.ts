@@ -12,7 +12,20 @@ export type HostMonitorChange = {
   dimmed?: boolean;
   gainDb?: number;
   changedBy?: string;
+  /** Plays the selected input's recording from `atUtc` for the whole feed, or `null` for live. */
+  replay?: { atUtc: string } | null;
 };
+
+/** The node refused a change; `code` is its reason, e.g. `nothing-recorded`. */
+export class HostOutputChangeError extends Error {
+  constructor(
+    message: string,
+    readonly code: string,
+  ) {
+    super(message);
+    this.name = "HostOutputChangeError";
+  }
+}
 
 /**
  * Where this device's monitor audio plays (ADR 0031): here, or joined to one
@@ -55,6 +68,9 @@ const changeErrors: Record<string, string> = {
   "invalid-channel": "That input is not on the running device.",
   "unknown-output-feed":
     "That host output feed no longer exists. Choose another.",
+  "nothing-recorded": "Nothing was recorded at that time.",
+  "recording-not-available": "This node is not recording.",
+  "no-channel-selected": "Choose a channel to listen back to first.",
 };
 
 export function createHttpHostOutputSource(
@@ -121,9 +137,10 @@ export function createHttpHostOutputSource(
         } catch {
           // The status alone is reported.
         }
-        throw new Error(
+        throw new HostOutputChangeError(
           changeErrors[code] ??
             `The audio node refused the change (HTTP ${response.status}).`,
+          code,
         );
       }
       return parseHostOutput(await response.json());

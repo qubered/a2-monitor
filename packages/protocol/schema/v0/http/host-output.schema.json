@@ -133,6 +133,12 @@
                 "minLength": 1,
                 "maxLength": 80
               },
+              "replayOffsetMs": {
+                "description": "Set while the feed plays recorded audio of the selected input instead of live: how far behind live it is, constant while it plays. Absent or null when the feed is live. Everyone in the feed hears it, and choosing another input or going back to live ends it.",
+                "type": ["integer", "null"],
+                "minimum": 0,
+                "maximum": 3600000
+              },
               "changedAtUtc": {
                 "type": ["string", "null"],
                 "format": "date-time"

@@ -201,6 +201,9 @@ type WorkerEvent =
   | { type: "replay-started"; sessionId: string }
   | { type: "replay-rejected"; sessionId: string; detail: string }
   | { type: "replay-ended"; sessionId: string }
+  | { type: "monitor-replay-started"; mix: number }
+  | { type: "monitor-replay-rejected"; mix: number; detail: string }
+  | { type: "monitor-replay-ended"; mix: number }
   | {
       type: "recording";
       available: boolean;
@@ -243,6 +246,9 @@ const EVENT_FIELDS: Readonly<Record<WorkerEvent["type"], readonly string[]>> = {
   "replay-started": ["sessionId", "type"],
   "replay-rejected": ["detail", "sessionId", "type"],
   "replay-ended": ["sessionId", "type"],
+  "monitor-replay-started": ["mix", "type"],
+  "monitor-replay-rejected": ["detail", "mix", "type"],
+  "monitor-replay-ended": ["mix", "type"],
   recording: [
     "active",
     "available",
@@ -446,6 +452,16 @@ export function parseWorkerEvent(line: string): WorkerEvent {
       }
       return { type, detail: text("detail"), retryInMs: record.retryInMs };
     }
+    case "monitor-replay-started":
+    case "monitor-replay-ended":
+    case "monitor-replay-rejected": {
+      if (!isCount(record.mix, 0, 7)) {
+        throw new Error(`Media worker ${type} event mix is invalid.`);
+      }
+      return type === "monitor-replay-rejected"
+        ? { type, mix: record.mix, detail: text("detail") }
+        : { type, mix: record.mix };
+    }
     case "replay-started":
     case "replay-ended":
       return { type, sessionId: text("sessionId") };
@@ -510,6 +526,14 @@ export class MediaWorkerManager extends EventEmitter {
   private readonly sessions = new Set<string>();
   private readonly pendingReplays = new Map<
     string,
+    {
+      resolve: () => void;
+      reject: (error: Error) => void;
+      timer: NodeJS.Timeout;
+    }
+  >();
+  private readonly pendingMonitorReplays = new Map<
+    number,
     {
       resolve: () => void;
       reject: (error: Error) => void;
@@ -824,6 +848,45 @@ export class MediaWorkerManager extends EventEmitter {
     });
   }
 
+  /**
+   * Plays recorded audio of the feed's selected input on one host output feed
+   * from `atUtcMs`, or goes back to live with `null`. `command` is the feed's
+   * current monitor. Resolves once the node has started it; rejects with the
+   * node's reason otherwise. The feed's live input and level are unchanged.
+   */
+  setMonitorReplay(
+    mix: number,
+    command: MonitorCommand,
+    atUtcMs: number | null,
+  ): Promise<void> {
+    if (!this.outputState || !this.child || command.channel === null) {
+      return Promise.reject(new ReplayRejectedError("no feed playing"));
+    }
+    const send = () =>
+      this.send({
+        type: "monitor-replay",
+        mix,
+        channel: command.channel,
+        gain: command.gain,
+        atUtcMs,
+      });
+    if (atUtcMs === null) {
+      send();
+      return Promise.resolve();
+    }
+    this.pendingMonitorReplays
+      .get(mix)
+      ?.reject(new ReplayRejectedError("superseded"));
+    return new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pendingMonitorReplays.delete(mix);
+        reject(new Error("Media worker did not answer the replay in time."));
+      }, REPLAY_TIMEOUT_MS);
+      this.pendingMonitorReplays.set(mix, { resolve, reject, timer });
+      send();
+    });
+  }
+
   closeSession(sessionId: string): boolean {
     if (!this.sessions.has(sessionId)) return false;
     this.sessions.delete(sessionId);
@@ -864,6 +927,11 @@ export class MediaWorkerManager extends EventEmitter {
       pending.reject(error);
     }
     this.pendingReplays.clear();
+    for (const pending of this.pendingMonitorReplays.values()) {
+      clearTimeout(pending.timer);
+      pending.reject(error);
+    }
+    this.pendingMonitorReplays.clear();
     for (const pending of this.pending.values()) {
       clearTimeout(pending.timer);
       pending.reject(error);
@@ -1065,6 +1133,19 @@ export class MediaWorkerManager extends EventEmitter {
       }
       case "replay-ended":
         this.emit("replay-ended", event.sessionId);
+        break;
+      case "monitor-replay-started":
+      case "monitor-replay-rejected": {
+        const pending = this.pendingMonitorReplays.get(event.mix);
+        if (!pending) break;
+        clearTimeout(pending.timer);
+        this.pendingMonitorReplays.delete(event.mix);
+        if (event.type === "monitor-replay-started") pending.resolve();
+        else pending.reject(new ReplayRejectedError(event.detail));
+        break;
+      }
+      case "monitor-replay-ended":
+        this.emit("monitor-replay-ended", event.mix);
         break;
       case "recording":
         if (event.writeErrors > this.recording.writeErrors) {

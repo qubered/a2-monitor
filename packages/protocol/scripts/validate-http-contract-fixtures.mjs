@@ -112,6 +112,7 @@ const contracts = [
     rejected: [
       "fixtures/v0/http/incompatible/host-output.unknown-field.json",
       "fixtures/v0/http/incompatible/host-output.gain-above-range.json",
+      "fixtures/v0/http/incompatible/host-output.negative-replay-offset.json",
     ],
   },
   {

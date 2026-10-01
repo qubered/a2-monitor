@@ -75,7 +75,11 @@ type PlayerProps = {
   /** Opens the followed channel's detail; the glance tile has no expand button. */
   onOpenDetail?: () => void;
   /** Set while the player is playing recorded audio: how far behind live. */
-  replay?: { offsetMs: number } | null;
+  replay?: {
+    offsetMs: number;
+    /** The shared feed everyone hears it on, when replay is on a host output. */
+    sharedWith?: string;
+  } | null;
   /** Plays the primary channel's recording from a UTC time. Absent when this
    * output cannot listen back (shared host output, or nothing connected). */
   onPlayRecorded?: (atUtcMs: number) => Promise<ReplayOutcome>;
@@ -369,7 +373,7 @@ export function Player({
     playheadSpan !== undefined &&
     nowMs - playheadMs >= MIN_REPLAY_OFFSET_MS;
   const listenHint = !onPlayRecorded
-    ? "Listening back needs this device's monitor output."
+    ? "Choose a channel playing on the monitor output to listen back."
     : recorded.status !== "ready"
       ? "The node's recording state is unknown."
       : !recorded.recording.enabled
@@ -420,7 +424,11 @@ export function Player({
             Listening back to {channel?.name ?? "this channel"},{" "}
             {formatTimeCode(replay.offsetMs)} behind live
           </strong>
-          <span>Live audio is paused.</span>
+          <span>
+            {replay.sharedWith
+              ? `Everyone on ${replay.sharedWith} hears this.`
+              : "Live audio is paused."}
+          </span>
           <button
             type="button"
             className="control-button"
@@ -437,7 +445,10 @@ export function Player({
             disabled={!canListenFromHere}
             onClick={() => void listenFrom(playheadMs)}
           >
-            Listen from here ({formatTimeCode(nowMs - playheadMs)})
+            {hostOutput
+              ? `Listen from here on ${hostOutput.feedName}`
+              : "Listen from here"}{" "}
+            ({formatTimeCode(nowMs - playheadMs)})
           </button>
           {listenHint ? <span>{listenHint}</span> : null}
         </div>

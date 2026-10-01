@@ -76,6 +76,7 @@ import {
   describeOutputChannels,
   readLastDestination,
   feedIdOf,
+  HostOutputChangeError,
   saveLastDestination,
   useHostOutput,
   type HostMonitorChange,
@@ -711,6 +712,33 @@ export function App({
     },
     [hostOutput, hostFeedId, operator],
   );
+
+  // On a shared host feed, replay is the feed's shared state: everyone on it
+  // hears the recording, sees it, and can go back to live.
+  const playRecordedHost = useCallback(
+    async (atUtcMs: number): Promise<ReplayOutcome> => {
+      if (hostFeedId === null) return "failed";
+      try {
+        await hostOutput.change(hostFeedId, {
+          replay: { atUtc: new Date(atUtcMs).toISOString() },
+          changedBy: operatorLabel(operator),
+        });
+        return "started";
+      } catch (error) {
+        if (error instanceof HostOutputChangeError) {
+          if (error.code === "nothing-recorded") return "nothing-recorded";
+          if (error.code === "recording-not-available") {
+            return "recording-unavailable";
+          }
+        }
+        return "failed";
+      }
+    },
+    [hostOutput, hostFeedId, operator],
+  );
+  const returnToLiveHost = useCallback(() => {
+    void changeHost({ replay: null });
+  }, [changeHost]);
 
   const shownMuted = hostMode ? (hostMonitor?.muted ?? false) : muted;
   const shownDimmed = hostMode ? (hostMonitor?.dimmed ?? false) : dimmed;
@@ -1948,11 +1976,28 @@ export function App({
               ? undefined
               : (id) => setSelectedIds((prev) => prev.filter((x) => x !== id))
           }
-          replay={replayOffsetMs === null ? null : { offsetMs: replayOffsetMs }}
-          onPlayRecorded={
-            deviceMode && playback !== null ? playRecorded : undefined
+          replay={
+            hostMode
+              ? hostMonitor?.replayOffsetMs != null
+                ? {
+                    offsetMs: hostMonitor.replayOffsetMs,
+                    sharedWith: hostFeed?.name ?? "this feed",
+                  }
+                : null
+              : replayOffsetMs === null
+                ? null
+                : { offsetMs: replayOffsetMs }
           }
-          onReturnToLive={returnToLive}
+          onPlayRecorded={
+            hostMode
+              ? hostMonitor?.input != null
+                ? playRecordedHost
+                : undefined
+              : deviceMode && playback !== null
+                ? playRecorded
+                : undefined
+          }
+          onReturnToLive={hostMode ? returnToLiveHost : returnToLive}
           muted={shownMuted}
           dimmed={shownDimmed}
           gainDb={shownGainDb}
