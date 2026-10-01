@@ -167,6 +167,13 @@ async function main() {
       A2_NODE_ORIGIN: "http://127.0.0.1:4173",
     },
   });
+  // Recorded audio is local-only and never backed up.
+  const recordingDirectory = resolve(
+    process.env.HOME ?? "/tmp",
+    "Library/Application Support/Pulse/recordings",
+  );
+  mkdirSync(recordingDirectory, { recursive: true, mode: 0o700 });
+  execFile("/usr/bin/tmutil", ["addexclusion", recordingDirectory], () => {});
   const gateway = spawn(
     process.execPath,
     ["services/listen-gateway/dist/start.js"],
@@ -179,6 +186,7 @@ async function main() {
         A2_MEDIA_WORKER_BIN: mediaWorkerBinary,
         // Host monitor output (ADR 0031) is on only when the app names a device.
         A2_OUTPUT_BIN: outputBinary,
+        A2_RECORDING_DIR: recordingDirectory,
         A2_LISTEN_HOST: host,
         A2_LISTEN_PORT: "4173",
         A2_LIVE_DIR: resolve(appRoot, "apps/live/dist"),

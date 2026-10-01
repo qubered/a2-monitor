@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { EventEmitter } from "node:events";
 import type { Readable, Writable } from "node:stream";
+import type { RecordingState } from "@rvlt/pulse-protocol/http";
 import type { MeterReading } from "./levels.js";
 
 const EVENT_LINE_LIMIT_BYTES = 256 * 1024;
@@ -68,6 +69,11 @@ export type MediaWorkerOptions = {
   outputDevice?: string;
   outputChannels?: readonly number[];
   outputBinary?: string;
+  /**
+   * Where the node may keep recorded audio (`--recording-dir`). Without it,
+   * recording is unavailable. The node itself remembers whether it is on.
+   */
+  recordingDirectory?: string;
   processFactory?: WorkerProcessFactory;
   restartDelaysMs?: readonly number[];
   now?: () => number;
@@ -106,6 +112,9 @@ export type HostOutputState = {
 
 /** One feed's shared mix the worker renders: one input (or none) at one linear gain. */
 export type MonitorCommand = { channel: number | null; gain: number };
+
+/** The most minutes of audio the node will keep. */
+export const MAX_RECORDING_MINUTES = 60;
 
 /** Highest linear monitor gain the worker accepts: +48 dB, a +24 dB trim under a +24 dB level. */
 export const MAX_MONITOR_GAIN = 251.188_643;
@@ -179,7 +188,16 @@ type WorkerEvent =
       overflowFrames: number;
       droppedBlocks: number;
     }
-  | { type: "output-failed"; detail: string; retryInMs: number };
+  | { type: "output-failed"; detail: string; retryInMs: number }
+  | {
+      type: "recording";
+      available: boolean;
+      enabled: boolean;
+      retentionMinutes: number;
+      active: boolean;
+      droppedBlocks: number;
+      writeErrors: number;
+    };
 
 const EVENT_FIELDS: Readonly<Record<WorkerEvent["type"], readonly string[]>> = {
   ready: ["channelCount", "deviceName", "sampleRateHz", "type"],
@@ -210,6 +228,15 @@ const EVENT_FIELDS: Readonly<Record<WorkerEvent["type"], readonly string[]>> = {
     "underruns",
   ],
   "output-failed": ["detail", "retryInMs", "type"],
+  recording: [
+    "active",
+    "available",
+    "droppedBlocks",
+    "enabled",
+    "retentionMinutes",
+    "type",
+    "writeErrors",
+  ],
 };
 
 function defaultProcessFactory(
@@ -404,6 +431,27 @@ export function parseWorkerEvent(line: string): WorkerEvent {
       }
       return { type, detail: text("detail"), retryInMs: record.retryInMs };
     }
+    case "recording": {
+      if (
+        typeof record.available !== "boolean" ||
+        typeof record.enabled !== "boolean" ||
+        typeof record.active !== "boolean" ||
+        !isCount(record.retentionMinutes, 1, MAX_RECORDING_MINUTES) ||
+        !isCount(record.droppedBlocks, 0, Number.MAX_SAFE_INTEGER) ||
+        !isCount(record.writeErrors, 0, Number.MAX_SAFE_INTEGER)
+      ) {
+        throw new Error("Media worker recording event is invalid.");
+      }
+      return {
+        type,
+        available: record.available,
+        enabled: record.enabled,
+        retentionMinutes: record.retentionMinutes,
+        active: record.active,
+        droppedBlocks: record.droppedBlocks,
+        writeErrors: record.writeErrors,
+      };
+    }
     default: {
       if (
         !isCount(record.sessions, 0, 1_000) ||
@@ -456,6 +504,8 @@ export class MediaWorkerManager extends EventEmitter {
   private outputState: HostOutputState | null;
   /** Each feed's mix, by mix index. */
   private monitors: MonitorCommand[] = [];
+  private readonly recordingDirectory: string | undefined;
+  private recording: RecordingState;
 
   constructor(options: MediaWorkerOptions) {
     super();
@@ -493,6 +543,16 @@ export class MediaWorkerManager extends EventEmitter {
             underruns: 0,
             droppedFrames: 0,
           };
+    this.recordingDirectory = options.recordingDirectory || undefined;
+    this.recording = {
+      schemaVersion: "0",
+      available: this.recordingDirectory !== undefined,
+      enabled: false,
+      retentionMinutes: MAX_RECORDING_MINUTES,
+      active: false,
+      droppedBlocks: 0,
+      writeErrors: 0,
+    };
     this.state = {
       schemaVersion: 0,
       status: "configuration-required",
@@ -515,6 +575,24 @@ export class MediaWorkerManager extends EventEmitter {
   /** True when the configured device is the built-in test signal, not a physical input. */
   get simulated(): boolean {
     return this.device === SIMULATED_DEVICE_NAME;
+  }
+
+  /** Recording as the node last reported it. */
+  getRecordingState(): RecordingState {
+    return this.recording;
+  }
+
+  /**
+   * Turns recording on or off and sets the retention. The node applies and
+   * remembers it, then confirms with a `recording` event; this returns false
+   * when the command could not be delivered to a running node.
+   */
+  setRecording(enabled: boolean, retentionMinutes: number): boolean {
+    if (!this.recording.available || !this.child) return false;
+    this.send({ type: "recording", enabled, retentionMinutes });
+    this.recording = { ...this.recording, enabled, retentionMinutes };
+    this.emit("recording", this.recording);
+    return true;
   }
 
   /** Host monitor output state, or null when no output device is configured. */
@@ -622,6 +700,9 @@ export class MediaWorkerManager extends EventEmitter {
               "--output-routes",
               this.outputRoutes.map((route) => route.join(",")).join(";"),
             ]),
+        ...(this.recordingDirectory === undefined
+          ? []
+          : ["--recording-dir", this.recordingDirectory]),
       ]);
     } catch {
       this.fail("Media worker could not be started.");
@@ -743,6 +824,10 @@ export class MediaWorkerManager extends EventEmitter {
       this.restartAttempt = 0;
     }
     this.readyAtMs = undefined;
+    if (this.recording.active) {
+      this.recording = { ...this.recording, active: false };
+      this.emit("recording", this.recording);
+    }
     this.setOutputState({
       status: "error",
       detail: "The audio node stopped, so the host output is silent.",
@@ -903,6 +988,23 @@ export class MediaWorkerManager extends EventEmitter {
         this.setOutputState({ underruns: event.underruns, droppedFrames });
         break;
       }
+      case "recording":
+        if (event.writeErrors > this.recording.writeErrors) {
+          process.stderr.write(
+            `a2-listen-gateway: recording had ${event.writeErrors - this.recording.writeErrors} write error(s)\n`,
+          );
+        }
+        this.recording = {
+          schemaVersion: "0",
+          available: event.available,
+          enabled: event.enabled,
+          retentionMinutes: event.retentionMinutes,
+          active: event.active,
+          droppedBlocks: event.droppedBlocks,
+          writeErrors: event.writeErrors,
+        };
+        this.emit("recording", this.recording);
+        break;
       case "output-failed":
         process.stderr.write(
           `a2-listen-gateway: host output failed: ${event.detail}\n`,

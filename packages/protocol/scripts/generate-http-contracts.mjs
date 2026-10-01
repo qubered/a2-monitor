@@ -59,6 +59,11 @@ const contracts = [
     parserName: "parseHostOutput",
   },
   {
+    schemaPath: "schema/v0/http/recording-state.schema.json",
+    typeName: "RecordingState",
+    parserName: "parseRecordingState",
+  },
+  {
     schemaPath: "schema/v0/http/live-state.schema.json",
     typeName: "LiveState",
     parserName: "parseLiveState",

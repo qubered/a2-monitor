@@ -477,4 +477,71 @@ describe("parseWorkerEvent", () => {
     });
     media.stop();
   });
+
+  it("passes the recording directory and relays recording state", async () => {
+    const child = new FakeWorkerProcess();
+    const factory = vi.fn(() => child);
+    const media = new MediaWorkerManager({
+      device: "DVS",
+      recordingDirectory: "/var/pulse/recordings",
+      processFactory: factory,
+    });
+    expect(media.getRecordingState()).toMatchObject({
+      available: true,
+      enabled: false,
+      active: false,
+    });
+    expect(media.setRecording(true, 30)).toBe(false);
+    media.start();
+    expect(factory.mock.calls[0]?.[1]).toEqual(
+      expect.arrayContaining(["--recording-dir", "/var/pulse/recordings"]),
+    );
+    child.ready();
+
+    expect(media.setRecording(true, 30)).toBe(true);
+    await flush();
+    expect(child.commands.at(-1)).toEqual({
+      type: "recording",
+      enabled: true,
+      retentionMinutes: 30,
+    });
+    child.emit({
+      type: "recording",
+      available: true,
+      enabled: true,
+      retentionMinutes: 30,
+      active: true,
+      droppedBlocks: 2,
+      writeErrors: 0,
+    });
+    await flush();
+    expect(media.getRecordingState()).toEqual({
+      schemaVersion: "0",
+      available: true,
+      enabled: true,
+      retentionMinutes: 30,
+      active: true,
+      droppedBlocks: 2,
+      writeErrors: 0,
+    });
+  });
+
+  it("reports recording unavailable without a directory and rejects bad events", () => {
+    const media = new MediaWorkerManager({ device: "DVS" });
+    expect(media.getRecordingState().available).toBe(false);
+    expect(media.setRecording(true, 30)).toBe(false);
+    expect(() =>
+      parseWorkerEvent(
+        JSON.stringify({
+          type: "recording",
+          available: true,
+          enabled: true,
+          retentionMinutes: 61,
+          active: true,
+          droppedBlocks: 0,
+          writeErrors: 0,
+        }),
+      ),
+    ).toThrow("recording event is invalid");
+  });
 });

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "0",
+  "available": true,
+  "enabled": true,
+  "retentionMinutes": 60,
+  "active": true,
+  "droppedBlocks": 0,
+  "writeErrors": 0,
+  "path": "/tmp/recordings"
+}

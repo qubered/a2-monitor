@@ -24,6 +24,7 @@ import {
 import { LEVEL_WINDOW_MS, LevelBank, type MeterReading } from "./levels.js";
 import {
   MediaWorkerManager,
+  MAX_RECORDING_MINUTES,
   SessionRejectedError,
   type ListenSource,
   type MediaWorkerOptions,
@@ -256,6 +257,7 @@ export class ListenGateway {
         outputDevice: options.outputDevice,
         outputChannels: options.outputChannels,
         outputBinary: options.outputBinary,
+        recordingDirectory: options.recordingDirectory,
         processFactory: options.processFactory,
       });
     this.hostFeeds = new HostOutputFeeds(this.media.getDefaultOutputChannels());
@@ -339,6 +341,17 @@ export class ListenGateway {
         request.url === "/audio/v0/output/events"
       ) {
         this.openOutputStream(response);
+        return;
+      }
+      if (request.url === "/audio/v0/recording") {
+        this.handleRecording(request, response).catch((error: unknown) => {
+          if (response.headersSent) return;
+          if (error instanceof HttpError) {
+            sendJson(response, error.status, { error: error.code });
+          } else {
+            sendJson(response, 500, { error: "internal-error" });
+          }
+        });
         return;
       }
       if (request.method === "GET" && request.url === "/audio/v0/shure") {
@@ -513,6 +526,43 @@ export class ListenGateway {
       throw error;
     }
     sendJson(response, 200, this.getOutput());
+  }
+
+  /**
+   * `GET /audio/v0/recording` reads the node's recording state; `PUT` sets
+   * `{enabled, retentionMinutes}` and returns the new state. The node keeps
+   * the setting, so Manager changes it here and the node needs no backend.
+   */
+  private async handleRecording(
+    request: IncomingMessage,
+    response: ServerResponse,
+  ): Promise<void> {
+    if (request.method === "GET") {
+      sendJson(response, 200, this.media.getRecordingState());
+      return;
+    }
+    if (request.method !== "PUT")
+      throw new HttpError(405, "method-not-allowed");
+    if (!this.media.getRecordingState().available) {
+      throw new HttpError(409, "recording-not-available");
+    }
+    const { enabled, retentionMinutes } = await readJsonObject(request, [
+      "enabled",
+      "retentionMinutes",
+    ]);
+    if (
+      typeof enabled !== "boolean" ||
+      typeof retentionMinutes !== "number" ||
+      !Number.isInteger(retentionMinutes) ||
+      retentionMinutes < 1 ||
+      retentionMinutes > MAX_RECORDING_MINUTES
+    ) {
+      throw new HttpError(400, "invalid-recording");
+    }
+    if (!this.media.setRecording(enabled, retentionMinutes)) {
+      throw new HttpError(503, "audio-not-ready");
+    }
+    sendJson(response, 200, this.media.getRecordingState());
   }
 
   /** Server-Sent Events: the `host-output` document on connect and after every change. */

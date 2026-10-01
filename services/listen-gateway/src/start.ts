@@ -32,6 +32,8 @@ const gateway = new ListenGateway({
   outputDevice,
   outputChannels,
   outputBinary: process.env.A2_OUTPUT_BIN ?? defaultOutputBinary,
+  // Recorded audio stays on this machine. Recording is unavailable unless set.
+  recordingDirectory: process.env.A2_RECORDING_DIR || undefined,
   webRoot: process.env.A2_LIVE_DIR,
   managerRoot: process.env.A2_MANAGER_DIR,
   backendOrigin: process.env.A2_BACKEND_ORIGIN,

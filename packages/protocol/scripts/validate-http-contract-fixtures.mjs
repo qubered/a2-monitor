@@ -115,6 +115,18 @@ const contracts = [
     ],
   },
   {
+    name: "recording-state",
+    schema: "schema/v0/http/recording-state.schema.json",
+    accepted: [
+      "fixtures/v0/http/current/recording-state.valid.json",
+      "fixtures/v0/http/previous/recording-state.valid.json",
+    ],
+    rejected: [
+      "fixtures/v0/http/incompatible/recording-state.unknown-field.json",
+      "fixtures/v0/http/incompatible/recording-state.retention-above-range.json",
+    ],
+  },
+  {
     name: "live-state",
     schema: "schema/v0/http/live-state.schema.json",
     accepted: [

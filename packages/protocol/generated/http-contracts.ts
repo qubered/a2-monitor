@@ -9,14 +9,15 @@
 //   - schema/v0/http/node-levels.schema.json
 //   - schema/v0/http/meter-frame.schema.json
 //   - schema/v0/http/host-output.schema.json
+//   - schema/v0/http/recording-state.schema.json
 //   - schema/v0/http/live-state.schema.json
 //   - schema/v0/http/live-state.schema.json
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: bfad69dfdd980c9b6e9d79f06d51806a622b16c30ad0cdad4b13e63480cc7f41
-// Generator-SHA256: 123e494d4215c85da4d6478cb1ee908a830ec3431fb8ab658c6fc0e098c4296b
-// Body-SHA256: b89534048f64f05b7b2442f32531ffb304dbba89bb31d391ccd892954f4cda46
+// Schema-SHA256: 705507400bf28982f5c922ca8a9d3192ed0c9f8ca92d488fd9492b35c3e3d059
+// Generator-SHA256: 3134351bd74ad6f194d2e9dcf8af097d656e5b121aec00b7cc0d4248a80355b6
+// Body-SHA256: 47d3e754234d53be1ae1b8095c3fc3f5d9c522feb6e6995056880bc64d0b6614
 
 export type HealthResponse = {
   status: "ok";
@@ -333,6 +334,16 @@ export type HostOutput = {
       changedAtUtc: string | null;
     };
   }>;
+};
+
+export type RecordingState = {
+  schemaVersion: "0";
+  available: boolean;
+  enabled: boolean;
+  retentionMinutes: number;
+  active: boolean;
+  droppedBlocks: number;
+  writeErrors: number;
 };
 
 export type LiveStateVerdict =
@@ -2237,6 +2248,58 @@ const hostOutputSchema = {
           },
         },
       },
+    },
+  },
+} as const;
+
+const recordingStateSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://pulse.local/schema/v0/http/recording-state.schema.json",
+  title: "Audio node recording state",
+  description:
+    "Whether the audio node is recording every input as 48 kbps Opus, served at GET /audio/v0/recording and returned by PUT /audio/v0/recording. The node keeps `enabled` and `retentionMinutes` itself, so recording resumes after a restart without the backend. `available` is false when the node has no recording directory. `active` is true only while capture is running and audio is being written. Turning recording off deletes what was recorded.",
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "schemaVersion",
+    "available",
+    "enabled",
+    "retentionMinutes",
+    "active",
+    "droppedBlocks",
+    "writeErrors",
+  ],
+  properties: {
+    schemaVersion: {
+      const: "0",
+    },
+    available: {
+      type: "boolean",
+    },
+    enabled: {
+      type: "boolean",
+    },
+    retentionMinutes: {
+      description: "How many minutes of audio are kept, at most 60.",
+      type: "integer",
+      minimum: 1,
+      maximum: 60,
+    },
+    active: {
+      type: "boolean",
+    },
+    droppedBlocks: {
+      description:
+        "10 ms capture blocks the recorder dropped because it fell behind, since the node started. Each one leaves a gap in the recording.",
+      type: "integer",
+      minimum: 0,
+      maximum: 9007199254740991,
+    },
+    writeErrors: {
+      description: "Failed writes or encodes since the node started.",
+      type: "integer",
+      minimum: 0,
+      maximum: 9007199254740991,
     },
   },
 } as const;
@@ -5095,6 +5158,14 @@ export function parseMeterFrame(value: unknown): MeterFrame {
 
 export function parseHostOutput(value: unknown): HostOutput {
   return parseWithSchema<HostOutput>(value, hostOutputSchema, "HostOutput");
+}
+
+export function parseRecordingState(value: unknown): RecordingState {
+  return parseWithSchema<RecordingState>(
+    value,
+    recordingStateSchema,
+    "RecordingState",
+  );
 }
 
 export function parseLiveState(value: unknown): LiveState {

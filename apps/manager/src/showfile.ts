@@ -1,9 +1,11 @@
 import {
   parseHostOutput,
+  parseRecordingState,
   parseProductionList,
   parseShowfile,
   parseShureTelemetry,
   type HostOutput,
+  type RecordingState,
   type ProductionList,
   type Showfile,
   type ShureTelemetry,
@@ -86,6 +88,31 @@ export async function loadHostOutput(
   if (!response.ok)
     throw new Error("The host output state could not be loaded.");
   return parseHostOutput(await response.json());
+}
+
+/** The node's recording state. It keeps the setting itself, so this is the source of truth. */
+export async function loadRecording(
+  signal?: AbortSignal,
+): Promise<RecordingState> {
+  const response = await fetch("/audio/v0/recording", { signal });
+  if (!response.ok) throw new Error("The recording state could not be loaded.");
+  return parseRecordingState(await response.json());
+}
+
+export async function saveRecording(
+  enabled: boolean,
+  retentionMinutes: number,
+): Promise<RecordingState> {
+  const response = await fetch("/audio/v0/recording", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ enabled, retentionMinutes }),
+  });
+  if (response.status === 503) {
+    throw new Error("The audio node is not running, so nothing was changed.");
+  }
+  if (!response.ok) throw new Error("The recording setting was not saved.");
+  return parseRecordingState(await response.json());
 }
 
 export async function saveShowfile(showfile: Showfile): Promise<Showfile> {

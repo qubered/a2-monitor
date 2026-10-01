@@ -5,6 +5,7 @@ import { PassThrough } from "node:stream";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   parseHostOutput,
+  parseRecordingState,
   parseMeterFrame,
   parseNodeLevels,
 } from "@rvlt/pulse-protocol/http";
@@ -57,11 +58,13 @@ afterEach(async () => {
 async function startGateway(
   device = "Test Device",
   output?: { outputDevice: string; outputChannels: number[] },
+  recordingDirectory?: string,
 ) {
   const worker = new ScriptedWorker();
   const media = new MediaWorkerManager({
     device,
     processFactory: () => worker,
+    recordingDirectory,
     ...output,
   });
   const gateway = new ListenGateway({
@@ -673,5 +676,53 @@ describe("ListenGateway shared host output", () => {
       }),
     );
     vi.unstubAllGlobals();
+  });
+});
+
+describe("ListenGateway recording", () => {
+  const put = (base: string, body: unknown) =>
+    fetch(`${base}/audio/v0/recording`, {
+      method: "PUT",
+      headers: json,
+      body: JSON.stringify(body),
+    });
+
+  it("is unavailable without a recording directory", async () => {
+    const { base } = await startGateway();
+    const state = parseRecordingState(
+      await (await fetch(`${base}/audio/v0/recording`)).json(),
+    );
+    expect(state.available).toBe(false);
+    expect(
+      (await put(base, { enabled: true, retentionMinutes: 10 })).status,
+    ).toBe(409);
+  });
+
+  it("forwards a valid change to the node and rejects invalid ones", async () => {
+    const { base, worker } = await startGateway(
+      "Test Device",
+      undefined,
+      "/rec",
+    );
+    const accepted = await put(base, { enabled: true, retentionMinutes: 45 });
+    expect(accepted.status).toBe(200);
+    expect(parseRecordingState(await accepted.json())).toMatchObject({
+      available: true,
+      enabled: true,
+      retentionMinutes: 45,
+    });
+    expect(worker.commands.at(-1)).toEqual({
+      type: "recording",
+      enabled: true,
+      retentionMinutes: 45,
+    });
+    for (const body of [
+      { enabled: true, retentionMinutes: 61 },
+      { enabled: true, retentionMinutes: 0 },
+      { enabled: "yes", retentionMinutes: 10 },
+      { enabled: true },
+    ]) {
+      expect((await put(base, body)).status, JSON.stringify(body)).toBe(400);
+    }
   });
 });
