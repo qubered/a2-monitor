@@ -790,6 +790,28 @@ describe("Live channel grid", () => {
     expect(card().classList.contains("is-selected")).toBe(false);
   });
 
+  it("selects every visible channel with Ctrl+A, and Escape clears them", async () => {
+    const user = userEvent.setup();
+    renderApp(stateWith(), {
+      audioDeviceSource: readyDevice,
+      playbackFactory: vi.fn<PlaybackFactory>(() => ({
+        setSources: vi.fn(),
+        setMuted: vi.fn(async () => undefined),
+        setDimmed: vi.fn(),
+        setGainDb: vi.fn(),
+        close: vi.fn(),
+      })),
+    });
+    await user.keyboard("{Control>}a{/Control}");
+    const cards = document.querySelectorAll("article.channel-card");
+    expect(cards.length).toBeGreaterThan(1);
+    expect(document.querySelectorAll("article.is-selected").length).toBe(
+      cards.length,
+    );
+    await user.keyboard("{Escape}");
+    expect(document.querySelectorAll("article.is-selected").length).toBe(0);
+  });
+
   it("shows a channel's trim and sends it to the node's mix when listening", async () => {
     const user = userEvent.setup();
     const setSources = vi.fn();
@@ -1079,6 +1101,39 @@ describe("Live channel grid", () => {
       await within(sheet).findByText(/Low RF · 1 · Marguerite/),
     ).toBeTruthy();
     expect(within(sheet).getByText("Never acknowledged")).toBeTruthy();
+  });
+
+  it("clears every channel's exceptions from the exceptions sheet", async () => {
+    const user = userEvent.setup();
+    const cleared = stateWith({ revision: 12, alerts: [] });
+    const post = vi.fn(
+      async () =>
+        new Response(JSON.stringify(cleared), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+    vi.stubGlobal("fetch", post);
+    renderApp(stateWith({ alerts: [alert()] }));
+
+    await user.click(
+      screen.getByRole("button", { name: "1 to acknowledge · 1 critical" }),
+    );
+    const sheet = screen.getByRole("dialog", { name: "Exceptions" });
+    await user.click(
+      within(sheet).getByRole("button", {
+        name: "Clear every exception: reset 1 channel",
+      }),
+    );
+    expect(post).toHaveBeenCalledWith(
+      "/api/v1/channels/ch-marguerite/reset",
+      expect.objectContaining({ method: "POST" }),
+    );
+    await vi.waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: /Clear every exception/ }),
+      ).toBeNull(),
+    );
   });
 
   it("announces a newly raised critical alert once", () => {

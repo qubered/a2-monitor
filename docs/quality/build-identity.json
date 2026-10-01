@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.a209c1ce823ac882",
-  "sourceSha256": "a209c1ce823ac882bb730a3d37fb0e3342811ab079e068d02902a4e2403a1e39",
-  "inputCount": 471,
+  "buildId": "a2-0.0.0+sha256.281b1aba01d5f50a",
+  "sourceSha256": "281b1aba01d5f50af8765567ad099fda6f19a1785d7ef52317eeda4cf66d6ada",
+  "inputCount": 472,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "aee64688bec107a3a1bfeb0303cc39cc827ff8b5a6fc883b9b86f6bcec020c72"
+      "sha256": "c0a9995f2e283152f1fc444855353112dbd44ec3617dfc0af1e00745be60d056"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "271cf8dde1c13eafa7ee172b369cb6b4140e63ea97839360db879ca3dc529357"
+      "sha256": "82f19c0ea8e6c1b4dff96cf454895a507e94e8d840fcbaae2aad1b946d53493f"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -129,11 +129,11 @@
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
-      "sha256": "73f97a62fe1ea1469405900a68f01d041a7a17ef1b94afe1a3042c221320cba3"
+      "sha256": "ab3aed589549bdc9425a242cedf5e527f26497f2c78e36139350e7ca3cc3932f"
     },
     {
       "path": "apps/live/src/components/ExceptionsSheet.tsx",
-      "sha256": "275a0eb81c7c89726bd024d0700b742576d796d50013f2953a6e072d93fdc8fc"
+      "sha256": "7a2ab29c1e2e28eb519c308d00f97b336f52dda5c34d416d8e52554bf534da85"
     },
     {
       "path": "apps/live/src/components/FilterBar.tsx",
@@ -176,8 +176,12 @@
       "sha256": "836532172386b13e4d46fd0909affca0613339dd98f7c336079dd4b90596f450"
     },
     {
+      "path": "apps/live/src/components/SelectionBar.test.tsx",
+      "sha256": "5a0236fdb3a736496b8e3e48230e50f9b9749719617b142cd04a5b7f44b49ffc"
+    },
+    {
       "path": "apps/live/src/components/SelectionBar.tsx",
-      "sha256": "9780027bdce925855401684e8d97d039af1d3536ad0bab502851cb57d8162ddc"
+      "sha256": "f01cd4268f41a08dd7614d4470c97542ecd9eff010d2b160f9644398ab1a970f"
     },
     {
       "path": "apps/live/src/components/SessionBar.tsx",
@@ -1677,11 +1681,11 @@
     },
     {
       "path": "services/backend/src/live-model.test.ts",
-      "sha256": "d9d0aadc25f6b5f5f92fdfd9d73fcea37bc5a974ecde349415cf78c19517e9b1"
+      "sha256": "02e078f36b13ca230830baf9e474febbd1b785ffcaf8888223d48d7dec8440d1"
     },
     {
       "path": "services/backend/src/live-model.ts",
-      "sha256": "74f8da5f892e40e771944aa7b4e9f16e9507f831716dadc29e7df65f965abf3b"
+      "sha256": "be45da988fec2c65c3a35c994095e48aee8b69c84ded26a1bb753a00d040775d"
     },
     {
       "path": "services/backend/src/live-monitor.ts",
