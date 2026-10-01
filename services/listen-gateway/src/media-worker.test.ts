@@ -544,4 +544,54 @@ describe("parseWorkerEvent", () => {
       ),
     ).toThrow("recording event is invalid");
   });
+
+  it("starts replay on a session and relays the node's refusal", async () => {
+    const child = new FakeWorkerProcess();
+    const media = new MediaWorkerManager({
+      device: "DVS",
+      recordingDirectory: "/rec",
+      processFactory: () => child,
+    });
+    media.start();
+    child.ready();
+    const opened = media.openSession({
+      sessionId: "s-1",
+      sources: [{ channel: 0, gain: 1 }],
+      offer: "v=0",
+      candidateAddress: "192.168.1.20",
+    });
+    await flush();
+    child.emit({ type: "answer", sessionId: "s-1", answer: "a" });
+    await opened;
+
+    const started = media.startReplay("s-1", 1, 0.5, 1_700_000_000_000);
+    await flush();
+    expect(child.commands.at(-1)).toEqual({
+      type: "replay",
+      sessionId: "s-1",
+      channel: 1,
+      gain: 0.5,
+      atUtcMs: 1_700_000_000_000,
+    });
+    child.emit({ type: "replay-started", sessionId: "s-1" });
+    await expect(started).resolves.toBeUndefined();
+
+    const refused = media.startReplay("s-1", 1, 0.5, 5);
+    await flush();
+    child.emit({
+      type: "replay-rejected",
+      sessionId: "s-1",
+      detail: "nothing was recorded at that time",
+    });
+    await expect(refused).rejects.toThrow("nothing was recorded");
+    await expect(media.startReplay("other", 1, 1, 5)).rejects.toThrow(
+      "unknown session",
+    );
+
+    const ended = vi.fn();
+    media.on("replay-ended", ended);
+    child.emit({ type: "replay-ended", sessionId: "s-1" });
+    await flush();
+    expect(ended).toHaveBeenCalledWith("s-1");
+  });
 });

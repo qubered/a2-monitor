@@ -26,6 +26,7 @@
     "./schema/meter-frame": "./schema/v0/http/meter-frame.schema.json",
     "./schema/host-output": "./schema/v0/http/host-output.schema.json",
     "./schema/recording-state": "./schema/v0/http/recording-state.schema.json",
+    "./schema/recording-spans": "./schema/v0/http/recording-spans.schema.json",
     "./schema/live-state": "./schema/v0/http/live-state.schema.json",
     "./schema/alert-log": "./schema/v0/http/alert-log.schema.json",
     "./schema/mic-checks": "./schema/v0/http/mic-checks.schema.json",

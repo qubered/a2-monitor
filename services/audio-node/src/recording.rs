@@ -45,6 +45,8 @@ pub fn channel_directory(root: &Path, channel: usize) -> PathBuf {
 
 pub struct SegmentWriter {
     file: BufWriter<File>,
+    path: PathBuf,
+    header: SegmentHeader,
     packets: u32,
 }
 
@@ -53,7 +55,8 @@ impl SegmentWriter {
         let directory = channel_directory(root, header.channel as usize);
         fs::create_dir_all(&directory)?;
         let name = format!("{:013}-{}.pseg", header.start_utc_ms, header.first_frame);
-        let mut file = BufWriter::new(File::create(directory.join(name))?);
+        let path = directory.join(name);
+        let mut file = BufWriter::new(File::create(&path)?);
         file.write_all(&MAGIC)?;
         file.write_all(&header.channel.to_le_bytes())?;
         file.write_all(&SAMPLE_RATE_HZ.to_le_bytes())?;
@@ -61,7 +64,12 @@ impl SegmentWriter {
         file.write_all(&header.first_frame.to_le_bytes())?;
         file.write_all(&header.start_utc_ms.to_le_bytes())?;
         file.flush()?;
-        Ok(Self { file, packets: 0 })
+        Ok(Self {
+            file,
+            path,
+            header,
+            packets: 0,
+        })
     }
 
     pub fn write_packet(&mut self, packet: &[u8]) -> io::Result<()> {
@@ -79,8 +87,20 @@ impl SegmentWriter {
         self.packets >= SEGMENT_PACKETS
     }
 
+    /// Flushes and renames the file to carry its packet count (`<start>-<frame>-<packets>.pseg`),
+    /// so a finished segment's length is known from the directory listing alone. A segment
+    /// still being written, or left by a crash, has no count.
     pub fn finish(mut self) -> io::Result<()> {
-        self.file.flush()
+        self.file.flush()?;
+        if self.packets == 0 {
+            return Ok(());
+        }
+        let name = format!(
+            "{:013}-{}-{}.pseg",
+            self.header.start_utc_ms, self.header.first_frame, self.packets
+        );
+        drop(self.file);
+        fs::rename(&self.path, self.path.with_file_name(name))
     }
 }
 
@@ -112,6 +132,17 @@ pub fn read_segment(path: &Path) -> io::Result<Segment> {
         at += 2 + length;
     }
     Ok(Segment { header, packets })
+}
+
+/// The packet count in a finished segment's file name, if it has one.
+pub fn packets_in_name(path: &Path) -> Option<u32> {
+    path.file_name()?
+        .to_str()?
+        .strip_suffix(".pseg")?
+        .splitn(3, '-')
+        .nth(2)?
+        .parse()
+        .ok()
 }
 
 /// Segment files in one input's directory as `(start utc ms, path)`, oldest first.
@@ -182,6 +213,7 @@ mod tests {
         writer.finish().unwrap();
         let (start, path) = list_segments(&channel_directory(&root, 3)).remove(0);
         assert_eq!(start, 1_700_000_000_000);
+        assert_eq!(packets_in_name(&path), Some(2));
         let segment = read_segment(&path).unwrap();
         assert_eq!(segment.header, header);
         assert_eq!(segment.packets, vec![vec![1, 2, 3], vec![4, 5]]);

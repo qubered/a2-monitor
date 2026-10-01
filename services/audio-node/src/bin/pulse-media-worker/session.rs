@@ -14,6 +14,8 @@ use str0m::media::{Direction, Frequency, MediaKind, MediaTime, Mid, Pt};
 use str0m::net::{Protocol, Receive};
 use str0m::{Candidate, Event, IceConnectionState, Input, Output, Rtc, RtcConfig};
 
+use a2_audio_node::replay_reader::{Read, ReplayReader};
+
 use crate::capture::{CaptureBlock, FRAMES_PER_BLOCK, SAMPLE_RATE_HZ};
 
 /// CELT-only mono at this rate is transparent for monitoring and a small fraction of any LAN.
@@ -34,7 +36,17 @@ pub struct Transmit<'a> {
     pub contents: &'a [u8],
 }
 
+/// A listener hearing recorded audio of one input instead of live.
+struct Replay {
+    reader: ReplayReader,
+    gain: f32,
+    /// Ramp the first block in so starting or seeking never steps.
+    fade_in: bool,
+}
+
 pub struct ListenSession {
+    replay: Option<Replay>,
+    replay_ended: bool,
     rtc: Rtc,
     encoder: Encoder,
     audio_mid: Mid,
@@ -202,6 +214,8 @@ impl ListenSession {
 
         let encoder = opus_encoder().map_err(|_| "Opus encoder could not be created".to_owned())?;
         let session = Self {
+            replay: None,
+            replay_ended: false,
             rtc,
             encoder,
             audio_mid: mid,
@@ -233,6 +247,14 @@ impl ListenSession {
 
     /// Changes what this listener hears. The switch is crossfaded, never renegotiated.
     pub fn select(&mut self, sources: &[Source]) {
+        if self.replay.take().is_some() {
+            // Back to live: ramp in from silence rather than step from the replay.
+            self.fade_from.clear();
+            self.sources.clear();
+            self.sources.extend_from_slice(sources);
+            self.fading = true;
+            return;
+        }
         if sources != self.sources.as_slice() {
             self.fade_from.clear();
             self.fade_from.extend_from_slice(&self.sources);
@@ -240,6 +262,20 @@ impl ListenSession {
             self.sources.extend_from_slice(sources);
             self.fading = true;
         }
+    }
+
+    /// Plays recorded audio instead of live until `select` or the recording runs out.
+    pub fn start_replay(&mut self, reader: ReplayReader, gain: f32) {
+        self.replay = Some(Replay {
+            reader,
+            gain,
+            fade_in: true,
+        });
+    }
+
+    /// True once after replay caught up with the end of the recording and went back to live.
+    pub fn take_replay_ended(&mut self) -> bool {
+        std::mem::take(&mut self.replay_ended)
     }
 
     pub fn close(&mut self, reason: &'static str) {
@@ -284,9 +320,29 @@ impl ListenSession {
         if !self.connected || self.closed.is_some() {
             return;
         }
-        let fade_from = self.fading.then_some(self.fade_from.as_slice());
-        mix_sources(block, &self.sources, fade_from, &mut self.mono);
-        self.fading = false;
+        if let Some(replay) = self.replay.as_mut() {
+            let outcome = replay.reader.read_block(&mut self.mono);
+            for (frame, sample) in self.mono.iter_mut().enumerate() {
+                let ramp = if replay.fade_in {
+                    (frame as f32 + 0.5) / FRAMES_PER_BLOCK as f32
+                } else {
+                    1.0
+                };
+                *sample *= replay.gain * ramp;
+            }
+            replay.fade_in = false;
+            if outcome == Read::EndOfRecording {
+                // Caught up with the recording: back to live, ramped in.
+                self.replay = None;
+                self.replay_ended = true;
+                self.fade_from.clear();
+                self.fading = true;
+            }
+        } else {
+            let fade_from = self.fading.then_some(self.fade_from.as_slice());
+            mix_sources(block, &self.sources, fade_from, &mut self.mono);
+            self.fading = false;
+        }
         let Ok(length) = self.encoder.encode_float(&self.mono, &mut self.packet) else {
             self.close("encoder-error");
             return;

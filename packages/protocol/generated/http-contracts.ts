@@ -10,14 +10,15 @@
 //   - schema/v0/http/meter-frame.schema.json
 //   - schema/v0/http/host-output.schema.json
 //   - schema/v0/http/recording-state.schema.json
+//   - schema/v0/http/recording-spans.schema.json
 //   - schema/v0/http/live-state.schema.json
 //   - schema/v0/http/live-state.schema.json
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: 705507400bf28982f5c922ca8a9d3192ed0c9f8ca92d488fd9492b35c3e3d059
-// Generator-SHA256: 3134351bd74ad6f194d2e9dcf8af097d656e5b121aec00b7cc0d4248a80355b6
-// Body-SHA256: 47d3e754234d53be1ae1b8095c3fc3f5d9c522feb6e6995056880bc64d0b6614
+// Schema-SHA256: dffe4aef68afebfe218b49df346a0fe683cc3a294421660df4875e6c291f15eb
+// Generator-SHA256: 764dac3e31a4b771de757ea8bc931bfc69133da4cf08f256b30b14f991151fb9
+// Body-SHA256: 56ef5205dec073906fd3b6d84326e30092f341c4427d7e4309b29394377a4ab4
 
 export type HealthResponse = {
   status: "ok";
@@ -344,6 +345,18 @@ export type RecordingState = {
   active: boolean;
   droppedBlocks: number;
   writeErrors: number;
+};
+
+export type RecordingSpan = {
+  startUtc: string;
+  endUtc: string;
+};
+
+export type RecordingSpans = {
+  schemaVersion: "0";
+  channel: number;
+  generatedAtUtc: string;
+  spans: Array<RecordingSpan>;
 };
 
 export type LiveStateVerdict =
@@ -2300,6 +2313,55 @@ const recordingStateSchema = {
       type: "integer",
       minimum: 0,
       maximum: 9007199254740991,
+    },
+  },
+} as const;
+
+const recordingSpansSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://pulse.local/schema/v0/http/recording-spans.schema.json",
+  title: "Audio node recorded spans",
+  description:
+    "Which stretches of one input the audio node holds recorded audio for, served at GET /audio/v0/recording/spans?channel=n. `channel` is the 0-based input on the capture device. Spans are oldest first, never overlap, and exclude gaps of 100 ms or more, so a time outside every span has no audio to play. A span that is still being recorded ends at the last write, not at the present.",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "channel", "generatedAtUtc", "spans"],
+  properties: {
+    schemaVersion: {
+      const: "0",
+    },
+    channel: {
+      type: "integer",
+      minimum: 0,
+      maximum: 255,
+    },
+    generatedAtUtc: {
+      type: "string",
+      format: "date-time",
+    },
+    spans: {
+      type: "array",
+      maxItems: 3600,
+      items: {
+        $ref: "#/$defs/span",
+      },
+    },
+  },
+  $defs: {
+    span: {
+      type: "object",
+      additionalProperties: false,
+      required: ["startUtc", "endUtc"],
+      properties: {
+        startUtc: {
+          type: "string",
+          format: "date-time",
+        },
+        endUtc: {
+          type: "string",
+          format: "date-time",
+        },
+      },
     },
   },
 } as const;
@@ -5165,6 +5227,14 @@ export function parseRecordingState(value: unknown): RecordingState {
     value,
     recordingStateSchema,
     "RecordingState",
+  );
+}
+
+export function parseRecordingSpans(value: unknown): RecordingSpans {
+  return parseWithSchema<RecordingSpans>(
+    value,
+    recordingSpansSchema,
+    "RecordingSpans",
   );
 }
 

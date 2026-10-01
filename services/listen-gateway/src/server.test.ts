@@ -726,3 +726,91 @@ describe("ListenGateway recording", () => {
     }
   });
 });
+
+describe("ListenGateway replay", () => {
+  async function open(base: string, worker: ScriptedWorker) {
+    const created = await fetch(`${base}/audio/v0/listen/sessions`, {
+      method: "POST",
+      headers: json,
+      body: JSON.stringify({ channel: 0, offer: "v=0 offer" }),
+    });
+    const { sessionId } = (await created.json()) as { sessionId: string };
+    worker.commands.length = 0;
+    return sessionId;
+  }
+  const replay = (base: string, sessionId: string, body: unknown) =>
+    fetch(`${base}/audio/v0/listen/sessions/${sessionId}/replay`, {
+      method: "PUT",
+      headers: json,
+      body: JSON.stringify(body),
+    });
+
+  it("starts replay at a recorded time and reports when nothing was recorded", async () => {
+    const { base, worker } = await startGateway(
+      "Test Device",
+      undefined,
+      "/rec",
+    );
+    const sessionId = await open(base, worker);
+    const at = "2026-10-01T10:00:00.000Z";
+
+    const accepted = replay(base, sessionId, {
+      channel: 1,
+      atUtc: at,
+      gain: 1,
+    });
+    await vi.waitFor(() =>
+      expect(worker.commands.at(-1)).toEqual({
+        type: "replay",
+        sessionId,
+        channel: 1,
+        gain: 1,
+        atUtcMs: Date.parse(at),
+      }),
+    );
+    worker.emit({ type: "replay-started", sessionId });
+    expect((await accepted).status).toBe(204);
+
+    const refused = replay(base, sessionId, { channel: 1, atUtc: at, gain: 1 });
+    await vi.waitFor(() => expect(worker.commands.length).toBe(2));
+    worker.emit({ type: "replay-rejected", sessionId, detail: "nothing" });
+    expect((await refused).status).toBe(409);
+  });
+
+  it("validates the request and needs recording", async () => {
+    const { base, worker } = await startGateway(
+      "Test Device",
+      undefined,
+      "/rec",
+    );
+    const sessionId = await open(base, worker);
+    for (const body of [
+      { channel: 1, atUtc: "not a date", gain: 1 },
+      { channel: 1, atUtc: "2026-10-01T10:00:00Z", gain: 99 },
+      { channel: 1, atUtc: "2026-10-01T10:00:00Z" },
+    ]) {
+      expect((await replay(base, sessionId, body)).status).toBe(400);
+    }
+    expect(
+      (
+        await replay(base, "00000000-0000-0000-0000-000000000000", {
+          channel: 1,
+          atUtc: "2026-10-01T10:00:00Z",
+          gain: 1,
+        })
+      ).status,
+    ).toBe(404);
+
+    const plain = await startGateway();
+    const plainSession = await open(plain.base, plain.worker);
+    expect(
+      (
+        await replay(plain.base, plainSession, {
+          channel: 1,
+          atUtc: "2026-10-01T10:00:00Z",
+          gain: 1,
+        })
+      ).status,
+    ).toBe(409);
+  });
+});

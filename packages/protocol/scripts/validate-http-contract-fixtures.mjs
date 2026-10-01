@@ -127,6 +127,18 @@ const contracts = [
     ],
   },
   {
+    name: "recording-spans",
+    schema: "schema/v0/http/recording-spans.schema.json",
+    accepted: [
+      "fixtures/v0/http/current/recording-spans.valid.json",
+      "fixtures/v0/http/previous/recording-spans.valid.json",
+    ],
+    rejected: [
+      "fixtures/v0/http/incompatible/recording-spans.unknown-field.json",
+      "fixtures/v0/http/incompatible/recording-spans.span-without-end.json",
+    ],
+  },
+  {
     name: "live-state",
     schema: "schema/v0/http/live-state.schema.json",
     accepted: [

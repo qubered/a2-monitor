@@ -6,6 +6,7 @@ import type { MeterReading } from "./levels.js";
 
 const EVENT_LINE_LIMIT_BYTES = 256 * 1024;
 const OPEN_TIMEOUT_MS = 10_000;
+const REPLAY_TIMEOUT_MS = 3_000;
 /** Frames in one worker block (10 ms at 48 kHz). */
 const FRAMES_PER_WORKER_BLOCK = 480;
 /**
@@ -151,6 +152,14 @@ export class SessionRejectedError extends Error {
   }
 }
 
+/** The node refused to start replay, with its reason. */
+export class ReplayRejectedError extends Error {
+  constructor(detail: string) {
+    super(detail);
+    this.name = "ReplayRejectedError";
+  }
+}
+
 type PendingOpen = {
   resolve: (answer: string) => void;
   reject: (error: Error) => void;
@@ -189,6 +198,9 @@ type WorkerEvent =
       droppedBlocks: number;
     }
   | { type: "output-failed"; detail: string; retryInMs: number }
+  | { type: "replay-started"; sessionId: string }
+  | { type: "replay-rejected"; sessionId: string; detail: string }
+  | { type: "replay-ended"; sessionId: string }
   | {
       type: "recording";
       available: boolean;
@@ -228,6 +240,9 @@ const EVENT_FIELDS: Readonly<Record<WorkerEvent["type"], readonly string[]>> = {
     "underruns",
   ],
   "output-failed": ["detail", "retryInMs", "type"],
+  "replay-started": ["sessionId", "type"],
+  "replay-rejected": ["detail", "sessionId", "type"],
+  "replay-ended": ["sessionId", "type"],
   recording: [
     "active",
     "available",
@@ -431,6 +446,11 @@ export function parseWorkerEvent(line: string): WorkerEvent {
       }
       return { type, detail: text("detail"), retryInMs: record.retryInMs };
     }
+    case "replay-started":
+    case "replay-ended":
+      return { type, sessionId: text("sessionId") };
+    case "replay-rejected":
+      return { type, sessionId: text("sessionId"), detail: text("detail") };
     case "recording": {
       if (
         typeof record.available !== "boolean" ||
@@ -488,6 +508,14 @@ export class MediaWorkerManager extends EventEmitter {
   private stopping = false;
   private readonly pending = new Map<string, PendingOpen>();
   private readonly sessions = new Set<string>();
+  private readonly pendingReplays = new Map<
+    string,
+    {
+      resolve: () => void;
+      reject: (error: Error) => void;
+      timer: NodeJS.Timeout;
+    }
+  >();
   private droppedCaptureBlocks = 0;
   private droppedCaptureCallbacks = 0;
   private readonly restartDelaysMs: readonly number[];
@@ -580,6 +608,11 @@ export class MediaWorkerManager extends EventEmitter {
   /** Recording as the node last reported it. */
   getRecordingState(): RecordingState {
     return this.recording;
+  }
+
+  /** Where recorded audio is kept, if this node records at all. */
+  getRecordingDirectory(): string | undefined {
+    return this.recordingDirectory;
   }
 
   /**
@@ -764,6 +797,33 @@ export class MediaWorkerManager extends EventEmitter {
     return true;
   }
 
+  /**
+   * Plays recorded audio of one input to a listener from `atUtcMs`, at `gain`,
+   * until the listener selects live again or the recording runs out. Resolves
+   * once the node has started it; rejects with the node's reason otherwise.
+   */
+  startReplay(
+    sessionId: string,
+    channel: number,
+    gain: number,
+    atUtcMs: number,
+  ): Promise<void> {
+    if (!this.sessions.has(sessionId) || !this.child) {
+      return Promise.reject(new ReplayRejectedError("unknown session"));
+    }
+    this.pendingReplays
+      .get(sessionId)
+      ?.reject(new ReplayRejectedError("superseded"));
+    return new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pendingReplays.delete(sessionId);
+        reject(new Error("Media worker did not answer the replay in time."));
+      }, REPLAY_TIMEOUT_MS);
+      this.pendingReplays.set(sessionId, { resolve, reject, timer });
+      this.send({ type: "replay", sessionId, channel, gain, atUtcMs });
+    });
+  }
+
   closeSession(sessionId: string): boolean {
     if (!this.sessions.has(sessionId)) return false;
     this.sessions.delete(sessionId);
@@ -799,6 +859,11 @@ export class MediaWorkerManager extends EventEmitter {
   }
 
   private clearSessions(error: Error): void {
+    for (const pending of this.pendingReplays.values()) {
+      clearTimeout(pending.timer);
+      pending.reject(error);
+    }
+    this.pendingReplays.clear();
     for (const pending of this.pending.values()) {
       clearTimeout(pending.timer);
       pending.reject(error);
@@ -988,6 +1053,19 @@ export class MediaWorkerManager extends EventEmitter {
         this.setOutputState({ underruns: event.underruns, droppedFrames });
         break;
       }
+      case "replay-started":
+      case "replay-rejected": {
+        const pending = this.pendingReplays.get(event.sessionId);
+        if (!pending) break;
+        clearTimeout(pending.timer);
+        this.pendingReplays.delete(event.sessionId);
+        if (event.type === "replay-started") pending.resolve();
+        else pending.reject(new ReplayRejectedError(event.detail));
+        break;
+      }
+      case "replay-ended":
+        this.emit("replay-ended", event.sessionId);
+        break;
       case "recording":
         if (event.writeErrors > this.recording.writeErrors) {
           process.stderr.write(

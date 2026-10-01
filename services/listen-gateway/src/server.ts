@@ -21,10 +21,12 @@ import {
   parseMonitorChange,
   HostOutputFeeds,
 } from "./host-output.js";
+import { recordingSpans } from "./recording-spans.js";
 import { LEVEL_WINDOW_MS, LevelBank, type MeterReading } from "./levels.js";
 import {
   MediaWorkerManager,
   MAX_RECORDING_MINUTES,
+  ReplayRejectedError,
   SessionRejectedError,
   type ListenSource,
   type MediaWorkerOptions,
@@ -44,8 +46,14 @@ const FEED_OUTPUT_PATH = /^\/audio\/v0\/output\/feeds\/([^/]{1,192})$/;
 const SESSION_PATH = /^\/audio\/v0\/listen\/sessions\/([0-9a-f-]{36})$/;
 const SESSION_CHANNEL_PATH =
   /^\/audio\/v0\/listen\/sessions\/([0-9a-f-]{36})\/channel$/;
+const SESSION_REPLAY_PATH =
+  /^\/audio\/v0\/listen\/sessions\/([0-9a-f-]{36})\/replay$/;
 const SESSION_SOURCES_PATH =
   /^\/audio\/v0\/listen\/sessions\/([0-9a-f-]{36})\/sources$/;
+/** Linear gain ceiling of one source: the +24 dB trim limit. */
+const MAX_SOURCE_GAIN = 16;
+/** How far back spans are listed: the longest the node keeps. */
+const RECORDING_SPAN_WINDOW_MS = 60 * 60 * 1000;
 /** The most inputs one listener can hear at once (the worker's limit). */
 const MAX_LISTEN_SOURCES = 16;
 /** Channel trim bounds, as in the showfile. */
@@ -343,6 +351,17 @@ export class ListenGateway {
         this.openOutputStream(response);
         return;
       }
+      if (request.url?.startsWith("/audio/v0/recording/spans")) {
+        this.handleRecordingSpans(request, response).catch((error: unknown) => {
+          if (response.headersSent) return;
+          if (error instanceof HttpError) {
+            sendJson(response, error.status, { error: error.code });
+          } else {
+            sendJson(response, 500, { error: "internal-error" });
+          }
+        });
+        return;
+      }
       if (request.url === "/audio/v0/recording") {
         this.handleRecording(request, response).catch((error: unknown) => {
           if (response.headersSent) return;
@@ -463,6 +482,43 @@ export class ListenGateway {
       return;
     }
 
+    const replayMatch = SESSION_REPLAY_PATH.exec(path);
+    if (replayMatch?.[1] && request.method === "PUT") {
+      // Listen back to one input at a recorded time; `select` returns to live.
+      const body = await readJsonObject(request, ["channel", "atUtc", "gain"]);
+      const state = this.media.getState();
+      if (state.status !== "ready") throw new HttpError(503, "audio-not-ready");
+      const channel = channelFrom(body.channel, state.device.channelCount);
+      const atUtcMs =
+        typeof body.atUtc === "string" ? Date.parse(body.atUtc) : Number.NaN;
+      const { gain } = body;
+      if (
+        !Number.isFinite(atUtcMs) ||
+        typeof gain !== "number" ||
+        !(gain >= 0 && gain <= MAX_SOURCE_GAIN)
+      ) {
+        throw new HttpError(400, "invalid-replay");
+      }
+      if (!this.media.getRecordingState().available) {
+        throw new HttpError(409, "recording-not-available");
+      }
+      try {
+        await this.media.startReplay(replayMatch[1], channel, gain, atUtcMs);
+      } catch (error) {
+        if (error instanceof ReplayRejectedError) {
+          throw new HttpError(
+            error.message === "unknown session" ? 404 : 409,
+            error.message === "unknown session"
+              ? "unknown-session"
+              : "nothing-recorded",
+          );
+        }
+        throw new HttpError(503, "media-worker-unavailable");
+      }
+      response.writeHead(204, { "Cache-Control": "no-store" }).end();
+      return;
+    }
+
     const sessionMatch = SESSION_PATH.exec(path);
     if (sessionMatch?.[1] && request.method === "DELETE") {
       if (!this.media.closeSession(sessionMatch[1])) {
@@ -526,6 +582,34 @@ export class ListenGateway {
       throw error;
     }
     sendJson(response, 200, this.getOutput());
+  }
+
+  /** `GET /audio/v0/recording/spans?channel=n`: what is recorded for one input. */
+  private async handleRecordingSpans(
+    request: IncomingMessage,
+    response: ServerResponse,
+  ): Promise<void> {
+    if (request.method !== "GET")
+      throw new HttpError(405, "method-not-allowed");
+    const directory = this.media.getRecordingDirectory();
+    if (directory === undefined) {
+      throw new HttpError(409, "recording-not-available");
+    }
+    const url = new URL(request.url ?? "", "http://localhost");
+    const raw = url.searchParams.get("channel");
+    const channel = raw !== null && /^\d{1,3}$/.test(raw) ? Number(raw) : -1;
+    if (channel < 0 || channel > 255)
+      throw new HttpError(400, "invalid-channel");
+    sendJson(
+      response,
+      200,
+      await recordingSpans(
+        directory,
+        channel,
+        Date.now(),
+        RECORDING_SPAN_WINDOW_MS,
+      ),
+    );
   }
 
   /**

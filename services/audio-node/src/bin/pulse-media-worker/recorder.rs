@@ -110,6 +110,11 @@ impl Recorder {
         }
     }
 
+    /// Where recordings are kept, if this node records at all.
+    pub fn directory(&self) -> Option<&Path> {
+        self.root.as_deref()
+    }
+
     pub fn report(&self) -> RecorderReport {
         RecorderReport {
             available: self.root.is_some(),

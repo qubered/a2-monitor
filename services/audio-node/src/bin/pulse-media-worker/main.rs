@@ -20,6 +20,7 @@ use std::collections::HashMap;
 use std::ffi::OsString;
 use std::io::{self, BufRead, BufReader, ErrorKind};
 use std::net::{IpAddr, SocketAddr, UdpSocket};
+use std::path::Path;
 use std::process::{Child, Command as ProcessCommand, ExitCode, Stdio};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -27,6 +28,8 @@ use std::sync::mpsc::{self, RecvTimeoutError, Sender, SyncSender};
 use std::thread;
 use std::time::{Duration, Instant};
 
+use a2_audio_node::recording::channel_directory;
+use a2_audio_node::replay_reader::ReplayReader;
 use capture::{CaptureBlock, CaptureHeader};
 use control::{Command, EventWriter};
 use host_output::{HostOutput, OutputArgs, OutputEvent};
@@ -291,6 +294,39 @@ impl<W: io::Write> Worker<W> {
                     None => Ok(()),
                 }
             }
+            Command::Replay {
+                session_id,
+                channel,
+                gain,
+                at_utc_ms,
+            } => {
+                let Some(directory) = self.recorder.directory().map(Path::to_path_buf) else {
+                    return self
+                        .output
+                        .replay_rejected(&session_id, "recording is not available");
+                };
+                if self.channel_count.is_none_or(|count| channel >= count) {
+                    return self
+                        .output
+                        .replay_rejected(&session_id, "channel is out of range");
+                }
+                let Some(session) = self.sessions.get_mut(&session_id) else {
+                    return self.output.closed(&session_id, "unknown-session");
+                };
+                let opened = ReplayReader::open(&channel_directory(&directory, channel), at_utc_ms);
+                match opened {
+                    Ok(Some(reader)) => {
+                        session.start_replay(reader, gain);
+                        self.output.replay_started(&session_id)
+                    }
+                    Ok(None) => self
+                        .output
+                        .replay_rejected(&session_id, "nothing was recorded at that time"),
+                    Err(_) => self
+                        .output
+                        .replay_rejected(&session_id, "the recording could not be read"),
+                }
+            }
             Command::Recording {
                 enabled,
                 retention_minutes,
@@ -347,6 +383,9 @@ impl<W: io::Write> Worker<W> {
     fn drive(&mut self, now: Instant) -> io::Result<()> {
         let mut transitions = Vec::new();
         for (id, session) in &mut self.sessions {
+            if session.take_replay_ended() {
+                self.output.replay_ended(id)?;
+            }
             session.handle_timeout(now);
             let sockets = &self.sockets;
             if let Some(event) = session.poll(&mut |packet| {

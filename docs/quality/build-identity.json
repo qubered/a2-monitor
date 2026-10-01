@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.7583687595c9ab31",
-  "sourceSha256": "7583687595c9ab315c85eb9521089b932e4b83324b903296b679227a50e3565f",
-  "inputCount": 480,
+  "buildId": "a2-0.0.0+sha256.2d234e9d9775b22a",
+  "sourceSha256": "2d234e9d9775b22a13ad9f850600b1a4833154a79b04ccdf99479084235f4283",
+  "inputCount": 488,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -1220,6 +1220,10 @@
       "sha256": "d860b617b5c2c0484e9759a8a32c59ef3802ff61ce769788a4828791f6040411"
     },
     {
+      "path": "packages/protocol/fixtures/v0/http/current/recording-spans.valid.json",
+      "sha256": "f16922547e53a0f6935e35e4de421255b55bb229f99ee77d0434102ab444441e"
+    },
+    {
       "path": "packages/protocol/fixtures/v0/http/current/recording-state.valid.json",
       "sha256": "67a0bf327858011b4061c753bcff780fdfc2daec86c4854587f86e2e7768b2bc"
     },
@@ -1296,6 +1300,14 @@
       "sha256": "884edd307303f105be8440dc8469bdbf308ea7cb9f5f95ff89c009df5b8172de"
     },
     {
+      "path": "packages/protocol/fixtures/v0/http/incompatible/recording-spans.span-without-end.json",
+      "sha256": "d623e5d65212d27f93936ff1618a9c7fcd6d3531b809d9adbd3a8d9825a2a533"
+    },
+    {
+      "path": "packages/protocol/fixtures/v0/http/incompatible/recording-spans.unknown-field.json",
+      "sha256": "6eafbc5775e2acd7ca56cf4da4e267704532c810b50d73a15cc4351173c2a779"
+    },
+    {
       "path": "packages/protocol/fixtures/v0/http/incompatible/recording-state.retention-above-range.json",
       "sha256": "385ab69767430e3e265376b2ee2950c370ecab278813f09ce61cdec667f90d5e"
     },
@@ -1364,6 +1376,10 @@
       "sha256": "6661bd909c0fab4a32fd0e22a763d0b65124d37b681310819111799f9b8e575b"
     },
     {
+      "path": "packages/protocol/fixtures/v0/http/previous/recording-spans.valid.json",
+      "sha256": "f16922547e53a0f6935e35e4de421255b55bb229f99ee77d0434102ab444441e"
+    },
+    {
       "path": "packages/protocol/fixtures/v0/http/previous/recording-state.valid.json",
       "sha256": "67a0bf327858011b4061c753bcff780fdfc2daec86c4854587f86e2e7768b2bc"
     },
@@ -1377,7 +1393,7 @@
     },
     {
       "path": "packages/protocol/generated/http-contracts.ts",
-      "sha256": "1a1859a5ef01728e3f717bcd040540f24889d3a36328d5c0d4993abe7f062e9d"
+      "sha256": "6d7935717d43327fb564b41177d4311ac32684f8db14d5a2bd249ab7218101d2"
     },
     {
       "path": "packages/protocol/model/aggregate-transitions.v0.json",
@@ -1385,7 +1401,7 @@
     },
     {
       "path": "packages/protocol/package.json",
-      "sha256": "4be010ff54039f9f6b48b828c93b5c633663696ae3fad38ad46f4be7d9a04855"
+      "sha256": "e8108ccf6c8bec87fddc7a9fd21b5ced23bbab2732b8ff5f4a22f5f2e7698cbb"
     },
     {
       "path": "packages/protocol/policy/alert-policy.ts",
@@ -1436,6 +1452,10 @@
       "sha256": "44cb046d156cbf72dad0e1c381f795e11060aa96f9a090a91c6f910c86f8ccfe"
     },
     {
+      "path": "packages/protocol/schema/v0/http/recording-spans.schema.json",
+      "sha256": "dbbd0c329a5943fdbe9d23210d620532a3e34412256885e93eb97bc9e8065e81"
+    },
+    {
       "path": "packages/protocol/schema/v0/http/recording-state.schema.json",
       "sha256": "ff92ec41d1341504f64a5a7c75338dc573e8cf325f7cbc5ffdc47e588b92be8f"
     },
@@ -1449,11 +1469,11 @@
     },
     {
       "path": "packages/protocol/scripts/generate-http-contracts.mjs",
-      "sha256": "3134351bd74ad6f194d2e9dcf8af097d656e5b121aec00b7cc0d4248a80355b6"
+      "sha256": "764dac3e31a4b771de757ea8bc931bfc69133da4cf08f256b30b14f991151fb9"
     },
     {
       "path": "packages/protocol/scripts/validate-http-contract-fixtures.mjs",
-      "sha256": "a1f42ed1327bc38d72f791a4da3cddb08d64846d6433d44d9d8684b272f3f2ff"
+      "sha256": "9a16d99105fd66fa5b4f739f7b6e54141bbbeec2321072a77493ce1b72324c7c"
     },
     {
       "path": "packages/protocol/specification.md",
@@ -1609,7 +1629,7 @@
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/control.rs",
-      "sha256": "c6e92d76b89307fe6fc5058f79650e0b5d7a7fa0968c0ec52060b1b7ced44245"
+      "sha256": "48ea3dead6d576206ac92e263a8483ab3b5db2b57f1519ad793d5ba2084c0142"
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/host_output.rs",
@@ -1617,7 +1637,7 @@
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/main.rs",
-      "sha256": "97397314d6f1911a97ca184edda70f6006d14a5c66a7b83fe1206fbf64b8821e"
+      "sha256": "20be32da99d4ed1bd6dc2306c7e34d2e09750b11bc8d3f02b21a9cd46788c5ed"
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/meters.rs",
@@ -1625,11 +1645,11 @@
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/recorder.rs",
-      "sha256": "99d1fc1c15a651e79a015bbc8c3324fda4ab4dcf62ebea54de8644d3d7470629"
+      "sha256": "0ce8225ef48672e5cdd31829f1015ab634ed6673537f1421ab44b97c8e7e75ed"
     },
     {
       "path": "services/audio-node/src/bin/pulse-media-worker/session.rs",
-      "sha256": "e7429acff4ff82b506c1f7b0b4843aa3adfc60471e2e26f4e6974429db8cb1b5"
+      "sha256": "8787ada1bcbb11385a9d936b7cee904060be6cf18476eec341d9796faf7270ec"
     },
     {
       "path": "services/audio-node/src/bin/replay-smoke.rs",
@@ -1645,7 +1665,7 @@
     },
     {
       "path": "services/audio-node/src/lib.rs",
-      "sha256": "b603fb5485b9e1b97db1e29e2d7bcc3822f0b131d164987cf69e3938557e44c3"
+      "sha256": "b42ad5e67444be56f03ba91a5ff69b35bfd6a111b6f9281eaae15557c59fbe1c"
     },
     {
       "path": "services/audio-node/src/monitor_output.rs",
@@ -1653,7 +1673,11 @@
     },
     {
       "path": "services/audio-node/src/recording.rs",
-      "sha256": "28620fdcffc6e463183b29498eed68a77c5751c4d706a66a55c71b0b82bbdf06"
+      "sha256": "ed65ca554cbf6b004135a832d2efb890e1c646469e6aabccef6e212e5549d486"
+    },
+    {
+      "path": "services/audio-node/src/replay_reader.rs",
+      "sha256": "c495b1e4a8d7bd8651657d8f125bbd73c49e9941b45aef383af2794ebcdcd624"
     },
     {
       "path": "services/audio-node/src/test_signal.rs",
@@ -1821,19 +1845,27 @@
     },
     {
       "path": "services/listen-gateway/src/media-worker.test.ts",
-      "sha256": "133d6e7cc5f032699377fccb567e40683b521d19902a5b5737f3c402cae4e444"
+      "sha256": "56cd18fd3454d1da2bf960fef0b40b2aee4b4e5e4c5b9c7f109495b703921f21"
     },
     {
       "path": "services/listen-gateway/src/media-worker.ts",
-      "sha256": "0c2da6445cba7bc34cd555f76ca77f67cd1b9285a384a8ae53b3495b21e75348"
+      "sha256": "0c31560f47d9dddb5fb72c896993e82cf74a178378a22b00efe5dda3e13bb745"
+    },
+    {
+      "path": "services/listen-gateway/src/recording-spans.test.ts",
+      "sha256": "3b1a311e71ed96547a781ad25d44d43899e204d53a3b6fc30b1c6b27cd2c745d"
+    },
+    {
+      "path": "services/listen-gateway/src/recording-spans.ts",
+      "sha256": "431b1434efd492fb19708ea55217f586f7e479d4552314b925c44281c91ec6d9"
     },
     {
       "path": "services/listen-gateway/src/server.test.ts",
-      "sha256": "229dd76b5cb632f95ac75e0df65505c866d47344839780b12802a5605afb948d"
+      "sha256": "a3013801ec9e1de3de43023ffcca188893b51f78f9e7c1b3635cb8ed246caee3"
     },
     {
       "path": "services/listen-gateway/src/server.ts",
-      "sha256": "4417dee400f63482546dc6ce2f90966af1927a5a2da31fe10fc6b00d1beeabde"
+      "sha256": "d27b1bf8eebb0122ed30499cada73f6d4d0768eba7f32050a6060dc268530b04"
     },
     {
       "path": "services/listen-gateway/src/shure.test.ts",

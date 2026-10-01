@@ -21,6 +21,7 @@ const COMMAND_LIMIT_BYTES: usize = 128 * 1024;
 const OFFER_LIMIT_BYTES: usize = 64 * 1024;
 const SESSION_ID_LIMIT: usize = 64;
 const MAX_CHANNEL_INDEX: u64 = 255;
+const MAX_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
 
 #[derive(Debug, PartialEq)]
 pub enum Command {
@@ -49,6 +50,13 @@ pub enum Command {
     /// e.g. a production's saved feeds (ADR 0031). Validated like `--output-routes`.
     OutputRoutes {
         routes: String,
+    },
+    /// Plays recorded audio of one input to a listener, from `at_utc_ms`, at `gain`.
+    Replay {
+        session_id: String,
+        channel: usize,
+        gain: f32,
+        at_utc_ms: u64,
     },
     /// Turns recording of every input on or off and sets how many minutes are kept.
     Recording {
@@ -202,6 +210,25 @@ pub fn parse_command(line: &str) -> Result<Command, String> {
                 .filter(|routes| parse_output_routes(routes).is_ok())
                 .ok_or_else(|| "routes are invalid".to_owned())?;
             Ok(Command::OutputRoutes { routes })
+        }
+        Some("replay") => {
+            exact_keys(record, &["type", "sessionId", "channel", "gain", "atUtcMs"])?;
+            let gain = record
+                .get("gain")
+                .and_then(Value::as_f64)
+                .filter(|gain| gain.is_finite() && (0.0..=MAX_SOURCE_GAIN).contains(gain))
+                .ok_or_else(|| "gain is invalid".to_owned())?;
+            let at_utc_ms = record
+                .get("atUtcMs")
+                .and_then(Value::as_u64)
+                .filter(|at| *at <= MAX_SAFE_INTEGER)
+                .ok_or_else(|| "atUtcMs is invalid".to_owned())?;
+            Ok(Command::Replay {
+                session_id: session_id(record)?,
+                channel: channel(record)?,
+                gain: gain as f32,
+                at_utc_ms,
+            })
         }
         Some("recording") => {
             exact_keys(record, &["type", "enabled", "retentionMinutes"])?;
@@ -358,6 +385,19 @@ impl<W: Write> EventWriter<W> {
 
     /// Periodic health: listeners, 10 ms blocks this worker dropped on a full
     /// queue, and device callbacks the capture process dropped (its overruns).
+    pub fn replay_started(&mut self, session_id: &str) -> std::io::Result<()> {
+        self.emit(json!({ "type": "replay-started", "sessionId": session_id }))
+    }
+
+    pub fn replay_rejected(&mut self, session_id: &str, detail: &str) -> std::io::Result<()> {
+        self.emit(json!({ "type": "replay-rejected", "sessionId": session_id, "detail": detail }))
+    }
+
+    /// Replay reached the end of the recording and the listener is live again.
+    pub fn replay_ended(&mut self, session_id: &str) -> std::io::Result<()> {
+        self.emit(json!({ "type": "replay-ended", "sessionId": session_id }))
+    }
+
     pub fn recording(&mut self, report: &RecorderReport) -> std::io::Result<()> {
         self.emit(json!({
             "type": "recording",
@@ -388,6 +428,28 @@ impl<W: Write> EventWriter<W> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn parses_replay_strictly() {
+        assert_eq!(
+            parse_command(
+                r#"{"type":"replay","sessionId":"s-1","channel":3,"gain":1.0,"atUtcMs":1700000000000}"#
+            ),
+            Ok(Command::Replay {
+                session_id: "s-1".into(),
+                channel: 3,
+                gain: 1.0,
+                at_utc_ms: 1_700_000_000_000
+            })
+        );
+        for bad in [
+            r#"{"type":"replay","sessionId":"s-1","channel":3,"gain":99,"atUtcMs":1}"#,
+            r#"{"type":"replay","sessionId":"s-1","channel":3,"gain":1,"atUtcMs":-1}"#,
+            r#"{"type":"replay","sessionId":"s-1","channel":3,"gain":1}"#,
+        ] {
+            assert!(parse_command(bad).is_err(), "{bad}");
+        }
+    }
 
     #[test]
     fn parses_recording_strictly() {
