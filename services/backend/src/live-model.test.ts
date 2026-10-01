@@ -176,6 +176,50 @@ describe("evaluate", () => {
     });
   });
 
+  it("sorts a channel with no category into its room's category for the mic type", () => {
+    const base = showfileWith();
+    const showfile = {
+      ...base,
+      rooms: [
+        {
+          id: "room-a",
+          name: "Ballroom",
+          categories: [
+            { id: "cat-hand", name: "Handhelds" },
+            { id: "cat-belt", name: "Beltpacks" },
+          ],
+        },
+      ],
+      channels: base.channels.map((channel, index) =>
+        index === 0
+          ? {
+              ...channel,
+              micType: null,
+              rooms: [{ roomId: "room-a", categoryId: null }],
+            }
+          : {
+              ...channel,
+              rooms: [{ roomId: "room-a", categoryId: "cat-belt" }],
+            },
+      ),
+    };
+    const observation = observationAt(
+      T0,
+      levelsWith([-12, -30]),
+      telemetryWith([
+        { transmitter: { type: "AD2", name: null, muted: null } },
+      ]),
+    );
+    const result = run(observation, { showfile });
+    expect(result.channels[0]!.rooms).toEqual([
+      { roomId: "room-a", categoryId: "cat-hand" },
+    ]);
+    // An operator-chosen category is left alone.
+    expect(result.channels[1]!.rooms).toEqual([
+      { roomId: "room-a", categoryId: "cat-belt" },
+    ]);
+  });
+
   it("escalates battery from caution to critical at the policy limits", () => {
     const low = run(
       observationAt(
