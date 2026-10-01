@@ -698,6 +698,8 @@ export function App({
   const keyboardToggles = useRef({ toggleMute, toggleDim });
   /** Escape closes an open sheet first; with none open it clears the selection. */
   const escapeAction = useRef<() => void>(() => undefined);
+  /** Ctrl/Cmd+A selects every visible channel; returns whether it handled the key. */
+  const selectAllAction = useRef<() => boolean>(() => false);
   useEffect(() => {
     keyboardToggles.current = { toggleMute, toggleDim };
   });
@@ -709,6 +711,14 @@ export function App({
         event.target instanceof HTMLSelectElement ||
         event.target instanceof HTMLTextAreaElement
       ) {
+        return;
+      }
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        !event.altKey &&
+        event.key.toLowerCase() === "a"
+      ) {
+        if (selectAllAction.current()) event.preventDefault();
         return;
       }
       if (event.key.toLowerCase() === "m") keyboardToggles.current.toggleMute();
@@ -804,6 +814,25 @@ export function App({
       } catch (error) {
         setActionError(
           error instanceof Error ? error.message : "The channel was not reset.",
+        );
+      }
+    },
+    [apply],
+  );
+
+  /** Resets every selected channel in turn; the last reply is the freshest state. */
+  const resetChannelsAlerts = useCallback(
+    async (channelIds: readonly string[]) => {
+      setActionError(null);
+      try {
+        for (const channelId of channelIds) {
+          apply(await resetChannel(channelId));
+        }
+      } catch (error) {
+        setActionError(
+          error instanceof Error
+            ? error.message
+            : "The channels were not reset.",
         );
       }
     },
@@ -1401,15 +1430,23 @@ export function App({
     !isA1 && hostDocument?.output && chosenDestination === null;
 
   useEffect(() => {
+    const sheetOpen =
+      detailId !== null ||
+      exceptionsOpen ||
+      turnoverRoom !== null ||
+      micCheckId !== null ||
+      outputSheetOpen ||
+      roomSheetOpen ||
+      outputPrompt;
+    selectAllAction.current = () => {
+      if (isA1 || hostMode || sheetOpen || orderedChannelIds.length === 0) {
+        return false;
+      }
+      setSelectedIds(orderedChannelIds);
+      setSelectionAnchorId(orderedChannelIds[0] ?? null);
+      return true;
+    };
     escapeAction.current = () => {
-      const sheetOpen =
-        detailId !== null ||
-        exceptionsOpen ||
-        turnoverRoom !== null ||
-        micCheckId !== null ||
-        outputSheetOpen ||
-        roomSheetOpen ||
-        outputPrompt;
       setDetailId(null);
       setExceptionsOpen(false);
       setTurnoverRoom(null);
@@ -1682,6 +1719,9 @@ export function App({
           touchSelecting={touchSelecting}
           onDone={() => setTouchSelecting(false)}
           onClear={clearSelection}
+          onReset={
+            offline ? undefined : () => void resetChannelsAlerts(selectedIds)
+          }
         />
       ) : null}
 
@@ -2008,6 +2048,11 @@ export function App({
             setExceptionsOpen(false);
             setDetailId(channelId);
           }}
+          onClearAll={
+            offline
+              ? undefined
+              : (channelIds) => void resetChannelsAlerts(channelIds)
+          }
           onReportAction={(report, action) => void reportAction(report, action)}
           busy={reportBusy}
           onClose={() => setExceptionsOpen(false)}
