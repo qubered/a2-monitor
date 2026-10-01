@@ -45,6 +45,8 @@ export type ChannelTracker = {
   heard: boolean;
   receiverKey: string | null;
   transmitterSeen: boolean;
+  /** Set by a reset: the inferred mic icon stays blank until a transmitter is seen again. */
+  micTypeCleared: boolean;
 };
 
 /** A gap in observation longer than this restarts silence timing instead of counting through it. */
@@ -242,6 +244,7 @@ function trackerFor(
       heard: false,
       receiverKey: null,
       transmitterSeen: false,
+      micTypeCleared: false,
     };
     trackers.set(channelId, tracker);
   }
@@ -263,6 +266,7 @@ export function resetChannelTracker(
   tracker.lastSignalAtMs = null;
   tracker.heard = false;
   tracker.transmitterSeen = false;
+  tracker.micTypeCleared = true;
 }
 
 type Built = { channel: LiveStateChannel; conditions: AlertCondition[] };
@@ -415,7 +419,10 @@ function buildChannel(
         : telemetryChannel.linkStatus === "no-transmitter"
           ? false
           : null;
-  if (transmitterPresent === true) tracker.transmitterSeen = true;
+  if (transmitterPresent === true) {
+    tracker.transmitterSeen = true;
+    tracker.micTypeCleared = false;
+  }
 
   const capabilities = telemetryReceiver?.capabilities;
   const linkQualityPercent =
@@ -442,12 +449,12 @@ function buildChannel(
     runtimeMinutes: telemetryChannel?.batteryRunTimeMinutes ?? null,
     type: telemetryChannel?.batteryType ?? null,
   };
-  // The operator's micType always wins; a detected form factor only fills the
+  // The operator's micType always wins (a reset leaves it alone); a detected form factor only fills the
   // gap while none has been set, and is marked inferred rather than merged in
   // as if the operator had confirmed it (the honesty grammar, DESIGN.md §9).
-  const detectedMicType = classifyShureTransmitter(
-    telemetryChannel?.transmitter.type ?? null,
-  );
+  const detectedMicType = tracker.micTypeCleared
+    ? null
+    : classifyShureTransmitter(telemetryChannel?.transmitter.type ?? null);
   const micType: LiveStateChannel["micType"] =
     showChannel.micType ?? detectedMicType;
   const micTypeSource: LiveStateChannel["micTypeSource"] =

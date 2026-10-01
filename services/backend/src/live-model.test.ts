@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_ALERT_POLICY } from "./alert-policy.js";
-import { evaluate, type ChannelTracker } from "./live-model.js";
+import {
+  evaluate,
+  resetChannelTracker,
+  type ChannelTracker,
+} from "./live-model.js";
 import {
   levelsWith,
   observationAt,
@@ -173,6 +177,43 @@ describe("evaluate", () => {
     expect(operatorSet.channels[0]).toMatchObject({
       micType: "headset",
       micTypeSource: "operator",
+    });
+  });
+
+  it("blanks the inferred mic icon on reset until a transmitter is seen again", () => {
+    const base = showfileWith();
+    const unset = {
+      ...base,
+      channels: base.channels.map((channel, index) =>
+        index === 0 ? { ...channel, micType: null } : channel,
+      ),
+    };
+    const trackers = new Map<string, ChannelTracker>();
+    const observe = (
+      type: string | null,
+      linkStatus: "active" | "no-transmitter",
+    ) =>
+      run(
+        observationAt(
+          T0,
+          levelsWith([-12, -30]),
+          telemetryWith([
+            { linkStatus, transmitter: { type, name: null, muted: null } },
+          ]),
+        ),
+        { showfile: unset, trackers },
+      ).channels[0];
+
+    expect(observe("AD2", "active")).toMatchObject({ micType: "handheld" });
+    resetChannelTracker(trackers, "ch-marguerite");
+    // The receiver still remembers the old transmitter model.
+    expect(observe("AD2", "no-transmitter")).toMatchObject({
+      micType: null,
+      micTypeSource: null,
+    });
+    expect(observe("AD1", "active")).toMatchObject({
+      micType: "beltpack",
+      micTypeSource: "inferred",
     });
   });
 

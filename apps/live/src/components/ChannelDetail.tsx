@@ -189,6 +189,7 @@ export function ChannelDetail({
 
         {onResetChannel &&
         (alerts.length > 0 ||
+          channel.micTypeSource === "inferred" ||
           Object.values(channel.statuses).some(
             (status) => status === "fault",
           )) ? (
