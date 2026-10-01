@@ -269,6 +269,34 @@ export function resetChannelTracker(
   tracker.micTypeCleared = true;
 }
 
+/**
+ * A channel with no category in a room is sorted into that room's category
+ * named for its mic type ("Handheld", "Handhelds", "Beltpack"...), when the
+ * room has one. A category the operator chose is never overridden, and with
+ * no mic type (or no matching category) the channel stays uncategorised.
+ */
+function roomsWithMicTypeCategory(
+  showfile: EvaluationInput["showfile"],
+  showChannel: ShowChannel,
+  micType: LiveStateChannel["micType"],
+): NonNullable<LiveStateChannel["rooms"]> {
+  const memberships = showChannel.rooms ?? [];
+  if (!micType) return memberships;
+  const named = (name: string) => {
+    const key = name.trim().toLowerCase();
+    return key === micType || key === `${micType}s`;
+  };
+  return memberships.map((membership) => {
+    if (membership.categoryId) return membership;
+    const category = showfile.rooms
+      ?.find(({ id }) => id === membership.roomId)
+      ?.categories.find(({ name }) => named(name));
+    return category?.id
+      ? { ...membership, categoryId: category.id }
+      : membership;
+  });
+}
+
 type Built = { channel: LiveStateChannel; conditions: AlertCondition[] };
 
 function buildChannel(
@@ -675,7 +703,7 @@ function buildChannel(
       micType,
       micTypeSource,
       trimDb: showChannel.trimDb ?? 0,
-      rooms: showChannel.rooms ?? [],
+      rooms: roomsWithMicTypeCategory(showfile, showChannel, micType),
       hasImage: Boolean(showChannel.imageUrl),
       input: { index: inputIndex, label: bounded(inputLabel, 160) },
       receiver: wireless

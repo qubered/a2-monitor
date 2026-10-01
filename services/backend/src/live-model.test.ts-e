@@ -180,6 +180,7 @@ describe("evaluate", () => {
     });
   });
 
+<<<<<<< HEAD
   it("sorts a channel with no category into its room's category for the mic type", () => {
     const base = showfileWith();
     const showfile = {
@@ -222,8 +223,7 @@ describe("evaluate", () => {
     expect(result.channels[1]!.rooms).toEqual([
       { roomId: "room-a", categoryId: "cat-belt" },
     ]);
-  });
-
+=======
   it("blanks the inferred mic icon on reset until a transmitter is seen again", () => {
     const base = showfileWith();
     const unset = {
@@ -259,6 +259,7 @@ describe("evaluate", () => {
       micType: "beltpack",
       micTypeSource: "inferred",
     });
+>>>>>>> origin/main
   });
 
   it("escalates battery from caution to critical at the policy limits", () => {

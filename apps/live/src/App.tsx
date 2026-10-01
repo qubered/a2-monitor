@@ -114,7 +114,7 @@ import { useLiveState } from "./useLiveState";
 import { useNow } from "./useNow";
 
 /**
- * "all", "session", "needs-someone", "wireless", "wired", or a category
+ * "all", "session", "needs-someone", or a category
  * (`cat:<id>`, `cat:none` for channels without one).
  */
 type Filter = string;
@@ -1057,8 +1057,7 @@ export function App({
     [operator],
   );
 
-  // The filter row: everything, what needs someone, then the room's categories
-  // (Wireless and Wired stand in when the show has none).
+  // The filter row: everything, what needs someone, then the room's categories.
   const filterOptions = useMemo<FilterOption[]>(() => {
     const count = (matches: (channel: LiveStateChannel) => boolean) =>
       roomChannels.filter(matches).length;
@@ -1102,20 +1101,7 @@ export function App({
         label: "Needs someone",
         count: count((channel) => needsSomeone(channel, activeAlerts)),
       },
-      ...(byCategory.length
-        ? byCategory
-        : [
-            {
-              key: "wireless",
-              label: "Wireless",
-              count: count(({ kind }) => kind === "wireless"),
-            },
-            {
-              key: "wired",
-              label: "Wired",
-              count: count(({ kind }) => kind === "wired"),
-            },
-          ]),
+      ...byCategory,
     ];
   }, [activeAlerts, room, roomChannels, rooms, sessionRunning]);
   // A filter that no longer exists (the run ended, another room) falls back to all.
@@ -1130,8 +1116,6 @@ export function App({
       if (filter === "session") return channel.session?.inUse !== false;
       if (filter === "needs-someone")
         return needsSomeone(channel, activeAlerts);
-      if (filter === "wireless" || filter === "wired")
-        return channel.kind === filter;
       if (filter === "cat:none")
         return categoryIdInRoom(channel, room) === null;
       if (filter.startsWith("cat:")) {

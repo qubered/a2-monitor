@@ -976,7 +976,7 @@ describe("Live channel grid", () => {
       }),
     );
 
-    await user.click(screen.getByRole("button", { name: /^Wired/ }));
+    await user.click(screen.getByRole("button", { name: /^All channels/ }));
     const cards = screen.getAllByRole("article");
     expect(cards.map((card) => card.getAttribute("data-channel-id"))).toEqual([
       "ch-marguerite",

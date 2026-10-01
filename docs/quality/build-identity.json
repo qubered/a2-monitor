@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.281b1aba01d5f50a",
-  "sourceSha256": "281b1aba01d5f50af8765567ad099fda6f19a1785d7ef52317eeda4cf66d6ada",
-  "inputCount": 472,
+  "buildId": "a2-0.0.0+sha256.87a154b28018a207",
+  "sourceSha256": "87a154b28018a2079ec4fff3187d7393549002d02875e3ea42982ea3f0fc08e8",
+  "inputCount": 473,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -93,11 +93,11 @@
     },
     {
       "path": "apps/live/src/App.test.tsx",
-      "sha256": "c0a9995f2e283152f1fc444855353112dbd44ec3617dfc0af1e00745be60d056"
+      "sha256": "754f912a59b923dc41e46376b375382eb6294b113abf84c25a1cea5223d7f362"
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "82f19c0ea8e6c1b4dff96cf454895a507e94e8d840fcbaae2aad1b946d53493f"
+      "sha256": "d7391159abb7e6f76515a8df13b606542152e1be564406d25d8fa044e46296ea"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -1681,11 +1681,15 @@
     },
     {
       "path": "services/backend/src/live-model.test.ts",
-      "sha256": "02e078f36b13ca230830baf9e474febbd1b785ffcaf8888223d48d7dec8440d1"
+      "sha256": "62b19e02d35db5acad1907866efb1678c101834a2643f8999912757e4c5dd8c1"
+    },
+    {
+      "path": "services/backend/src/live-model.test.ts-e",
+      "sha256": "1f4af4c72ee964cdd87413133c3f4595da2c6533dea6a862b4e87bbe315ba92b"
     },
     {
       "path": "services/backend/src/live-model.ts",
-      "sha256": "be45da988fec2c65c3a35c994095e48aee8b69c84ded26a1bb753a00d040775d"
+      "sha256": "a1c400866b9dd4e933780e846b3baba96126c9e7ff758a178482a6f88c9a306b"
     },
     {
       "path": "services/backend/src/live-monitor.ts",
