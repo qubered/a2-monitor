@@ -4,6 +4,8 @@ type SelectionBarProps = {
   touchSelecting: boolean;
   onDone: () => void;
   onClear: () => void;
+  /** Absent while the backend is unreachable, so the reset is never offered then. */
+  onReset?: () => void;
 };
 
 /**
@@ -18,6 +20,7 @@ export function SelectionBar({
   touchSelecting,
   onDone,
   onClear,
+  onReset,
 }: SelectionBarProps) {
   // One channel is just what the player shows; the bar is for several
   // (DESIGN.md §8.4) and for the touch mode that picks them.
@@ -33,6 +36,16 @@ export function SelectionBar({
         {touchSelecting ? (
           <button type="button" className="control-button" onClick={onDone}>
             Done
+          </button>
+        ) : null}
+        {count > 0 && onReset ? (
+          <button
+            type="button"
+            className="line-button"
+            onClick={onReset}
+            aria-label="Clear alerts and reset every selected channel"
+          >
+            Clear alerts and reset
           </button>
         ) : null}
         {count > 0 ? (

@@ -14,6 +14,8 @@ type ExceptionsSheetProps = {
   nowMs: number;
   onAcknowledge: (alert: LiveAlert) => void;
   onShowChannel: (channelId: string) => void;
+  /** Absent while the backend is unreachable. Resets every channel that has an active alert. */
+  onClearAll?: (channelIds: string[]) => void;
   onReportAction?: (report: FaultReport, action: ReportAction) => void;
   busy?: boolean;
   onClose: () => void;
@@ -30,12 +32,19 @@ export function ExceptionsSheet({
   nowMs,
   onAcknowledge,
   onShowChannel,
+  onClearAll,
   onReportAction,
   busy = false,
   onClose,
 }: ExceptionsSheetProps) {
   const active = [...state.alerts].sort(byUrgency);
   const reports = state.reports.filter(isActiveReport);
+  // System faults belong to no channel, so there is nothing to reset for them.
+  const clearable = [
+    ...new Set(
+      active.flatMap(({ channelId }) => (channelId ? [channelId] : [])),
+    ),
+  ];
   const cleared = (history ?? []).slice(0, 12);
 
   return (
@@ -56,14 +65,26 @@ export function ExceptionsSheet({
             <h2 id="exceptions-title">Exceptions</h2>
             <p>Every active alert across the show, most urgent first.</p>
           </div>
-          <button
-            className="line-button"
-            type="button"
-            onClick={onClose}
-            autoFocus
-          >
-            Close
-          </button>
+          <div className="exception-actions">
+            {onClearAll && clearable.length > 0 ? (
+              <button
+                className="line-button"
+                type="button"
+                onClick={() => onClearAll(clearable)}
+                aria-label={`Clear every exception: reset ${clearable.length} channel${clearable.length === 1 ? "" : "s"}`}
+              >
+                Clear all
+              </button>
+            ) : null}
+            <button
+              className="line-button"
+              type="button"
+              onClick={onClose}
+              autoFocus
+            >
+              Close
+            </button>
+          </div>
         </header>
 
         {reports.length && onReportAction ? (

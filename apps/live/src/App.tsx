@@ -116,7 +116,7 @@ import { useLiveState } from "./useLiveState";
 import { useNow } from "./useNow";
 
 /**
- * "all", "session", "needs-someone", "wireless", "wired", or a category
+ * "all", "session", "needs-someone", or a category
  * (`cat:<id>`, `cat:none` for channels without one).
  */
 type Filter = string;
@@ -754,6 +754,8 @@ export function App({
   const keyboardToggles = useRef({ toggleMute, toggleDim });
   /** Escape closes an open sheet first; with none open it clears the selection. */
   const escapeAction = useRef<() => void>(() => undefined);
+  /** Ctrl/Cmd+A selects every visible channel; returns whether it handled the key. */
+  const selectAllAction = useRef<() => boolean>(() => false);
   useEffect(() => {
     keyboardToggles.current = { toggleMute, toggleDim };
   });
@@ -765,6 +767,14 @@ export function App({
         event.target instanceof HTMLSelectElement ||
         event.target instanceof HTMLTextAreaElement
       ) {
+        return;
+      }
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        !event.altKey &&
+        event.key.toLowerCase() === "a"
+      ) {
+        if (selectAllAction.current()) event.preventDefault();
         return;
       }
       if (event.key.toLowerCase() === "m") keyboardToggles.current.toggleMute();
@@ -860,6 +870,25 @@ export function App({
       } catch (error) {
         setActionError(
           error instanceof Error ? error.message : "The channel was not reset.",
+        );
+      }
+    },
+    [apply],
+  );
+
+  /** Resets every selected channel in turn; the last reply is the freshest state. */
+  const resetChannelsAlerts = useCallback(
+    async (channelIds: readonly string[]) => {
+      setActionError(null);
+      try {
+        for (const channelId of channelIds) {
+          apply(await resetChannel(channelId));
+        }
+      } catch (error) {
+        setActionError(
+          error instanceof Error
+            ? error.message
+            : "The channels were not reset.",
         );
       }
     },
@@ -1084,8 +1113,7 @@ export function App({
     [operator],
   );
 
-  // The filter row: everything, what needs someone, then the room's categories
-  // (Wireless and Wired stand in when the show has none).
+  // The filter row: everything, what needs someone, then the room's categories.
   const filterOptions = useMemo<FilterOption[]>(() => {
     const count = (matches: (channel: LiveStateChannel) => boolean) =>
       roomChannels.filter(matches).length;
@@ -1129,20 +1157,7 @@ export function App({
         label: "Needs someone",
         count: count((channel) => needsSomeone(channel, activeAlerts)),
       },
-      ...(byCategory.length
-        ? byCategory
-        : [
-            {
-              key: "wireless",
-              label: "Wireless",
-              count: count(({ kind }) => kind === "wireless"),
-            },
-            {
-              key: "wired",
-              label: "Wired",
-              count: count(({ kind }) => kind === "wired"),
-            },
-          ]),
+      ...byCategory,
     ];
   }, [activeAlerts, room, roomChannels, rooms, sessionRunning]);
   // A filter that no longer exists (the run ended, another room) falls back to all.
@@ -1157,8 +1172,6 @@ export function App({
       if (filter === "session") return channel.session?.inUse !== false;
       if (filter === "needs-someone")
         return needsSomeone(channel, activeAlerts);
-      if (filter === "wireless" || filter === "wired")
-        return channel.kind === filter;
       if (filter === "cat:none")
         return categoryIdInRoom(channel, room) === null;
       if (filter.startsWith("cat:")) {
@@ -1473,15 +1486,23 @@ export function App({
     !isA1 && hostDocument?.output && chosenDestination === null;
 
   useEffect(() => {
+    const sheetOpen =
+      detailId !== null ||
+      exceptionsOpen ||
+      turnoverRoom !== null ||
+      micCheckId !== null ||
+      outputSheetOpen ||
+      roomSheetOpen ||
+      outputPrompt;
+    selectAllAction.current = () => {
+      if (isA1 || hostMode || sheetOpen || orderedChannelIds.length === 0) {
+        return false;
+      }
+      setSelectedIds(orderedChannelIds);
+      setSelectionAnchorId(orderedChannelIds[0] ?? null);
+      return true;
+    };
     escapeAction.current = () => {
-      const sheetOpen =
-        detailId !== null ||
-        exceptionsOpen ||
-        turnoverRoom !== null ||
-        micCheckId !== null ||
-        outputSheetOpen ||
-        roomSheetOpen ||
-        outputPrompt;
       setDetailId(null);
       setExceptionsOpen(false);
       setTurnoverRoom(null);
@@ -1754,6 +1775,9 @@ export function App({
           touchSelecting={touchSelecting}
           onDone={() => setTouchSelecting(false)}
           onClear={clearSelection}
+          onReset={
+            offline ? undefined : () => void resetChannelsAlerts(selectedIds)
+          }
         />
       ) : null}
 
@@ -2102,6 +2126,11 @@ export function App({
             setExceptionsOpen(false);
             setDetailId(channelId);
           }}
+          onClearAll={
+            offline
+              ? undefined
+              : (channelIds) => void resetChannelsAlerts(channelIds)
+          }
           onReportAction={(report, action) => void reportAction(report, action)}
           busy={reportBusy}
           onClose={() => setExceptionsOpen(false)}

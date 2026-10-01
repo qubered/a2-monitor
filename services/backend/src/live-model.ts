@@ -45,6 +45,8 @@ export type ChannelTracker = {
   heard: boolean;
   receiverKey: string | null;
   transmitterSeen: boolean;
+  /** Set by a reset: the inferred mic icon stays blank until a transmitter is seen again. */
+  micTypeCleared: boolean;
 };
 
 /** A gap in observation longer than this restarts silence timing instead of counting through it. */
@@ -242,6 +244,7 @@ function trackerFor(
       heard: false,
       receiverKey: null,
       transmitterSeen: false,
+      micTypeCleared: false,
     };
     trackers.set(channelId, tracker);
   }
@@ -263,6 +266,35 @@ export function resetChannelTracker(
   tracker.lastSignalAtMs = null;
   tracker.heard = false;
   tracker.transmitterSeen = false;
+  tracker.micTypeCleared = true;
+}
+
+/**
+ * A channel with no category in a room is sorted into that room's category
+ * named for its mic type ("Handheld", "Handhelds", "Beltpack"...), when the
+ * room has one. A category the operator chose is never overridden, and with
+ * no mic type (or no matching category) the channel stays uncategorised.
+ */
+function roomsWithMicTypeCategory(
+  showfile: EvaluationInput["showfile"],
+  showChannel: ShowChannel,
+  micType: LiveStateChannel["micType"],
+): NonNullable<LiveStateChannel["rooms"]> {
+  const memberships = showChannel.rooms ?? [];
+  if (!micType) return memberships;
+  const named = (name: string) => {
+    const key = name.trim().toLowerCase();
+    return key === micType || key === `${micType}s`;
+  };
+  return memberships.map((membership) => {
+    if (membership.categoryId) return membership;
+    const category = showfile.rooms
+      ?.find(({ id }) => id === membership.roomId)
+      ?.categories.find(({ name }) => named(name));
+    return category?.id
+      ? { ...membership, categoryId: category.id }
+      : membership;
+  });
 }
 
 type Built = { channel: LiveStateChannel; conditions: AlertCondition[] };
@@ -415,7 +447,10 @@ function buildChannel(
         : telemetryChannel.linkStatus === "no-transmitter"
           ? false
           : null;
-  if (transmitterPresent === true) tracker.transmitterSeen = true;
+  if (transmitterPresent === true) {
+    tracker.transmitterSeen = true;
+    tracker.micTypeCleared = false;
+  }
 
   const capabilities = telemetryReceiver?.capabilities;
   const linkQualityPercent =
@@ -442,12 +477,12 @@ function buildChannel(
     runtimeMinutes: telemetryChannel?.batteryRunTimeMinutes ?? null,
     type: telemetryChannel?.batteryType ?? null,
   };
-  // The operator's micType always wins; a detected form factor only fills the
+  // The operator's micType always wins (a reset leaves it alone); a detected form factor only fills the
   // gap while none has been set, and is marked inferred rather than merged in
   // as if the operator had confirmed it (the honesty grammar, DESIGN.md §9).
-  const detectedMicType = classifyShureTransmitter(
-    telemetryChannel?.transmitter.type ?? null,
-  );
+  const detectedMicType = tracker.micTypeCleared
+    ? null
+    : classifyShureTransmitter(telemetryChannel?.transmitter.type ?? null);
   const micType: LiveStateChannel["micType"] =
     showChannel.micType ?? detectedMicType;
   const micTypeSource: LiveStateChannel["micTypeSource"] =
@@ -668,7 +703,7 @@ function buildChannel(
       micType,
       micTypeSource,
       trimDb: showChannel.trimDb ?? 0,
-      rooms: showChannel.rooms ?? [],
+      rooms: roomsWithMicTypeCategory(showfile, showChannel, micType),
       hasImage: Boolean(showChannel.imageUrl),
       input: { index: inputIndex, label: bounded(inputLabel, 160) },
       receiver: wireless
