@@ -12,13 +12,16 @@ use crate::Event;
 use crate::capture::CaptureHeader;
 use crate::host_output::{MAX_MONITOR_GAIN, OutputReport};
 use crate::meters::{METER_INTERVAL_MS, MeterReading};
+use crate::recorder::RecorderReport;
 use crate::session::{MAX_SOURCES, Source};
 use a2_audio_node::monitor_output::{MAX_OUTPUT_ROUTES, parse_output_routes};
+use a2_audio_node::recording::MAX_RETENTION_MINUTES;
 
 const COMMAND_LIMIT_BYTES: usize = 128 * 1024;
 const OFFER_LIMIT_BYTES: usize = 64 * 1024;
 const SESSION_ID_LIMIT: usize = 64;
 const MAX_CHANNEL_INDEX: u64 = 255;
+const MAX_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
 
 #[derive(Debug, PartialEq)]
 pub enum Command {
@@ -47,6 +50,26 @@ pub enum Command {
     /// e.g. a production's saved feeds (ADR 0031). Validated like `--output-routes`.
     OutputRoutes {
         routes: String,
+    },
+    /// Plays recorded audio of one input on one host output feed's mix from `at_utc_ms`, or,
+    /// with no time, goes back to live. The feed's other controls are unchanged.
+    MonitorReplay {
+        mix: usize,
+        channel: usize,
+        gain: f32,
+        at_utc_ms: Option<u64>,
+    },
+    /// Plays recorded audio of one input to a listener, from `at_utc_ms`, at `gain`.
+    Replay {
+        session_id: String,
+        channel: usize,
+        gain: f32,
+        at_utc_ms: u64,
+    },
+    /// Turns recording of every input on or off and sets how many minutes are kept.
+    Recording {
+        enabled: bool,
+        retention_minutes: u32,
     },
 }
 
@@ -196,6 +219,71 @@ pub fn parse_command(line: &str) -> Result<Command, String> {
                 .ok_or_else(|| "routes are invalid".to_owned())?;
             Ok(Command::OutputRoutes { routes })
         }
+        Some("monitor-replay") => {
+            exact_keys(record, &["type", "mix", "channel", "gain", "atUtcMs"])?;
+            let mix = record
+                .get("mix")
+                .and_then(Value::as_u64)
+                .filter(|mix| *mix < MAX_OUTPUT_ROUTES as u64)
+                .ok_or_else(|| "mix is invalid".to_owned())? as usize;
+            let gain = record
+                .get("gain")
+                .and_then(Value::as_f64)
+                .filter(|gain| (0.0..=f64::from(MAX_MONITOR_GAIN)).contains(gain))
+                .ok_or_else(|| "gain is invalid".to_owned())? as f32;
+            let at_utc_ms = match record.get("atUtcMs") {
+                Some(Value::Null) => None,
+                Some(value) => Some(
+                    value
+                        .as_u64()
+                        .filter(|at| *at <= MAX_SAFE_INTEGER)
+                        .ok_or_else(|| "atUtcMs is invalid".to_owned())?,
+                ),
+                None => return Err("atUtcMs is invalid".to_owned()),
+            };
+            Ok(Command::MonitorReplay {
+                mix,
+                channel: channel(record)?,
+                gain,
+                at_utc_ms,
+            })
+        }
+        Some("replay") => {
+            exact_keys(record, &["type", "sessionId", "channel", "gain", "atUtcMs"])?;
+            let gain = record
+                .get("gain")
+                .and_then(Value::as_f64)
+                .filter(|gain| gain.is_finite() && (0.0..=MAX_SOURCE_GAIN).contains(gain))
+                .ok_or_else(|| "gain is invalid".to_owned())?;
+            let at_utc_ms = record
+                .get("atUtcMs")
+                .and_then(Value::as_u64)
+                .filter(|at| *at <= MAX_SAFE_INTEGER)
+                .ok_or_else(|| "atUtcMs is invalid".to_owned())?;
+            Ok(Command::Replay {
+                session_id: session_id(record)?,
+                channel: channel(record)?,
+                gain: gain as f32,
+                at_utc_ms,
+            })
+        }
+        Some("recording") => {
+            exact_keys(record, &["type", "enabled", "retentionMinutes"])?;
+            let enabled = record
+                .get("enabled")
+                .and_then(Value::as_bool)
+                .ok_or_else(|| "enabled is invalid".to_owned())?;
+            let retention_minutes = record
+                .get("retentionMinutes")
+                .and_then(Value::as_u64)
+                .filter(|minutes| (1..=u64::from(MAX_RETENTION_MINUTES)).contains(minutes))
+                .ok_or_else(|| "retentionMinutes is invalid".to_owned())?
+                as u32;
+            Ok(Command::Recording {
+                enabled,
+                retention_minutes,
+            })
+        }
         Some("close") => {
             exact_keys(record, &["type", "sessionId"])?;
             Ok(Command::Close {
@@ -334,6 +422,44 @@ impl<W: Write> EventWriter<W> {
 
     /// Periodic health: listeners, 10 ms blocks this worker dropped on a full
     /// queue, and device callbacks the capture process dropped (its overruns).
+    pub fn monitor_replay_started(&mut self, mix: usize) -> std::io::Result<()> {
+        self.emit(json!({ "type": "monitor-replay-started", "mix": mix }))
+    }
+
+    pub fn monitor_replay_rejected(&mut self, mix: usize, detail: &str) -> std::io::Result<()> {
+        self.emit(json!({ "type": "monitor-replay-rejected", "mix": mix, "detail": detail }))
+    }
+
+    /// A feed's replay ran out of recording and the feed is live again.
+    pub fn monitor_replay_ended(&mut self, mix: usize) -> std::io::Result<()> {
+        self.emit(json!({ "type": "monitor-replay-ended", "mix": mix }))
+    }
+
+    pub fn replay_started(&mut self, session_id: &str) -> std::io::Result<()> {
+        self.emit(json!({ "type": "replay-started", "sessionId": session_id }))
+    }
+
+    pub fn replay_rejected(&mut self, session_id: &str, detail: &str) -> std::io::Result<()> {
+        self.emit(json!({ "type": "replay-rejected", "sessionId": session_id, "detail": detail }))
+    }
+
+    /// Replay reached the end of the recording and the listener is live again.
+    pub fn replay_ended(&mut self, session_id: &str) -> std::io::Result<()> {
+        self.emit(json!({ "type": "replay-ended", "sessionId": session_id }))
+    }
+
+    pub fn recording(&mut self, report: &RecorderReport) -> std::io::Result<()> {
+        self.emit(json!({
+            "type": "recording",
+            "available": report.available,
+            "enabled": report.config.enabled,
+            "retentionMinutes": report.config.retention_minutes,
+            "active": report.active,
+            "droppedBlocks": report.dropped_blocks,
+            "writeErrors": report.write_errors,
+        }))
+    }
+
     pub fn stats(
         &mut self,
         sessions: usize,
@@ -352,6 +478,80 @@ impl<W: Write> EventWriter<W> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn parses_monitor_replay_strictly() {
+        assert_eq!(
+            parse_command(
+                r#"{"type":"monitor-replay","mix":1,"channel":2,"gain":0.5,"atUtcMs":1700000000000}"#
+            ),
+            Ok(Command::MonitorReplay {
+                mix: 1,
+                channel: 2,
+                gain: 0.5,
+                at_utc_ms: Some(1_700_000_000_000)
+            })
+        );
+        assert_eq!(
+            parse_command(
+                r#"{"type":"monitor-replay","mix":0,"channel":0,"gain":1,"atUtcMs":null}"#
+            ),
+            Ok(Command::MonitorReplay {
+                mix: 0,
+                channel: 0,
+                gain: 1.0,
+                at_utc_ms: None
+            })
+        );
+        for bad in [
+            r#"{"type":"monitor-replay","mix":99,"channel":0,"gain":1,"atUtcMs":null}"#,
+            r#"{"type":"monitor-replay","mix":0,"channel":0,"gain":1}"#,
+            r#"{"type":"monitor-replay","mix":0,"channel":0,"gain":1,"atUtcMs":-5}"#,
+        ] {
+            assert!(parse_command(bad).is_err(), "{bad}");
+        }
+    }
+
+    #[test]
+    fn parses_replay_strictly() {
+        assert_eq!(
+            parse_command(
+                r#"{"type":"replay","sessionId":"s-1","channel":3,"gain":1.0,"atUtcMs":1700000000000}"#
+            ),
+            Ok(Command::Replay {
+                session_id: "s-1".into(),
+                channel: 3,
+                gain: 1.0,
+                at_utc_ms: 1_700_000_000_000
+            })
+        );
+        for bad in [
+            r#"{"type":"replay","sessionId":"s-1","channel":3,"gain":99,"atUtcMs":1}"#,
+            r#"{"type":"replay","sessionId":"s-1","channel":3,"gain":1,"atUtcMs":-1}"#,
+            r#"{"type":"replay","sessionId":"s-1","channel":3,"gain":1}"#,
+        ] {
+            assert!(parse_command(bad).is_err(), "{bad}");
+        }
+    }
+
+    #[test]
+    fn parses_recording_strictly() {
+        assert_eq!(
+            parse_command(r#"{"type":"recording","enabled":true,"retentionMinutes":60}"#),
+            Ok(Command::Recording {
+                enabled: true,
+                retention_minutes: 60
+            })
+        );
+        for bad in [
+            r#"{"type":"recording","enabled":true,"retentionMinutes":61}"#,
+            r#"{"type":"recording","enabled":true,"retentionMinutes":0}"#,
+            r#"{"type":"recording","enabled":1,"retentionMinutes":5}"#,
+            r#"{"type":"recording","enabled":true}"#,
+        ] {
+            assert!(parse_command(bad).is_err(), "{bad}");
+        }
+    }
 
     #[test]
     fn parses_the_three_commands_strictly() {

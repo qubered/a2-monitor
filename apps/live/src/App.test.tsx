@@ -412,6 +412,8 @@ describe("Live channel grid", () => {
     const setSources = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
       setSources,
+      playRecorded: vi.fn(async () => "started" as const),
+      returnToLive: vi.fn(),
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
@@ -465,6 +467,8 @@ describe("Live channel grid", () => {
     const setSources = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
       setSources,
+      playRecorded: vi.fn(async () => "started" as const),
+      returnToLive: vi.fn(),
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
@@ -509,6 +513,8 @@ describe("Live channel grid", () => {
     const setSources = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
       setSources,
+      playRecorded: vi.fn(async () => "started" as const),
+      returnToLive: vi.fn(),
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
@@ -562,6 +568,8 @@ describe("Live channel grid", () => {
     const setSources = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
       setSources,
+      playRecorded: vi.fn(async () => "started" as const),
+      returnToLive: vi.fn(),
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
@@ -736,6 +744,8 @@ describe("Live channel grid", () => {
     window.localStorage.setItem("pulse-selected-channel", "ch-marguerite");
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
       setSources: vi.fn(),
+      playRecorded: vi.fn(async () => "started" as const),
+      returnToLive: vi.fn(),
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
@@ -768,6 +778,8 @@ describe("Live channel grid", () => {
       audioDeviceSource: readyDevice,
       playbackFactory: vi.fn<PlaybackFactory>(() => ({
         setSources: vi.fn(),
+        playRecorded: vi.fn(async () => "started" as const),
+        returnToLive: vi.fn(),
         setMuted: vi.fn(async () => undefined),
         setDimmed: vi.fn(),
         setGainDb: vi.fn(),
@@ -796,6 +808,8 @@ describe("Live channel grid", () => {
       audioDeviceSource: readyDevice,
       playbackFactory: vi.fn<PlaybackFactory>(() => ({
         setSources: vi.fn(),
+        playRecorded: vi.fn(async () => "started" as const),
+        returnToLive: vi.fn(),
         setMuted: vi.fn(async () => undefined),
         setDimmed: vi.fn(),
         setGainDb: vi.fn(),
@@ -817,6 +831,8 @@ describe("Live channel grid", () => {
     const setSources = vi.fn();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
       setSources,
+      playRecorded: vi.fn(async () => "started" as const),
+      returnToLive: vi.fn(),
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),
@@ -1259,6 +1275,8 @@ describe("Live channel grid", () => {
       });
       return {
         setSources,
+        playRecorded: vi.fn(async () => "started" as const),
+        returnToLive: vi.fn(),
         setMuted,
         setDimmed: vi.fn(),
         setGainDb: vi.fn(),
@@ -1617,6 +1635,8 @@ describe("Live channel grid", () => {
     const user = userEvent.setup();
     const playbackFactory = vi.fn<PlaybackFactory>(() => ({
       setSources: vi.fn(),
+      playRecorded: vi.fn(async () => "started" as const),
+      returnToLive: vi.fn(),
       setMuted: vi.fn(async () => undefined),
       setDimmed: vi.fn(),
       setGainDb: vi.fn(),

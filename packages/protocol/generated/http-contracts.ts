@@ -9,14 +9,16 @@
 //   - schema/v0/http/node-levels.schema.json
 //   - schema/v0/http/meter-frame.schema.json
 //   - schema/v0/http/host-output.schema.json
+//   - schema/v0/http/recording-state.schema.json
+//   - schema/v0/http/recording-spans.schema.json
 //   - schema/v0/http/live-state.schema.json
 //   - schema/v0/http/live-state.schema.json
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: bfad69dfdd980c9b6e9d79f06d51806a622b16c30ad0cdad4b13e63480cc7f41
-// Generator-SHA256: 123e494d4215c85da4d6478cb1ee908a830ec3431fb8ab658c6fc0e098c4296b
-// Body-SHA256: b89534048f64f05b7b2442f32531ffb304dbba89bb31d391ccd892954f4cda46
+// Schema-SHA256: be55c2dc54fc23b277d79708cb8177a314ed3c99247c1852f2d7d9241bc8963d
+// Generator-SHA256: 764dac3e31a4b771de757ea8bc931bfc69133da4cf08f256b30b14f991151fb9
+// Body-SHA256: 6ca6137cda37c1796b1caf50ada30e8f926a481c7f4b5bbe5efbd782dd986f5f
 
 export type HealthResponse = {
   status: "ok";
@@ -330,9 +332,32 @@ export type HostOutput = {
       dimmed: boolean;
       gainDb: number;
       changedBy: string | null;
+      replayOffsetMs?: number | null;
       changedAtUtc: string | null;
     };
   }>;
+};
+
+export type RecordingState = {
+  schemaVersion: "0";
+  available: boolean;
+  enabled: boolean;
+  retentionMinutes: number;
+  active: boolean;
+  droppedBlocks: number;
+  writeErrors: number;
+};
+
+export type RecordingSpan = {
+  startUtc: string;
+  endUtc: string;
+};
+
+export type RecordingSpans = {
+  schemaVersion: "0";
+  channel: number;
+  generatedAtUtc: string;
+  spans: Array<RecordingSpan>;
 };
 
 export type LiveStateVerdict =
@@ -2229,12 +2254,120 @@ const hostOutputSchema = {
                 minLength: 1,
                 maxLength: 80,
               },
+              replayOffsetMs: {
+                description:
+                  "Set while the feed plays recorded audio of the selected input instead of live: how far behind live it is, constant while it plays. Absent or null when the feed is live. Everyone in the feed hears it, and choosing another input or going back to live ends it.",
+                type: ["integer", "null"],
+                minimum: 0,
+                maximum: 3600000,
+              },
               changedAtUtc: {
                 type: ["string", "null"],
                 format: "date-time",
               },
             },
           },
+        },
+      },
+    },
+  },
+} as const;
+
+const recordingStateSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://pulse.local/schema/v0/http/recording-state.schema.json",
+  title: "Audio node recording state",
+  description:
+    "Whether the audio node is recording every input as 48 kbps Opus, served at GET /audio/v0/recording and returned by PUT /audio/v0/recording. The node keeps `enabled` and `retentionMinutes` itself, so recording resumes after a restart without the backend. `available` is false when the node has no recording directory. `active` is true only while capture is running and audio is being written. Turning recording off deletes what was recorded.",
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "schemaVersion",
+    "available",
+    "enabled",
+    "retentionMinutes",
+    "active",
+    "droppedBlocks",
+    "writeErrors",
+  ],
+  properties: {
+    schemaVersion: {
+      const: "0",
+    },
+    available: {
+      type: "boolean",
+    },
+    enabled: {
+      type: "boolean",
+    },
+    retentionMinutes: {
+      description: "How many minutes of audio are kept, at most 60.",
+      type: "integer",
+      minimum: 1,
+      maximum: 60,
+    },
+    active: {
+      type: "boolean",
+    },
+    droppedBlocks: {
+      description:
+        "10 ms capture blocks the recorder dropped because it fell behind, since the node started. Each one leaves a gap in the recording.",
+      type: "integer",
+      minimum: 0,
+      maximum: 9007199254740991,
+    },
+    writeErrors: {
+      description: "Failed writes or encodes since the node started.",
+      type: "integer",
+      minimum: 0,
+      maximum: 9007199254740991,
+    },
+  },
+} as const;
+
+const recordingSpansSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://pulse.local/schema/v0/http/recording-spans.schema.json",
+  title: "Audio node recorded spans",
+  description:
+    "Which stretches of one input the audio node holds recorded audio for, served at GET /audio/v0/recording/spans?channel=n. `channel` is the 0-based input on the capture device. Spans are oldest first, never overlap, and exclude gaps of 100 ms or more, so a time outside every span has no audio to play. A span that is still being recorded ends at the last write, not at the present.",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "channel", "generatedAtUtc", "spans"],
+  properties: {
+    schemaVersion: {
+      const: "0",
+    },
+    channel: {
+      type: "integer",
+      minimum: 0,
+      maximum: 255,
+    },
+    generatedAtUtc: {
+      type: "string",
+      format: "date-time",
+    },
+    spans: {
+      type: "array",
+      maxItems: 3600,
+      items: {
+        $ref: "#/$defs/span",
+      },
+    },
+  },
+  $defs: {
+    span: {
+      type: "object",
+      additionalProperties: false,
+      required: ["startUtc", "endUtc"],
+      properties: {
+        startUtc: {
+          type: "string",
+          format: "date-time",
+        },
+        endUtc: {
+          type: "string",
+          format: "date-time",
         },
       },
     },
@@ -5095,6 +5228,22 @@ export function parseMeterFrame(value: unknown): MeterFrame {
 
 export function parseHostOutput(value: unknown): HostOutput {
   return parseWithSchema<HostOutput>(value, hostOutputSchema, "HostOutput");
+}
+
+export function parseRecordingState(value: unknown): RecordingState {
+  return parseWithSchema<RecordingState>(
+    value,
+    recordingStateSchema,
+    "RecordingState",
+  );
+}
+
+export function parseRecordingSpans(value: unknown): RecordingSpans {
+  return parseWithSchema<RecordingSpans>(
+    value,
+    recordingSpansSchema,
+    "RecordingSpans",
+  );
 }
 
 export function parseLiveState(value: unknown): LiveState {

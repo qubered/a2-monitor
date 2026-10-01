@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   BellRing,
   CalendarClock,
+  CircleDot,
   DoorOpen,
   FolderKanban,
   Headphones,
@@ -28,6 +29,7 @@ import {
 } from "./showfile";
 import { AlertsTab } from "./components/AlertsTab";
 import { HostOutputTab } from "./components/HostOutputTab";
+import { RecordingTab } from "./components/RecordingTab";
 import { ChannelsTab } from "./components/ChannelsTab";
 import { EmptyState } from "./components/EmptyState";
 import { ProductionsTab } from "./components/ProductionsTab";
@@ -356,6 +358,11 @@ export function App() {
                   ? ` · ${showfile.hostOutput.feeds.length}`
                   : ""}
               </TabsTrigger>
+              <TabsGroupLabel>Audio node</TabsGroupLabel>
+              <TabsTrigger value="recording">
+                <CircleDot aria-hidden="true" />
+                Recording
+              </TabsTrigger>
             </TabsList>
             <div className="min-w-0 flex-1">
               <TabsContent value="show">
@@ -402,6 +409,9 @@ export function App() {
               </TabsContent>
               <TabsContent value="host-output">
                 <HostOutputTab showfile={showfile} onChange={update} />
+              </TabsContent>
+              <TabsContent value="recording">
+                <RecordingTab />
               </TabsContent>
             </div>
           </Tabs>

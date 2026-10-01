@@ -5,6 +5,7 @@ import { PassThrough } from "node:stream";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   parseHostOutput,
+  parseRecordingState,
   parseMeterFrame,
   parseNodeLevels,
 } from "@rvlt/pulse-protocol/http";
@@ -57,11 +58,13 @@ afterEach(async () => {
 async function startGateway(
   device = "Test Device",
   output?: { outputDevice: string; outputChannels: number[] },
+  recordingDirectory?: string,
 ) {
   const worker = new ScriptedWorker();
   const media = new MediaWorkerManager({
     device,
     processFactory: () => worker,
+    recordingDirectory,
     ...output,
   });
   const gateway = new ListenGateway({
@@ -673,5 +676,274 @@ describe("ListenGateway shared host output", () => {
       }),
     );
     vi.unstubAllGlobals();
+  });
+});
+
+describe("ListenGateway recording", () => {
+  const put = (base: string, body: unknown) =>
+    fetch(`${base}/audio/v0/recording`, {
+      method: "PUT",
+      headers: json,
+      body: JSON.stringify(body),
+    });
+
+  it("is unavailable without a recording directory", async () => {
+    const { base } = await startGateway();
+    const state = parseRecordingState(
+      await (await fetch(`${base}/audio/v0/recording`)).json(),
+    );
+    expect(state.available).toBe(false);
+    expect(
+      (await put(base, { enabled: true, retentionMinutes: 10 })).status,
+    ).toBe(409);
+  });
+
+  it("forwards a valid change to the node and rejects invalid ones", async () => {
+    const { base, worker } = await startGateway(
+      "Test Device",
+      undefined,
+      "/rec",
+    );
+    const accepted = await put(base, { enabled: true, retentionMinutes: 45 });
+    expect(accepted.status).toBe(200);
+    expect(parseRecordingState(await accepted.json())).toMatchObject({
+      available: true,
+      enabled: true,
+      retentionMinutes: 45,
+    });
+    expect(worker.commands.at(-1)).toEqual({
+      type: "recording",
+      enabled: true,
+      retentionMinutes: 45,
+    });
+    for (const body of [
+      { enabled: true, retentionMinutes: 61 },
+      { enabled: true, retentionMinutes: 0 },
+      { enabled: "yes", retentionMinutes: 10 },
+      { enabled: true },
+    ]) {
+      expect((await put(base, body)).status, JSON.stringify(body)).toBe(400);
+    }
+  });
+});
+
+describe("ListenGateway replay", () => {
+  async function open(base: string, worker: ScriptedWorker) {
+    const created = await fetch(`${base}/audio/v0/listen/sessions`, {
+      method: "POST",
+      headers: json,
+      body: JSON.stringify({ channel: 0, offer: "v=0 offer" }),
+    });
+    const { sessionId } = (await created.json()) as { sessionId: string };
+    worker.commands.length = 0;
+    return sessionId;
+  }
+  const replay = (base: string, sessionId: string, body: unknown) =>
+    fetch(`${base}/audio/v0/listen/sessions/${sessionId}/replay`, {
+      method: "PUT",
+      headers: json,
+      body: JSON.stringify(body),
+    });
+
+  it("starts replay at a recorded time and reports when nothing was recorded", async () => {
+    const { base, worker } = await startGateway(
+      "Test Device",
+      undefined,
+      "/rec",
+    );
+    const sessionId = await open(base, worker);
+    const at = "2026-10-01T10:00:00.000Z";
+
+    const accepted = replay(base, sessionId, {
+      channel: 1,
+      atUtc: at,
+      gain: 1,
+    });
+    await vi.waitFor(() =>
+      expect(worker.commands.at(-1)).toEqual({
+        type: "replay",
+        sessionId,
+        channel: 1,
+        gain: 1,
+        atUtcMs: Date.parse(at),
+      }),
+    );
+    worker.emit({ type: "replay-started", sessionId });
+    expect((await accepted).status).toBe(204);
+
+    const refused = replay(base, sessionId, { channel: 1, atUtc: at, gain: 1 });
+    await vi.waitFor(() => expect(worker.commands.length).toBe(2));
+    worker.emit({ type: "replay-rejected", sessionId, detail: "nothing" });
+    expect((await refused).status).toBe(409);
+  });
+
+  it("validates the request and needs recording", async () => {
+    const { base, worker } = await startGateway(
+      "Test Device",
+      undefined,
+      "/rec",
+    );
+    const sessionId = await open(base, worker);
+    for (const body of [
+      { channel: 1, atUtc: "not a date", gain: 1 },
+      { channel: 1, atUtc: "2026-10-01T10:00:00Z", gain: 99 },
+      { channel: 1, atUtc: "2026-10-01T10:00:00Z" },
+    ]) {
+      expect((await replay(base, sessionId, body)).status).toBe(400);
+    }
+    expect(
+      (
+        await replay(base, "00000000-0000-0000-0000-000000000000", {
+          channel: 1,
+          atUtc: "2026-10-01T10:00:00Z",
+          gain: 1,
+        })
+      ).status,
+    ).toBe(404);
+
+    const plain = await startGateway();
+    const plainSession = await open(plain.base, plain.worker);
+    expect(
+      (
+        await replay(plain.base, plainSession, {
+          channel: 1,
+          atUtc: "2026-10-01T10:00:00Z",
+          gain: 1,
+        })
+      ).status,
+    ).toBe(409);
+  });
+});
+
+describe("ListenGateway replay on the shared host output", () => {
+  const output = { outputDevice: "DVS", outputChannels: [3] };
+  const patch = (base: string, body: unknown) =>
+    fetch(`${base}/audio/v0/output/feeds/default`, {
+      method: "PATCH",
+      headers: json,
+      body: JSON.stringify(body),
+    });
+  const monitorOf = async (base: string) =>
+    parseHostOutput(await (await fetch(`${base}/audio/v0/output`)).json())
+      .feeds[0]!.monitor;
+
+  async function ready() {
+    const gateway = await startGateway("Test Device", output, "/rec");
+    gateway.worker.emit({
+      type: "output-ready",
+      deviceName: "DVS",
+      channelCount: 64,
+      outputRoutes: [[3]],
+    });
+    await patch(gateway.base, { channelId: "ch-1", input: 1 });
+    gateway.worker.commands.length = 0;
+    return gateway;
+  }
+  const at = () => new Date(Date.now() - 45_000).toISOString();
+
+  it("starts replay for the whole feed once the node confirms, and ends it on a new selection", async () => {
+    const { base, worker } = await ready();
+    const started = patch(base, { replay: { atUtc: at() }, changedBy: "Ana" });
+    await vi.waitFor(() =>
+      expect(
+        worker.commands.find((c) => c.type === "monitor-replay"),
+      ).toMatchObject({ mix: 0, channel: 1, gain: 1 }),
+    );
+    // Nothing is shared until the node says it is playing.
+    expect((await monitorOf(base)).replayOffsetMs ?? null).toBeNull();
+    worker.emit({ type: "monitor-replay-started", mix: 0 });
+    expect((await started).status).toBe(200);
+    const shared = await monitorOf(base);
+    expect(shared.replayOffsetMs).toBeGreaterThan(44_000);
+    expect(shared.replayOffsetMs).toBeLessThan(47_000);
+    expect(shared.changedBy).toBe("Ana");
+
+    // A level change keeps replay; choosing another input ends it.
+    await patch(base, { gainDb: -6 });
+    expect((await monitorOf(base)).replayOffsetMs).toBeGreaterThan(0);
+    await patch(base, { channelId: "ch-2", input: 0 });
+    expect((await monitorOf(base)).replayOffsetMs).toBeNull();
+  });
+
+  it("changes nothing when the node has nothing recorded, and stops on request", async () => {
+    const { base, worker } = await ready();
+    const refused = patch(base, { replay: { atUtc: at() } });
+    await vi.waitFor(() =>
+      expect(worker.commands.some((c) => c.type === "monitor-replay")).toBe(
+        true,
+      ),
+    );
+    worker.emit({
+      type: "monitor-replay-rejected",
+      mix: 0,
+      detail: "nothing was recorded at that time",
+    });
+    expect((await refused).status).toBe(409);
+    expect((await monitorOf(base)).replayOffsetMs ?? null).toBeNull();
+
+    const started = patch(base, { replay: { atUtc: at() } });
+    await vi.waitFor(() =>
+      expect(
+        worker.commands.filter((c) => c.type === "monitor-replay").length,
+      ).toBe(2),
+    );
+    worker.emit({ type: "monitor-replay-started", mix: 0 });
+    await started;
+    const stopped = await patch(base, { replay: null, changedBy: "Ben" });
+    expect(stopped.status).toBe(200);
+    expect(
+      worker.commands.filter((c) => c.type === "monitor-replay").at(-1),
+    ).toMatchObject({ atUtcMs: null });
+    expect((await monitorOf(base)).replayOffsetMs).toBeNull();
+  });
+
+  it("follows the node when its recording runs out, and validates the request", async () => {
+    const { base, worker } = await ready();
+    const started = patch(base, { replay: { atUtc: at() } });
+    await vi.waitFor(() =>
+      expect(worker.commands.some((c) => c.type === "monitor-replay")).toBe(
+        true,
+      ),
+    );
+    worker.emit({ type: "monitor-replay-started", mix: 0 });
+    await started;
+    worker.emit({ type: "monitor-replay-ended", mix: 0 });
+    await vi.waitFor(async () =>
+      expect((await monitorOf(base)).replayOffsetMs).toBeNull(),
+    );
+
+    for (const body of [
+      { replay: { atUtc: "nope" } },
+      { replay: { atUtc: at() }, muted: true },
+      { replay: { atUtc: new Date(Date.now() + 60_000).toISOString() } },
+      { replay: { atUtc: new Date(Date.now() - 4_000_000).toISOString() } },
+    ]) {
+      expect((await patch(base, body)).status, JSON.stringify(body)).toBe(400);
+    }
+  });
+
+  it("needs a selected input and a recording node", async () => {
+    const bare = await startGateway("Test Device", output, "/rec");
+    bare.worker.emit({
+      type: "output-ready",
+      deviceName: "DVS",
+      channelCount: 64,
+      outputRoutes: [[3]],
+    });
+    expect((await patch(bare.base, { replay: { atUtc: at() } })).status).toBe(
+      409,
+    );
+
+    const plain = await startGateway("Test Device", output);
+    plain.worker.emit({
+      type: "output-ready",
+      deviceName: "DVS",
+      channelCount: 64,
+      outputRoutes: [[3]],
+    });
+    await patch(plain.base, { channelId: "ch-1", input: 1 });
+    expect((await patch(plain.base, { replay: { atUtc: at() } })).status).toBe(
+      409,
+    );
   });
 });

@@ -8,7 +8,22 @@ export type PlaybackUpdate = {
 /** One node input in the monitored mix, at its channel's showfile trim. */
 export type ListenSource = { channel: number; trimDb: number };
 
+/** What the node said when asked to play recorded audio. */
+export type ReplayOutcome =
+  "started" | "nothing-recorded" | "recording-unavailable" | "failed";
+
 export interface PlaybackSession {
+  /**
+   * Plays the recording of one input from `atUtc` instead of live. The node
+   * decodes it into this same stream, so mute, dim and level still apply.
+   */
+  playRecorded(request: {
+    channel: number;
+    trimDb: number;
+    atUtc: string;
+  }): Promise<ReplayOutcome>;
+  /** Goes back to the live mix last given to `setSources`. */
+  returnToLive(): void;
   /**
    * Retargets the one stream to this mix. The node sums the inputs sample-aligned,
    * each at its trim, and crossfades the change; the connection is kept.
@@ -73,6 +88,8 @@ export function describeSources(sources: readonly ListenSource[]): string {
 export type PlaybackFactory = (options: {
   sources: readonly ListenSource[];
   onUpdate: (update: PlaybackUpdate) => void;
+  /** Replay stopped without being asked to: the connection restarted or the mix changed. */
+  onReplayEnded?: () => void;
 }) => PlaybackSession;
 
 type AudioContextConstructor = new (
@@ -154,7 +171,7 @@ async function postOffer(
 export function createWebRtcPlaybackFactory(
   dependencies?: Dependencies,
 ): PlaybackFactory {
-  return ({ sources: initialSources, onUpdate }) => {
+  return ({ sources: initialSources, onUpdate, onReplayEnded }) => {
     const AudioContextClass =
       dependencies?.AudioContext ??
       (window.AudioContext as unknown as AudioContextConstructor);
@@ -189,6 +206,14 @@ export function createWebRtcPlaybackFactory(
     let retryTimer: number | undefined;
     let graceTimer: number | undefined;
     let listening = false;
+    let replaying = false;
+
+    /** Replay lives on the node-side session, so losing or retargeting it ends replay. */
+    function endReplay() {
+      if (!replaying) return;
+      replaying = false;
+      onReplayEnded?.();
+    }
 
     function applyGain() {
       const effectiveGainDb = gainDb + (dimmed ? DIM_ATTENUATION_DB : 0);
@@ -245,12 +270,16 @@ export function createWebRtcPlaybackFactory(
       }
     }
 
-    const receiving = () => `Receiving ${describeSources(sources)}.`;
+    const receiving = () =>
+      replaying
+        ? "Playing from the recording."
+        : `Receiving ${describeSources(sources)}.`;
 
     /** Moves the live session to `sources`; the node crossfades, no renegotiation. */
     function pushSources() {
       const target = sessionId;
       if (target === undefined) return;
+      endReplay();
       const requested = sources;
       void fetchImpl(`${LISTEN_SESSIONS_PATH}/${target}/sources`, {
         method: "PUT",
@@ -282,6 +311,7 @@ export function createWebRtcPlaybackFactory(
     }
 
     function teardown() {
+      endReplay();
       generation += 1;
       if (graceTimer !== undefined) timers.clearTimeout(graceTimer);
       graceTimer = undefined;
@@ -414,6 +444,46 @@ export function createWebRtcPlaybackFactory(
     void connect();
 
     return {
+      async playRecorded({ channel, trimDb, atUtc }) {
+        const target = sessionId;
+        if (target === undefined) return "failed";
+        try {
+          const response = await fetchImpl(
+            `${LISTEN_SESSIONS_PATH}/${target}/replay`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                channel,
+                atUtc,
+                gain: Number((10 ** (trimDb / 20)).toFixed(6)),
+              }),
+            },
+          );
+          if (target !== sessionId) return "failed";
+          if (response.ok) {
+            replaying = true;
+            if (listening) update("listening", receiving());
+            return "started";
+          }
+          if (response.status === 409) {
+            const body = (await response.json().catch(() => null)) as {
+              error?: unknown;
+            } | null;
+            return body?.error === "recording-not-available"
+              ? "recording-unavailable"
+              : "nothing-recorded";
+          }
+          return "failed";
+        } catch {
+          return "failed";
+        }
+      },
+      returnToLive() {
+        if (!replaying) return;
+        pushSources();
+        if (listening) update("listening", receiving());
+      },
       setSources(nextSources) {
         const next = normalizeSources(nextSources);
         if (next.length === 0 || sameSources(next, sources)) return;

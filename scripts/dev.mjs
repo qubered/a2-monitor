@@ -22,13 +22,22 @@ const backendEnv = simulate
         process.env.A2_DATA_DIR ?? resolve(repoRoot, "data/simulated"),
     }
   : {};
+// Recorded audio stays under the git-ignored data directory.
+const recordingEnv = {
+  A2_RECORDING_DIR:
+    process.env.A2_RECORDING_DIR ?? resolve(repoRoot, "data/recordings"),
+};
 const gatewayEnv = simulate
   ? {
+      ...recordingEnv,
       A2_AUDIO_DEVICE: process.env.A2_AUDIO_DEVICE ?? SIMULATED_DEVICE,
       A2_OUTPUT_DEVICE: process.env.A2_OUTPUT_DEVICE ?? SIMULATED_OUTPUT,
       A2_BACKEND_ORIGIN: process.env.A2_BACKEND_ORIGIN ?? BACKEND,
     }
-  : { A2_BACKEND_ORIGIN: process.env.A2_BACKEND_ORIGIN ?? BACKEND };
+  : {
+      ...recordingEnv,
+      A2_BACKEND_ORIGIN: process.env.A2_BACKEND_ORIGIN ?? BACKEND,
+    };
 
 // Each child leads its own process group so stopping it also stops the
 // grandchildren (`npm` → `sh` → `node --watch` → the watched process), which

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pulse.local/schema/v0/http/recording-spans.schema.json",
+  "title": "Audio node recorded spans",
+  "description": "Which stretches of one input the audio node holds recorded audio for, served at GET /audio/v0/recording/spans?channel=n. `channel` is the 0-based input on the capture device. Spans are oldest first, never overlap, and exclude gaps of 100 ms or more, so a time outside every span has no audio to play. A span that is still being recorded ends at the last write, not at the present.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "channel", "generatedAtUtc", "spans"],
+  "properties": {
+    "schemaVersion": {
+      "const": "0"
+    },
+    "channel": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 255
+    },
+    "generatedAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "spans": {
+      "type": "array",
+      "maxItems": 3600,
+      "items": {
+        "$ref": "#/$defs/span"
+      }
+    }
+  },
+  "$defs": {
+    "span": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startUtc", "endUtc"],
+      "properties": {
+        "startUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endUtc": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

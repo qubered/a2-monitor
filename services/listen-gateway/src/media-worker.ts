@@ -1,10 +1,12 @@
 import { spawn } from "node:child_process";
 import { EventEmitter } from "node:events";
 import type { Readable, Writable } from "node:stream";
+import type { RecordingState } from "@rvlt/pulse-protocol/http";
 import type { MeterReading } from "./levels.js";
 
 const EVENT_LINE_LIMIT_BYTES = 256 * 1024;
 const OPEN_TIMEOUT_MS = 10_000;
+const REPLAY_TIMEOUT_MS = 3_000;
 /** Frames in one worker block (10 ms at 48 kHz). */
 const FRAMES_PER_WORKER_BLOCK = 480;
 /**
@@ -68,6 +70,11 @@ export type MediaWorkerOptions = {
   outputDevice?: string;
   outputChannels?: readonly number[];
   outputBinary?: string;
+  /**
+   * Where the node may keep recorded audio (`--recording-dir`). Without it,
+   * recording is unavailable. The node itself remembers whether it is on.
+   */
+  recordingDirectory?: string;
   processFactory?: WorkerProcessFactory;
   restartDelaysMs?: readonly number[];
   now?: () => number;
@@ -107,6 +114,9 @@ export type HostOutputState = {
 /** One feed's shared mix the worker renders: one input (or none) at one linear gain. */
 export type MonitorCommand = { channel: number | null; gain: number };
 
+/** The most minutes of audio the node will keep. */
+export const MAX_RECORDING_MINUTES = 60;
+
 /** Highest linear monitor gain the worker accepts: +48 dB, a +24 dB trim under a +24 dB level. */
 export const MAX_MONITOR_GAIN = 251.188_643;
 
@@ -139,6 +149,14 @@ export class SessionRejectedError extends Error {
     super(detail);
     this.name = "SessionRejectedError";
     this.capacity = detail === "listener capacity reached";
+  }
+}
+
+/** The node refused to start replay, with its reason. */
+export class ReplayRejectedError extends Error {
+  constructor(detail: string) {
+    super(detail);
+    this.name = "ReplayRejectedError";
   }
 }
 
@@ -179,7 +197,22 @@ type WorkerEvent =
       overflowFrames: number;
       droppedBlocks: number;
     }
-  | { type: "output-failed"; detail: string; retryInMs: number };
+  | { type: "output-failed"; detail: string; retryInMs: number }
+  | { type: "replay-started"; sessionId: string }
+  | { type: "replay-rejected"; sessionId: string; detail: string }
+  | { type: "replay-ended"; sessionId: string }
+  | { type: "monitor-replay-started"; mix: number }
+  | { type: "monitor-replay-rejected"; mix: number; detail: string }
+  | { type: "monitor-replay-ended"; mix: number }
+  | {
+      type: "recording";
+      available: boolean;
+      enabled: boolean;
+      retentionMinutes: number;
+      active: boolean;
+      droppedBlocks: number;
+      writeErrors: number;
+    };
 
 const EVENT_FIELDS: Readonly<Record<WorkerEvent["type"], readonly string[]>> = {
   ready: ["channelCount", "deviceName", "sampleRateHz", "type"],
@@ -210,6 +243,21 @@ const EVENT_FIELDS: Readonly<Record<WorkerEvent["type"], readonly string[]>> = {
     "underruns",
   ],
   "output-failed": ["detail", "retryInMs", "type"],
+  "replay-started": ["sessionId", "type"],
+  "replay-rejected": ["detail", "sessionId", "type"],
+  "replay-ended": ["sessionId", "type"],
+  "monitor-replay-started": ["mix", "type"],
+  "monitor-replay-rejected": ["detail", "mix", "type"],
+  "monitor-replay-ended": ["mix", "type"],
+  recording: [
+    "active",
+    "available",
+    "droppedBlocks",
+    "enabled",
+    "retentionMinutes",
+    "type",
+    "writeErrors",
+  ],
 };
 
 function defaultProcessFactory(
@@ -404,6 +452,42 @@ export function parseWorkerEvent(line: string): WorkerEvent {
       }
       return { type, detail: text("detail"), retryInMs: record.retryInMs };
     }
+    case "monitor-replay-started":
+    case "monitor-replay-ended":
+    case "monitor-replay-rejected": {
+      if (!isCount(record.mix, 0, 7)) {
+        throw new Error(`Media worker ${type} event mix is invalid.`);
+      }
+      return type === "monitor-replay-rejected"
+        ? { type, mix: record.mix, detail: text("detail") }
+        : { type, mix: record.mix };
+    }
+    case "replay-started":
+    case "replay-ended":
+      return { type, sessionId: text("sessionId") };
+    case "replay-rejected":
+      return { type, sessionId: text("sessionId"), detail: text("detail") };
+    case "recording": {
+      if (
+        typeof record.available !== "boolean" ||
+        typeof record.enabled !== "boolean" ||
+        typeof record.active !== "boolean" ||
+        !isCount(record.retentionMinutes, 1, MAX_RECORDING_MINUTES) ||
+        !isCount(record.droppedBlocks, 0, Number.MAX_SAFE_INTEGER) ||
+        !isCount(record.writeErrors, 0, Number.MAX_SAFE_INTEGER)
+      ) {
+        throw new Error("Media worker recording event is invalid.");
+      }
+      return {
+        type,
+        available: record.available,
+        enabled: record.enabled,
+        retentionMinutes: record.retentionMinutes,
+        active: record.active,
+        droppedBlocks: record.droppedBlocks,
+        writeErrors: record.writeErrors,
+      };
+    }
     default: {
       if (
         !isCount(record.sessions, 0, 1_000) ||
@@ -440,6 +524,22 @@ export class MediaWorkerManager extends EventEmitter {
   private stopping = false;
   private readonly pending = new Map<string, PendingOpen>();
   private readonly sessions = new Set<string>();
+  private readonly pendingReplays = new Map<
+    string,
+    {
+      resolve: () => void;
+      reject: (error: Error) => void;
+      timer: NodeJS.Timeout;
+    }
+  >();
+  private readonly pendingMonitorReplays = new Map<
+    number,
+    {
+      resolve: () => void;
+      reject: (error: Error) => void;
+      timer: NodeJS.Timeout;
+    }
+  >();
   private droppedCaptureBlocks = 0;
   private droppedCaptureCallbacks = 0;
   private readonly restartDelaysMs: readonly number[];
@@ -456,6 +556,8 @@ export class MediaWorkerManager extends EventEmitter {
   private outputState: HostOutputState | null;
   /** Each feed's mix, by mix index. */
   private monitors: MonitorCommand[] = [];
+  private readonly recordingDirectory: string | undefined;
+  private recording: RecordingState;
 
   constructor(options: MediaWorkerOptions) {
     super();
@@ -493,6 +595,16 @@ export class MediaWorkerManager extends EventEmitter {
             underruns: 0,
             droppedFrames: 0,
           };
+    this.recordingDirectory = options.recordingDirectory || undefined;
+    this.recording = {
+      schemaVersion: "0",
+      available: this.recordingDirectory !== undefined,
+      enabled: false,
+      retentionMinutes: MAX_RECORDING_MINUTES,
+      active: false,
+      droppedBlocks: 0,
+      writeErrors: 0,
+    };
     this.state = {
       schemaVersion: 0,
       status: "configuration-required",
@@ -515,6 +627,29 @@ export class MediaWorkerManager extends EventEmitter {
   /** True when the configured device is the built-in test signal, not a physical input. */
   get simulated(): boolean {
     return this.device === SIMULATED_DEVICE_NAME;
+  }
+
+  /** Recording as the node last reported it. */
+  getRecordingState(): RecordingState {
+    return this.recording;
+  }
+
+  /** Where recorded audio is kept, if this node records at all. */
+  getRecordingDirectory(): string | undefined {
+    return this.recordingDirectory;
+  }
+
+  /**
+   * Turns recording on or off and sets the retention. The node applies and
+   * remembers it, then confirms with a `recording` event; this returns false
+   * when the command could not be delivered to a running node.
+   */
+  setRecording(enabled: boolean, retentionMinutes: number): boolean {
+    if (!this.recording.available || !this.child) return false;
+    this.send({ type: "recording", enabled, retentionMinutes });
+    this.recording = { ...this.recording, enabled, retentionMinutes };
+    this.emit("recording", this.recording);
+    return true;
   }
 
   /** Host monitor output state, or null when no output device is configured. */
@@ -622,6 +757,9 @@ export class MediaWorkerManager extends EventEmitter {
               "--output-routes",
               this.outputRoutes.map((route) => route.join(",")).join(";"),
             ]),
+        ...(this.recordingDirectory === undefined
+          ? []
+          : ["--recording-dir", this.recordingDirectory]),
       ]);
     } catch {
       this.fail("Media worker could not be started.");
@@ -683,6 +821,72 @@ export class MediaWorkerManager extends EventEmitter {
     return true;
   }
 
+  /**
+   * Plays recorded audio of one input to a listener from `atUtcMs`, at `gain`,
+   * until the listener selects live again or the recording runs out. Resolves
+   * once the node has started it; rejects with the node's reason otherwise.
+   */
+  startReplay(
+    sessionId: string,
+    channel: number,
+    gain: number,
+    atUtcMs: number,
+  ): Promise<void> {
+    if (!this.sessions.has(sessionId) || !this.child) {
+      return Promise.reject(new ReplayRejectedError("unknown session"));
+    }
+    this.pendingReplays
+      .get(sessionId)
+      ?.reject(new ReplayRejectedError("superseded"));
+    return new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pendingReplays.delete(sessionId);
+        reject(new Error("Media worker did not answer the replay in time."));
+      }, REPLAY_TIMEOUT_MS);
+      this.pendingReplays.set(sessionId, { resolve, reject, timer });
+      this.send({ type: "replay", sessionId, channel, gain, atUtcMs });
+    });
+  }
+
+  /**
+   * Plays recorded audio of the feed's selected input on one host output feed
+   * from `atUtcMs`, or goes back to live with `null`. `command` is the feed's
+   * current monitor. Resolves once the node has started it; rejects with the
+   * node's reason otherwise. The feed's live input and level are unchanged.
+   */
+  setMonitorReplay(
+    mix: number,
+    command: MonitorCommand,
+    atUtcMs: number | null,
+  ): Promise<void> {
+    if (!this.outputState || !this.child || command.channel === null) {
+      return Promise.reject(new ReplayRejectedError("no feed playing"));
+    }
+    const send = () =>
+      this.send({
+        type: "monitor-replay",
+        mix,
+        channel: command.channel,
+        gain: command.gain,
+        atUtcMs,
+      });
+    if (atUtcMs === null) {
+      send();
+      return Promise.resolve();
+    }
+    this.pendingMonitorReplays
+      .get(mix)
+      ?.reject(new ReplayRejectedError("superseded"));
+    return new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pendingMonitorReplays.delete(mix);
+        reject(new Error("Media worker did not answer the replay in time."));
+      }, REPLAY_TIMEOUT_MS);
+      this.pendingMonitorReplays.set(mix, { resolve, reject, timer });
+      send();
+    });
+  }
+
   closeSession(sessionId: string): boolean {
     if (!this.sessions.has(sessionId)) return false;
     this.sessions.delete(sessionId);
@@ -718,6 +922,16 @@ export class MediaWorkerManager extends EventEmitter {
   }
 
   private clearSessions(error: Error): void {
+    for (const pending of this.pendingReplays.values()) {
+      clearTimeout(pending.timer);
+      pending.reject(error);
+    }
+    this.pendingReplays.clear();
+    for (const pending of this.pendingMonitorReplays.values()) {
+      clearTimeout(pending.timer);
+      pending.reject(error);
+    }
+    this.pendingMonitorReplays.clear();
     for (const pending of this.pending.values()) {
       clearTimeout(pending.timer);
       pending.reject(error);
@@ -743,6 +957,10 @@ export class MediaWorkerManager extends EventEmitter {
       this.restartAttempt = 0;
     }
     this.readyAtMs = undefined;
+    if (this.recording.active) {
+      this.recording = { ...this.recording, active: false };
+      this.emit("recording", this.recording);
+    }
     this.setOutputState({
       status: "error",
       detail: "The audio node stopped, so the host output is silent.",
@@ -903,6 +1121,49 @@ export class MediaWorkerManager extends EventEmitter {
         this.setOutputState({ underruns: event.underruns, droppedFrames });
         break;
       }
+      case "replay-started":
+      case "replay-rejected": {
+        const pending = this.pendingReplays.get(event.sessionId);
+        if (!pending) break;
+        clearTimeout(pending.timer);
+        this.pendingReplays.delete(event.sessionId);
+        if (event.type === "replay-started") pending.resolve();
+        else pending.reject(new ReplayRejectedError(event.detail));
+        break;
+      }
+      case "replay-ended":
+        this.emit("replay-ended", event.sessionId);
+        break;
+      case "monitor-replay-started":
+      case "monitor-replay-rejected": {
+        const pending = this.pendingMonitorReplays.get(event.mix);
+        if (!pending) break;
+        clearTimeout(pending.timer);
+        this.pendingMonitorReplays.delete(event.mix);
+        if (event.type === "monitor-replay-started") pending.resolve();
+        else pending.reject(new ReplayRejectedError(event.detail));
+        break;
+      }
+      case "monitor-replay-ended":
+        this.emit("monitor-replay-ended", event.mix);
+        break;
+      case "recording":
+        if (event.writeErrors > this.recording.writeErrors) {
+          process.stderr.write(
+            `a2-listen-gateway: recording had ${event.writeErrors - this.recording.writeErrors} write error(s)\n`,
+          );
+        }
+        this.recording = {
+          schemaVersion: "0",
+          available: event.available,
+          enabled: event.enabled,
+          retentionMinutes: event.retentionMinutes,
+          active: event.active,
+          droppedBlocks: event.droppedBlocks,
+          writeErrors: event.writeErrors,
+        };
+        this.emit("recording", this.recording);
+        break;
       case "output-failed":
         process.stderr.write(
           `a2-listen-gateway: host output failed: ${event.detail}\n`,

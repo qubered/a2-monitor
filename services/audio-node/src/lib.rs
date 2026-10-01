@@ -2,6 +2,8 @@
 
 pub mod capture_stats;
 pub mod monitor_output;
+pub mod recording;
+pub mod replay_reader;
 pub mod test_signal;
 pub mod worker_control;
 pub mod worker_control_session;

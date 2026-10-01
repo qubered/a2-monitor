@@ -13,12 +13,14 @@ mod capture;
 mod control;
 mod host_output;
 mod meters;
+mod recorder;
 mod session;
 
 use std::collections::HashMap;
 use std::ffi::OsString;
 use std::io::{self, BufRead, BufReader, ErrorKind};
 use std::net::{IpAddr, SocketAddr, UdpSocket};
+use std::path::Path;
 use std::process::{Child, Command as ProcessCommand, ExitCode, Stdio};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -26,10 +28,13 @@ use std::sync::mpsc::{self, RecvTimeoutError, Sender, SyncSender};
 use std::thread;
 use std::time::{Duration, Instant};
 
+use a2_audio_node::recording::channel_directory;
+use a2_audio_node::replay_reader::ReplayReader;
 use capture::{CaptureBlock, CaptureHeader};
 use control::{Command, EventWriter};
 use host_output::{HostOutput, OutputArgs, OutputEvent};
 use meters::MeterBank;
+use recorder::{Recorder, RecordingConfig};
 use session::{ListenSession, SessionEvent};
 use socket2::{Domain, Protocol, Socket, Type};
 
@@ -59,6 +64,7 @@ struct Args {
     capture_binary: OsString,
     device_name: OsString,
     output: Option<OutputArgs>,
+    recording_dir: Option<OsString>,
 }
 
 fn parse_args<I>(args: I) -> Result<Args, &'static str>
@@ -66,18 +72,20 @@ where
     I: Iterator<Item = OsString>,
 {
     const USAGE: &str = "usage: pulse-media-worker --capture-bin <path> --device <exact-device-name> \
-         [--output-bin <path> --output-device <exact-device-name> --output-routes <n[,n…][;…]>]";
+         [--output-bin <path> --output-device <exact-device-name> --output-routes <n[,n…][;…]>] \
+         [--recording-dir <path>]";
     let args: Vec<OsString> = args.collect();
     if !args.len().is_multiple_of(2) {
         return Err(USAGE);
     }
-    let mut values: [Option<OsString>; 5] = Default::default();
-    const FLAGS: [&str; 5] = [
+    let mut values: [Option<OsString>; 6] = Default::default();
+    const FLAGS: [&str; 6] = [
         "--capture-bin",
         "--device",
         "--output-bin",
         "--output-device",
         "--output-routes",
+        "--recording-dir",
     ];
     for pair in args.as_chunks::<2>().0 {
         let index = FLAGS
@@ -95,6 +103,7 @@ where
         output_binary,
         output_device,
         output_routes,
+        recording_dir,
     ] = values;
     let (Some(capture_binary), Some(device_name)) = (capture_binary, device_name) else {
         return Err(USAGE);
@@ -112,6 +121,7 @@ where
         capture_binary,
         device_name,
         output,
+        recording_dir,
     })
 }
 
@@ -200,6 +210,7 @@ struct Worker<W: io::Write> {
     channel_count: Option<usize>,
     meters: Option<MeterBank>,
     host_output: Option<HostOutput>,
+    recorder: Recorder,
     recycle: Sender<Vec<f32>>,
     dropped_blocks: Arc<AtomicU64>,
     /// Device callbacks `pulse-device-capture` dropped, from its stats lines.
@@ -283,6 +294,91 @@ impl<W: io::Write> Worker<W> {
                     None => Ok(()),
                 }
             }
+            Command::MonitorReplay {
+                mix,
+                channel,
+                gain,
+                at_utc_ms,
+            } => {
+                let Some(at_utc_ms) = at_utc_ms else {
+                    if let Some(output) = &mut self.host_output {
+                        output.stop_replay(mix);
+                    }
+                    return Ok(());
+                };
+                let directory = self.recorder.directory().map(Path::to_path_buf);
+                let (Some(directory), Some(output)) = (directory, self.host_output.as_mut()) else {
+                    return self
+                        .output
+                        .monitor_replay_rejected(mix, "recording is not available");
+                };
+                if self.channel_count.is_none_or(|count| channel >= count) {
+                    return self
+                        .output
+                        .monitor_replay_rejected(mix, "channel is out of range");
+                }
+                match ReplayReader::open(&channel_directory(&directory, channel), at_utc_ms) {
+                    Ok(Some(reader)) => {
+                        // The feed plays this input; replay then replaces its live audio.
+                        output.set_monitor(mix, Some(channel), gain);
+                        if output.start_replay(mix, reader) {
+                            self.output.monitor_replay_started(mix)
+                        } else {
+                            self.output
+                                .monitor_replay_rejected(mix, "the feed does not exist")
+                        }
+                    }
+                    Ok(None) => self
+                        .output
+                        .monitor_replay_rejected(mix, "nothing was recorded at that time"),
+                    Err(_) => self
+                        .output
+                        .monitor_replay_rejected(mix, "the recording could not be read"),
+                }
+            }
+            Command::Replay {
+                session_id,
+                channel,
+                gain,
+                at_utc_ms,
+            } => {
+                let Some(directory) = self.recorder.directory().map(Path::to_path_buf) else {
+                    return self
+                        .output
+                        .replay_rejected(&session_id, "recording is not available");
+                };
+                if self.channel_count.is_none_or(|count| channel >= count) {
+                    return self
+                        .output
+                        .replay_rejected(&session_id, "channel is out of range");
+                }
+                let Some(session) = self.sessions.get_mut(&session_id) else {
+                    return self.output.closed(&session_id, "unknown-session");
+                };
+                let opened = ReplayReader::open(&channel_directory(&directory, channel), at_utc_ms);
+                match opened {
+                    Ok(Some(reader)) => {
+                        session.start_replay(reader, gain);
+                        self.output.replay_started(&session_id)
+                    }
+                    Ok(None) => self
+                        .output
+                        .replay_rejected(&session_id, "nothing was recorded at that time"),
+                    Err(_) => self
+                        .output
+                        .replay_rejected(&session_id, "the recording could not be read"),
+                }
+            }
+            Command::Recording {
+                enabled,
+                retention_minutes,
+            } => {
+                self.recorder.apply(RecordingConfig {
+                    enabled,
+                    retention_minutes,
+                });
+                self.output.recording(&self.recorder.report())
+            }
             Command::Close { session_id } => match self.sessions.get_mut(&session_id) {
                 Some(session) => {
                     session.close("requested");
@@ -300,6 +396,7 @@ impl<W: io::Write> Worker<W> {
         if let Some(output) = &mut self.host_output {
             output.write_block(&block);
         }
+        self.recorder.write_block(&block, utc_now_ms());
         let reading = self
             .meters
             .as_mut()
@@ -326,8 +423,16 @@ impl<W: io::Write> Worker<W> {
     }
 
     fn drive(&mut self, now: Instant) -> io::Result<()> {
+        if let Some(output) = &mut self.host_output {
+            for mix in output.take_replay_ended() {
+                self.output.monitor_replay_ended(mix)?;
+            }
+        }
         let mut transitions = Vec::new();
         for (id, session) in &mut self.sessions {
+            if session.take_replay_ended() {
+                self.output.replay_ended(id)?;
+            }
             session.handle_timeout(now);
             let sockets = &self.sockets;
             if let Some(event) = session.poll(&mut |packet| {
@@ -381,6 +486,12 @@ impl<W: io::Write> Worker<W> {
             None => Ok(()),
         }
     }
+}
+
+fn utc_now_ms() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |elapsed| elapsed.as_millis() as u64)
 }
 
 fn spawn_capture(args: &Args) -> io::Result<Child> {
@@ -453,6 +564,7 @@ fn run(args: &Args) -> Result<(), String> {
         channel_count: None,
         meters: None,
         host_output,
+        recorder: Recorder::new(args.recording_dir.clone().map(Into::into)),
         recycle: recycle_tx,
         dropped_blocks,
         dropped_callbacks,
@@ -464,6 +576,7 @@ fn run(args: &Args) -> Result<(), String> {
     if let Some(output) = &mut worker.host_output {
         output.shutdown();
     }
+    worker.recorder.shutdown();
     let _ = child.kill();
     let _ = child.wait();
     result
@@ -493,7 +606,12 @@ fn event_loop<W: io::Write>(
             Ok(Event::CaptureReady(header)) => {
                 worker.channel_count = Some(header.channel_count);
                 worker.meters = Some(MeterBank::new(header.channel_count));
+                worker.recorder.capture_ready(header.channel_count);
                 worker.output.ready(&header).map_err(io_error)?;
+                worker
+                    .output
+                    .recording(&worker.recorder.report())
+                    .map_err(io_error)?;
             }
             Ok(Event::Capture(block)) => worker
                 .handle_block(block, Instant::now())
@@ -528,6 +646,10 @@ fn event_loop<W: io::Write>(
                     worker.dropped_callbacks.load(Ordering::Relaxed),
                 )
                 .map_err(io_error)?;
+            worker
+                .output
+                .recording(&worker.recorder.report())
+                .map_err(io_error)?;
         }
     }
 }
@@ -558,6 +680,7 @@ mod tests {
                 capture_binary: "/bin/capture".into(),
                 device_name: "DVS".into(),
                 output: None,
+                recording_dir: None,
             })
         );
         assert_eq!(
@@ -581,6 +704,7 @@ mod tests {
                     device_name: "DVS".into(),
                     routes: "3,4;5".into(),
                 }),
+                recording_dir: None,
             })
         );
         assert!(

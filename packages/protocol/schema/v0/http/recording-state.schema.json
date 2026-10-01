@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pulse.local/schema/v0/http/recording-state.schema.json",
+  "title": "Audio node recording state",
+  "description": "Whether the audio node is recording every input as 48 kbps Opus, served at GET /audio/v0/recording and returned by PUT /audio/v0/recording. The node keeps `enabled` and `retentionMinutes` itself, so recording resumes after a restart without the backend. `available` is false when the node has no recording directory. `active` is true only while capture is running and audio is being written. Turning recording off deletes what was recorded.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "available",
+    "enabled",
+    "retentionMinutes",
+    "active",
+    "droppedBlocks",
+    "writeErrors"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "0"
+    },
+    "available": {
+      "type": "boolean"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "retentionMinutes": {
+      "description": "How many minutes of audio are kept, at most 60.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 60
+    },
+    "active": {
+      "type": "boolean"
+    },
+    "droppedBlocks": {
+      "description": "10 ms capture blocks the recorder dropped because it fell behind, since the node started. Each one leaves a gap in the recording.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "writeErrors": {
+      "description": "Failed writes or encodes since the node started.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    }
+  }
+}

@@ -1445,6 +1445,38 @@ a:focus-visible {
   padding: var(--space-4) var(--space-6);
 }
 
+/* Listening back to the recording. While replaying, this bar is always
+   visible (even with history closed) so live is one touch away. */
+.replay-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-6) 0;
+  color: var(--ink-2);
+  font-size: var(--font-caption);
+}
+
+.replay-bar.is-replaying {
+  margin: var(--space-3) var(--space-6) 0;
+  padding: var(--space-3);
+  border: var(--size-1) solid var(--warn);
+  border-radius: var(--radius);
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.replay-bar.is-replaying .control-button {
+  margin-left: auto;
+}
+
+.replay-notice {
+  margin: 0;
+  padding: var(--space-2) var(--space-6) 0;
+  color: var(--warn);
+  font-size: var(--font-caption);
+}
+
 /* Shown only past the first monitored channel: every channel the operator is
    currently listening to together, each with its own honest status dot. */
 .monitor-list {

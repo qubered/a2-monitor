@@ -112,6 +112,31 @@ const contracts = [
     rejected: [
       "fixtures/v0/http/incompatible/host-output.unknown-field.json",
       "fixtures/v0/http/incompatible/host-output.gain-above-range.json",
+      "fixtures/v0/http/incompatible/host-output.negative-replay-offset.json",
+    ],
+  },
+  {
+    name: "recording-state",
+    schema: "schema/v0/http/recording-state.schema.json",
+    accepted: [
+      "fixtures/v0/http/current/recording-state.valid.json",
+      "fixtures/v0/http/previous/recording-state.valid.json",
+    ],
+    rejected: [
+      "fixtures/v0/http/incompatible/recording-state.unknown-field.json",
+      "fixtures/v0/http/incompatible/recording-state.retention-above-range.json",
+    ],
+  },
+  {
+    name: "recording-spans",
+    schema: "schema/v0/http/recording-spans.schema.json",
+    accepted: [
+      "fixtures/v0/http/current/recording-spans.valid.json",
+      "fixtures/v0/http/previous/recording-spans.valid.json",
+    ],
+    rejected: [
+      "fixtures/v0/http/incompatible/recording-spans.unknown-field.json",
+      "fixtures/v0/http/incompatible/recording-spans.span-without-end.json",
     ],
   },
   {
