@@ -1,9 +1,9 @@
-# Pulse — design language
+# Pulse, by RVLT — design language
 
-- **Version:** 2.17.0
+- **Version:** 3.0.0
 - **Status:** Proposed. Nothing here has been in front of an A2, an A1 or a real
   rack; none of it should be treated as validated until it has.
-- **Last updated:** 2026-09-28
+- **Last updated:** 2026-10-22
 
 This is the whole design language in one document. It is normative: where it and
 anything else disagree, this document is the intent, and the implementation is
@@ -30,17 +30,22 @@ current reference build.
 
 ## 1. Foundations
 
-### 1.1 A system of its own
+### 1.1 Pulse, by RVLT
 
-Pulse ships as part of the RVLT product family, alongside RVLT Flow and Beacon
-by RVLT, and shares their instinct for plain, unpretentious software. But it is
-not built on a shared token system with them, and this document is not a list
-of deviations from someone else's design language. Pulse's tokens, type,
-shape and motion exist because of what this product is: an instrument panel
-read in the dark, backstage, for a few seconds at a time, by someone who is not
-looking at a screen for a living. Where an earlier version of this document
-inherited a design language from elsewhere, it has been replaced wholesale.
-Nothing below should be read as "the same as before, but green."
+Pulse is an RVLT product. It runs on the [RVLT design
+language](https://github.com/RVLT-Labs/rvlt-designlanguage) (`DESIGN.md` there
+is the master copy): the espresso surface ramp, Archivo / Hanken Grotesk / Geist
+Mono, 2px outlines with hard offset shadows, pill controls, and red as the
+action colour. Pulse's tokens are those values, declared once in
+`packages/ui/tokens.css`.
+
+Pulse is also an instrument panel read in the dark, backstage, for a few seconds
+at a time, by someone who is not looking at a screen for a living. Where that
+job needs something RVLT's app rules don't give, Pulse departs deliberately, and
+every departure is listed here and in [§1.6](#16-deliberate-departures-from-rvlt).
+Anything not listed there follows RVLT. Where an RVLT rule and this document
+disagree and the departure is not in §1.6, RVLT wins and this document is the
+bug.
 
 ### 1.2 Dark. Only.
 
@@ -86,6 +91,35 @@ Recorded as [ADR 0019](../decisions/0019-cue-optional-and-show-time-scope.md).
   an operator should not be hopping between programs. Coordination, scanning,
   deployment and firmware stay in the vendor tools.
 
+### 1.6 Deliberate departures from RVLT
+
+These are the only places Pulse departs from the RVLT app rules, and why.
+
+1. **Red on the channel grid means a critical fault, nothing else.** RVLT uses
+   red for primary actions, live state and alerts. In chrome Pulse does the same
+   (primary buttons, the RVLT mark, chrome focus). On a card, red is only ever a
+   critical fault. If red marked both "you are listening" and "this is failing" on
+   one 64-channel grid, an operator in the dark could not tell them apart.
+2. **Live and listening are signal green (`--ok`).** RVLT's own live pill is
+   green with a pulsing dot; Pulse extends that to the channel in your ears.
+3. **Per-channel signal states.** `--ok` / `--warn` tick fills, `--rep` for
+   stale or unknown, `--purple` for replay, and the whole honesty grammar
+   ([§9](#9-the-honesty-grammar)) stay. They are product semantics, not chrome.
+4. **Focus is red on chrome and ink on channel cards**, so keyboard focus never
+   reads as a critical fault on the grid.
+5. **Hover lift is an enhancement only.** Touch is primary; selection and focus
+   never depend on hover.
+6. **No mascot, stickers, Kalam or doodles on live screens.** Calm data.
+   Operator-written notes are body type in italic
+   ([§4.3](#43-machine-and-human-type)); Hanken Grotesk has no italic cut, so the
+   browser synthesises one.
+7. **The attention pulse stays** ([§6](#6-motion)): a soft glow that marks an
+   unclaimed report or an unacknowledged critical alert. It is Pulse's only
+   glow and is the one use of a soft shadow.
+8. **The brand mark is Pulse's own five bars.** They are set the way RVLT sets
+   product icons: cream on an RVLT-red tile (radius 22.6%), with "by RVLT" in the
+   unaltered RVLT mark. See [§7](#7-iconography).
+
 ---
 
 ## 2. Principles
@@ -128,7 +162,7 @@ borrowed for the logo — it is the same colour the product uses for _verified,
 healthy_ and _listening_ ([§3.3](#33-accent-roles)). It is spent where it says
 something: the channel in your ears, a verified check, the live meter, a
 healthy status tick. A fault or caution cell still tints its whole background,
-so on a grid of sixty-four channels a *fill* is what means "look here"; the
+so on a grid of sixty-four channels a _fill_ is what means "look here"; the
 tick's own colour says whether that one dimension is fine
 ([§10.2](#102-status-strip)).
 
@@ -141,8 +175,8 @@ keep Pulse looking like an instrument built for this job, not a generic admin
 console that happens to be dark.
 
 - No gradients, anywhere, for any purpose.
-- No glow, halo, bloom or coloured drop shadow. Elevation comes from a soft
-  neutral shadow and a lighter surface, never a colour-tinted one. The one
+- No glow, halo, bloom or coloured drop shadow. Elevation comes from the hard
+  offset shadow and a lighter surface, never a blurred or colour-tinted one. The one
   exception is the [attention pulse](#6-motion): a soft glow that breathes
   around an element that needs someone, and nowhere else.
 - No glassmorphism or backdrop blur.
@@ -178,9 +212,8 @@ There is one surface: dark. No opt-in alternate, no theme resolution.
 --line  #332c24  --line-2  #473e32
 ```
 
-Cards are a hairline `--line` rule plus a soft neutral shadow, never a thick
-outline and never a hard pixel-offset shadow — see
-[§5](#5-shape-and-elevation) for why.
+Cards are a 2px `--line-2` outline plus a hard offset shadow — see
+[§5](#5-shape-and-elevation).
 
 ### 3.2 Never inline a value
 
@@ -195,18 +228,18 @@ colour at the component.
 
 ### 3.3 Accent roles
 
-Three accents, each doing one job, none of them decorative:
+Four accents, each doing one job, none of them decorative:
 
-| Role                     | Token      | Value     | Job                                                     |
-| ------------------------ | ---------- | --------- | ------------------------------------------------------- |
-| Signal (brand + healthy) | `--ok`     | `#4fd888` | The product's own colour. Verified, healthy, listening. |
-| Warn                     | `--warn`   | `#eba53a` | Needs someone, not failing yet.                         |
-| Replay                   | `--purple` | `#9b82e6` | You are hearing the past, not the present.              |
+| Role             | Token          | Value     | Job                                                                   |
+| ---------------- | -------------- | --------- | --------------------------------------------------------------------- |
+| Action           | `--action-red` | `#d6323a` | Primary action fill under white text, and the RVLT mark. Chrome only. |
+| Signal (healthy) | `--ok`         | `#4fd888` | Verified, healthy, listening.                                         |
+| Warn             | `--warn`       | `#eba53a` | Needs someone, not failing yet.                                       |
+| Replay           | `--purple`     | `#9b82e6` | You are hearing the past, not the present.                            |
 
-Signal green is not a fourth, separate "brand colour" layered on top of the
-semantic system — it _is_ the semantic system's healthy state
-([§2.9](#2-principles)). A card with every tick green is, by
-construction, on-brand.
+Signal green is the semantic system's healthy state ([§2.9](#2-principles)); the
+brand is RVLT red and cream ([§1.6](#16-deliberate-departures-from-rvlt)). A card
+with every tick green is healthy, not "on-brand".
 
 ### 3.4 Domain mapping
 
@@ -219,9 +252,11 @@ construction, on-brand.
 | Stale, unknown, disarmed    | `--rep` on `--rep-soft`       | `#b6ac9a` |
 | Replay                      | `--purple` on `--purple-soft` | `#9b82e6` |
 
-Red is reserved, strictly, for **a critical fault**, and nothing else. It never
-appears in the wordmark, the icon, a chart, focus, a pressed control or any
-chrome. The channel in your ears carries the signal-green ring: an earlier
+On a card, red is reserved, strictly, for **a critical fault**, and nothing else.
+In chrome it is the RVLT action and brand colour (primary buttons, the app icon
+and the "by RVLT" mark, chrome focus); it never appears in a chart, a meter, a
+badge or a card border except as a critical fault. The channel in your ears
+carries the signal-green ring: an earlier
 version made it red, which put the same colour on "you are listening" and "this
 is failing" on one grid, against the aviation and process-control practice of
 reserving alert colours for alerts (audit
@@ -235,28 +270,23 @@ meter, a badge or a border.
 
 ## 4. Typography
 
-Two families, not four. **IBM Plex Sans carries display, body and the
-wordmark** — one typeface, read at different weights, sizes and tracking,
-rather than reaching for a separate "brand" typeface to make the logotype feel
-distinct. **IBM Plex Mono is every machine measurement.** Plex was chosen
-because it is a real technical typeface with its own history (IBM's own,
-built for print and code and screens together), not because it was trending
-in a font picker — an earlier draft of this system used Space Grotesk and
-Fredoka, both of which had drifted into being the default look of any
-AI-assisted mockup, and neither said anything specific about this product.
+RVLT's three app families, self-hosted from `packages/ui/fonts/` (SIL OFL;
+licences alongside) so core show operation works offline. **Archivo** is display
+and the wordmark, **Hanken Grotesk** is body and UI, **Geist Mono** is every
+machine measurement.
 
-| Role      | Family                            | Weights         | Job here                                                                              |
-| --------- | --------------------------------- | --------------- | ------------------------------------------------------------------------------------- |
-| Display   | **IBM Plex Sans**                 | 600 / 700       | Page titles, panel headers, the one bright figure                                     |
-| Body      | **IBM Plex Sans**                 | 400 / 500       | Everything read as language; all UI text, labels, controls                            |
-| Data mono | **IBM Plex Mono**, `tabular-nums` | 400 / 500 / 600 | Anything a machine measured — levels, frequencies, times, asset IDs. Data cells only. |
-| Wordmark  | **IBM Plex Sans**                 | 700             | The product lockup only, at −.02em tracking. Never a separate typeface.               |
+| Role      | Family                         | Weights         | Job here                                                                              |
+| --------- | ------------------------------ | --------------- | ------------------------------------------------------------------------------------- |
+| Display   | **Archivo**                    | 700 / 800       | Page titles (24 / 800 / −.02em), panel headers, the one bright figure                 |
+| Body      | **Hanken Grotesk**             | 400 / 500 / 600 | Everything read as language; all UI text, labels, controls                            |
+| Data mono | **Geist Mono**, `tabular-nums` | 400 / 500 / 600 | Anything a machine measured — levels, frequencies, times, asset IDs. Data cells only. |
+| Wordmark  | **Archivo**                    | 800             | "Pulse" in the lockup, at −.02em tracking.                                            |
 
 ### 4.1 App type ramp (LOCKED — do not invent UI sizes)
 
 | Role                   | Size / line / tracking | Family · weight            | Use                                 |
 | ---------------------- | ---------------------- | -------------------------- | ----------------------------------- |
-| App page title         | 24 / 1.2 / −.02em      | display 700                | the one `h1` on a screen            |
+| App page title         | 24 / 1.2 / −.02em      | display 800                | the one `h1` on a screen            |
 | Section / panel header | 18 / 1.25 / −.01em     | display 600                | card and section headers            |
 | Card / widget title    | 15 / 1.3               | display 600 _or_ body 600  | channel name on a card              |
 | Reading body           | 16 / 1.5               | body 400                   | descriptions, help, long text       |
@@ -269,7 +299,7 @@ AI-assisted mockup, and neither said anything specific about this product.
   status-strip labels and axis ticks.
 - Buttons are UI text, 14px, weight 600. Mono matches the cell it sits in.
 - Weights: display 600–700 for titles; body 400 read / 500 UI / 600 emphasis /
-  700 badge. No others — Plex Sans's lighter (100–300) and heavier cuts are
+  700 badge. No others — the variable fonts' lighter and heavier cuts are
   unused.
 - Keep the high-contrast jump: a 24px display title over 13.5px quiet rows. Do
   not flatten everything to one size.
@@ -305,44 +335,29 @@ body-size rule.
 
 ## 5. Shape and elevation
 
-Pulse's material is soft, not pressable. A card sits slightly above the page
-because of light and shadow, not because it looks like a button waiting to be
-pushed down 2px. This is the one place this version breaks hardest from what
-came before, which borrowed a printed, outlined, hard-shadow language that
-answered to a different product's brand, not to a screen read at arm's length
-in the dark.
+Pulse uses RVLT's physical edge: a 2px outline and a hard offset shadow with no
+blur, like a printed flight case. Elevation is that shadow plus a one-step-lighter
+surface.
 
 ```
 --r 12px   --r-lg 18px   pill 999px
 ```
 
-**Cards.** A 1px hairline `--line` border, plus a two-layer soft shadow: a
-tight, low-opacity contact shadow and a broader, softer ambient one. Nothing
-sharp, nothing offset, nothing that reads as a drop-shadow filter slapped on
-in one pass.
+**Cards.** A 2px `--line-2` border, a hard offset shadow, and a faint inset top
+highlight.
 
 ```
---shadow-1: 0 1px 2px rgb(0 0 0 / 28%)                            /* resting */
---shadow-2: 0 2px 6px rgb(0 0 0 / 22%), 0 8px 24px rgb(0 0 0 / 24%)  /* card, hover */
---shadow-3: 0 8px 16px rgb(0 0 0 / 26%), 0 24px 48px rgb(0 0 0 / 30%) /* dialog, sheet */
+--shadow-card:  0 3px 0 #0c0a08   /* resting */
+--shadow-hover: 0 7px 0 #0c0a08   /* hover, selected */
+--shadow-press: 0 1px 0 #0c0a08   /* pressed */
+--card-lit: inset 0 1px 0 rgb(255 253 248 / 14%)
 ```
 
-Shadow alone reads poorly on a near-black page — a dark shadow is nearly
-invisible against dark, and a light glow reads as a bug, not depth
-([§2.10](#210-refusals) bans coloured glow outright). So elevation is carried
-by **two signals together**: the shadow above, _and_ a one-step-lighter surface
-colour (`--paper` → `--card` → `--elev`) with a faint inset top highlight —
+The lit edge marks hierarchy (`--card` → `--elev`); it is not decoration.
 
-```
---card-lit: inset 0 1px 0 rgb(255 253 248 / 12%)
-```
-
-— which reads as a sliver of light catching the top edge of a raised surface.
-
-**Hover and press.** A card lifts from `--shadow-2` to `--shadow-3` and rises
-1px on hover; it settles back on press, shadow included — a soft compression,
-not a hard pixel-snap. Buttons darken or lighten their fill by one step and
-lose their shadow on press; they never translate.
+**Hover and press.** A card lifts 3px and its shadow grows to `--shadow-hover`
+on hover (pointer only; never the only affordance). Buttons drop 2px on press and
+their shadow shrinks to `--shadow-press`; a primary button's shadow is `--red-700`.
 
 **Borders carry state, not weight.** A resting card's border is `--line`, 1px,
 quiet. Selection and focus are a **2px accent ring, offset 2px from the edge**
@@ -351,15 +366,9 @@ neutral border and a normal one are too easy to confuse at a glance. Which
 accent depends on context: `--ok` for the channel in your ears, `--ink` for
 keyboard focus generally, `--ink-2` for "this is the one I have open."
 
-**Controls stay pills.** Buttons, filter chips and badges keep the fully
-rounded `999px` shape — a soft, closed form that reads as "press me" without a
-hard edge, and the one place a rounded geometry is allowed to leak into UI
-chrome. Cards and panels use the smaller `12`/`18px` radii; nothing in the
-product uses a sharp corner.
-
-All of this replaces the old `0 3px 0` hard-offset shadow and the 2px ink
-outline on every card, control and photo frame outright. Nothing in the
-product should still read as "printed and pressable" once this ships.
+**Controls stay pills.** Buttons, filter chips and badges keep the fully rounded
+`999px` shape, with a red primary (`--action-red`, white text) once per region.
+Cards and panels use the `12` / `18px` radii; nothing uses a sharp corner.
 
 ---
 
@@ -404,8 +413,9 @@ operator, the Manager link) and carries a dot while one of them needs the
 operator. Each carries an accessible name that says the state in words, such as
 `2 to acknowledge · 1 critical`.
 
-The **brand mark** is a separate thing from interface iconography: five
-vertical bars in a mountain profile — a level meter and an RF signal-strength
+The **brand mark** is a separate thing from interface iconography: the Pulse
+app icon (cream on an RVLT-red tile) beside "by RVLT" in the unaltered RVLT
+mark. The glyph is five vertical bars in a mountain profile — a level meter and an RF signal-strength
 indicator at once, which is what this product actually watches. It appears at
 full size (icon, favicon, the header lockup) and is never repurposed as an
 interface glyph; a channel's own meter trace ([§10.1](#101-channel-card)) is
@@ -540,7 +550,7 @@ The centrepiece, and it is a photograph. An A2 thinks in people: they are lookin
 for Eleanor, not for input 27, and a face is recognised faster than any label.
 
 ```
-┌────────────────────────────────┐  1px hairline · soft shadow, no outline
+┌────────────────────────────────┐  2px outline · hard offset shadow
 │ ┌────────────────────────────┐ │
 │ │ 27                     ⤢   │ │ ← number; expand button
 │ │        headshot 16:10      │ │
@@ -1117,6 +1127,17 @@ explicit words — _observed_, _likely_, _unconfirmed_ — not a slider.
 
 ## 14. Changelog
 
+**3.0.0 — 2026-10-22.** Pulse is "Pulse, by RVLT" and follows the RVLT design
+language ([§1.1](#11-pulse-by-rvlt)); the departures are listed in
+[§1.6](#16-deliberate-departures-from-rvlt). Type moves from IBM Plex to Archivo,
+Hanken Grotesk and Geist Mono ([§4](#4-typography)). Elevation moves from soft
+shadows and hairlines to 2px outlines and hard offset shadows
+([§5](#5-shape-and-elevation)). Red becomes the chrome action colour and the
+brand; on cards it is still only a critical fault, and "listening" stays green.
+The five-bar mark becomes a cream-on-red app icon with "by RVLT"
+([§7](#7-iconography)). Implemented in Live and Manager alongside this entry;
+not operator-validated.
+
 **2.17.0 — 2026-09-28.** Cards is the default view again
 ([§10.1.1](#1011-glance-view)): 2.11.0 made Glance the default so a 64-channel
 show didn't open to five screens of scrolling photographs. Most shows are
@@ -1132,7 +1153,7 @@ a status-strip tick reads `--ok` on all clear, matching the channel-in-your-ears
 ring. 2.12.0 kept the tick neutral specifically to avoid reusing the ring's
 colour; that traded scan speed for the separation, and operator feedback said
 the trade wasn't worth it on a live grid. Colour still only fills a cell's
-*background* for fault or caution, so "look here" still means a filled cell,
+_background_ for fault or caution, so "look here" still means a filled cell,
 not a green one. Implemented in Live alongside this entry (Manager unchanged);
 not operator-validated.
 

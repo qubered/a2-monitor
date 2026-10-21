@@ -1,0 +1,51 @@
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: none;
+  font-family: var(--font-display);
+}
+
+.brand-tile {
+  display: inline-flex;
+  flex: none;
+  color: var(--cream);
+}
+
+.brand-name {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.brand-name > b {
+  font-family: var(--font-wordmark);
+  font-size: var(--font-page);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.brand-by {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--font-badge);
+  font-weight: 500;
+}
+
+.brand-by svg {
+  width: auto;
+  height: 0.5625rem;
+  fill: var(--red);
+}
+
+.brand-suffix {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--font-ui);
+  font-style: normal;
+  font-weight: 600;
+}

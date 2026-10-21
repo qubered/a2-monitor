@@ -123,7 +123,7 @@ export function RoomsTab({
             <section
               key={room.id ?? `new-${position}`}
               aria-label={`Room ${position + 1}`}
-              className="flex flex-col gap-3 rounded-lg border border-card-outline bg-card p-5 shadow-card"
+              className="flex flex-col gap-3 rounded-lg border-2 border-card-outline bg-card p-5 shadow-card"
             >
               <div className="flex flex-wrap items-center gap-3">
                 <Input

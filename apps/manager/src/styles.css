@@ -33,6 +33,9 @@
 
   --color-red: var(--red);
   --color-red-700: var(--red-700);
+  --color-action-red: var(--action-red);
+  --color-on-red: var(--on-red);
+  --color-control-line: var(--control-line);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
   --color-warn: var(--warn);
@@ -50,8 +53,8 @@
   --color-foreground: var(--ink);
   --color-popover: var(--card);
   --color-popover-foreground: var(--ink);
-  --color-primary: var(--red);
-  --color-primary-foreground: var(--card);
+  --color-primary: var(--action-red);
+  --color-primary-foreground: var(--on-red);
   --color-secondary: var(--paper-2);
   --color-secondary-foreground: var(--ink);
   --color-muted: var(--paper-2);
@@ -61,7 +64,7 @@
   --color-destructive: var(--t-out);
   --color-destructive-foreground: var(--card);
   --color-border: var(--line-2);
-  --color-input: var(--line-2);
+  --color-input: var(--control-line);
   --color-ring: var(--red);
 
   --radius-md: var(--radius);
@@ -70,6 +73,7 @@
   --shadow-card: var(--shadow-card);
   --shadow-hover: var(--shadow-hover);
   --shadow-button: var(--shadow-button);
+  --shadow-press: var(--shadow-press);
 }
 
 * {

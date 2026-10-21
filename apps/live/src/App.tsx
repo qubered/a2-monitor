@@ -1,3 +1,4 @@
+import { PulseLockup } from "@rvlt/pulse-ui/brand";
 import {
   useCallback,
   useEffect,
@@ -1503,23 +1504,7 @@ export function App({
         {announcement}
       </div>
       <header className="app-header">
-        <div className="brand" aria-label="Pulse">
-          <span aria-hidden="true">
-            <svg
-              viewBox="0 0 100 100"
-              width="20"
-              height="20"
-              fill="currentColor"
-            >
-              <rect x="8" y="38" width="12" height="24" rx="6" />
-              <rect x="27" y="24" width="12" height="52" rx="6" />
-              <rect x="46" y="8" width="12" height="84" rx="6" />
-              <rect x="65" y="24" width="12" height="52" rx="6" />
-              <rect x="84" y="38" width="12" height="24" rx="6" />
-            </svg>
-          </span>
-          <b>Pulse</b>
-        </div>
+        <PulseLockup />
         <div className="show-name">
           <strong>{showName}</strong>
           <span>

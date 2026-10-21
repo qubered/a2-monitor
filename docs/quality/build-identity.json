@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.87a154b28018a207",
-  "sourceSha256": "87a154b28018a2079ec4fff3187d7393549002d02875e3ea42982ea3f0fc08e8",
-  "inputCount": 473,
+  "buildId": "a2-0.0.0+sha256.fab5ec9bec95298e",
+  "sourceSha256": "fab5ec9bec95298edf51fb99297d32e9a1ec1c2e4d6bd3cb55e90418d2d208c5",
+  "inputCount": 483,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -85,11 +85,11 @@
     },
     {
       "path": "apps/live/package.json",
-      "sha256": "e27cca69a84b6ccbf5452987571df9591f3117b81e067ff3b1468627bf00a3a3"
+      "sha256": "0347a56fc03444d78568e45632a007c37e1b1c0a96cb6fe74de9528e1badfad5"
     },
     {
       "path": "apps/live/public/favicon.svg",
-      "sha256": "b7ae37b5b125ec07dcc07125ea4ea7030f20c33ace384c9dcbecc29f36f90be1"
+      "sha256": "ccf866806fb3f2f5286454b134b0e36d5c5fc7412720d72b86122623d9311560"
     },
     {
       "path": "apps/live/src/App.test.tsx",
@@ -97,7 +97,7 @@
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "d7391159abb7e6f76515a8df13b606542152e1be564406d25d8fa044e46296ea"
+      "sha256": "e1c567c956abad43f36406f0ed775748d60481bab69665f99b82d4fe690fd82d"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -229,7 +229,7 @@
     },
     {
       "path": "apps/live/src/main.tsx",
-      "sha256": "e0b834b67ed6a871b15cdd831ce16a2d7b4a7ee23feaac0d21128c4ef485642b"
+      "sha256": "ca7e16226726891b9a6c272fb361d052f3c4431e81852526afcfcf731ae07abd"
     },
     {
       "path": "apps/live/src/meters.test.ts",
@@ -269,7 +269,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "50e582d5007fbaecb31f046a72953530d115f5a623dc17fe35c36916a7f1c0d8"
+      "sha256": "e6ce21541a5e63b3f4529161e206ce87f91bbaa78fd86c2cc8931c49c103876a"
     },
     {
       "path": "apps/live/src/trim.ts",
@@ -321,11 +321,11 @@
     },
     {
       "path": "apps/manager/package.json",
-      "sha256": "d21d1b7270bbd6c57ee63368a3f75ce3a8098ac267702b3aaf6965b269a4d6e2"
+      "sha256": "f97785de2689873b7305f2938e8f21def16fe77a2d5d78a422f60b345982f4b0"
     },
     {
       "path": "apps/manager/public/favicon.svg",
-      "sha256": "b7ae37b5b125ec07dcc07125ea4ea7030f20c33ace384c9dcbecc29f36f90be1"
+      "sha256": "ccf866806fb3f2f5286454b134b0e36d5c5fc7412720d72b86122623d9311560"
     },
     {
       "path": "apps/manager/src/App.test.tsx",
@@ -333,7 +333,7 @@
     },
     {
       "path": "apps/manager/src/App.tsx",
-      "sha256": "a5d306dd8e2ba039bd96201ca5a15d5af792054332d900c6a77bc2b1cdce7a54"
+      "sha256": "6294252bdfd07a66dfc1913d5016ce86e794ad3ae20b8d1f26e39e8c37216b69"
     },
     {
       "path": "apps/manager/src/components/AlertsTab.tsx",
@@ -361,7 +361,7 @@
     },
     {
       "path": "apps/manager/src/components/RoomsTab.tsx",
-      "sha256": "c4462786b51e0da8a7dc8abc9d72ea69662f07fb04781d24e65fadce9c027f34"
+      "sha256": "0a6195fa35c7ba4b79b0938046f728d3141625075f26884e50c28869961196e7"
     },
     {
       "path": "apps/manager/src/components/SessionsTab.tsx",
@@ -377,7 +377,7 @@
     },
     {
       "path": "apps/manager/src/components/ui/button.tsx",
-      "sha256": "efac429237891c7a2bc3f3e9a833eb947715f2dc7381d134b8c435690a463e4d"
+      "sha256": "fd30d4a9dac1d3a83fce5bb016f0a8c6d3f9572b9d97aad94e6e1c4164cc5681"
     },
     {
       "path": "apps/manager/src/components/ui/card.tsx",
@@ -385,7 +385,7 @@
     },
     {
       "path": "apps/manager/src/components/ui/input.tsx",
-      "sha256": "ae3bdd9b7de6cbc589cc078e561b8b3792f16752550457133544d1df733133ec"
+      "sha256": "d84ad9515909ae1ec03d3ace67493172cf634300b832b543337a9584aa44e546"
     },
     {
       "path": "apps/manager/src/components/ui/label.tsx",
@@ -393,15 +393,15 @@
     },
     {
       "path": "apps/manager/src/components/ui/select.tsx",
-      "sha256": "c74470c781ea7d240416e0bb0812ac06b285a8756c629de05d1ad4468614ec21"
+      "sha256": "ff476556d17170c6331fd073d628a6bff6e2d7867436c0eb71c71e816f11a710"
     },
     {
       "path": "apps/manager/src/components/ui/table.tsx",
-      "sha256": "b9196c2ccd6da7807f98cc18fa6097ac149325169f7af5867a5b708ed6d58b5a"
+      "sha256": "0ec55444c6c6816910ba8041c8c804711c0ad4a9c4278df105785f84f6b89e4c"
     },
     {
       "path": "apps/manager/src/components/ui/tabs.tsx",
-      "sha256": "0ea28cd94a91eadcc4a6dec089f93111f7ba8dc5f64c653642c885a73c4827d8"
+      "sha256": "ebdd639c1604c2af99c0573fa41c49d94002bb0d0551e8f5371d4cebf1938e84"
     },
     {
       "path": "apps/manager/src/lib/group-id.ts",
@@ -417,7 +417,7 @@
     },
     {
       "path": "apps/manager/src/main.tsx",
-      "sha256": "6e275534d2f63aaad468c184eb851f8e4ffdfcc5565cf2616d6107dfa1d92757"
+      "sha256": "0a9db3c53c4619f505440e5198b6a8e6943d013a8f79fef2e2663df223f1b727"
     },
     {
       "path": "apps/manager/src/showfile.ts",
@@ -425,7 +425,7 @@
     },
     {
       "path": "apps/manager/src/styles.css",
-      "sha256": "533849683dfa11c3567fe2fff067227353e5c40e7bbef19ef420e228fe702162"
+      "sha256": "c072207861b89d6dbe7f32b6c4aaac5114ec4f0e3400ef2243acabaf70e367c1"
     },
     {
       "path": "apps/manager/src/vite-env.d.ts",
@@ -797,7 +797,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "eeb707995cb9e60cba871b551b80246835af74f597cf4147593fc134f7105217"
+      "sha256": "3135d8a17c09f65ae54a579cca3387b8c923ed46e26d9d804608ebbaf7235980"
     },
     {
       "path": "docs/design/README.md",
@@ -921,7 +921,7 @@
     },
     {
       "path": "docs/quality/node-dependency-inventory.json",
-      "sha256": "f5054a44d1d6386067385fe4b2ef3dbdcc9498cb437825bc85c0516cfaa66920"
+      "sha256": "b442446c58e22694b2df32ee53102d6d4b9c7ac9ba2f78cb7f9bcb505ce52bfd"
     },
     {
       "path": "docs/quality/performance-baselines.md",
@@ -1165,7 +1165,7 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "2674e6e7407f6fe27317abbcfab7484d3829bec8bb6f058f67fe02e3f5dce192"
+      "sha256": "af2e51bc77bfbbf835b8020136fe0f440b4dcfe58b76364cac879e577ee839c3"
     },
     {
       "path": "package.json",
@@ -1472,16 +1472,56 @@
       "sha256": "18aff896cfe10cdfae2c03d07a042c7b8774504a79e6dbd6b8d45e22a1927191"
     },
     {
+      "path": "packages/ui/brand/PulseLockup.tsx",
+      "sha256": "f8e97d340ed85d3705828e4f2a115080835f0c9691ad10f9e9cf4be69e7fb345"
+    },
+    {
+      "path": "packages/ui/brand/brand.css",
+      "sha256": "04fa389df8e91fa1dac797941c00588c28ed1b162f71fc5ef5162a198a0aea52"
+    },
+    {
+      "path": "packages/ui/brand/index.ts",
+      "sha256": "c226b3ab2e693dd2c960f4e267c984571c4d41a59d8208cd59650b1455c37b1e"
+    },
+    {
+      "path": "packages/ui/fonts.css",
+      "sha256": "8720e329022e41758cef018f4b003d8be8f9957d82fed4912636c2d23670e020"
+    },
+    {
+      "path": "packages/ui/fonts/Archivo-Variable.woff2",
+      "sha256": "8f704806dbedeaaeca334b11ec348bc3ac3a439d6431544b3afb54f534ee4967"
+    },
+    {
+      "path": "packages/ui/fonts/GeistMono-Variable.woff2",
+      "sha256": "684ad5b531f81d43c1e8c7038262d5db7cdc1f68006e04d6c7769efa8d33c8cc"
+    },
+    {
+      "path": "packages/ui/fonts/HankenGrotesk-Variable.woff2",
+      "sha256": "e9201eddf1d41d0b62253295d869ce3cf65768f7102b797f02c7f8c876b4a9d5"
+    },
+    {
+      "path": "packages/ui/fonts/licenses/Archivo-OFL.txt",
+      "sha256": "1778201b7bd33e8c08a2eda32a4ad2f69bc38ced9731b01cc3fc47f268c8ef3c"
+    },
+    {
+      "path": "packages/ui/fonts/licenses/GeistMono-OFL.txt",
+      "sha256": "fb64c1011862d97fe49c633ad9180ffd80a61aab6ff220a2935704e8a0c3a7c4"
+    },
+    {
+      "path": "packages/ui/fonts/licenses/HankenGrotesk-OFL.txt",
+      "sha256": "bb93c61eef5b10204ac305aeb3d204ce74c22c40aa8398f9e2c3bdab2263f2d1"
+    },
+    {
       "path": "packages/ui/package.json",
-      "sha256": "a2be10ea8fc35da24995efbd5691ca3abe7ec998d093500af8a2d87629742c9b"
+      "sha256": "0a622c7bcff1ce691050f436d472d537a0f60c20cdd4f5503eeff2b3561a332c"
     },
     {
       "path": "packages/ui/tokens.css",
-      "sha256": "4901b9cd0dd78ba0797d8efeb94d60cf40c2b1136429b9ab7c054a3063f8461a"
+      "sha256": "27e89ad2c1db8b357bd63c53a59ffec0cfea19d3966b6656c3d95e5df98918a2"
     },
     {
       "path": "packages/ui/tsconfig.json",
-      "sha256": "42ab10efc9681055cd7928481f26390d74a581ae3ae246fd6711151a0d44490c"
+      "sha256": "2315d3d8d30342f85cbba04d6544db06d8e479bea2fc9d3439a0d4014be09154"
     },
     {
       "path": "packages/ui/visualization/LevelTrace.tsx",

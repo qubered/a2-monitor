@@ -1,0 +1,28 @@
+/* RVLT brand font faces: Archivo (display), Hanken Grotesk (body), Geist Mono (data).
+   SIL OFL, self-hosted so core show operation works without internet access.
+   Source: design-system/fonts in RVLT-Labs/rvlt-designlanguage (licences in ./fonts/licenses).
+   Regenerate: copy the three *-Variable.woff2 files and their licences from that path.
+   Hanken Grotesk ships upright only; operator notes use the browser's synthesised italic. */
+@font-face {
+  font-family: "Archivo";
+  src: url("./fonts/Archivo-Variable.woff2") format("woff2");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Hanken Grotesk";
+  src: url("./fonts/HankenGrotesk-Variable.woff2") format("woff2");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("./fonts/GeistMono-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
