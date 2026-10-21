@@ -588,10 +588,9 @@ a:focus-visible {
 .session-room {
   flex: none;
   min-width: calc(var(--target-primary) * 2);
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: var(--font-card);
-  font-weight: 700;
+  color: var(--muted);
+  font-size: var(--font-ui);
+  font-weight: 600;
 }
 
 /* Run of show (design system §10.9): now, next and how much the turnover
@@ -601,8 +600,10 @@ a:focus-visible {
   align-items: center;
   gap: var(--space-6);
   padding: var(--space-1) var(--space-6);
-  border-bottom: var(--size-1) solid var(--line-2);
-  background: var(--paper-2);
+}
+
+.session-bar + .session-bar {
+  border-top: var(--size-1) solid var(--line);
 }
 
 /* One line per slot, so the run of show costs one row above the grid. */
@@ -616,8 +617,7 @@ a:focus-visible {
 }
 
 .session-slot + .session-slot {
-  padding-left: var(--space-6);
-  border-left: var(--size-1) solid var(--line-2);
+  padding-left: var(--space-2);
 }
 
 .session-overline {
@@ -628,8 +628,9 @@ a:focus-visible {
 
 .session-slot strong {
   overflow: hidden;
-  font-family: var(--font-display);
-  font-size: var(--font-card);
+  color: var(--ink-2);
+  font-size: var(--font-ui);
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -651,9 +652,16 @@ a:focus-visible {
   font-weight: 600;
 }
 
-.session-open {
+.line-button.session-open {
   flex: none;
   margin-left: auto;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-2);
+}
+
+.line-button.session-open:hover {
+  background: var(--card);
 }
 
 .session-open:disabled {
