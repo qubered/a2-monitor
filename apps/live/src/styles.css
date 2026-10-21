@@ -921,7 +921,6 @@ a:focus-visible {
   border-color: var(--ink);
   background: var(--ink);
   color: var(--paper);
-  box-shadow: var(--shadow-card);
 }
 
 .filter-button[aria-pressed="true"] > span {
@@ -932,8 +931,7 @@ a:focus-visible {
 .filter-button:active,
 .control-button:active,
 .line-button:active {
-  transform: translateY(var(--size-2));
-  box-shadow: var(--shadow-press);
+  filter: brightness(0.92);
 }
 
 .channel-main {
@@ -1687,8 +1685,7 @@ a:focus-visible {
   min-width: var(--target-primary);
   min-height: var(--target);
   padding: 0 var(--space-4);
-  border: var(--size-2) solid var(--line-2);
-  box-shadow: var(--shadow-button);
+  border: var(--size-1) solid var(--line-2);
   border-radius: var(--radius-pill);
   background: transparent;
   font-size: var(--font-ui);
@@ -1704,7 +1701,6 @@ a:focus-visible {
   border-color: var(--ink);
   background: var(--ink);
   color: var(--card);
-  box-shadow: var(--shadow-button);
 }
 
 .control-button:disabled {

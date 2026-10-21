@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.fab5ec9bec95298e",
-  "sourceSha256": "fab5ec9bec95298edf51fb99297d32e9a1ec1c2e4d6bd3cb55e90418d2d208c5",
+  "buildId": "a2-0.0.0+sha256.7aa54e38f691cead",
+  "sourceSha256": "7aa54e38f691ceadac290887de6fab8a4fcd3f4d89599f1b0adaeabe2684a7eb",
   "inputCount": 483,
   "inputs": [
     {
@@ -269,7 +269,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "e6ce21541a5e63b3f4529161e206ce87f91bbaa78fd86c2cc8931c49c103876a"
+      "sha256": "179ec8a3b372cc8eefecf9ea6d81eeadeb204833d2e0bb049add5f681e1cf3b3"
     },
     {
       "path": "apps/live/src/trim.ts",
@@ -377,7 +377,7 @@
     },
     {
       "path": "apps/manager/src/components/ui/button.tsx",
-      "sha256": "fd30d4a9dac1d3a83fce5bb016f0a8c6d3f9572b9d97aad94e6e1c4164cc5681"
+      "sha256": "922bf05a64bf7e3f2de078119bab3ea2420115020527819ddf38531d331b5708"
     },
     {
       "path": "apps/manager/src/components/ui/card.tsx",
@@ -385,7 +385,7 @@
     },
     {
       "path": "apps/manager/src/components/ui/input.tsx",
-      "sha256": "d84ad9515909ae1ec03d3ace67493172cf634300b832b543337a9584aa44e546"
+      "sha256": "ae3bdd9b7de6cbc589cc078e561b8b3792f16752550457133544d1df733133ec"
     },
     {
       "path": "apps/manager/src/components/ui/label.tsx",
@@ -393,7 +393,7 @@
     },
     {
       "path": "apps/manager/src/components/ui/select.tsx",
-      "sha256": "ff476556d17170c6331fd073d628a6bff6e2d7867436c0eb71c71e816f11a710"
+      "sha256": "2126719d9310f59e3b4b6119f7371fb6fb5a1412e3babda3a87706a1cfa84ff7"
     },
     {
       "path": "apps/manager/src/components/ui/table.tsx",
@@ -401,7 +401,7 @@
     },
     {
       "path": "apps/manager/src/components/ui/tabs.tsx",
-      "sha256": "ebdd639c1604c2af99c0573fa41c49d94002bb0d0551e8f5371d4cebf1938e84"
+      "sha256": "890cbee20f25de6727c41422efa34fb35023b366c81833af9f9617bdf19931f4"
     },
     {
       "path": "apps/manager/src/lib/group-id.ts",
@@ -797,7 +797,7 @@
     },
     {
       "path": "docs/design/DESIGN.md",
-      "sha256": "3135d8a17c09f65ae54a579cca3387b8c923ed46e26d9d804608ebbaf7235980"
+      "sha256": "8ef47782f8c48d0237533963206e49f62b0271d8324bc116920938be024f0580"
     },
     {
       "path": "docs/design/README.md",

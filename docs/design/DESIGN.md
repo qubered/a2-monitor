@@ -366,6 +366,12 @@ neutral border and a normal one are too easy to confuse at a glance. Which
 accent depends on context: `--ok` for the channel in your ears, `--ink` for
 keyboard focus generally, `--ink-2` for "this is the one I have open."
 
+**Quiet controls.** The outline and offset shadow belong to cards, panels and the
+one red primary action per region. Secondary controls (filter chips, toggles,
+icon buttons, outline buttons) are a 1px `--line-2` pill with no shadow: a grid
+of sixty-four cards is already loud, and a shadow on every control makes
+nothing stand out.
+
 **Controls stay pills.** Buttons, filter chips and badges keep the fully rounded
 `999px` shape, with a red primary (`--action-red`, white text) once per region.
 Cards and panels use the `12` / `18px` radii; nothing uses a sharp corner.
