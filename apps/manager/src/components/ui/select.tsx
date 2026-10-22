@@ -42,7 +42,7 @@ function SelectContent({
         position={position}
         sideOffset={4}
         className={cn(
-          "z-50 max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) overflow-y-auto rounded-md border border-card-outline bg-popover text-popover-foreground shadow-card",
+          "z-50 max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) overflow-y-auto rounded-md border-2 border-card-outline bg-popover text-popover-foreground shadow-card",
           className,
         )}
         {...props}

@@ -1,5 +1,7 @@
-/* Pulse is dark-mode only. There is no light/Paper theme and no
-   data-theme switch — one surface, no resolution logic needed. */
+/* Pulse, by RVLT. Dark-mode only: no light/Paper theme and no data-theme
+   switch. Values follow the RVLT design language (espresso ramp, hard-offset
+   elevation, 2px outlines, Archivo / Hanken Grotesk / Geist Mono). Pulse's own
+   exceptions are listed in docs/design/DESIGN.md. */
 :root {
   color-scheme: dark;
 
@@ -16,6 +18,12 @@
   --red: #e0363d;
   --red-700: #b21f26;
   --red-soft: rgb(224 54 61 / 16%);
+  --action-red: #d6323a;
+  --red-text: #ee5a5f;
+  --on-red: #ffffff;
+  --cream: #f5efe2;
+  --control-line: #857a69;
+  --info: #82a8f3;
   --ok: #4fd888;
   --ok-soft: rgb(62 207 122 / 14%);
   --warn: #eba53a;
@@ -29,13 +37,14 @@
   --blue: #5b8def;
   --scrim: rgb(14 12 10 / 66%);
   --select: rgb(224 54 61 / 20%);
-  --card-outline: var(--line);
-  --card-lit: inset 0 var(--size-1) 0 rgb(255 253 248 / 12%);
+  --card-outline: var(--line-2);
+  --card-lit: inset 0 var(--size-1) 0 rgb(255 253 248 / 14%);
+  --shadow-edge: #0c0a08;
 
-  --font-display: "IBM Plex Sans", sans-serif;
-  --font-wordmark: "IBM Plex Sans", sans-serif;
-  --font-body: "IBM Plex Sans", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: "Archivo", system-ui, sans-serif;
+  --font-wordmark: "Archivo", system-ui, sans-serif;
+  --font-body: "Hanken Grotesk", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
 
   --font-page: 1.5rem;
   --font-section: 1.125rem;
@@ -75,9 +84,11 @@
   --radius: 0.75rem;
   --radius-large: 1.125rem;
   --radius-pill: 99rem;
-  --shadow-card: 0 2px 6px rgb(0 0 0 / 30%), 0 10px 28px rgb(0 0 0 / 34%);
-  --shadow-hover: 0 8px 20px rgb(0 0 0 / 32%), 0 24px 48px rgb(0 0 0 / 36%);
-  --shadow-button: var(--shadow-card);
+  --lift: -0.1875rem;
+  --shadow-card: 0 0.1875rem 0 var(--shadow-edge);
+  --shadow-hover: 0 0.4375rem 0 var(--shadow-edge);
+  --shadow-button: 0 0.1875rem 0 var(--shadow-edge);
+  --shadow-press: 0 0.0625rem 0 var(--shadow-edge);
   --transition-control: 120ms cubic-bezier(0.2, 0.8, 0.3, 1);
   --transition-state: 160ms cubic-bezier(0.2, 0.8, 0.3, 1);
   --transition-panel: 220ms cubic-bezier(0.16, 1, 0.3, 1);

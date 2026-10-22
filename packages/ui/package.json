@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./brand": "./brand/index.ts",
+    "./brand.css": "./brand/brand.css",
+    "./fonts.css": "./fonts.css",
     "./tokens.css": "./tokens.css",
     "./visualization": "./visualization/index.ts",
     "./visualization.css": "./visualization/visualization.css"

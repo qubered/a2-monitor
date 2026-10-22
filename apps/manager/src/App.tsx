@@ -1,3 +1,4 @@
+import { PulseLockup } from "@rvlt/pulse-ui/brand";
 import { useEffect, useState } from "react";
 import {
   BellRing,
@@ -213,31 +214,7 @@ export function App() {
   return (
     <div className="min-h-screen bg-paper text-foreground">
       <header className="flex min-h-17 flex-wrap items-center gap-5 border-b border-line-2 bg-paper-2 px-6 py-3">
-        <div
-          className="flex items-center gap-2 font-display text-section font-bold"
-          aria-label="Pulse Manager"
-        >
-          <span aria-hidden="true" className="inline-flex text-ok">
-            <svg
-              viewBox="0 0 100 100"
-              width="20"
-              height="20"
-              fill="currentColor"
-            >
-              <rect x="8" y="38" width="12" height="24" rx="6" />
-              <rect x="27" y="24" width="12" height="52" rx="6" />
-              <rect x="46" y="8" width="12" height="84" rx="6" />
-              <rect x="65" y="24" width="12" height="52" rx="6" />
-              <rect x="84" y="38" width="12" height="24" rx="6" />
-            </svg>
-          </span>
-          <b className="font-wordmark text-page font-bold tracking-tight">
-            Pulse
-          </b>
-          <em className="font-body text-ui font-semibold not-italic text-muted-foreground">
-            Manager
-          </em>
-        </div>
+        <PulseLockup label="Pulse Manager by RVLT" suffix="Manager" />
         <div className="flex flex-col border-l border-line-2 pl-5 leading-tight">
           <span className="font-mono text-badge text-faint">
             Local showfile

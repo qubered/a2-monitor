@@ -1,12 +1,6 @@
-import "@fontsource/ibm-plex-sans/latin-400.css";
-import "@fontsource/ibm-plex-sans/latin-400-italic.css";
-import "@fontsource/ibm-plex-sans/latin-500.css";
-import "@fontsource/ibm-plex-sans/latin-600.css";
-import "@fontsource/ibm-plex-sans/latin-700.css";
-import "@fontsource/ibm-plex-mono/latin-400.css";
-import "@fontsource/ibm-plex-mono/latin-500.css";
-import "@fontsource/ibm-plex-mono/latin-600.css";
+import "@rvlt/pulse-ui/fonts.css";
 import "@rvlt/pulse-ui/tokens.css";
+import "@rvlt/pulse-ui/brand.css";
 import "@rvlt/pulse-ui/visualization.css";
 import "./styles.css";
 

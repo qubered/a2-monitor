@@ -33,8 +33,9 @@ button:focus-visible,
 select:focus-visible,
 input:focus-visible,
 a:focus-visible {
-  /* Red means a critical fault and nothing else (DESIGN.md §3.4); focus is ink. */
-  outline: var(--size-2) solid var(--ink);
+  /* Chrome focus is the RVLT red ring (DESIGN.md §3.4). Channel cards keep an
+     ink ring so focus never reads as a critical fault on the grid. */
+  outline: var(--size-2) solid var(--red);
   outline-offset: var(--space-1);
 }
 
@@ -67,28 +68,6 @@ a:focus-visible {
   padding: var(--space-3) var(--space-6);
   background: var(--paper-2);
   border-bottom: var(--size-1) solid var(--line-2);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex: none;
-  font-family: var(--font-display);
-  font-size: var(--font-section);
-  font-weight: 700;
-}
-
-.brand > span {
-  display: inline-flex;
-  color: var(--ok);
-}
-
-.brand > b {
-  font-family: var(--font-wordmark);
-  font-size: var(--font-page);
-  font-weight: 700;
-  letter-spacing: -0.02em;
 }
 
 .show-name {
@@ -609,10 +588,50 @@ a:focus-visible {
 .session-room {
   flex: none;
   min-width: calc(var(--target-primary) * 2);
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: var(--font-card);
-  font-weight: 700;
+  color: var(--muted);
+  font-size: var(--font-ui);
+  font-weight: 600;
+}
+
+.run-toggle {
+  width: 100%;
+  min-height: var(--target);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-6);
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: var(--font-ui);
+  text-align: left;
+}
+
+.run-toggle svg {
+  flex: none;
+  transition: transform var(--transition-control);
+}
+
+.run-toggle[aria-expanded="false"] svg {
+  transform: rotate(-90deg);
+}
+
+.run-toggle-label {
+  font-weight: 600;
+}
+
+.run-toggle-summary {
+  color: var(--muted);
+  font-size: var(--font-caption);
+}
+
+.run-toggle-summary.is-action {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.run-of-show {
+  border-bottom: var(--size-1) solid var(--line);
 }
 
 /* Run of show (design system §10.9): now, next and how much the turnover
@@ -622,8 +641,10 @@ a:focus-visible {
   align-items: center;
   gap: var(--space-6);
   padding: var(--space-1) var(--space-6);
-  border-bottom: var(--size-1) solid var(--line-2);
-  background: var(--paper-2);
+}
+
+.session-bar + .session-bar {
+  border-top: var(--size-1) solid var(--line);
 }
 
 /* One line per slot, so the run of show costs one row above the grid. */
@@ -637,8 +658,7 @@ a:focus-visible {
 }
 
 .session-slot + .session-slot {
-  padding-left: var(--space-6);
-  border-left: var(--size-1) solid var(--line-2);
+  padding-left: var(--space-2);
 }
 
 .session-overline {
@@ -649,8 +669,9 @@ a:focus-visible {
 
 .session-slot strong {
   overflow: hidden;
-  font-family: var(--font-display);
-  font-size: var(--font-card);
+  color: var(--ink-2);
+  font-size: var(--font-ui);
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -672,9 +693,16 @@ a:focus-visible {
   font-weight: 600;
 }
 
-.session-open {
+.line-button.session-open {
   flex: none;
   margin-left: auto;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-2);
+}
+
+.line-button.session-open:hover {
+  background: var(--card);
 }
 
 .session-open:disabled {
@@ -942,7 +970,6 @@ a:focus-visible {
   border-color: var(--ink);
   background: var(--ink);
   color: var(--paper);
-  box-shadow: var(--shadow-card);
 }
 
 .filter-button[aria-pressed="true"] > span {
@@ -954,7 +981,6 @@ a:focus-visible {
 .control-button:active,
 .line-button:active {
   filter: brightness(0.92);
-  box-shadow: none;
 }
 
 .channel-main {
@@ -978,6 +1004,7 @@ a:focus-visible {
 .grid-heading h1 {
   margin: 0;
   font-family: var(--font-display);
+  font-weight: 800;
   font-size: var(--font-page);
   line-height: 1.2;
   letter-spacing: -0.02em;
@@ -1006,7 +1033,7 @@ a:focus-visible {
   gap: var(--space-3);
   padding: var(--space-3);
   overflow: hidden;
-  border: var(--size-1) solid var(--card-outline);
+  border: var(--size-2) solid var(--card-outline);
   border-radius: var(--radius-large);
   background: var(--card);
   box-shadow: var(--shadow-card), var(--card-lit);
@@ -1016,8 +1043,13 @@ a:focus-visible {
     border-color var(--transition-state);
 }
 
+.channel-card:focus-visible,
+.channel-card :focus-visible {
+  outline-color: var(--ink);
+}
+
 .channel-card:hover {
-  transform: translateY(calc(var(--space-1) * -1));
+  transform: translateY(var(--lift));
   box-shadow: var(--shadow-hover), var(--card-lit);
 }
 
@@ -1086,7 +1118,7 @@ a:focus-visible {
   display: grid;
   place-items: center;
   overflow: hidden;
-  border: var(--size-1) solid var(--card-outline);
+  border: var(--size-2) solid var(--card-outline);
   border-radius: var(--radius);
   background: var(--paper-2);
 }
@@ -1136,7 +1168,7 @@ a:focus-visible {
   left: var(--space-2);
   z-index: 2;
   padding: var(--space-1) var(--space-2);
-  border: var(--size-1) solid var(--card-outline);
+  border: var(--size-2) solid var(--card-outline);
   border-radius: calc(var(--radius) / 2);
   background: var(--card);
   font-family: var(--font-mono);
@@ -1165,7 +1197,7 @@ a:focus-visible {
   position: absolute;
   width: calc(var(--target) - var(--space-3));
   height: calc(var(--target) - var(--space-3));
-  border: var(--size-1) solid var(--card-outline);
+  border: var(--size-2) solid var(--card-outline);
   border-radius: 50%;
   background: var(--card);
 }
@@ -1278,7 +1310,7 @@ a:focus-visible {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   overflow: hidden;
-  border: var(--size-1) solid var(--card-outline);
+  border: var(--size-2) solid var(--card-outline);
   border-radius: calc(var(--radius) / 2);
 }
 
@@ -1642,7 +1674,7 @@ a:focus-visible {
   width: var(--target-primary);
   height: var(--target-primary);
   flex: none;
-  border: var(--size-1) solid var(--card-outline);
+  border: var(--size-2) solid var(--card-outline);
   border-radius: var(--radius);
   background: var(--card);
 }
@@ -1702,7 +1734,7 @@ a:focus-visible {
   min-width: var(--target-primary);
   min-height: var(--target);
   padding: 0 var(--space-4);
-  border: var(--size-1) solid var(--ink);
+  border: var(--size-1) solid var(--line-2);
   border-radius: var(--radius-pill);
   background: transparent;
   font-size: var(--font-ui);
@@ -1718,7 +1750,6 @@ a:focus-visible {
   border-color: var(--ink);
   background: var(--ink);
   color: var(--card);
-  box-shadow: var(--shadow-button);
 }
 
 .control-button:disabled {
@@ -1766,7 +1797,7 @@ a:focus-visible {
   width: min(100%, var(--dialog-width));
   max-height: calc(100vh - var(--space-8));
   overflow: auto;
-  border: var(--size-1) solid var(--card-outline);
+  border: var(--size-2) solid var(--card-outline);
   border-radius: var(--radius-large);
   background: var(--elev);
   box-shadow: var(--shadow-card);
@@ -2300,9 +2331,15 @@ a:focus-visible {
 
 .primary-button {
   min-height: var(--target-primary);
-  border-color: var(--ok);
-  background: var(--ok);
-  color: var(--paper);
+  border-color: var(--action-red);
+  background: var(--action-red);
+  color: var(--on-red);
+  box-shadow: 0 0.1875rem 0 var(--red-700);
+}
+
+.primary-button:active {
+  transform: translateY(var(--size-2));
+  box-shadow: 0 var(--size-1) 0 var(--red-700);
 }
 
 /* The attention pulse (design system §6): the product's second and last

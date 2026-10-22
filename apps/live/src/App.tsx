@@ -1,3 +1,4 @@
+import { PulseLockup } from "@rvlt/pulse-ui/brand";
 import {
   useCallback,
   useEffect,
@@ -53,6 +54,7 @@ import { Player } from "./components/Player";
 import { A1Bar, ReportBanner } from "./components/Reports";
 import { ReportSheet } from "./components/ReportSheet";
 import { SelectionBar } from "./components/SelectionBar";
+import { RunOfShow } from "./components/RunOfShow";
 import { SessionBar } from "./components/SessionBar";
 import { SessionSheet } from "./components/SessionSheet";
 import type { CardReportState } from "./components/ChannelCard";
@@ -1496,6 +1498,24 @@ export function App({
         : summary.active;
   const showName = liveState?.show.name ?? "Show state unavailable";
   const nodeDevice = liveState?.node.device ?? null;
+  const runToPrepare = runs.reduce(
+    (total, run) =>
+      total +
+      (turnovers.get(roomKeyOf(run.roomId)) ?? []).filter(
+        ({ tone }) => tone !== "ready",
+      ).length,
+    0,
+  );
+  const runSummary = offline
+    ? "Unknown"
+    : [
+        runs.length > 1 ? `${runs.length} rooms` : null,
+        runToPrepare
+          ? `${runToPrepare} channel${runToPrepare === 1 ? "" : "s"} to prepare`
+          : "all ready",
+      ]
+        .filter(Boolean)
+        .join(" · ");
 
   return (
     <div className="live-app">
@@ -1503,23 +1523,7 @@ export function App({
         {announcement}
       </div>
       <header className="app-header">
-        <div className="brand" aria-label="Pulse">
-          <span aria-hidden="true">
-            <svg
-              viewBox="0 0 100 100"
-              width="20"
-              height="20"
-              fill="currentColor"
-            >
-              <rect x="8" y="38" width="12" height="24" rx="6" />
-              <rect x="27" y="24" width="12" height="52" rx="6" />
-              <rect x="46" y="8" width="12" height="84" rx="6" />
-              <rect x="65" y="24" width="12" height="52" rx="6" />
-              <rect x="84" y="38" width="12" height="24" rx="6" />
-            </svg>
-          </span>
-          <b>Pulse</b>
-        </div>
+        <PulseLockup />
         <div className="show-name">
           <strong>{showName}</strong>
           <span>
@@ -1752,23 +1756,30 @@ export function App({
         </div>
       ) : null}
 
-      {runs.map((run) => (
-        <SessionBar
-          key={roomKeyOf(run.roomId)}
-          session={run}
-          roomName={
-            rooms.length && (room === "all" || runs.length > 1)
-              ? roomName(run.roomId)
-              : null
-          }
-          turnover={turnovers.get(roomKeyOf(run.roomId)) ?? []}
-          offline={offline}
-          onOpen={() => {
-            setSessionError(null);
-            setTurnoverRoom(roomKeyOf(run.roomId));
-          }}
-        />
-      ))}
+      {runs.length ? (
+        <RunOfShow
+          summary={runSummary}
+          needsAttention={runToPrepare > 0 && !offline}
+        >
+          {runs.map((run) => (
+            <SessionBar
+              key={roomKeyOf(run.roomId)}
+              session={run}
+              roomName={
+                rooms.length && (room === "all" || runs.length > 1)
+                  ? roomName(run.roomId)
+                  : null
+              }
+              turnover={turnovers.get(roomKeyOf(run.roomId)) ?? []}
+              offline={offline}
+              onOpen={() => {
+                setSessionError(null);
+                setTurnoverRoom(roomKeyOf(run.roomId));
+              }}
+            />
+          ))}
+        </RunOfShow>
+      ) : null}
 
       {!isA1 ? (
         <ReportBanner
