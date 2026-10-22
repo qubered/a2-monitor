@@ -1756,28 +1756,30 @@ export function App({
         </div>
       ) : null}
 
-      <RunOfShow
-        summary={runSummary}
-        needsAttention={runToPrepare > 0 && !offline}
-      >
-        {runs.map((run) => (
-          <SessionBar
-            key={roomKeyOf(run.roomId)}
-            session={run}
-            roomName={
-              rooms.length && (room === "all" || runs.length > 1)
-                ? roomName(run.roomId)
-                : null
-            }
-            turnover={turnovers.get(roomKeyOf(run.roomId)) ?? []}
-            offline={offline}
-            onOpen={() => {
-              setSessionError(null);
-              setTurnoverRoom(roomKeyOf(run.roomId));
-            }}
-          />
-        ))}
-      </RunOfShow>
+      {runs.length ? (
+        <RunOfShow
+          summary={runSummary}
+          needsAttention={runToPrepare > 0 && !offline}
+        >
+          {runs.map((run) => (
+            <SessionBar
+              key={roomKeyOf(run.roomId)}
+              session={run}
+              roomName={
+                rooms.length && (room === "all" || runs.length > 1)
+                  ? roomName(run.roomId)
+                  : null
+              }
+              turnover={turnovers.get(roomKeyOf(run.roomId)) ?? []}
+              offline={offline}
+              onOpen={() => {
+                setSessionError(null);
+                setTurnoverRoom(roomKeyOf(run.roomId));
+              }}
+            />
+          ))}
+        </RunOfShow>
+      ) : null}
 
       {!isA1 ? (
         <ReportBanner

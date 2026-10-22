@@ -39,7 +39,7 @@ export function RunOfShow({
   };
 
   return (
-    <section className="run-of-show" aria-label="Run of show">
+    <div className="run-of-show">
       <button
         className="run-toggle"
         type="button"
@@ -70,6 +70,6 @@ export function RunOfShow({
       <div id={bodyId} hidden={!open}>
         {children}
       </div>
-    </section>
+    </div>
   );
 }

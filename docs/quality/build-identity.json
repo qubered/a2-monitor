@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.9b3349c932a3fc83",
-  "sourceSha256": "9b3349c932a3fc8368e2b00afe67f0470b44f1146b614dc7ca51ee5f20b91751",
+  "buildId": "a2-0.0.0+sha256.20c0b933c5f6e595",
+  "sourceSha256": "20c0b933c5f6e595e7bee825735aea0f2b2e96218a8577824a298c1f26cc3123",
   "inputCount": 485,
   "inputs": [
     {
@@ -97,7 +97,7 @@
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "b969a45c1e491fd86671c6be4fe84b43aa76fc6b81ef3d9c7b488aefa34080b7"
+      "sha256": "f4d961018c0da4d7723a38893c5295c02c82b1fb63ba48f1f7dcce30d81d545c"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -181,7 +181,7 @@
     },
     {
       "path": "apps/live/src/components/RunOfShow.tsx",
-      "sha256": "763f4d492eeb26b439bc919763159a92b9c5dd3c92f3c476b29b68a1c07152ec"
+      "sha256": "dad4eb2547dadcd39d13450c340e9bf83f3e19c454ee87ef3d1d37b1f7161ece"
     },
     {
       "path": "apps/live/src/components/SelectionBar.test.tsx",
