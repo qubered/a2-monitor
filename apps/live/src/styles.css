@@ -593,6 +593,47 @@ a:focus-visible {
   font-weight: 600;
 }
 
+.run-toggle {
+  width: 100%;
+  min-height: var(--target);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-6);
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: var(--font-ui);
+  text-align: left;
+}
+
+.run-toggle svg {
+  flex: none;
+  transition: transform var(--transition-control);
+}
+
+.run-toggle[aria-expanded="false"] svg {
+  transform: rotate(-90deg);
+}
+
+.run-toggle-label {
+  font-weight: 600;
+}
+
+.run-toggle-summary {
+  color: var(--muted);
+  font-size: var(--font-caption);
+}
+
+.run-toggle-summary.is-action {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.run-of-show {
+  border-bottom: var(--size-1) solid var(--line);
+}
+
 /* Run of show (design system §10.9): now, next and how much the turnover
    still needs, one row under the header. */
 .session-bar {

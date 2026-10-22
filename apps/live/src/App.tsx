@@ -54,6 +54,7 @@ import { Player } from "./components/Player";
 import { A1Bar, ReportBanner } from "./components/Reports";
 import { ReportSheet } from "./components/ReportSheet";
 import { SelectionBar } from "./components/SelectionBar";
+import { RunOfShow } from "./components/RunOfShow";
 import { SessionBar } from "./components/SessionBar";
 import { SessionSheet } from "./components/SessionSheet";
 import type { CardReportState } from "./components/ChannelCard";
@@ -1497,6 +1498,24 @@ export function App({
         : summary.active;
   const showName = liveState?.show.name ?? "Show state unavailable";
   const nodeDevice = liveState?.node.device ?? null;
+  const runToPrepare = runs.reduce(
+    (total, run) =>
+      total +
+      (turnovers.get(roomKeyOf(run.roomId)) ?? []).filter(
+        ({ tone }) => tone !== "ready",
+      ).length,
+    0,
+  );
+  const runSummary = offline
+    ? "Unknown"
+    : [
+        runs.length > 1 ? `${runs.length} rooms` : null,
+        runToPrepare
+          ? `${runToPrepare} channel${runToPrepare === 1 ? "" : "s"} to prepare`
+          : "all ready",
+      ]
+        .filter(Boolean)
+        .join(" · ");
 
   return (
     <div className="live-app">
@@ -1737,23 +1756,28 @@ export function App({
         </div>
       ) : null}
 
-      {runs.map((run) => (
-        <SessionBar
-          key={roomKeyOf(run.roomId)}
-          session={run}
-          roomName={
-            rooms.length && (room === "all" || runs.length > 1)
-              ? roomName(run.roomId)
-              : null
-          }
-          turnover={turnovers.get(roomKeyOf(run.roomId)) ?? []}
-          offline={offline}
-          onOpen={() => {
-            setSessionError(null);
-            setTurnoverRoom(roomKeyOf(run.roomId));
-          }}
-        />
-      ))}
+      <RunOfShow
+        summary={runSummary}
+        needsAttention={runToPrepare > 0 && !offline}
+      >
+        {runs.map((run) => (
+          <SessionBar
+            key={roomKeyOf(run.roomId)}
+            session={run}
+            roomName={
+              rooms.length && (room === "all" || runs.length > 1)
+                ? roomName(run.roomId)
+                : null
+            }
+            turnover={turnovers.get(roomKeyOf(run.roomId)) ?? []}
+            offline={offline}
+            onOpen={() => {
+              setSessionError(null);
+              setTurnoverRoom(roomKeyOf(run.roomId));
+            }}
+          />
+        ))}
+      </RunOfShow>
 
       {!isA1 ? (
         <ReportBanner
