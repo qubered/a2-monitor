@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.45cbb9264bf4e460",
-  "sourceSha256": "45cbb9264bf4e4609275404cb100cca9a0f0b1d8ca3e86b3a6222bc41998380f",
+  "buildId": "a2-0.0.0+sha256.f4a1271ec050c88b",
+  "sourceSha256": "f4a1271ec050c88b204cdfb4f7e9f0e2c390e57043373333bab4ae6065026036",
   "inputCount": 485,
   "inputs": [
     {
@@ -97,7 +97,7 @@
     },
     {
       "path": "apps/live/src/App.tsx",
-      "sha256": "f4d961018c0da4d7723a38893c5295c02c82b1fb63ba48f1f7dcce30d81d545c"
+      "sha256": "def60803a1823cdef7bc0db49238f02d916b2fbf7bcb2ff8828b902d3e9277fa"
     },
     {
       "path": "apps/live/src/alerts.ts",
@@ -277,7 +277,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "4be0990cc2d5ecb4b9767b4c623edf8995618cc4786854cb5e3f7576e509ec23"
+      "sha256": "97b7b88bcf08e0c92fcb0da915ab9216b21f908d0280bef9d7d46c3798d51a18"
     },
     {
       "path": "apps/live/src/trim.ts",

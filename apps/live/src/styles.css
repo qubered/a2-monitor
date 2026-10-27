@@ -1025,6 +1025,18 @@ a:focus-visible {
   gap: var(--space-4);
 }
 
+.channel-grid[data-card-size="s"] {
+  --channel-card-min: 9.5rem;
+}
+
+.channel-grid[data-card-size="l"] {
+  --channel-card-min: 18rem;
+}
+
+.channel-grid[data-card-size="xl"] {
+  --channel-card-min: 26rem;
+}
+
 .channel-card {
   position: relative;
   min-width: 0;
@@ -2817,6 +2829,15 @@ a:focus-visible {
   .channel-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-3);
+  }
+
+  .channel-grid[data-card-size="s"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .channel-grid[data-card-size="l"],
+  .channel-grid[data-card-size="xl"] {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .channel-card {

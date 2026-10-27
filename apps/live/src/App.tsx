@@ -85,6 +85,14 @@ import {
 } from "./host-output";
 import { MeterStore } from "./meters";
 import { fitGlance } from "./glance-layout";
+
+type CardSize = "s" | "m" | "l" | "xl";
+const CARD_SIZES: readonly (readonly [CardSize, string])[] = [
+  ["s", "Small"],
+  ["m", "Medium"],
+  ["l", "Large"],
+  ["xl", "Extra large"],
+];
 import {
   categoryIdInRoom,
   effectiveRoom,
@@ -451,6 +459,23 @@ export function App({
       window.localStorage.setItem("pulse-grid-view", next);
     } catch {
       // The layout is a per-device convenience.
+    }
+  };
+  /** Card width step for the Cards layout. Per device. */
+  const [cardSize, setCardSize] = useState<CardSize>(() => {
+    try {
+      const stored = window.localStorage.getItem("pulse-card-size");
+      return CARD_SIZES.find(([key]) => key === stored)?.[0] ?? "m";
+    } catch {
+      return "m";
+    }
+  });
+  const chooseCardSize = (next: CardSize) => {
+    setCardSize(next);
+    try {
+      window.localStorage.setItem("pulse-card-size", next);
+    } catch {
+      // The size is a per-device convenience.
     }
   };
   const mainRef = useRef<HTMLElement>(null);
@@ -1303,7 +1328,7 @@ export function App({
 
   /**
    * Selects a channel to monitor. A plain press replaces the selection with
-   * just this one; a Shift-click (or Shift-Enter on a focused card) extends
+   * just this one, or stops it when it is already the only one playing; a Shift-click (or Shift-Enter on a focused card) extends
    * it to every card between the last anchor and this one; a Ctrl/Cmd-click,
    * or any tap while `touchSelecting` is on, toggles this one card without
    * touching the rest. Several channels can play at once in device mode; the
@@ -1315,7 +1340,10 @@ export function App({
     modifiers: { extend?: boolean; toggle?: boolean } = {},
   ) {
     if (hostMode) {
-      if (channel.id === hostSelectedId) return;
+      if (channel.id === hostSelectedId) {
+        clearSelection();
+        return;
+      }
       if (channel.input.index === null) {
         setActionError(
           `${channel.name} has no patched input, so the host output is unchanged.`,
@@ -1341,6 +1369,11 @@ export function App({
           : [...prev, channel.id],
       );
       setSelectionAnchorId(channel.id);
+      return;
+    }
+    // Pressing the one channel already playing stops it.
+    if (selectedIds.length === 1 && selectedIds[0] === channel.id) {
+      clearSelection();
       return;
     }
     setSelectedIds([channel.id]);
@@ -1753,6 +1786,21 @@ export function App({
               </button>
             ))}
           </div>
+          {gridView === "cards" ? (
+            <div className="view-switch" role="group" aria-label="Card size">
+              {CARD_SIZES.map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={cardSize === key}
+                  aria-label={`${label} cards`}
+                  onClick={() => chooseCardSize(key)}
+                >
+                  {key.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -1840,7 +1888,7 @@ export function App({
                     {group.title} <span>{group.channels.length}</span>
                   </h2>
                 ) : null}
-                <div className="channel-grid">
+                <div className="channel-grid" data-card-size={cardSize}>
                   {group.channels.map((channel) => (
                     <ChannelCard
                       key={channel.id}
