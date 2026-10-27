@@ -330,7 +330,11 @@ export function ChannelCard({
           </div>
         </div>
       )}
-      <StatusStrip statuses={channel.statuses} compact={density === "glance"} />
+      <StatusStrip
+        statuses={channel.statuses}
+        battery={channel.battery}
+        compact={density === "glance"}
+      />
 
       {alert ? (
         <button

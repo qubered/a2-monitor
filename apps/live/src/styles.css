@@ -1326,6 +1326,27 @@ a:focus-visible {
   font-weight: 700;
 }
 
+/* The battery cell's charge and remaining runtime replace its label. They stay
+   visible on the phone grid, where the other cells drop their words. */
+.status-reading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.15;
+}
+
+.status-reading b,
+.status-reading i {
+  font-style: normal;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-reading i {
+  font-weight: 500;
+  opacity: 0.85;
+}
+
 .status-cell + .status-cell {
   border-left: var(--size-1) solid var(--line-2);
 }
@@ -2802,7 +2823,7 @@ a:focus-visible {
     padding: var(--space-2);
   }
 
-  .status-cell span:not(.sr-only) {
+  .status-cell span:not(.sr-only, .status-reading) {
     display: none;
   }
 

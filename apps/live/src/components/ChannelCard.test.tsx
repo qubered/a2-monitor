@@ -193,3 +193,64 @@ describe("ChannelCard touch multi-select", () => {
     }
   });
 });
+
+describe("ChannelCard battery reading", () => {
+  const battery = (
+    overrides: Partial<LiveStateChannel["battery"]>,
+  ): LiveStateChannel["battery"] => ({
+    availability: "observed",
+    percent: 90,
+    bars: 5,
+    runtimeMinutes: 200,
+    type: "LION",
+    ...overrides,
+  });
+
+  it("shows charge and remaining runtime on the card", () => {
+    renderCard({ battery: battery({}) });
+    expect(screen.getByText("90%")).not.toBeNull();
+    expect(screen.getByText("3h 20m")).not.toBeNull();
+  });
+
+  it("marks a stale reading as stale", () => {
+    renderCard({ battery: battery({ availability: "stale" }) });
+    expect(screen.getByText("stale")).not.toBeNull();
+  });
+
+  it("shows no number for an unknown battery, never zero", () => {
+    renderCard({
+      battery: battery({
+        availability: "unknown",
+        percent: null,
+        runtimeMinutes: null,
+      }),
+      statuses: {
+        rf: "unknown",
+        audio: "good",
+        battery: "unknown",
+        check: "unknown",
+      },
+    });
+    expect(screen.queryByText(/%/)).toBeNull();
+    expect(screen.getByText("Battery")).not.toBeNull();
+  });
+
+  it("shows charge alone when the receiver reports no runtime", () => {
+    renderCard({ battery: battery({ runtimeMinutes: null }) });
+    expect(screen.getByText("90%")).not.toBeNull();
+    expect(screen.queryByText(/\dm$/)).toBeNull();
+  });
+
+  it("shows nothing for a wired channel", () => {
+    renderCard({
+      kind: "wired",
+      statuses: {
+        rf: "not-applicable",
+        audio: "good",
+        battery: "not-applicable",
+        check: "unknown",
+      },
+    });
+    expect(screen.queryByText("90%")).toBeNull();
+  });
+});
