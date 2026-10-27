@@ -10,6 +10,10 @@ externally tested release.
 
 ### Changed
 
+- Live: each wireless channel card's battery cell now shows the charge
+  percentage and remaining runtime (for example `63%` / `3h 05m`), so battery
+  levels can be checked from the grid without opening a channel's history. A
+  stale reading is marked stale; an unknown one shows no number.
 - Manager and Live: a channel can now belong to several rooms at once (ADR
   0035), each with its own category. Manager's Channels tab assigns and
   removes room memberships one at a time instead of one dropdown; Live shows

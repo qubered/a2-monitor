@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.a63a8deab16f3492",
-  "sourceSha256": "a63a8deab16f349216d224677c608dc49e255887347f134ab13e2bc9383d76e5",
+  "buildId": "a2-0.0.0+sha256.f4a1271ec050c88b",
+  "sourceSha256": "f4a1271ec050c88b204cdfb4f7e9f0e2c390e57043373333bab4ae6065026036",
   "inputCount": 485,
   "inputs": [
     {
@@ -49,7 +49,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "ef947d58ffc98b87508521f7b99ab1e92375bdeb7c3c5447c0d4c7e841e143a0"
+      "sha256": "9ef667adfa80ad5a2cb91b0633985dbeaf5e297c7aea2369bc3c64c4e1142166"
     },
     {
       "path": "CLAUDE.md",
@@ -121,11 +121,11 @@
     },
     {
       "path": "apps/live/src/components/ChannelCard.test.tsx",
-      "sha256": "7fb28fa2c8aa9958229754238a68e999e844443b4c9c3ebcc324c3ce0f2a3da5"
+      "sha256": "fadfc89ac71f23a9bd6df56b4e1931cff84fefe97247d7302c024bbf4c4bc04c"
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
-      "sha256": "f61cb9165f227e24b894f74db6eee0aa836b2fd6ca26c444332e89f98a724489"
+      "sha256": "09468fbfd74ea67a83fe4da57e44c80fef8fb7b674f5a4045f1db9893ded47f4"
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
@@ -201,7 +201,7 @@
     },
     {
       "path": "apps/live/src/components/StatusStrip.tsx",
-      "sha256": "a65d4188e462a9f014a0688588f44605e00a6648e86222cbb095cc30f68486c7"
+      "sha256": "70e5799e3b1148032a77702ed4f0f649aad365817ea9827d4de728421b87e5da"
     },
     {
       "path": "apps/live/src/components/useLongPress.ts",
@@ -277,7 +277,7 @@
     },
     {
       "path": "apps/live/src/styles.css",
-      "sha256": "36450ee2f502e5cb53f766e32a2e1c81d169c43ad9c67770971b135836f74db1"
+      "sha256": "97b7b88bcf08e0c92fcb0da915ab9216b21f908d0280bef9d7d46c3798d51a18"
     },
     {
       "path": "apps/live/src/trim.ts",
