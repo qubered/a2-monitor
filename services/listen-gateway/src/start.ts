@@ -24,6 +24,17 @@ const outputChannels = outputDevice
 if (!Number.isInteger(port) || port < 1 || port > 65_535) {
   throw new Error("A2_LISTEN_PORT must be an integer from 1 to 65535.");
 }
+// Development only (npm run dev:simulate): the EW-DX simulator's port. Real
+// receivers always answer SSCv2 on 443.
+const ewdxPort = process.env.A2_EWDX_PORT
+  ? Number(process.env.A2_EWDX_PORT)
+  : undefined;
+if (
+  ewdxPort !== undefined &&
+  (!Number.isInteger(ewdxPort) || ewdxPort < 1 || ewdxPort > 65_535)
+) {
+  throw new Error("A2_EWDX_PORT must be an integer from 1 to 65535.");
+}
 
 const gateway = new ListenGateway({
   device: process.env.A2_AUDIO_DEVICE,
@@ -35,6 +46,8 @@ const gateway = new ListenGateway({
   webRoot: process.env.A2_LIVE_DIR,
   managerRoot: process.env.A2_MANAGER_DIR,
   backendOrigin: process.env.A2_BACKEND_ORIGIN,
+  ewdxSecretsFile: process.env.A2_EWDX_SECRETS_FILE,
+  ewdxPort,
 });
 
 gateway.startCapture();

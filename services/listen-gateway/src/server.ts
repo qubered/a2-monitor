@@ -29,6 +29,11 @@ import {
   type MediaWorkerOptions,
 } from "./media-worker.js";
 import { handleWebRequest, type WebHostOptions } from "./web-host.js";
+import { readEwdxSecrets } from "./ewdx-secrets.js";
+import {
+  mergeFleetTelemetry,
+  SennheiserFleetMonitor,
+} from "./sennheiser-ewdx.js";
 import { ShureFleetMonitor } from "./shure.js";
 
 const MAX_SIGNALING_BODY_BYTES = 64 * 1024;
@@ -55,6 +60,11 @@ export type ListenGatewayOptions = MediaWorkerOptions &
     mediaWorker?: MediaWorkerManager;
 
     shureMonitor?: ShureFleetMonitor;
+    sennheiserMonitor?: SennheiserFleetMonitor;
+    /** Node-local EW-DX third-party password file (mode 0600); see ewdx-secrets.ts. */
+    ewdxSecretsFile?: string;
+    /** Development only: the EW-DX simulator's HTTPS port instead of 443. */
+    ewdxPort?: number;
     interfaces?: () => NodeJS.Dict<NetworkInterfaceInfo[]>;
   };
 
@@ -210,6 +220,7 @@ function channelFrom(value: unknown, channelCount: number): number {
 export class ListenGateway {
   readonly media: MediaWorkerManager;
   readonly shure: ShureFleetMonitor;
+  readonly sennheiser: SennheiserFleetMonitor;
   readonly server: Server;
   private readonly interfaces: () => NodeJS.Dict<NetworkInterfaceInfo[]>;
   private readonly meterClients = new Set<ServerResponse>();
@@ -292,12 +303,21 @@ export class ListenGateway {
       for (const client of this.outputClients) client.write(": keepalive\n\n");
     }, METER_KEEPALIVE_MS);
     this.keepalive.unref();
+    this.sennheiser =
+      options.sennheiserMonitor ??
+      new SennheiserFleetMonitor({
+        port: options.ewdxPort,
+        // Re-read on every refresh so a password stored later takes effect.
+        password: (id) => readEwdxSecrets(options.ewdxSecretsFile).password(id),
+        secretsError: () => readEwdxSecrets(options.ewdxSecretsFile).error,
+      });
     this.shure =
       options.shureMonitor ??
       new ShureFleetMonitor({
         backendOrigin: options.backendOrigin,
         // The active production's host output feeds (ADR 0031).
         onShowfile: (showfile) => {
+          this.sennheiser.reconcile(showfile.sennheiserReceivers ?? []);
           this.setInputTrims(showfile);
           this.hostFeeds.configure(
             showfile.hostOutput?.feeds,
@@ -342,7 +362,14 @@ export class ListenGateway {
         return;
       }
       if (request.method === "GET" && request.url === "/audio/v0/shure") {
-        sendJson(response, 200, this.shure.getState());
+        sendJson(
+          response,
+          200,
+          mergeFleetTelemetry(
+            this.shure.getState(),
+            this.sennheiser.getStates(),
+          ),
+        );
         return;
       }
       if (request.url?.startsWith("/audio/v0/listen/")) {
@@ -630,6 +657,7 @@ export class ListenGateway {
     clearInterval(this.keepalive);
     this.media.stop();
     this.shure.close();
+    this.sennheiser.close();
     for (const client of this.meterClients) client.end();
     this.meterClients.clear();
     for (const client of this.outputClients) client.end();

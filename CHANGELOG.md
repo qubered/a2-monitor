@@ -8,6 +8,20 @@ externally tested release.
 
 ## Unreleased
 
+### Added
+
+- Manager, Live and the audio node: read-only Sennheiser EW-DX EM 2 Dante
+  receivers (two channels, firmware 4.x over authenticated SSCv2). Manager
+  adds each unit by explicit IP and its TLS certificate's SHA-256 fingerprint;
+  the third-party password stays only in the audio node's secret file. Live
+  shows RF level, the receiver's own link quality in percent, audio level,
+  frequency, transmitter type, mute, battery charge and remaining runtime,
+  with the same alerts as Shure. Values EW-DX does not report (battery bars
+  and cycles, per-antenna diversity, interference) stay unknown, never zero.
+  The wrong model, older SSCv1-only firmware, a rejected password or a
+  mismatched certificate is reported instead of being trusted. Not yet
+  verified on physical hardware.
+
 ### Changed
 
 - Live: each wireless channel card's battery cell now shows the charge

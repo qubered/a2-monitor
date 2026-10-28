@@ -298,8 +298,9 @@ export function App() {
               <TabsTrigger value="receivers">
                 <Radio aria-hidden="true" />
                 Receivers
-                {showfile.shureReceivers.length
-                  ? ` · ${showfile.shureReceivers.length}`
+                {showfile.shureReceivers.length +
+                (showfile.sennheiserReceivers?.length ?? 0)
+                  ? ` · ${showfile.shureReceivers.length + (showfile.sennheiserReceivers?.length ?? 0)}`
                   : ""}
               </TabsTrigger>
               <TabsTrigger value="channels">

@@ -5,6 +5,10 @@ import {
   SHURE_RECEIVER_MODELS,
   type ShureReceiverModel,
 } from "@rvlt/pulse-protocol/shure-models";
+import {
+  isTlsCertificatePin,
+  SENNHEISER_MODEL_INFO,
+} from "@rvlt/pulse-protocol/sennheiser-models";
 import { EmptyState } from "./EmptyState";
 import { Badge, type BadgeProps } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -31,6 +35,18 @@ function receiverId(): string {
 }
 
 const DEFAULT_MODEL: ShureReceiverModel = "ULXD4D";
+/** Shure and EW-DX receivers together; the fleet telemetry carries at most 64. */
+const MAX_RECEIVERS = 64;
+const EWDX = SENNHEISER_MODEL_INFO["EW-DX EM 2 Dante"];
+
+/**
+ * Accepts a fingerprint as openssl or a browser prints it ("AB:CD:...") by
+ * dropping separators and case only. It is never shortened: anything other
+ * than 64 hex digits stays as entered and is shown as invalid.
+ */
+function normalizePin(value: string): string {
+  return value.replace(/[\s:]/g, "").toLowerCase();
+}
 
 function statusVariant(status: string | undefined): BadgeProps["variant"] {
   switch (status) {
@@ -56,6 +72,10 @@ export function ReceiversTab({
   shure: ShureTelemetry | null;
   onChange: (next: Showfile) => void;
 }) {
+  const sennheiserReceivers = showfile.sennheiserReceivers ?? [];
+  const atLimit =
+    showfile.shureReceivers.length + sennheiserReceivers.length >=
+    MAX_RECEIVERS;
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -71,6 +91,7 @@ export function ReceiversTab({
         </div>
         <Button
           variant="outline"
+          disabled={atLimit}
           onClick={() =>
             onChange({
               ...showfile,
@@ -238,6 +259,206 @@ export function ReceiversTab({
                         onChange({
                           ...showfile,
                           shureReceivers: showfile.shureReceivers.filter(
+                            ({ id }) => id !== receiver.id,
+                          ),
+                          channels: showfile.channels.map((channel) =>
+                            channel.shureReceiverId === receiver.id
+                              ? {
+                                  ...channel,
+                                  shureReceiverId: null,
+                                  shureChannelIndex: null,
+                                }
+                              : channel,
+                          ),
+                        })
+                      }
+                    >
+                      <Trash2 aria-hidden="true" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      )}
+      {atLimit ? (
+        <p className="text-caption text-muted-foreground">
+          {MAX_RECEIVERS} receivers is the most one show can hold.
+        </p>
+      ) : null}
+
+      <SennheiserReceivers
+        showfile={showfile}
+        telemetry={shure}
+        atLimit={atLimit}
+        onChange={onChange}
+      />
+    </div>
+  );
+}
+
+function SennheiserReceivers({
+  showfile,
+  telemetry,
+  atLimit,
+  onChange,
+}: {
+  showfile: Showfile;
+  telemetry: ShureTelemetry | null;
+  atLimit: boolean;
+  onChange: (next: Showfile) => void;
+}) {
+  const receivers = showfile.sennheiserReceivers ?? [];
+  const update = (
+    position: number,
+    patch: Partial<(typeof receivers)[number]>,
+  ) => {
+    const next = [...receivers];
+    next[position] = { ...next[position]!, ...patch };
+    onChange({ ...showfile, sennheiserReceivers: next });
+  };
+  return (
+    <div className="mt-4 flex flex-col gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="font-display text-section leading-tight text-foreground">
+            Sennheiser EW-DX receivers
+          </h2>
+          <p className="mt-1 max-w-xl text-caption text-muted-foreground">
+            Read-only over SSCv2 (firmware 4.0 or later). On the receiver,
+            enable 3rd party access with a password in Sennheiser Control
+            Cockpit; store that password only on the audio node, never here. Pin
+            the receiver&apos;s certificate by its SHA-256 fingerprint.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          disabled={atLimit}
+          onClick={() =>
+            onChange({
+              ...showfile,
+              sennheiserReceivers: [
+                ...receivers,
+                {
+                  id: receiverId(),
+                  name: `EW-DX ${receivers.length + 1}`,
+                  host: "192.168.1.100",
+                  model: EWDX.model,
+                  channelCount: 2,
+                  tlsCertificateSha256: "",
+                },
+              ],
+            })
+          }
+        >
+          Add EW-DX EM 2 Dante
+        </Button>
+      </div>
+
+      {receivers.length === 0 ? null : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-10">#</TableHead>
+              <TableHead>Unit name</TableHead>
+              <TableHead>Model</TableHead>
+              <TableHead>Control IP</TableHead>
+              <TableHead>Certificate SHA-256</TableHead>
+              <TableHead className="w-32">Channels</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-16">
+                <span className="sr-only">Remove</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {receivers.map((receiver, position) => {
+              const observed = telemetry?.receivers.find(
+                ({ id }) => id === receiver.id,
+              );
+              const pinValid = isTlsCertificatePin(
+                receiver.tlsCertificateSha256,
+              );
+              return (
+                <TableRow key={receiver.id}>
+                  <TableCell className="font-mono text-table tabular-nums text-muted-foreground">
+                    {position + 1}
+                  </TableCell>
+                  <TableCell className="min-w-40">
+                    <Input
+                      aria-label={`EW-DX receiver ${position + 1} name`}
+                      value={receiver.name}
+                      maxLength={120}
+                      onChange={(event) =>
+                        update(position, { name: event.target.value })
+                      }
+                    />
+                  </TableCell>
+                  <TableCell className="min-w-48 text-table text-foreground">
+                    {EWDX.label}
+                  </TableCell>
+                  <TableCell className="min-w-36">
+                    <Input
+                      aria-label={`EW-DX receiver ${position + 1} control IP`}
+                      value={receiver.host}
+                      maxLength={45}
+                      onChange={(event) =>
+                        update(position, { host: event.target.value })
+                      }
+                    />
+                  </TableCell>
+                  <TableCell className="min-w-56">
+                    <Input
+                      aria-label={`EW-DX receiver ${position + 1} certificate SHA-256`}
+                      aria-invalid={!pinValid}
+                      className="font-mono"
+                      placeholder="64 hex digits"
+                      value={receiver.tlsCertificateSha256}
+                      onChange={(event) =>
+                        update(position, {
+                          tlsCertificateSha256: normalizePin(
+                            event.target.value,
+                          ),
+                        })
+                      }
+                    />
+                    {pinValid ? null : (
+                      <p className="mt-1 text-caption text-muted-foreground">
+                        Needs exactly 64 hex digits (SHA-256).
+                      </p>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono text-table tabular-nums text-muted-foreground">
+                      {EWDX.channelCount} channels
+                    </span>
+                  </TableCell>
+                  <TableCell className="max-w-72">
+                    <Badge
+                      variant={
+                        observed ? statusVariant(observed.status) : "neutral"
+                      }
+                    >
+                      {observed
+                        ? `${observed.status} · ${observed.model ?? "model unknown"}`
+                        : "Save to connect"}
+                    </Badge>
+                    {observed && observed.status !== "ready" ? (
+                      <p className="mt-1 text-caption text-muted-foreground">
+                        {observed.detail}
+                      </p>
+                    ) : null}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      aria-label={`Remove EW-DX receiver ${position + 1}`}
+                      onClick={() =>
+                        onChange({
+                          ...showfile,
+                          sennheiserReceivers: receivers.filter(
                             ({ id }) => id !== receiver.id,
                           ),
                           channels: showfile.channels.map((channel) =>

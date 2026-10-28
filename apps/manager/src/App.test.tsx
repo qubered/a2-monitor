@@ -35,6 +35,7 @@ type StoredShowfile = {
   device: { name: string; channelCount: number } | null;
   channels: Array<Record<string, unknown>>;
   shureReceivers?: unknown[];
+  sennheiserReceivers?: unknown[];
 };
 
 const storedShowfile: StoredShowfile = {
@@ -268,6 +269,170 @@ describe("Manager showfile editor", () => {
         String(path) === "/api/v1/showfile" && init?.method === "PUT",
     );
     expect(String(saveCall?.[1]?.body)).toContain('"model":"ANX4"');
+  });
+
+  it("adds an EW-DX EM 2 Dante with a pinned certificate and binds a channel to its second channel", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /receivers/i }));
+    await user.click(
+      screen.getByRole("button", { name: "Add EW-DX EM 2 Dante" }),
+    );
+    expect(screen.getByText("Sennheiser EW-DX EM 2 Dante")).toBeTruthy();
+    const pin = screen.getByLabelText("EW-DX receiver 1 certificate SHA-256");
+    // Pasted the way openssl prints it: upper-case pairs with colons.
+    await user.type(pin, Array.from({ length: 32 }, () => "AB").join(":"));
+    expect((pin as HTMLInputElement).value).toBe("ab".repeat(32));
+    const host = screen.getByLabelText("EW-DX receiver 1 control IP");
+    await user.clear(host);
+    await user.type(host, "192.168.1.140");
+
+    await user.click(screen.getByRole("tab", { name: /channels/i }));
+    await user.click(
+      await screen.findByRole("combobox", {
+        name: "Channel 2 receiver channel",
+      }),
+    );
+    await user.click(
+      await screen.findByRole("option", { name: "EW-DX 1 · channel 2" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Save showfile" }));
+    const saveCall = fetchMock.mock.calls.find(
+      ([path, init]) =>
+        String(path) === "/api/v1/showfile" && init?.method === "PUT",
+    );
+    const saved = JSON.parse(String(saveCall?.[1]?.body)) as {
+      sennheiserReceivers: Array<Record<string, unknown>>;
+      channels: Array<Record<string, unknown>>;
+    };
+    expect(saved.sennheiserReceivers).toEqual([
+      {
+        id: expect.any(String),
+        name: "EW-DX 1",
+        host: "192.168.1.140",
+        model: "EW-DX EM 2 Dante",
+        channelCount: 2,
+        tlsCertificateSha256: "ab".repeat(32),
+      },
+    ]);
+    expect(saved.channels[1]).toMatchObject({
+      shureReceiverId: saved.sennheiserReceivers[0]!.id,
+      shureChannelIndex: 1,
+    });
+    expect(String(saveCall?.[1]?.body)).not.toMatch(/password/i);
+  });
+
+  it.each([
+    ["an overlong fingerprint", "ab".repeat(33), "ab".repeat(33), false],
+    ["a non-hex digit", `${"ab".repeat(31)}az`, `${"ab".repeat(31)}az`, false],
+    [
+      "spaces and a line break",
+      `${"AB ".repeat(16)}\n${"ab".repeat(16)}`,
+      "ab".repeat(32),
+      true,
+    ],
+  ])(
+    "keeps %s exactly as entered and says whether it is a valid pin",
+    async (_label, typed, kept, valid) => {
+      const user = userEvent.setup();
+      render(<App />);
+      await user.click(await screen.findByRole("tab", { name: /receivers/i }));
+      await user.click(
+        screen.getByRole("button", { name: "Add EW-DX EM 2 Dante" }),
+      );
+      const pin = screen.getByLabelText("EW-DX receiver 1 certificate SHA-256");
+      await user.type(pin, typed);
+      expect((pin as HTMLInputElement).value).toBe(kept);
+      expect(pin.getAttribute("aria-invalid")).toBe(String(!valid));
+      const message = screen.queryByText(
+        "Needs exactly 64 hex digits (SHA-256).",
+      );
+      if (valid) expect(message).toBeNull();
+      else expect(message).not.toBeNull();
+    },
+  );
+
+  it("shows an EW-DX receiver's observed status and stops adding receivers at 64", async () => {
+    showfiles.p1 = {
+      ...storedShowfile,
+      shureReceivers: Array.from({ length: 63 }, (_, index) => ({
+        id: `shure-${index}`,
+        name: `Shure ${index}`,
+        host: `192.0.2.${index + 1}`,
+        model: "ULXD4",
+        channelCount: 1,
+      })),
+      sennheiserReceivers: [
+        {
+          id: "ewdx-a",
+          name: "EW-DX rack",
+          host: "192.0.2.200",
+          model: "EW-DX EM 2 Dante",
+          channelCount: 2,
+          tlsCertificateSha256: "ab".repeat(32),
+        },
+      ],
+    } as StoredShowfile;
+    const realFetch = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation(async (input, init) => {
+      if (String(input) === "/audio/v0/shure")
+        return Response.json({
+          schemaVersion: "0",
+          status: "error",
+          detail: "One or more configured receivers are not current.",
+          receivers: [
+            {
+              id: "ewdx-a",
+              vendor: "sennheiser",
+              name: "EW-DX rack",
+              host: "192.0.2.200",
+              model: null,
+              firmware: null,
+              compatibility: "compatible-read-only",
+              status: "error",
+              detail:
+                "The receiver's third-party password is not configured on this audio node.",
+              capabilities: {
+                antennaDiversity: false,
+                linkQuality: true,
+                interference: false,
+                audioMeter: true,
+                batteryHealth: true,
+                transmitterDetail: true,
+              },
+              channels: [],
+            },
+          ],
+        });
+      return realFetch(input, init);
+    });
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /receivers/i }));
+    expect(
+      await screen.findByText(
+        "The receiver's third-party password is not configured on this audio node.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText(/error · model unknown/)).toBeTruthy();
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Add receiver",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Add EW-DX EM 2 Dante",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+    fetchMock.mockImplementation(realFetch);
   });
 
   it("sets a channel's mic type, uploads a photo, and turns off RF monitoring", async () => {
