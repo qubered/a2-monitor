@@ -1,6 +1,7 @@
 # Sennheiser EW-DX integration specification
 
-**Status:** Proposed
+**Status:** EW-DX EM 2 Dante implemented read-only over SSCv2 (firmware 4.x);
+EM 2 and EM 4 Dante remain proposed. Not verified on physical hardware.
 
 **Research checked:** 2026-09-18
 
@@ -47,6 +48,33 @@ The runtime capability descriptor is authoritative. SSCv1 and SSCv2 may expose
 different field shapes or update behavior; the adapter normalizes them without
 claiming unavailable values. Credentials and raw SSC sessions never leave the
 node.
+
+## Implemented EM 2 Dante mapping
+
+| Pulse field | EW-DX resource (OpenAPI 1.7) | Notes |
+| --- | --- | --- |
+| Identity | `/api/ssc/version`, `/api/device/identity`, `/api/firmware/update/state` | Protocol 2.x, schema 1.x, vendor, product `EWDX2CHDS` and firmware 4.x required. |
+| RF level | `/api/channel/{id}/signalStrengthIndicator` | dBm, -107..0. |
+| Link quality | `/api/channel/{id}/signalQualityIndicator` | Percent (RSQI), kept separate from RF level. |
+| Audio level | `/api/channel/{id}/level` | dBFS, -138.5..0. |
+| Name | `/api/channel/{id}` `name` | The channel's output mute is not transmitter mute. |
+| Frequency | `/api/rf/channels/{id}` | kHz. |
+| Transmitter, mute | `/api/transmitters/{id}` | HTTP 422 means no transmitter is linked. |
+| Battery | `/api/transmitters/{id}/battery` | Gauge percent and lifetime minutes; `NoBattery` is no reading. |
+| Warnings | `/api/channel/{id}/warnings`, `/api/transmitters/{id}/warnings` | Documented values only. |
+
+Unavailable on EW-DX and published as unknown: battery bars and cycle count,
+per-antenna diversity (the 0..2 `diversityIndicator` has no documented
+meaning) and interference classification. The adapter polls with GETs; it
+does not open SSE subscriptions, so it never holds one of the receiver's
+limited subscription sessions.
+
+Hardware acceptance gates still open: that `EWDX2CHDS` is the EM 2 Dante's
+product code (inferred from the documented list, not stated in it), real
+RSSI/RSQI/battery behaviour, that `/api/transmitters/{id}` uses the receiver
+channel index as its id (implied by the OpenAPI, not stated), keep-alive
+behaviour (a new connection is re-identified before use), and coexistence
+with Control Cockpit.
 
 ## Acceptance tests
 

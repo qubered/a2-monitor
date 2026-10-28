@@ -66,6 +66,14 @@ export function ShowTab({
               {showfile.shureReceivers.length}
             </TableCell>
           </TableRow>
+          <TableRow>
+            <TableCell className="font-semibold text-foreground">
+              Sennheiser EW-DX receivers
+            </TableCell>
+            <TableCell className="font-mono text-table tabular-nums text-muted-foreground">
+              {showfile.sennheiserReceivers?.length ?? 0}
+            </TableCell>
+          </TableRow>
         </TableBody>
       </Table>
     </div>

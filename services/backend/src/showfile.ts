@@ -33,6 +33,17 @@ export function trimShowfile(candidate: Showfile): Showfile {
       name: receiver.name.trim(),
       host: receiver.host.trim(),
     })),
+    ...(candidate.sennheiserReceivers === undefined
+      ? {}
+      : {
+          sennheiserReceivers: candidate.sennheiserReceivers.map(
+            (receiver) => ({
+              ...receiver,
+              name: receiver.name.trim(),
+              host: receiver.host.trim(),
+            }),
+          ),
+        }),
     channels: candidate.channels.map((channel) => ({
       ...channel,
       name: channel.name.trim(),

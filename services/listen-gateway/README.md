@@ -103,5 +103,22 @@ The gateway loads Manager's receiver inventory from the local showfile and
 opens an independent read-only Shure command-string connection to each unit on
 TCP 2202. Inventory changes are reconciled without restarting audio.
 `GET /audio/v0/shure` returns the closed normalized fleet battery contract.
+
+Sennheiser EW-DX EM 2 Dante receivers in the showfile's `sennheiserReceivers`
+are read with documented GETs over HTTPS on port 443 (SSCv2, Basic auth as
+user `api`). Each connection is trusted only if the receiver's certificate
+matches the SHA-256 pin from Manager, and every new connection is identified
+(product and serial) before any telemetry is read. Their normalized state is
+published in the same fleet contract with `vendor: "sennheiser"`. Their
+third-party passwords live only on this node, in a file named by
+`A2_EWDX_SECRETS_FILE` that must not be readable by other users (mode 0600):
+
+```json
+{ "schemaVersion": "0", "receivers": { "<receiver id>": { "password": "…" } } }
+```
+
+The file is re-read on every showfile refresh, so a stored or changed password
+takes effect without a restart. `A2_EWDX_PORT` exists only for the development
+simulator and applies only to loopback addresses.
 This temporary host is governed by ADR 0023 and is not a physical-hardware
 support claim.

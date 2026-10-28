@@ -4,15 +4,19 @@ This adapter converts the supported Sennheiser SSC interface into normalized
 receiver, radio-link, transmitter, battery, meter, warning, and capability
 events.
 
-## Planned receiver profiles
+## Receiver profiles
 
-- EW-DX EM 2;
-- EW-DX EM 2 Dante;
-- EW-DX EM 4 Dante; and
-- firmware 4.0 or later through authenticated SSCv2/OpenAPI.
+Implemented (read-only, `compatible-read-only`, hardware-unverified):
 
-Pre-4.0 SSCv1 is a listed `legacy-opt-in` profile rather than an invisible gap.
-It requires isolated configuration, physical firmware validation, and a
+- EW-DX EM 2 Dante, two channels, firmware 4.x through authenticated
+  SSCv2/OpenAPI (release 1.7). The adapter lives in
+  `services/listen-gateway/src/sennheiser-ewdx.ts`.
+
+Not implemented: the analogue EW-DX EM 2 and the four-channel EW-DX EM 4
+Dante. They are refused by product code rather than read as an EM 2 Dante.
+
+Pre-4.0 SSCv1 firmware is refused today with an explicit message. A future
+`legacy-opt-in` profile for it would require isolated configuration, physical firmware validation, and a
 persistent UI warning. Unknown future major versions remain unsupported until
 reviewed.
 

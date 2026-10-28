@@ -5,6 +5,7 @@ import type {
   Showfile,
   ShureTelemetry,
 } from "@rvlt/pulse-protocol/http";
+import { classifySennheiserTransmitter } from "@rvlt/pulse-protocol/sennheiser-models";
 import { classifyShureTransmitter } from "@rvlt/pulse-protocol/shure-models";
 import type { AlertPolicy } from "./alert-policy.js";
 import type { AlertCondition, AlertKind } from "./alerts.js";
@@ -25,9 +26,29 @@ import {
 } from "./sessions.js";
 
 type ShowChannel = Showfile["channels"][number];
-type ReceiverConfig = Showfile["shureReceivers"][number];
+type ReceiverConfig =
+  | Showfile["shureReceivers"][number]
+  | NonNullable<Showfile["sennheiserReceivers"]>[number];
 type TelemetryReceiver = ShureTelemetry["receivers"][number];
 type TelemetryChannel = TelemetryReceiver["channels"][number];
+
+/** Every configured receiver, Shure then EW-DX; they share one id namespace. */
+function receiverConfigs(showfile: Showfile): ReceiverConfig[] {
+  return [...showfile.shureReceivers, ...(showfile.sennheiserReceivers ?? [])];
+}
+
+/** Link quality in percent: EW-DX reports it directly, Shure on a 0..5 scale. */
+function linkQualityPercentOf(
+  receiver: TelemetryReceiver | undefined,
+  channel: TelemetryChannel | undefined,
+): number | null {
+  if (!receiver?.capabilities.linkQuality || !channel) return null;
+  if (receiver.vendor === "sennheiser")
+    return channel.linkQualityPercent ?? null;
+  return channel.linkQualityRaw !== null && channel.linkQualityRaw <= 5
+    ? Math.round((channel.linkQualityRaw / 5) * 100)
+    : null;
+}
 
 /**
  * Per-channel memory the evaluation needs between passes: how long an input
@@ -181,7 +202,7 @@ function evaluateReceivers(
   if (configs.length === 0) {
     return {
       status: "unconfigured",
-      detail: "No Shure receivers are configured in Manager.",
+      detail: "No wireless receivers are configured in Manager.",
       units: [],
     };
   }
@@ -224,8 +245,8 @@ function evaluateReceivers(
   return {
     status: allReady ? "ready" : allSame ? statuses[0]! : "degraded",
     detail: allReady
-      ? "All configured Shure receivers are reporting."
-      : "One or more configured Shure receivers are not current.",
+      ? "All configured wireless receivers are reporting."
+      : "One or more configured wireless receivers are not current.",
     units,
   };
 }
@@ -413,7 +434,7 @@ function buildChannel(
   const receiverConfig =
     showChannel.shureReceiverId == null
       ? undefined
-      : showfile.shureReceivers.find(
+      : receiverConfigs(showfile).find(
           ({ id: receiverId }) => receiverId === showChannel.shureReceiverId,
         );
   const receiverChannelIndex = showChannel.shureChannelIndex ?? null;
@@ -452,14 +473,10 @@ function buildChannel(
     tracker.micTypeCleared = false;
   }
 
-  const capabilities = telemetryReceiver?.capabilities;
-  const linkQualityPercent =
-    capabilities?.linkQuality &&
-    telemetryChannel?.linkQualityRaw !== null &&
-    telemetryChannel?.linkQualityRaw !== undefined &&
-    telemetryChannel.linkQualityRaw <= 5
-      ? Math.round((telemetryChannel.linkQualityRaw / 5) * 100)
-      : null;
+  const linkQualityPercent = linkQualityPercentOf(
+    telemetryReceiver,
+    telemetryChannel,
+  );
   const rf: LiveStateChannel["rf"] = {
     availability: wireless ? telemetryAvailability : "unknown",
     levelDbm: telemetryChannel?.rfLevelDbm ?? null,
@@ -482,7 +499,11 @@ function buildChannel(
   // as if the operator had confirmed it (the honesty grammar, DESIGN.md §9).
   const detectedMicType = tracker.micTypeCleared
     ? null
-    : classifyShureTransmitter(telemetryChannel?.transmitter.type ?? null);
+    : telemetryReceiver?.vendor === "sennheiser"
+      ? classifySennheiserTransmitter(
+          telemetryChannel?.transmitter.type ?? null,
+        )
+      : classifyShureTransmitter(telemetryChannel?.transmitter.type ?? null);
   const micType: LiveStateChannel["micType"] =
     showChannel.micType ?? detectedMicType;
   const micTypeSource: LiveStateChannel["micTypeSource"] =
@@ -785,7 +806,7 @@ function systemConditions(
   if (node.status !== "unreachable") {
     for (const unit of receivers.units) {
       if (unit.status === "stale" || unit.status === "error") {
-        const config = input.showfile.shureReceivers.find(
+        const config = receiverConfigs(input.showfile).find(
           ({ id }) => id === unit.id,
         );
         system(
@@ -808,7 +829,10 @@ export function evaluate(input: EvaluationInput): Evaluation {
     node.status === "unreachable"
       ? null
       : freshTelemetry(input.observation, input.nowMs);
-  const receivers = evaluateReceivers(input.showfile.shureReceivers, telemetry);
+  const receivers = evaluateReceivers(
+    receiverConfigs(input.showfile),
+    telemetry,
+  );
   const built = input.showfile.channels.map((channel, position) =>
     buildChannel(channel, position, input, node, telemetry),
   );

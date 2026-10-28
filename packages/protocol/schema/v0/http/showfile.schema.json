@@ -125,6 +125,29 @@
         }
       }
     },
+    "sennheiserReceivers": {
+      "description": "Sennheiser EW-DX EM 2 Dante receivers read over authenticated SSCv2 (firmware 4.0.0 and later). Ids share one namespace with shureReceivers, so a channel's shureReceiverId/shureChannelIndex may name either. The third-party password is an audio-node secret and never appears here. Absent means none.",
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "host", "model", "channelCount", "tlsCertificateSha256"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+          "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "host": { "type": "string", "minLength": 1, "maxLength": 45 },
+          "model": { "enum": ["EW-DX EM 2 Dante"] },
+          "channelCount": { "const": 2 },
+          "tlsCertificateSha256": {
+            "description": "Lower-case hex SHA-256 fingerprint of the receiver's TLS certificate (the backend rejects anything but 64 hex digits). The node refuses to send credentials to any other certificate.",
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64
+          }
+        }
+      }
+    },
     "channels": {
       "type": "array",
       "maxItems": 128,

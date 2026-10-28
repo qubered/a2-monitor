@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.f4a1271ec050c88b",
-  "sourceSha256": "f4a1271ec050c88b204cdfb4f7e9f0e2c390e57043373333bab4ae6065026036",
-  "inputCount": 485,
+  "buildId": "a2-0.0.0+sha256.ed8d3e2f949ef483",
+  "sourceSha256": "ed8d3e2f949ef4833985687132de2e4b787432e434b5093ec81159890aebe59e",
+  "inputCount": 494,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -49,7 +49,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "9ef667adfa80ad5a2cb91b0633985dbeaf5e297c7aea2369bc3c64c4e1142166"
+      "sha256": "540c3c191111af7b40ddde955ef487b85e734ffaf9022b34bd5502d0163fb223"
     },
     {
       "path": "CLAUDE.md",
@@ -337,11 +337,11 @@
     },
     {
       "path": "apps/manager/src/App.test.tsx",
-      "sha256": "0c6366c75cd34c66e194af12d20381765e8e4029af6f0084894788cb7ccd097f"
+      "sha256": "4874a6b10bf2891ecd7a5ec0f39926f9e114a11487b6c8abcbc0e7b8386b7fef"
     },
     {
       "path": "apps/manager/src/App.tsx",
-      "sha256": "6294252bdfd07a66dfc1913d5016ce86e794ad3ae20b8d1f26e39e8c37216b69"
+      "sha256": "d2ac16b784b05a86d039bfc6e76f9b2eda44f53aa8e40d99d7b4c4a05c252a81"
     },
     {
       "path": "apps/manager/src/components/AlertsTab.tsx",
@@ -349,7 +349,7 @@
     },
     {
       "path": "apps/manager/src/components/ChannelsTab.tsx",
-      "sha256": "4018cd739d14b1fe138e97416e84c8c645f2e6fc727dc7785f7bee133766b787"
+      "sha256": "6c18008d9c8023b659b8f98893a1d416a08451441109e037a6571cec236297cd"
     },
     {
       "path": "apps/manager/src/components/EmptyState.tsx",
@@ -365,7 +365,7 @@
     },
     {
       "path": "apps/manager/src/components/ReceiversTab.tsx",
-      "sha256": "c8a323e39305207252a8f89ba370e9da60b1e9d0db9ec1ac42db4415e9f1f575"
+      "sha256": "af70e6d933a8e1373bd68a27f4a611d166aef33f9d7fb5736294e6b6bc962d32"
     },
     {
       "path": "apps/manager/src/components/RoomsTab.tsx",
@@ -377,7 +377,7 @@
     },
     {
       "path": "apps/manager/src/components/ShowTab.tsx",
-      "sha256": "1929f02853defcf685129b3967d91315c972122b2e6958c193c52a5a12a3f7db"
+      "sha256": "0fd3a78a7263483f2f54cb55dada173d43e26b5d28fff7712235ad4f1efebc86"
     },
     {
       "path": "apps/manager/src/components/ui/badge.tsx",
@@ -881,7 +881,7 @@
     },
     {
       "path": "docs/integrations/sennheiser-ew-dx.md",
-      "sha256": "5582ed8ff3f980bb12f96ccb3167f22447c076ad8226364991851ae71aed8f1f"
+      "sha256": "6a5e1a4f2612623394c6e326bc1cd717d8b29be7589bee5cda32bde1ff7f2678"
     },
     {
       "path": "docs/integrations/shure-wireless.md",
@@ -1165,7 +1165,7 @@
     },
     {
       "path": "integrations/sennheiser-ewdx/README.md",
-      "sha256": "14617aad2a20085510da0a02a7d57201a3c6e5a932236911a40df7dd7d5eb26b"
+      "sha256": "0e0ae3c7f7c5d2791e72adf8cdd63fca6a6fc4c32c7fc371f89a6ae377ebc669"
     },
     {
       "path": "integrations/shure/README.md",
@@ -1369,7 +1369,7 @@
     },
     {
       "path": "packages/protocol/generated/http-contracts.ts",
-      "sha256": "d285db25b1ce7f089aa38de8039a8e772a1f4121832fc8a18d4deb2333f43695"
+      "sha256": "ebc554c416c9630147323f4a17a94c0c658f100b2dec2827ccec6ac1d14690ab"
     },
     {
       "path": "packages/protocol/model/aggregate-transitions.v0.json",
@@ -1377,11 +1377,15 @@
     },
     {
       "path": "packages/protocol/package.json",
-      "sha256": "029a6725acdfa71782616b030493b50b3def2b79c6fa8db9d7d90fa837e661a4"
+      "sha256": "58d15d7b97f8b09eb6a8df05dd5437b80444888c5a3f4c8c34be88a461216597"
     },
     {
       "path": "packages/protocol/policy/alert-policy.ts",
       "sha256": "f2554965274e71b0eafefc05a26a5e58e72035c5676c0ede87d368bafcf38281"
+    },
+    {
+      "path": "packages/protocol/receivers/sennheiser-models.ts",
+      "sha256": "675f7ea347b562373fec99fc8aca262a2757edd51fa0b11a8befddfb6314a26f"
     },
     {
       "path": "packages/protocol/receivers/shure-models.ts",
@@ -1429,11 +1433,11 @@
     },
     {
       "path": "packages/protocol/schema/v0/http/showfile.schema.json",
-      "sha256": "5262b0b4071033eb90fa2e9cbc9667945882fa7f152e21b9e1d86f6c36965e17"
+      "sha256": "bbd999ee110ef78cf7b093d2c28bff3c9a91ec6c36daad6020fec5401dfc3509"
     },
     {
       "path": "packages/protocol/schema/v0/http/shure-telemetry.schema.json",
-      "sha256": "a8a707eae436d9ef32310d998b4eddd6c375300ee6732196ca339f6e60506972"
+      "sha256": "f5b688f97bc005d58ccbdc6fd964e5b82a0fe20cb3a4503b74ee56c6b53750dc"
     },
     {
       "path": "packages/protocol/scripts/generate-http-contracts.mjs",
@@ -1458,6 +1462,10 @@
     {
       "path": "packages/protocol/tests/live-state-delta.test.ts",
       "sha256": "801c812fbbac9496779bf4e8ee088fc3e3e785e50960c4e0736e45cc800be006"
+    },
+    {
+      "path": "packages/protocol/tests/sennheiser-ewdx.test.ts",
+      "sha256": "81ac1b2ac081137cf5396e8b621eb41884b9ceb8da39ed80e3e6ea29c0587f37"
     },
     {
       "path": "packages/protocol/tests/shure-models.test.ts",
@@ -1581,7 +1589,7 @@
     },
     {
       "path": "scripts/dev.mjs",
-      "sha256": "d481f1f9695230691b1477ec86916d060966db04a9093aaa891009b8e922879e"
+      "sha256": "e0b20b0e014d1b7518a3a65cd80118753e7a035f534900625922b06b55f22759"
     },
     {
       "path": "scripts/generate-build-identity.mjs",
@@ -1716,6 +1724,10 @@
       "sha256": "605f9aabe9d1bfa08de0aa71d34b201f529546a7b223ce640dd29187a5a33d04"
     },
     {
+      "path": "services/backend/src/ewdx.test.ts",
+      "sha256": "ea1dee73731a9455437459a04586b6c53e0ace690f0d2de72d8bbbdf6a226431"
+    },
+    {
       "path": "services/backend/src/fixtures/live-snapshot.ts",
       "sha256": "f351dbfb793629b5c46260a0804b21d7aa030ce76c3d306103cb27500d00a5f8"
     },
@@ -1737,7 +1749,7 @@
     },
     {
       "path": "services/backend/src/live-model.ts",
-      "sha256": "a1c400866b9dd4e933780e846b3baba96126c9e7ff758a178482a6f88c9a306b"
+      "sha256": "5f613a50586de872fdc950b45d637b110ae37d1e227c2747ed8ffc6bb2d1e5e1"
     },
     {
       "path": "services/backend/src/live-monitor.ts",
@@ -1765,7 +1777,7 @@
     },
     {
       "path": "services/backend/src/productions.ts",
-      "sha256": "c1703c3a07f461d4bb92e17a504dc52a3d8b8e9cf3c2734b8db104589dff0dc2"
+      "sha256": "51da379b80d266ce2f188a059334eb38f8a57a561a140b79f6e149c53e651d70"
     },
     {
       "path": "services/backend/src/reports.test.ts",
@@ -1785,7 +1797,7 @@
     },
     {
       "path": "services/backend/src/server.ts",
-      "sha256": "70affd06a58a79406ab2436ffbcb35eb08aec82006c6923e5ed855170c7ce490"
+      "sha256": "e277fcb065d9226a14c90e28b8e583d82ddaf7967d4c40c02af8aa9d1f6a453a"
     },
     {
       "path": "services/backend/src/sessions.test.ts",
@@ -1801,7 +1813,7 @@
     },
     {
       "path": "services/backend/src/showfile.ts",
-      "sha256": "a0675e9773d18e3b7f8c3c4df335176611d51bdc519133838457c1a6cbcb22e2"
+      "sha256": "9ea1f2441c9d1a92cc3bd7e6bf49142e757de852e70c47fc473e7457d12436f3"
     },
     {
       "path": "services/backend/src/start.ts",
@@ -1813,15 +1825,27 @@
     },
     {
       "path": "services/listen-gateway/README.md",
-      "sha256": "63079236f6648cb470bf094e43bd4868554a9b791f0c9a00da448ee412a9fc34"
+      "sha256": "66679a9f8b03926db58265ddfc3f016b70f422163bd46d424411f89d39e20691"
     },
     {
       "path": "services/listen-gateway/package.json",
       "sha256": "2398e5a5a53a3f65f61660b4e5b22316081781c3185abad60a965875fb12abe1"
     },
     {
+      "path": "services/listen-gateway/src/dev/ewdx-simulator.ts",
+      "sha256": "e8b26d8e4f0af47620e99b0a1bc82b285351f6083a48719c320e63fdd4a6ba4e"
+    },
+    {
       "path": "services/listen-gateway/src/dev/shure-simulator.ts",
       "sha256": "280e1f43d089c02193cfddaa1031cf14351c6d61e0ba2a98e0222c2bce328006"
+    },
+    {
+      "path": "services/listen-gateway/src/ewdx-secrets.test.ts",
+      "sha256": "be8d352678fa2288dae62c68d4e2349d2c142549e4f213dbf45f31fe4c0ad8d0"
+    },
+    {
+      "path": "services/listen-gateway/src/ewdx-secrets.ts",
+      "sha256": "aa0e39a16315e03b9512188440a359df4fcfa8b16b08df668b752c6ff3ecccd1"
     },
     {
       "path": "services/listen-gateway/src/host-output.test.ts",
@@ -1848,12 +1872,24 @@
       "sha256": "128799936522096ac3bb4a7aaa80eb1a94be30965d363147d8e8cd739e223bdf"
     },
     {
+      "path": "services/listen-gateway/src/sennheiser-ewdx-monitor.test.ts",
+      "sha256": "22524f36f75fa73412fe1e8c3bf62ea24fd03717fd0017cf00095e18a5e3911f"
+    },
+    {
+      "path": "services/listen-gateway/src/sennheiser-ewdx.test.ts",
+      "sha256": "1aa3a1623cd39dc3bb96fba94aa062ae34056188e1391d6e6c3acb85992b3275"
+    },
+    {
+      "path": "services/listen-gateway/src/sennheiser-ewdx.ts",
+      "sha256": "28d94ad32703b48c756f172984b8188d0da14164551f60293b5c1501a2ad4566"
+    },
+    {
       "path": "services/listen-gateway/src/server.test.ts",
-      "sha256": "6ac68d1da868be74d84037b171a8076f9a68ba6334da1e85a0f68c71f29f83a6"
+      "sha256": "382f2f7be8c7cf6d2ef777767c0827c8b0d0c41d6e475c5c1a7e44ad3ed339b2"
     },
     {
       "path": "services/listen-gateway/src/server.ts",
-      "sha256": "a213fcc29179eda90e6f96a98df6e793a64fb76015dad569ed63ae228995cba8"
+      "sha256": "aa8de93048eff8f5d248d49ed1740917bfb23310157464e46e4f513f54cf8991"
     },
     {
       "path": "services/listen-gateway/src/shure.test.ts",
@@ -1865,7 +1901,7 @@
     },
     {
       "path": "services/listen-gateway/src/start.ts",
-      "sha256": "f2c5c63d76d7ce5e269b2ec1f2ad295566557aea664db76e302e770f33960d5c"
+      "sha256": "b2891b5b24273a696c971dada5737dc58a90a6a96b226390e3af2d88515c4494"
     },
     {
       "path": "services/listen-gateway/src/web-host.ts",

@@ -279,6 +279,9 @@ export function ChannelsTab({
   device: ObservedDevice | null;
   onChange: (next: Showfile) => void;
 }) {
+  const receiverCount =
+    showfile.shureReceivers.length +
+    (showfile.sennheiserReceivers?.length ?? 0);
   /** Saves a channel's monitor trim in 0.5 dB steps; empty or 0 means no trim. */
   function commitTrim(position: number, text: string) {
     const parsed = Number(text);
@@ -309,9 +312,9 @@ export function ChannelsTab({
             {device
               ? `${device.name} · ${device.channelCount} inputs · ${device.sampleRateHz / 1000} kHz`
               : "Audio input state unknown"}
-            {showfile.shureReceivers.length
-              ? ` · ${showfile.shureReceivers.length} Shure receiver unit${showfile.shureReceivers.length === 1 ? "" : "s"}`
-              : " · Shure receivers not configured"}
+            {receiverCount
+              ? ` · ${receiverCount} receiver unit${receiverCount === 1 ? "" : "s"}`
+              : " · Receivers not configured"}
           </p>
         </div>
         <Button
@@ -357,7 +360,7 @@ export function ChannelsTab({
               <TableHead>Mic type</TableHead>
               <TableHead>Audio input</TableHead>
               <TableHead className="min-w-24">Trim (dB)</TableHead>
-              <TableHead>Shure channel</TableHead>
+              <TableHead>Receiver channel</TableHead>
               <TableHead>Monitor</TableHead>
               <TableHead className="w-16">
                 <span className="sr-only">Remove</span>
@@ -638,13 +641,16 @@ export function ChannelsTab({
                     }}
                   >
                     <SelectTrigger
-                      aria-label={`Channel ${position + 1} Shure channel`}
+                      aria-label={`Channel ${position + 1} receiver channel`}
                     >
                       <SelectValue placeholder="None" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={NONE}>None</SelectItem>
-                      {showfile.shureReceivers.flatMap((receiver) =>
+                      {[
+                        ...showfile.shureReceivers,
+                        ...(showfile.sennheiserReceivers ?? []),
+                      ].flatMap((receiver) =>
                         Array.from(
                           { length: receiver.channelCount },
                           (_, receiverChannelIndex) => (

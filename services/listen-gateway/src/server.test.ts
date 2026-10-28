@@ -1,4 +1,7 @@
 import { once } from "node:events";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { PassThrough } from "node:stream";
@@ -13,6 +16,12 @@ import {
   SIMULATED_DEVICE_NAME,
   type WorkerProcess,
 } from "./media-worker.js";
+import { parseShureTelemetry } from "@rvlt/pulse-protocol/http";
+import {
+  generateSimulatorCertificate,
+  startEwdxSimulator,
+} from "./dev/ewdx-simulator.js";
+import { SennheiserFleetMonitor } from "./sennheiser-ewdx.js";
 import { ListenGateway, candidateAddressFor } from "./server.js";
 
 class ScriptedWorker implements WorkerProcess {
@@ -603,6 +612,177 @@ describe("ListenGateway shared host output", () => {
     expect(args[args.indexOf("--output-routes") + 1]).toBe("12;13,14");
     vi.unstubAllGlobals();
   });
+  it("publishes a configured EW-DX EM 2 Dante in the fleet telemetry next to Shure", async () => {
+    const realFetch = fetch;
+    const certificate = generateSimulatorCertificate();
+    const simulator = await startEwdxSimulator({
+      password: "synthetic-password",
+      certificate,
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          schemaVersion: "0",
+          revision: 1,
+          updatedAtUtc: null,
+          show: { name: "Show" },
+          device: null,
+          // Nothing answers Shure's port here, so this receiver never
+          // becomes ready; it must still be published unchanged.
+          shureReceivers: [
+            {
+              id: "shure-a",
+              name: "ULX-D rack",
+              host: "127.0.0.1",
+              model: "ULXD4D",
+              channelCount: 2,
+            },
+          ],
+          sennheiserReceivers: [
+            {
+              id: "ewdx-a",
+              name: "EW-DX rack",
+              host: "127.0.0.1",
+              model: "EW-DX EM 2 Dante",
+              channelCount: 2,
+              tlsCertificateSha256: certificate.fingerprint256,
+            },
+          ],
+          channels: [],
+        }),
+      ),
+    );
+    const gateway = new ListenGateway({
+      device: "Test Device",
+      processFactory: () => new ScriptedWorker(),
+      backendOrigin: "http://backend.invalid/",
+      sennheiserMonitor: new SennheiserFleetMonitor({
+        port: simulator.port,
+        pollMs: 100,
+        password: () => "synthetic-password",
+      }),
+    });
+    gateways.add(gateway);
+    gateway.server.listen(0, "127.0.0.1");
+    await once(gateway.server, "listening");
+    gateway.startCapture();
+    const port = (gateway.server.address() as AddressInfo).port;
+    try {
+      await vi.waitFor(
+        async () => {
+          const telemetry = parseShureTelemetry(
+            await (
+              await realFetch(`http://127.0.0.1:${port}/audio/v0/shure`)
+            ).json(),
+          );
+          expect(telemetry.status).toBe("degraded");
+          expect(telemetry.receivers).toEqual([
+            expect.objectContaining({
+              id: "shure-a",
+              model: null,
+              compatibility: "compatible-read-only",
+              status: expect.not.stringMatching(/^ready$/),
+            }),
+            expect.objectContaining({
+              id: "ewdx-a",
+              vendor: "sennheiser",
+              model: "EWDX2CHDS",
+              status: "ready",
+            }),
+          ]);
+          // Shure receivers keep their pre-EW-DX shape: no vendor key.
+          expect(telemetry.receivers[0]).not.toHaveProperty("vendor");
+          expect(telemetry.receivers[0]?.channels).toHaveLength(2);
+          expect(telemetry.receivers[1]?.channels).toHaveLength(2);
+        },
+        { timeout: 8_000, interval: 100 },
+      );
+    } finally {
+      vi.unstubAllGlobals();
+      await gateway.close();
+      gateways.delete(gateway);
+      await simulator.close();
+    }
+  }, 15_000);
+
+  it("reads EW-DX passwords from the node's secret file and honours the development port override", async () => {
+    const realFetch = fetch;
+    const certificate = generateSimulatorCertificate();
+    const simulator = await startEwdxSimulator({
+      password: "synthetic-password",
+      certificate,
+    });
+    const directory = mkdtempSync(path.join(tmpdir(), "pulse-gw-secrets-"));
+    const secretsFile = path.join(directory, "ewdx-secrets.json");
+    writeFileSync(
+      secretsFile,
+      JSON.stringify({
+        schemaVersion: "0",
+        receivers: { "ewdx-a": { password: "synthetic-password" } },
+      }),
+      { mode: 0o600 },
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          schemaVersion: "0",
+          revision: 1,
+          updatedAtUtc: null,
+          show: { name: "Show" },
+          device: null,
+          shureReceivers: [],
+          sennheiserReceivers: [
+            {
+              id: "ewdx-a",
+              name: "EW-DX rack",
+              host: "127.0.0.1",
+              model: "EW-DX EM 2 Dante",
+              channelCount: 2,
+              tlsCertificateSha256: certificate.fingerprint256,
+            },
+          ],
+          channels: [],
+        }),
+      ),
+    );
+    const gateway = new ListenGateway({
+      device: "Test Device",
+      processFactory: () => new ScriptedWorker(),
+      backendOrigin: "http://backend.invalid/",
+      ewdxSecretsFile: secretsFile,
+      ewdxPort: simulator.port,
+    });
+    gateways.add(gateway);
+    gateway.server.listen(0, "127.0.0.1");
+    await once(gateway.server, "listening");
+    gateway.startCapture();
+    const port = (gateway.server.address() as AddressInfo).port;
+    try {
+      await vi.waitFor(
+        async () => {
+          const telemetry = parseShureTelemetry(
+            await (
+              await realFetch(`http://127.0.0.1:${port}/audio/v0/shure`)
+            ).json(),
+          );
+          expect(telemetry.receivers[0]).toMatchObject({
+            id: "ewdx-a",
+            status: "ready",
+          });
+        },
+        { timeout: 8_000, interval: 100 },
+      );
+    } finally {
+      vi.unstubAllGlobals();
+      await gateway.close();
+      gateways.delete(gateway);
+      await simulator.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  }, 15_000);
+
   it("applies a channel's showfile trim under the operators' level on a host feed", async () => {
     const realFetch = fetch;
     vi.stubGlobal(

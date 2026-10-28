@@ -18,6 +18,10 @@
         "required": ["id", "name", "host", "model", "firmware", "compatibility", "status", "detail", "capabilities", "channels"],
         "properties": {
           "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+          "vendor": {
+            "description": "Receiver manufacturer. Absent means shure, the only vendor before EW-DX support.",
+            "enum": ["shure", "sennheiser"]
+          },
           "name": { "type": "string", "minLength": 1, "maxLength": 120 },
           "host": { "type": "string", "minLength": 1, "maxLength": 255 },
           "model": { "type": ["string", "null"], "maxLength": 64 },
@@ -90,6 +94,12 @@
                 "rfLevelDbm": { "type": ["integer", "null"], "minimum": -160, "maximum": 0 },
                 "rfLevelRaw": { "type": ["integer", "null"], "minimum": 0, "maximum": 1023 },
                 "linkQualityRaw": { "type": ["integer", "null"], "minimum": 0, "maximum": 1023 },
+                "linkQualityPercent": {
+                  "description": "Link quality the receiver itself reports in percent (EW-DX RSQI). Absent or null when the receiver reports a raw scale or nothing.",
+                  "type": ["integer", "null"],
+                  "minimum": 0,
+                  "maximum": 100
+                },
                 "interference": { "enum": ["none", "detected", "unavailable"] },
                 "audioLevelDbfs": { "type": ["integer", "null"], "minimum": -160, "maximum": 0 },
                 "audioLevelRaw": { "type": ["integer", "null"], "minimum": 0, "maximum": 1023 },

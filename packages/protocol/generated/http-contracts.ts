@@ -14,9 +14,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: bfad69dfdd980c9b6e9d79f06d51806a622b16c30ad0cdad4b13e63480cc7f41
+// Schema-SHA256: dffb281a6b4b52f664ca16ed6c3984a5257b8784726a56ed634b5b8fd3178bae
 // Generator-SHA256: 123e494d4215c85da4d6478cb1ee908a830ec3431fb8ab658c6fc0e098c4296b
-// Body-SHA256: b89534048f64f05b7b2442f32531ffb304dbba89bb31d391ccd892954f4cda46
+// Body-SHA256: d6881c4a0814a47dff31a4ca7701bd586dc3b92712e73fdac7266ab7e827bdfb
 
 export type HealthResponse = {
   status: "ok";
@@ -133,6 +133,14 @@ export type Showfile = {
       | "SLXD4QDAN+";
     channelCount: number;
   }>;
+  sennheiserReceivers?: Array<{
+    id: string;
+    name: string;
+    host: string;
+    model: "EW-DX EM 2 Dante";
+    channelCount: 2;
+    tlsCertificateSha256: string;
+  }>;
   channels: Array<{
     id?: string;
     inputIndex: number | null;
@@ -188,6 +196,7 @@ export type ShureTelemetry = {
   detail: string;
   receivers: Array<{
     id: string;
+    vendor?: "shure" | "sennheiser";
     name: string;
     host: string;
     model: string | null;
@@ -218,6 +227,7 @@ export type ShureTelemetry = {
       rfLevelDbm: number | null;
       rfLevelRaw: number | null;
       linkQualityRaw: number | null;
+      linkQualityPercent?: number | null;
       interference: "none" | "detected" | "unavailable";
       audioLevelDbfs: number | null;
       audioLevelRaw: number | null;
@@ -1272,6 +1282,54 @@ const showfileSchema = {
         },
       },
     },
+    sennheiserReceivers: {
+      description:
+        "Sennheiser EW-DX EM 2 Dante receivers read over authenticated SSCv2 (firmware 4.0.0 and later). Ids share one namespace with shureReceivers, so a channel's shureReceiverId/shureChannelIndex may name either. The third-party password is an audio-node secret and never appears here. Absent means none.",
+      type: "array",
+      maxItems: 64,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: [
+          "id",
+          "name",
+          "host",
+          "model",
+          "channelCount",
+          "tlsCertificateSha256",
+        ],
+        properties: {
+          id: {
+            type: "string",
+            minLength: 1,
+            maxLength: 64,
+          },
+          name: {
+            type: "string",
+            minLength: 1,
+            maxLength: 120,
+          },
+          host: {
+            type: "string",
+            minLength: 1,
+            maxLength: 45,
+          },
+          model: {
+            enum: ["EW-DX EM 2 Dante"],
+          },
+          channelCount: {
+            const: 2,
+          },
+          tlsCertificateSha256: {
+            description:
+              "Lower-case hex SHA-256 fingerprint of the receiver's TLS certificate (the backend rejects anything but 64 hex digits). The node refuses to send credentials to any other certificate.",
+            type: "string",
+            minLength: 64,
+            maxLength: 64,
+          },
+        },
+      },
+    },
     channels: {
       type: "array",
       maxItems: 128,
@@ -1525,6 +1583,11 @@ const shureTelemetrySchema = {
             minLength: 1,
             maxLength: 64,
           },
+          vendor: {
+            description:
+              "Receiver manufacturer. Absent means shure, the only vendor before EW-DX support.",
+            enum: ["shure", "sennheiser"],
+          },
           name: {
             type: "string",
             minLength: 1,
@@ -1678,6 +1741,13 @@ const shureTelemetrySchema = {
                   type: ["integer", "null"],
                   minimum: 0,
                   maximum: 1023,
+                },
+                linkQualityPercent: {
+                  description:
+                    "Link quality the receiver itself reports in percent (EW-DX RSQI). Absent or null when the receiver reports a raw scale or nothing.",
+                  type: ["integer", "null"],
+                  minimum: 0,
+                  maximum: 100,
                 },
                 interference: {
                   enum: ["none", "detected", "unavailable"],

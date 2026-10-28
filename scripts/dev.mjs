@@ -1,11 +1,13 @@
 import { spawn, spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 // `npm run dev` starts the backend, listen gateway, Live and Manager against
 // the configured A2_AUDIO_DEVICE. `npm run dev:simulate` swaps in the built-in
-// test signal, a simulated host output and a simulated Shure AD4Q, and seeds a
+// test signal, a simulated host output, a simulated Shure AD4Q and a simulated
+// Sennheiser EW-DX EM 2 Dante (loopback HTTPS on 8443), and seeds a
 // demo showfile in its own data directory, so every monitoring, alert and
 // listening path runs without hardware.
 // Nothing produced in simulate mode is evidence about real equipment.
@@ -16,17 +18,19 @@ const SIMULATED_DEVICE = "Pulse test signal";
 const SIMULATED_OUTPUT = "Pulse simulated output";
 const BACKEND = "http://127.0.0.1:3000";
 
-const backendEnv = simulate
-  ? {
-      A2_DATA_DIR:
-        process.env.A2_DATA_DIR ?? resolve(repoRoot, "data/simulated"),
-    }
-  : {};
+const dataDir = process.env.A2_DATA_DIR ?? resolve(repoRoot, "data/simulated");
+// The EW-DX simulator's certificate and synthetic secret live with the
+// simulated data, which git ignores.
+const ewdxStateDir = resolve(dataDir, "ewdx-simulator");
+const EWDX_SIM_PORT = "8443";
+const backendEnv = simulate ? { A2_DATA_DIR: dataDir } : {};
 const gatewayEnv = simulate
   ? {
       A2_AUDIO_DEVICE: process.env.A2_AUDIO_DEVICE ?? SIMULATED_DEVICE,
       A2_OUTPUT_DEVICE: process.env.A2_OUTPUT_DEVICE ?? SIMULATED_OUTPUT,
       A2_BACKEND_ORIGIN: process.env.A2_BACKEND_ORIGIN ?? BACKEND,
+      A2_EWDX_SECRETS_FILE: resolve(ewdxStateDir, "ewdx-secrets.json"),
+      A2_EWDX_PORT: EWDX_SIM_PORT,
     }
   : { A2_BACKEND_ORIGIN: process.env.A2_BACKEND_ORIGIN ?? BACKEND };
 
@@ -77,6 +81,16 @@ if (simulate) {
     const build = spawnSync(command, args, { cwd, stdio: "inherit" });
     if (build.status !== 0) process.exit(build.status ?? 1);
   }
+  const prepare = spawnSync(
+    "node",
+    ["dist/dev/ewdx-simulator.js", "--prepare"],
+    {
+      cwd: resolve(repoRoot, "services/listen-gateway"),
+      stdio: "inherit",
+      env: { ...process.env, EWDX_SIM_STATE_DIR: ewdxStateDir },
+    },
+  );
+  if (prepare.status !== 0) process.exit(prepare.status ?? 1);
 }
 
 const children = [
@@ -92,6 +106,12 @@ const children = [
 ];
 if (simulate) {
   children.push(startInGateway("node dist/dev/shure-simulator.js"));
+  children.push(
+    startInGateway("node dist/dev/ewdx-simulator.js", {
+      EWDX_SIM_STATE_DIR: ewdxStateDir,
+      EWDX_SIM_PORT,
+    }),
+  );
 }
 
 let stopping = false;
@@ -128,14 +148,22 @@ for (const child of children) {
 /** A demo show over the simulated inputs and receiver, written only into an empty simulate-mode library. */
 function demoShowfile(revision) {
   const monitor = { battery: true, rf: true, audio: true };
-  const wireless = (id, name, inputIndex, receiverChannel, place) => ({
+  const wireless = (
+    id,
+    name,
+    inputIndex,
+    receiverChannel,
+    place,
+    receiverId = "sim-ad4q",
+    micType = "headset",
+  ) => ({
     id,
     inputIndex,
     name,
     performer: null,
-    shureReceiverId: "sim-ad4q",
+    shureReceiverId: receiverId,
     shureChannelIndex: receiverChannel,
-    micType: "headset",
+    micType,
     imageUrl: null,
     monitor,
     rooms: [place],
@@ -175,6 +203,19 @@ function demoShowfile(revision) {
         channelCount: 4,
       },
     ],
+    sennheiserReceivers: [
+      {
+        id: "sim-ewdx",
+        name: "Simulated EW-DX EM 2 Dante",
+        host: "127.0.0.1",
+        model: "EW-DX EM 2 Dante",
+        channelCount: 2,
+        tlsCertificateSha256: readFileSync(
+          resolve(ewdxStateDir, "fingerprint.txt"),
+          "utf8",
+        ).trim(),
+      },
+    ],
     rooms: [
       {
         id: "demo-ballroom",
@@ -212,6 +253,27 @@ function demoShowfile(revision) {
       ),
       wired("demo-keys", "Keys DI", 5, "instrument", ballroom("demo-band")),
       wired("demo-spare", "Spare", 6, "other", breakout("demo-lectern")),
+      // EW-DX: mic type left unset so Live shows the type inferred from the
+      // reported transmitter. The bodypack has no audio input patched: its
+      // receiver telemetry is shown on its own, independent of Dante audio.
+      wireless(
+        "demo-ewdx-handheld",
+        "EW-DX handheld",
+        null,
+        0,
+        breakout("demo-lectern"),
+        "sim-ewdx",
+        null,
+      ),
+      wireless(
+        "demo-ewdx-bodypack",
+        "EW-DX bodypack",
+        null,
+        1,
+        breakout("demo-lectern"),
+        "sim-ewdx",
+        null,
+      ),
     ],
     // A short corporate run of show: presenters change per session and the
     // channels a session does not list are expected to be switched off.
@@ -301,7 +363,7 @@ async function seedDemoShowfile() {
 
 if (simulate) {
   console.log(
-    "Simulate mode: Live http://127.0.0.1:4173 · Manager http://127.0.0.1:4174/manager/ · data in data/simulated",
+    `Simulate mode: Live http://127.0.0.1:4173 · Manager http://127.0.0.1:4174/manager/ · data in ${dataDir}`,
   );
   void seedDemoShowfile();
 }

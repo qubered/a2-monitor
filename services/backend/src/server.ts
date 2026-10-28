@@ -20,6 +20,7 @@ import type {
   Showfile,
 } from "@rvlt/pulse-protocol/http";
 import { diffLiveState } from "@rvlt/pulse-protocol/live-state-delta";
+import { isTlsCertificatePin } from "@rvlt/pulse-protocol/sennheiser-models";
 import {
   createStrictAjv2020,
   stringifyValidatedJson,
@@ -182,6 +183,8 @@ const DEFAULT_HISTORY_WINDOW_MS = 30 * 60 * 1000;
 const MIN_HISTORY_WINDOW_MS = 1000;
 const MAX_HISTORY_WINDOW_MS = 60 * 60 * 1000;
 const MAX_EVENT_STREAMS = 64;
+/** Shure and EW-DX receivers together, matching the fleet telemetry's limit. */
+const MAX_RECEIVERS = 64;
 const EVENT_HEARTBEAT_MS = 15_000;
 
 const IMAGE_URL_SCHEMES = ["http://", "https://"];
@@ -697,7 +700,14 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
       const patchedInputs = candidate.channels
         .map(({ inputIndex }) => inputIndex)
         .filter((inputIndex): inputIndex is number => inputIndex !== null);
-      const receiverIds = candidate.shureReceivers.map(({ id }) => id);
+      const sennheiserReceivers = candidate.sennheiserReceivers ?? [];
+      // Shure and EW-DX receivers share one id namespace and one fleet limit,
+      // so a channel binding names exactly one receiver of either vendor.
+      const allReceivers = [
+        ...candidate.shureReceivers,
+        ...sennheiserReceivers,
+      ];
+      const receiverIds = allReceivers.map(({ id }) => id);
       const shurePatches = candidate.channels
         .filter(
           ({ shureReceiverId, shureChannelIndex }) =>
@@ -713,17 +723,22 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
         new Set(patchedInputs).size !== patchedInputs.length ||
         new Set(receiverIds).size !== receiverIds.length ||
         new Set(shurePatches).size !== shurePatches.length ||
-        candidate.shureReceivers.some(
+        allReceivers.length > MAX_RECEIVERS ||
+        allReceivers.some(
           ({ id, name, host }) =>
             id.trim().length === 0 ||
             name.trim().length === 0 ||
             isIP(host.trim()) === 0,
         ) ||
+        sennheiserReceivers.some(
+          ({ tlsCertificateSha256 }) =>
+            !isTlsCertificatePin(tlsCertificateSha256),
+        ) ||
         candidate.channels.some(({ shureReceiverId, shureChannelIndex }) => {
           if (shureReceiverId == null && shureChannelIndex == null)
             return false;
           if (shureReceiverId == null || shureChannelIndex == null) return true;
-          const receiver = candidate.shureReceivers.find(
+          const receiver = allReceivers.find(
             ({ id }) => id === shureReceiverId,
           );
           return !receiver || shureChannelIndex >= receiver.channelCount;

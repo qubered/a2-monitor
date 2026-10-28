@@ -50,7 +50,9 @@ function summarize(id: string, showfile: Showfile): ProductionSummary {
     revision: showfile.revision,
     updatedAtUtc: showfile.updatedAtUtc,
     channelCount: showfile.channels.length,
-    receiverCount: showfile.shureReceivers.length,
+    receiverCount:
+      showfile.shureReceivers.length +
+      (showfile.sennheiserReceivers?.length ?? 0),
   };
 }
 
