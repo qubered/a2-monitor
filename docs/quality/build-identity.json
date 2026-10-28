@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.d625d7fab62aa389",
-  "sourceSha256": "d625d7fab62aa389588ec4543842cd630c5219f8bf5ce4a16db34ea910d7bb64",
-  "inputCount": 485,
+  "buildId": "a2-0.0.0+sha256.ed8d3e2f949ef483",
+  "sourceSha256": "ed8d3e2f949ef4833985687132de2e4b787432e434b5093ec81159890aebe59e",
+  "inputCount": 494,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -1384,6 +1384,10 @@
       "sha256": "f2554965274e71b0eafefc05a26a5e58e72035c5676c0ede87d368bafcf38281"
     },
     {
+      "path": "packages/protocol/receivers/sennheiser-models.ts",
+      "sha256": "675f7ea347b562373fec99fc8aca262a2757edd51fa0b11a8befddfb6314a26f"
+    },
+    {
       "path": "packages/protocol/receivers/shure-models.ts",
       "sha256": "efc569fd179184864dbc46a7ec9de5208ea8e22c871b0e0e91da54177375692f"
     },
@@ -1458,6 +1462,10 @@
     {
       "path": "packages/protocol/tests/live-state-delta.test.ts",
       "sha256": "801c812fbbac9496779bf4e8ee088fc3e3e785e50960c4e0736e45cc800be006"
+    },
+    {
+      "path": "packages/protocol/tests/sennheiser-ewdx.test.ts",
+      "sha256": "81ac1b2ac081137cf5396e8b621eb41884b9ceb8da39ed80e3e6ea29c0587f37"
     },
     {
       "path": "packages/protocol/tests/shure-models.test.ts",
@@ -1716,6 +1724,10 @@
       "sha256": "605f9aabe9d1bfa08de0aa71d34b201f529546a7b223ce640dd29187a5a33d04"
     },
     {
+      "path": "services/backend/src/ewdx.test.ts",
+      "sha256": "ea1dee73731a9455437459a04586b6c53e0ace690f0d2de72d8bbbdf6a226431"
+    },
+    {
       "path": "services/backend/src/fixtures/live-snapshot.ts",
       "sha256": "f351dbfb793629b5c46260a0804b21d7aa030ce76c3d306103cb27500d00a5f8"
     },
@@ -1820,8 +1832,20 @@
       "sha256": "2398e5a5a53a3f65f61660b4e5b22316081781c3185abad60a965875fb12abe1"
     },
     {
+      "path": "services/listen-gateway/src/dev/ewdx-simulator.ts",
+      "sha256": "e8b26d8e4f0af47620e99b0a1bc82b285351f6083a48719c320e63fdd4a6ba4e"
+    },
+    {
       "path": "services/listen-gateway/src/dev/shure-simulator.ts",
       "sha256": "280e1f43d089c02193cfddaa1031cf14351c6d61e0ba2a98e0222c2bce328006"
+    },
+    {
+      "path": "services/listen-gateway/src/ewdx-secrets.test.ts",
+      "sha256": "be8d352678fa2288dae62c68d4e2349d2c142549e4f213dbf45f31fe4c0ad8d0"
+    },
+    {
+      "path": "services/listen-gateway/src/ewdx-secrets.ts",
+      "sha256": "aa0e39a16315e03b9512188440a359df4fcfa8b16b08df668b752c6ff3ecccd1"
     },
     {
       "path": "services/listen-gateway/src/host-output.test.ts",
@@ -1846,6 +1870,18 @@
     {
       "path": "services/listen-gateway/src/media-worker.ts",
       "sha256": "128799936522096ac3bb4a7aaa80eb1a94be30965d363147d8e8cd739e223bdf"
+    },
+    {
+      "path": "services/listen-gateway/src/sennheiser-ewdx-monitor.test.ts",
+      "sha256": "22524f36f75fa73412fe1e8c3bf62ea24fd03717fd0017cf00095e18a5e3911f"
+    },
+    {
+      "path": "services/listen-gateway/src/sennheiser-ewdx.test.ts",
+      "sha256": "1aa3a1623cd39dc3bb96fba94aa062ae34056188e1391d6e6c3acb85992b3275"
+    },
+    {
+      "path": "services/listen-gateway/src/sennheiser-ewdx.ts",
+      "sha256": "28d94ad32703b48c756f172984b8188d0da14164551f60293b5c1501a2ad4566"
     },
     {
       "path": "services/listen-gateway/src/server.test.ts",
