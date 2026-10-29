@@ -119,6 +119,12 @@ describe("EwdxReceiverMonitor against the synthetic EM 2 Dante", () => {
     expect(simulator!.requests).toEqual([]);
   });
 
+  it("connects without verification when no certificate pin is configured", async () => {
+    const receiver = await start({}, { tlsCertificateSha256: "" });
+    await waitFor(() => receiver.getState().status === "ready");
+    expect(simulator!.requests.length).toBeGreaterThan(0);
+  });
+
   it("reports a rejected password and backs off instead of hammering the receiver", async () => {
     const receiver = await start({}, {}, "wrong-password");
     await waitFor(() => receiver.getState().status === "error");

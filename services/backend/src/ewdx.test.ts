@@ -116,6 +116,13 @@ describe("showfile persistence of EW-DX receivers", () => {
       }),
     ],
     [
+      "a short certificate pin",
+      (initial: Showfile) => ({
+        ...inventory(initial),
+        sennheiserReceivers: [{ ...EWDX, tlsCertificateSha256: "not-a-pin" }],
+      }),
+    ],
+    [
       "a blank receiver name",
       (initial: Showfile) => ({
         ...inventory(initial),

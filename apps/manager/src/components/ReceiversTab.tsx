@@ -6,7 +6,7 @@ import {
   type ShureReceiverModel,
 } from "@rvlt/pulse-protocol/shure-models";
 import {
-  isTlsCertificatePin,
+  isOptionalTlsCertificatePin,
   SENNHEISER_MODEL_INFO,
 } from "@rvlt/pulse-protocol/sennheiser-models";
 import { EmptyState } from "./EmptyState";
@@ -328,8 +328,10 @@ function SennheiserReceivers({
           <p className="mt-1 max-w-xl text-caption text-muted-foreground">
             Read-only over SSCv2 (firmware 4.0 or later). On the receiver,
             enable 3rd party access with a password in Sennheiser Control
-            Cockpit; store that password only on the audio node, never here. Pin
-            the receiver&apos;s certificate by its SHA-256 fingerprint.
+            Cockpit; store that password only on the audio node, never here.
+            Optionally pin the receiver&apos;s certificate by its SHA-256
+            fingerprint; left empty, its self-signed certificate is trusted
+            unverified.
           </p>
         </div>
         <Button
@@ -377,7 +379,7 @@ function SennheiserReceivers({
               const observed = telemetry?.receivers.find(
                 ({ id }) => id === receiver.id,
               );
-              const pinValid = isTlsCertificatePin(
+              const pinValid = isOptionalTlsCertificatePin(
                 receiver.tlsCertificateSha256,
               );
               return (
@@ -413,7 +415,7 @@ function SennheiserReceivers({
                       aria-label={`EW-DX receiver ${position + 1} certificate SHA-256`}
                       aria-invalid={!pinValid}
                       className="font-mono"
-                      placeholder="64 hex digits"
+                      placeholder="Optional · 64 hex digits"
                       value={receiver.tlsCertificateSha256}
                       onChange={(event) =>
                         update(position, {
@@ -425,7 +427,7 @@ function SennheiserReceivers({
                     />
                     {pinValid ? null : (
                       <p className="mt-1 text-caption text-muted-foreground">
-                        Needs exactly 64 hex digits (SHA-256).
+                        Leave empty, or enter exactly 64 hex digits (SHA-256).
                       </p>
                     )}
                   </TableCell>
