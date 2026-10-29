@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.cbda6ad9ce1ebb17",
-  "sourceSha256": "cbda6ad9ce1ebb176e87cf5b9b629e2c87522b735ecb6accd823c8e80abd6ddb",
+  "buildId": "a2-0.0.0+sha256.9b40a0abafadb634",
+  "sourceSha256": "9b40a0abafadb63479486bd200934c1d2a9a97e41fb55bae3dc05efcc8e0e59a",
   "inputCount": 499,
   "inputs": [
     {
@@ -1369,7 +1369,7 @@
     },
     {
       "path": "packages/protocol/generated/http-contracts.ts",
-      "sha256": "8d6b17ff2a415f9fa616045f73e7c4b39d5d361e9cf146024c02383e7c56d498"
+      "sha256": "773d5e05c43f4d5171c65e1ea6abd0873d753e3d61d6ced392e4634313de7a42"
     },
     {
       "path": "packages/protocol/model/aggregate-transitions.v0.json",
@@ -1433,7 +1433,7 @@
     },
     {
       "path": "packages/protocol/schema/v0/http/showfile.schema.json",
-      "sha256": "256913bb778bac0ae7f652e8fe9ca4ff18c0010cc10e175851d9e46b4dc07669"
+      "sha256": "e0961df2912b9547564ca2f7e7687ae98b37492fa936413715a51d221caab2c3"
     },
     {
       "path": "packages/protocol/schema/v0/http/shure-telemetry.schema.json",
@@ -1469,7 +1469,7 @@
     },
     {
       "path": "packages/protocol/tests/sennheiser-ewdx.test.ts",
-      "sha256": "81ac1b2ac081137cf5396e8b621eb41884b9ceb8da39ed80e3e6ea29c0587f37"
+      "sha256": "3a82da8923480865b13c0c9223952a36fba0e77a6f134d9e880ffbf26309a371"
     },
     {
       "path": "packages/protocol/tests/shure-models.test.ts",
@@ -1733,7 +1733,7 @@
     },
     {
       "path": "services/backend/src/ewdx.test.ts",
-      "sha256": "ea1dee73731a9455437459a04586b6c53e0ace690f0d2de72d8bbbdf6a226431"
+      "sha256": "000ecd986bfe591c92613a86543b3d647a4a877c5d20627d9d9414ce6931672b"
     },
     {
       "path": "services/backend/src/fixtures/live-snapshot.ts",

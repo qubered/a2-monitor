@@ -140,7 +140,7 @@
           "model": { "enum": ["EW-DX EM 2 Dante"] },
           "channelCount": { "const": 2 },
           "tlsCertificateSha256": {
-            "description": "Optional lower-case hex SHA-256 fingerprint of the receiver's TLS certificate (the backend rejects anything but empty or 64 hex digits). When set, the node refuses to send credentials to any other certificate; when empty, the receiver's self-signed certificate is trusted without verification.",
+            "description": "Optional lower-case hex SHA-256 fingerprint of the receiver's TLS certificate (empty or 64 hex digits; the backend rejects anything else). When set, the node refuses to send credentials to any other certificate; when empty, the receiver's self-signed certificate is trusted without verification.",
             "type": "string",
             "minLength": 0,
             "maxLength": 64

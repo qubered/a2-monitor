@@ -85,6 +85,11 @@ describe("showfile EW-DX inventory", () => {
     expect(parseShowfile(value)).toEqual(value);
   });
 
+  it("accepts an empty pin, meaning the certificate is trusted unverified", () => {
+    const value = showfileWith({ ...EM2_DANTE, tlsCertificateSha256: "" });
+    expect(parseShowfile(value)).toEqual(value);
+  });
+
   it("still accepts a showfile written before EW-DX support", () => {
     const value = showfileWith(EM2_DANTE) as Record<string, unknown>;
     delete value.sennheiserReceivers;
@@ -96,7 +101,6 @@ describe("showfile EW-DX inventory", () => {
     ["four channels", { channelCount: 4 }],
     ["the EM 4 Dante", { model: "EW-DX EM 4 Dante" }],
     ["the analogue EM 2", { model: "EW-DX EM 2" }],
-    ["a short pin", { tlsCertificateSha256: "not-a-pin" }],
     ["a missing pin", { tlsCertificateSha256: undefined }],
     ["a stored password", { password: "secret" }],
     ["a stored username", { username: "api" }],

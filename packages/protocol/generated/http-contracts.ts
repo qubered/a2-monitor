@@ -14,9 +14,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: d94fe5e3a425cbda9c36b5ce4b7ac583b67a274f6308840b5f5e910cdd2f569b
+// Schema-SHA256: 27df7501873bed6af7b8312caa70d3aa55bba061b363eaa8e4dce1b2c8799797
 // Generator-SHA256: 123e494d4215c85da4d6478cb1ee908a830ec3431fb8ab658c6fc0e098c4296b
-// Body-SHA256: fc1734440a18d7fe23f533fe8c9f8a661fc6db3205296a213d2e955de5820fb6
+// Body-SHA256: 3f4530f7a285300684385d003177cbba50885fc89191e6a4e2887457daadf02a
 
 export type HealthResponse = {
   status: "ok";
@@ -1322,7 +1322,7 @@ const showfileSchema = {
           },
           tlsCertificateSha256: {
             description:
-              "Optional lower-case hex SHA-256 fingerprint of the receiver's TLS certificate (the backend rejects anything but empty or 64 hex digits). When set, the node refuses to send credentials to any other certificate; when empty, the receiver's self-signed certificate is trusted without verification.",
+              "Optional lower-case hex SHA-256 fingerprint of the receiver's TLS certificate (empty or 64 hex digits; the backend rejects anything else). When set, the node refuses to send credentials to any other certificate; when empty, the receiver's self-signed certificate is trusted without verification.",
             type: "string",
             minLength: 0,
             maxLength: 64,
