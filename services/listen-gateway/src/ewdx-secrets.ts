@@ -1,12 +1,14 @@
 import { readFileSync, statSync } from "node:fs";
 
-// EW-DX third-party passwords live only on the audio node, in a file the
-// operator creates by hand (mode 0600) and points A2_EWDX_SECRETS_FILE at:
+// EW-DX third-party passwords are entered per receiver in Manager. The backend
+// writes them, write-only and mode 0600, to receiver-secrets.json in its data
+// directory (services/backend/src/receiver-secrets.ts); this node reads the
+// same file, found through A2_DATA_DIR or named by A2_EWDX_SECRETS_FILE:
 //
 //   { "schemaVersion": "0", "receivers": { "<receiver id>": { "password": "…" } } }
 //
-// They never reach the backend, the showfile, Manager, Live, exports or logs,
-// and nothing here ever echoes a password back in an error.
+// They never appear in the showfile, Live, exports or logs, no route returns
+// one, and nothing here ever echoes a password back in an error.
 
 const MAX_BYTES = 64 * 1024;
 

@@ -154,14 +154,15 @@ async function main() {
   mkdirSync(dirname(logPath), { recursive: true });
   const log = openSync(logPath, "a", 0o600);
   const common = { cwd: appRoot, stdio: ["ignore", log, log] };
+  const dataDirectory = resolve(
+    process.env.HOME ?? "/tmp",
+    "Library/Application Support/Pulse",
+  );
   const backend = spawn(process.execPath, ["services/backend/dist/start.js"], {
     ...common,
     env: {
       ...process.env,
-      A2_DATA_DIR: resolve(
-        process.env.HOME ?? "/tmp",
-        "Library/Application Support/Pulse",
-      ),
+      A2_DATA_DIR: dataDirectory,
       // The backend reads normalized levels and receiver telemetry from the
       // gateway on loopback, whichever network scope the gateway serves.
       A2_NODE_ORIGIN: "http://127.0.0.1:4173",
@@ -184,6 +185,9 @@ async function main() {
         A2_LIVE_DIR: resolve(appRoot, "apps/live/dist"),
         A2_MANAGER_DIR: resolve(appRoot, "apps/manager/dist"),
         A2_BACKEND_ORIGIN: "http://127.0.0.1:3000",
+        // Receiver passwords set in Manager are stored here by the backend and
+        // read by the gateway.
+        A2_DATA_DIR: dataDirectory,
       },
     },
   );

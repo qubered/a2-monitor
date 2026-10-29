@@ -54,7 +54,6 @@ export function barrierScenarios(Monitor: MonitorClass): void {
         host: "127.0.0.1",
         model: "EW-DX EM 2 Dante",
         channelCount: 2,
-        tlsCertificateSha256: certificate.fingerprint256,
       },
       { password: PASSWORD, port: simulator!.port, ...timing, ...overrides },
     );

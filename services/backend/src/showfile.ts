@@ -311,6 +311,24 @@ function migrateChannelRooms(
   };
 }
 
+/**
+ * EW-DX receivers once carried a TLS certificate pin; the node now trusts the
+ * receiver's self-signed certificate, so a stored pin is dropped.
+ */
+function migrateSennheiserReceivers(value: unknown): Record<string, unknown> {
+  if (!Array.isArray(value)) return {};
+  return {
+    sennheiserReceivers: value.map((receiver) => {
+      if (typeof receiver !== "object" || receiver === null) return receiver;
+      const { tlsCertificateSha256: _pin, ...rest } = receiver as Record<
+        string,
+        unknown
+      >;
+      return rest;
+    }),
+  };
+}
+
 export function migrateShowfile(value: unknown): unknown {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return value;
@@ -321,6 +339,7 @@ export function migrateShowfile(value: unknown): unknown {
     ...record,
     ...migrateHostOutput(record.hostOutput),
     shureReceivers: needsReceivers ? [] : record.shureReceivers,
+    ...migrateSennheiserReceivers(record.sennheiserReceivers),
     channels: Array.isArray(record.channels)
       ? record.channels.map((channel, position) => {
           if (typeof channel !== "object" || channel === null) return channel;

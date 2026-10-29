@@ -9,10 +9,7 @@ import type { Duplex } from "node:stream";
 import { connect as tlsConnect } from "node:tls";
 import type { Showfile, ShureTelemetry } from "@rvlt/pulse-protocol/http";
 import type { ShureCapabilityProfile } from "@rvlt/pulse-protocol/shure-models";
-import {
-  isOptionalTlsCertificatePin,
-  SENNHEISER_MODEL_INFO,
-} from "@rvlt/pulse-protocol/sennheiser-models";
+import { SENNHEISER_MODEL_INFO } from "@rvlt/pulse-protocol/sennheiser-models";
 import { SseParser } from "@rvlt/pulse-protocol/sse-parser";
 
 // Read-only Sennheiser EW-DX EM 2 Dante adapter over authenticated SSCv2.
@@ -33,12 +30,7 @@ export type EwdxReading =
   | { status: number; body: unknown }
   | {
       error:
-        | "timeout"
-        | "network"
-        | "malformed"
-        | "tls-pin"
-        | "aborted"
-        | "identity-changed";
+        "timeout" | "network" | "malformed" | "aborted" | "identity-changed";
     };
 
 export type EwdxChannelReadings = {
@@ -193,7 +185,7 @@ export function emptyEwdxChannel(index: number): EwdxChannelState {
 function authFailure(reading: EwdxReading): string | null {
   if (!("status" in reading)) return null;
   if (reading.status === 401)
-    return "The receiver's third-party password was rejected. Check the password stored on this audio node.";
+    return "The receiver's third-party password was rejected. Check the password set for this receiver in Manager.";
   if (reading.status === 403)
     return "The receiver's api user is not allowed to read this resource. Check that third-party access is enabled.";
   return null;
@@ -432,12 +424,6 @@ export function ewdxPortFor(
 const MAX_RESPONSE_BYTES = 64 * 1024;
 const STALE_AFTER_MS = 15_000;
 
-class CertificatePinError extends Error {
-  constructor() {
-    super("certificate-pin-mismatch");
-  }
-}
-
 class UnverifiedConnectionError extends Error {
   constructor() {
     super("unverified-connection");
@@ -448,24 +434,21 @@ class UnverifiedConnectionError extends Error {
 export type EwdxExpectedIdentity = { product: string; serial: string | null };
 
 /**
- * Hands the HTTP layer a TLS socket only after the receiver's leaf
- * certificate matches the pinned SHA-256 fingerprint. EW-DX receivers present
- * a self-signed certificate, so chain validation is disabled for this one
- * socket and trust comes solely from the pin, which is checked before a
- * single request byte (and so any credential) is written. Nothing here changes
- * global TLS settings.
+ * Opens TLS sockets to a receiver. EW-DX receivers present a self-signed
+ * certificate that no chain can validate, so chain and name checks are off for
+ * these sockets only and the receiver's certificate is trusted as presented;
+ * nothing here changes global TLS settings. What stands in for certificate
+ * trust is the unauthenticated identity check that must be the first request
+ * on every connection, before a single credential is written.
  *
  * The agent also never opens a connection on its own: each new connection
- * needs a one-shot permit, which the transport grants only for the
- * unauthenticated identity check that must be the first request on it.
+ * needs a one-shot permit, which the transport grants only for that identity
+ * check.
  */
-class PinnedTlsAgent extends Agent {
+class SelfSignedTlsAgent extends Agent {
   private permit = false;
 
-  constructor(
-    private readonly pin: string,
-    private readonly handshakeTimeoutMs: number,
-  ) {
+  constructor(private readonly handshakeTimeoutMs: number) {
     super({ keepAlive: true, maxSockets: 1 });
   }
 
@@ -500,18 +483,7 @@ class PinnedTlsAgent extends Agent {
     socket.setTimeout(this.handshakeTimeoutMs, () =>
       socket.destroy(new Error("timeout")),
     );
-    socket.once("secureConnect", () => {
-      const fingerprint = socket
-        .getPeerCertificate()
-        .fingerprint256?.replaceAll(":", "")
-        .toLowerCase();
-      if (this.pin !== "" && fingerprint !== this.pin) {
-        socket.destroy();
-        settle(new CertificatePinError());
-        return;
-      }
-      settle(null);
-    });
+    socket.once("secureConnect", () => settle(null));
     socket.once("error", (error) => settle(error));
     return undefined;
   }
@@ -548,17 +520,16 @@ export type EwdxStreamOpen = {
 };
 
 class EwdxTransport {
-  private readonly agent: PinnedTlsAgent;
+  private readonly agent: SelfSignedTlsAgent;
   private readonly authorization: string;
 
   constructor(
     private readonly host: string,
     private readonly port: number,
-    pin: string,
     password: string,
     private readonly timeoutMs: number,
   ) {
-    this.agent = new PinnedTlsAgent(pin, timeoutMs);
+    this.agent = new SelfSignedTlsAgent(timeoutMs);
     this.authorization = `Basic ${Buffer.from(`api:${password}`).toString("base64")}`;
   }
 
@@ -683,11 +654,7 @@ class EwdxTransport {
       };
       signal.addEventListener("abort", onAbort, { once: true });
       if (signal.aborted) onAbort();
-      request.on("error", (error) =>
-        finish({
-          error: error instanceof CertificatePinError ? "tls-pin" : "network",
-        }),
-      );
+      request.on("error", () => finish({ error: "network" }));
       request.end();
     });
   }
@@ -770,11 +737,7 @@ class EwdxTransport {
       };
       signal.addEventListener("abort", onAbort, { once: true });
       if (signal.aborted) onAbort();
-      request.on("error", (error) =>
-        finish({
-          error: error instanceof CertificatePinError ? "tls-pin" : "network",
-        }),
-      );
+      request.on("error", () => finish({ error: "network" }));
       request.end(payload);
     });
   }
@@ -845,8 +808,6 @@ function transportDetail(reading: EwdxReading): string {
   if (!("error" in reading))
     return "The receiver returned an unexpected response.";
   switch (reading.error) {
-    case "tls-pin":
-      return "The receiver's TLS certificate does not match the pinned SHA-256 fingerprint; no credentials were sent.";
     case "timeout":
       return "The receiver is not answering (request timed out); retained telemetry is stale.";
     case "malformed":
@@ -956,10 +917,6 @@ export class EwdxReceiverMonitor {
     };
     if (isIP(this.config.host) === 0)
       return refuse("Receiver host must be an explicit IP address.");
-    if (!isOptionalTlsCertificatePin(this.config.tlsCertificateSha256))
-      return refuse(
-        "The receiver's TLS certificate pin is not a SHA-256 fingerprint.",
-      );
     if (!this.options.password)
       return refuse(
         this.options.secretsError
@@ -967,7 +924,7 @@ export class EwdxReceiverMonitor {
               0,
               240,
             )
-          : "The receiver's third-party password is not configured on this audio node.",
+          : "No third-party password is set for this receiver. Set it in Manager.",
       );
     this.transport = this.newTransport();
     this.schedule(0);
@@ -977,7 +934,6 @@ export class EwdxReceiverMonitor {
     return new EwdxTransport(
       this.config.host,
       ewdxPortFor(this.config.host, this.options.port),
-      this.config.tlsCertificateSha256,
       this.options.password!,
       this.options.requestTimeoutMs ?? 3_000,
     );
@@ -1102,10 +1058,7 @@ export class EwdxReceiverMonitor {
   private async required(path: string, auth: boolean): Promise<EwdxReading> {
     const reading = await this.get(path, auth);
     if ("error" in reading) {
-      throw new PollFailure(
-        reading.error === "tls-pin" ? "identity" : "transport",
-        transportDetail(reading),
-      );
+      throw new PollFailure("transport", transportDetail(reading));
     }
     return reading;
   }
@@ -1191,10 +1144,7 @@ export class EwdxReceiverMonitor {
             "the receiver's subscription answer was not a valid SSCv2 stream",
           );
         if (opened.error !== "aborted")
-          throw new PollFailure(
-            opened.error === "tls-pin" ? "identity" : "transport",
-            transportDetail(opened),
-          );
+          throw new PollFailure("transport", transportDetail(opened));
         return false;
       }
       if (opened.status === 401 || opened.status === 403)
@@ -1494,10 +1444,7 @@ export class EwdxReceiverMonitor {
             "A reconnect reached a different receiver identity; rechecking it before trusting its telemetry.",
           );
         if ("error" in reading) {
-          throw new PollFailure(
-            reading.error === "tls-pin" ? "identity" : "transport",
-            transportDetail(reading),
-          );
+          throw new PollFailure("transport", transportDetail(reading));
         }
         if (reading.status === 401 || reading.status === 403) {
           throw new PollFailure(

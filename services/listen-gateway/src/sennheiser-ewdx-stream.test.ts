@@ -40,7 +40,6 @@ function config(overrides: Record<string, unknown> = {}) {
     host: "127.0.0.1",
     model: "EW-DX EM 2 Dante" as const,
     channelCount: 2 as const,
-    tlsCertificateSha256: certificate.fingerprint256,
     ...overrides,
   };
 }

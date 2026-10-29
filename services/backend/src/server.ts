@@ -20,7 +20,6 @@ import type {
   Showfile,
 } from "@rvlt/pulse-protocol/http";
 import { diffLiveState } from "@rvlt/pulse-protocol/live-state-delta";
-import { isOptionalTlsCertificatePin } from "@rvlt/pulse-protocol/sennheiser-models";
 import {
   createStrictAjv2020,
   stringifyValidatedJson,
@@ -55,6 +54,11 @@ import {
   ShowfileConflictError,
   type ProductionStore,
 } from "./productions.js";
+import {
+  MAX_PASSWORD_LENGTH,
+  MemoryReceiverSecretStore,
+  type ReceiverSecretStore,
+} from "./receiver-secrets.js";
 
 export type SnapshotProvider = () => LiveSnapshot | Promise<LiveSnapshot>;
 
@@ -63,6 +67,35 @@ const errorResponseSchema = {
   additionalProperties: false,
   required: ["error"],
   properties: { error: { type: "string" } },
+} as const;
+
+const receiverIdParamsSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["id"],
+  properties: { id: { type: "string", minLength: 1, maxLength: 64 } },
+} as const;
+
+const receiverPasswordBodySchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["password"],
+  properties: {
+    password: { type: "string", minLength: 1, maxLength: MAX_PASSWORD_LENGTH },
+  },
+} as const;
+
+const receiverPasswordsResponseSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["configured"],
+  properties: {
+    configured: {
+      type: "array",
+      maxItems: 64,
+      items: { type: "string", minLength: 1, maxLength: 64 },
+    },
+  },
 } as const;
 
 const createProductionSchema = {
@@ -206,6 +239,8 @@ type BuildServerOptions = {
   checkPersistence?: CheckPersistence;
   reportPersistence?: ReportPersistence;
   sessionPersistence?: SessionPersistence;
+  /** Where receiver passwords are kept; in memory unless a file store is given. */
+  receiverSecrets?: ReceiverSecretStore;
   liveMonitor?: LiveMonitor;
   logger?: boolean;
 };
@@ -281,6 +316,8 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     options.snapshotProvider ?? (() => fabricatedLiveSnapshot);
   const productionStore =
     options.productionStore ?? new MemoryProductionStore();
+  const receiverSecrets =
+    options.receiverSecrets ?? new MemoryReceiverSecretStore();
 
   server.get(
     "/api/v1/live/snapshot",
@@ -683,6 +720,44 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     );
   }
 
+  // Receiver passwords are write-only: these routes say which receivers have
+  // one, and set or clear it, but never return a password. The audio node
+  // reads them from the same file the store writes.
+  server.get(
+    "/api/v1/receivers/passwords",
+    { schema: { response: { 200: receiverPasswordsResponseSchema } } },
+    async (_request, reply) =>
+      reply
+        .header("Cache-Control", "no-store")
+        .send({ configured: await receiverSecrets.configured() }),
+  );
+
+  server.put(
+    "/api/v1/receivers/:id/password",
+    {
+      schema: {
+        params: receiverIdParamsSchema,
+        body: receiverPasswordBodySchema,
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const { password } = request.body as { password: string };
+      await receiverSecrets.set(id, password);
+      return reply.code(204).send();
+    },
+  );
+
+  server.delete(
+    "/api/v1/receivers/:id/password",
+    { schema: { params: receiverIdParamsSchema } },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      await receiverSecrets.clear(id);
+      return reply.code(204).send();
+    },
+  );
+
   server.put(
     "/api/v1/showfile",
     {
@@ -729,10 +804,6 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
             id.trim().length === 0 ||
             name.trim().length === 0 ||
             isIP(host.trim()) === 0,
-        ) ||
-        sennheiserReceivers.some(
-          ({ tlsCertificateSha256 }) =>
-            !isOptionalTlsCertificatePin(tlsCertificateSha256),
         ) ||
         candidate.channels.some(({ shureReceiverId, shureChannelIndex }) => {
           if (shureReceiverId == null && shureChannelIndex == null)

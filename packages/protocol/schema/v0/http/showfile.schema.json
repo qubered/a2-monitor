@@ -126,25 +126,19 @@
       }
     },
     "sennheiserReceivers": {
-      "description": "Sennheiser EW-DX EM 2 Dante receivers read over authenticated SSCv2 (firmware 4.0.0 and later). Ids share one namespace with shureReceivers, so a channel's shureReceiverId/shureChannelIndex may name either. The third-party password is an audio-node secret and never appears here. Absent means none.",
+      "description": "Sennheiser EW-DX EM 2 Dante receivers read over authenticated SSCv2 (firmware 4.0.0 and later). Ids share one namespace with shureReceivers, so a channel's shureReceiverId/shureChannelIndex may name either. The third-party password is a node secret kept outside the showfile and never appears here. Absent means none.",
       "type": "array",
       "maxItems": 64,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "name", "host", "model", "channelCount", "tlsCertificateSha256"],
+        "required": ["id", "name", "host", "model", "channelCount"],
         "properties": {
           "id": { "type": "string", "minLength": 1, "maxLength": 64 },
           "name": { "type": "string", "minLength": 1, "maxLength": 120 },
           "host": { "type": "string", "minLength": 1, "maxLength": 45 },
           "model": { "enum": ["EW-DX EM 2 Dante"] },
-          "channelCount": { "const": 2 },
-          "tlsCertificateSha256": {
-            "description": "Optional lower-case hex SHA-256 fingerprint of the receiver's TLS certificate (empty or 64 hex digits; the backend rejects anything else). When set, the node refuses to send credentials to any other certificate; when empty, the receiver's self-signed certificate is trusted without verification.",
-            "type": "string",
-            "minLength": 0,
-            "maxLength": 64
-          }
+          "channelCount": { "const": 2 }
         }
       }
     },

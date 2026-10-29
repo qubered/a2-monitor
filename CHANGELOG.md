@@ -12,8 +12,9 @@ externally tested release.
 
 - Manager, Live and the audio node: read-only Sennheiser EW-DX EM 2 Dante
   receivers (two channels, firmware 4.x over authenticated SSCv2). Manager
-  adds each unit by explicit IP and its TLS certificate's SHA-256 fingerprint;
-  the third-party password stays only in the audio node's secret file. Live
+  adds each unit by explicit IP in the same Receivers table as Shure, with a
+  per-receiver third-party password that is stored write-only on this Mac. The
+  receiver's self-signed certificate is trusted as presented. Live
   shows RF level, the receiver's own link quality in percent, audio level,
   frequency, transmitter type, mute, battery charge and remaining runtime,
   with the same alerts as Shure. Values EW-DX does not report (battery bars

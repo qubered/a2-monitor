@@ -6,6 +6,7 @@ import { FileReportPersistence } from "./reports.js";
 import { FileSessionPersistence } from "./sessions.js";
 import { NodeObserver } from "./node-observer.js";
 import { FileProductionStore } from "./productions.js";
+import { FileReceiverSecretStore } from "./receiver-secrets.js";
 import { resolve } from "node:path";
 
 const host = "127.0.0.1";
@@ -21,6 +22,7 @@ const server = buildServer({
   checkPersistence: new FileCheckPersistence(dataDirectory),
   reportPersistence: new FileReportPersistence(dataDirectory),
   sessionPersistence: new FileSessionPersistence(dataDirectory),
+  receiverSecrets: new FileReceiverSecretStore(dataDirectory),
   nodeSource: new NodeObserver({ origin: nodeOrigin }),
 });
 
