@@ -103,10 +103,16 @@ The gateway loads Manager's receiver inventory from the local showfile and
 opens an independent read-only Shure command-string connection to each unit on
 TCP 2202. Inventory changes are reconciled without restarting audio.
 `GET /audio/v0/shure` returns the closed normalized fleet battery contract.
+`GET /audio/v0/receivers/events` pushes the same normalized telemetry as
+Server-Sent Events: a `fleet` document on connect and every second, and a
+`receiver` event (one receiver's state) as soon as it changes, at most one per
+receiver per 25 ms. The backend follows this stream and polls only while it is
+unavailable.
 
 Sennheiser EW-DX EM 2 Dante receivers in the showfile's `sennheiserReceivers`
-are read with documented GETs over HTTPS on port 443 (SSCv2, Basic auth as
-user `api`). Each connection is trusted only if the receiver's certificate
+are read over HTTPS on port 443 (SSCv2, Basic auth as user `api`) through one
+SSCv2 subscription stream per receiver, with a bounded read-only GET sweep as
+a labelled fallback. Each connection is trusted only if the receiver's certificate
 matches the SHA-256 pin from Manager, and every new connection is identified
 (product and serial) before any telemetry is read. Their normalized state is
 published in the same fleet contract with `vendor: "sennheiser"`. Their

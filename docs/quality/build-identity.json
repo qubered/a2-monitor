@@ -3,9 +3,9 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.ed8d3e2f949ef483",
-  "sourceSha256": "ed8d3e2f949ef4833985687132de2e4b787432e434b5093ec81159890aebe59e",
-  "inputCount": 494,
+  "buildId": "a2-0.0.0+sha256.e6aa43d507c762c1",
+  "sourceSha256": "e6aa43d507c762c194ab867b303e61c780d423f0c859eadd89ad7318aabaeeda",
+  "inputCount": 499,
   "inputs": [
     {
       "path": ".editorconfig",
@@ -49,7 +49,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "540c3c191111af7b40ddde955ef487b85e734ffaf9022b34bd5502d0163fb223"
+      "sha256": "25658b30d0c730015be1cf019a726a91468d595585989fdbea63125a29732914"
     },
     {
       "path": "CLAUDE.md",
@@ -881,7 +881,7 @@
     },
     {
       "path": "docs/integrations/sennheiser-ew-dx.md",
-      "sha256": "6a5e1a4f2612623394c6e326bc1cd717d8b29be7589bee5cda32bde1ff7f2678"
+      "sha256": "4b189388341600c5a8fdafbdff2c75f75bb5234656c4eaa6f5b59346346d34f7"
     },
     {
       "path": "docs/integrations/shure-wireless.md",
@@ -1377,7 +1377,7 @@
     },
     {
       "path": "packages/protocol/package.json",
-      "sha256": "58d15d7b97f8b09eb6a8df05dd5437b80444888c5a3f4c8c34be88a461216597"
+      "sha256": "884f7c5797c118d7bd5d6cc7ebf0d69795c084c6dc413b7ea2a1df30cdbf4d0b"
     },
     {
       "path": "packages/protocol/policy/alert-policy.ts",
@@ -1452,6 +1452,10 @@
       "sha256": "344c1fecb9d8ecacd52fd0fe7b0332bfa903f5ebcbc5f60968d1cd7ba914bcb1"
     },
     {
+      "path": "packages/protocol/sse/sse-parser.ts",
+      "sha256": "e8a652bdc0524ad315d3524a96b6d5d405f373e3a094b01eaabc1339b84e19d2"
+    },
+    {
       "path": "packages/protocol/tests/generator.test.mjs",
       "sha256": "a7628eafff09ef2b38165eecc4d58aa68483f146aef689ae5fabef6682ddf1ec"
     },
@@ -1470,6 +1474,10 @@
     {
       "path": "packages/protocol/tests/shure-models.test.ts",
       "sha256": "7cc2c73eb40e38842460c4f46b6f35c8beecb2c25e205385fbdd4ad7e2d7a1f1"
+    },
+    {
+      "path": "packages/protocol/tests/sse-parser.test.ts",
+      "sha256": "a5f8922994ea5bd68780ddd53e5b82f86a9857b54ce76f38b5f29dbcf8541451"
     },
     {
       "path": "packages/protocol/tests/strict-ajv.test.mjs",
@@ -1753,7 +1761,7 @@
     },
     {
       "path": "services/backend/src/live-monitor.ts",
-      "sha256": "6871051c16c64d6d6dad356ad9a56748dc9e9b989ccdeef43bcc098220c3d5aa"
+      "sha256": "1c7a7be4dcd9847f43d87978ff9fce11109310b624834bfb8dc8c95968e4ffaf"
     },
     {
       "path": "services/backend/src/live-routes.test.ts",
@@ -1761,11 +1769,15 @@
     },
     {
       "path": "services/backend/src/monitoring.test-support.ts",
-      "sha256": "76fe4d81ffd631aaf310417ef50b54586c8c5fbf381b193fc4a82b28aef2a30d"
+      "sha256": "906f678918431da967f51d55df22a7f3951643904e0aed3f96bf7ce182c4c406"
     },
     {
       "path": "services/backend/src/node-observer.ts",
-      "sha256": "dd3fc931655bbafc3a4708d10e6fda01ac572f7b91458e75204eff3bf66ddece"
+      "sha256": "45c096c204a751350a507cfb0f025d759e19590dbad55dbaa4966f5b40242d0c"
+    },
+    {
+      "path": "services/backend/src/node-stream.test.ts",
+      "sha256": "1f1541c1646f709dca01946619392a4a221d67cc4a18a05011725fb7b791dd63"
     },
     {
       "path": "services/backend/src/process-lifecycle.test.ts",
@@ -1825,7 +1837,7 @@
     },
     {
       "path": "services/listen-gateway/README.md",
-      "sha256": "66679a9f8b03926db58265ddfc3f016b70f422163bd46d424411f89d39e20691"
+      "sha256": "bd84999b8a756c54174fff7665d0989d20f592a08223723983e0c6aa11ff893e"
     },
     {
       "path": "services/listen-gateway/package.json",
@@ -1833,7 +1845,7 @@
     },
     {
       "path": "services/listen-gateway/src/dev/ewdx-simulator.ts",
-      "sha256": "e8b26d8e4f0af47620e99b0a1bc82b285351f6083a48719c320e63fdd4a6ba4e"
+      "sha256": "de08e8fce0f7328025a3dfd3d0176dfc579946fffa78f89bed2e94a7989414e9"
     },
     {
       "path": "services/listen-gateway/src/dev/shure-simulator.ts",
@@ -1872,8 +1884,16 @@
       "sha256": "128799936522096ac3bb4a7aaa80eb1a94be30965d363147d8e8cd739e223bdf"
     },
     {
+      "path": "services/listen-gateway/src/sennheiser-ewdx-barriers.test-support.ts",
+      "sha256": "62c1d49dcbd514a59d16ac67b9861591ef1f6dfc5f845d33f0e4a0afd3125261"
+    },
+    {
       "path": "services/listen-gateway/src/sennheiser-ewdx-monitor.test.ts",
-      "sha256": "22524f36f75fa73412fe1e8c3bf62ea24fd03717fd0017cf00095e18a5e3911f"
+      "sha256": "e55ca6f19f9279552693abe905ee0b172d22e76b276c0855c95a671df2a75b03"
+    },
+    {
+      "path": "services/listen-gateway/src/sennheiser-ewdx-stream.test.ts",
+      "sha256": "cc24e66c065c71101f6d759d1a49eb4c730ef51160beed93d2efa8591adebeda"
     },
     {
       "path": "services/listen-gateway/src/sennheiser-ewdx.test.ts",
@@ -1881,23 +1901,23 @@
     },
     {
       "path": "services/listen-gateway/src/sennheiser-ewdx.ts",
-      "sha256": "28d94ad32703b48c756f172984b8188d0da14164551f60293b5c1501a2ad4566"
+      "sha256": "c2db7553c6d198047c2ac9b25ee591765362a1b35678fc73910567b62a6f434d"
     },
     {
       "path": "services/listen-gateway/src/server.test.ts",
-      "sha256": "382f2f7be8c7cf6d2ef777767c0827c8b0d0c41d6e475c5c1a7e44ad3ed339b2"
+      "sha256": "2554f39bf3cef5351672770b7bc32e53ce43b9f8c19d6b1e8eca06f4c98ff1a2"
     },
     {
       "path": "services/listen-gateway/src/server.ts",
-      "sha256": "aa8de93048eff8f5d248d49ed1740917bfb23310157464e46e4f513f54cf8991"
+      "sha256": "6b3d4caf0f0a280c8d37c95138f7a213c386a2ef48d217870a2601268ba45785"
     },
     {
       "path": "services/listen-gateway/src/shure.test.ts",
-      "sha256": "d51ac026569385221ac7c61854e2fe90ce2b31a05b7252eceab6331021644364"
+      "sha256": "803b536a5a18a818e623177d68a1954a5c53310a61168944705cda171cc606da"
     },
     {
       "path": "services/listen-gateway/src/shure.ts",
-      "sha256": "7560bb5723037440511c253a16bc4925df0e72fb4f2b3a4886774d7f1b64becc"
+      "sha256": "a5909e2a2162b02502ce45a61430aa328daec4513db94f96af48fa04c76a34cb"
     },
     {
       "path": "services/listen-gateway/src/start.ts",

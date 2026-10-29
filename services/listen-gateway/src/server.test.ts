@@ -21,6 +21,7 @@ import {
   generateSimulatorCertificate,
   startEwdxSimulator,
 } from "./dev/ewdx-simulator.js";
+import { SseParser } from "@rvlt/pulse-protocol/sse-parser";
 import { SennheiserFleetMonitor } from "./sennheiser-ewdx.js";
 import { ListenGateway, candidateAddressFor } from "./server.js";
 
@@ -699,6 +700,125 @@ describe("ListenGateway shared host output", () => {
         { timeout: 8_000, interval: 100 },
       );
     } finally {
+      vi.unstubAllGlobals();
+      await gateway.close();
+      gateways.delete(gateway);
+      await simulator.close();
+    }
+  }, 15_000);
+
+  it("pushes receiver telemetry changes on /audio/v0/receivers/events within 150 ms", async () => {
+    const realFetch = fetch;
+    const certificate = generateSimulatorCertificate();
+    const simulator = await startEwdxSimulator({
+      password: "synthetic-password",
+      certificate,
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          schemaVersion: "0",
+          revision: 1,
+          updatedAtUtc: null,
+          show: { name: "Show" },
+          device: null,
+          shureReceivers: [],
+          sennheiserReceivers: [
+            {
+              id: "ewdx-a",
+              name: "EW-DX rack",
+              host: "127.0.0.1",
+              model: "EW-DX EM 2 Dante",
+              channelCount: 2,
+              tlsCertificateSha256: certificate.fingerprint256,
+            },
+          ],
+          channels: [],
+        }),
+      ),
+    );
+    const gateway = new ListenGateway({
+      device: "Test Device",
+      processFactory: () => new ScriptedWorker(),
+      backendOrigin: "http://backend.invalid/",
+      sennheiserMonitor: new SennheiserFleetMonitor({
+        port: simulator.port,
+        password: () => "synthetic-password",
+      }),
+      receiverFleetIntervalMs: 200,
+    });
+    gateways.add(gateway);
+    gateway.server.listen(0, "127.0.0.1");
+    await once(gateway.server, "listening");
+    gateway.startCapture();
+    const port = (gateway.server.address() as AddressInfo).port;
+    const controller = new AbortController();
+    const events: Array<{ event: string; data: unknown; at: number }> = [];
+    try {
+      const response = await realFetch(
+        `http://127.0.0.1:${port}/audio/v0/receivers/events`,
+        { signal: controller.signal },
+      );
+      expect(response.headers.get("content-type")).toMatch(
+        /text\/event-stream/,
+      );
+      const parser = new SseParser();
+      void (async () => {
+        for await (const chunk of response.body!)
+          for (const { event, data } of parser.push(chunk))
+            events.push({
+              event,
+              data: JSON.parse(data),
+              at: performance.now(),
+            });
+      })().catch(() => undefined);
+      await vi.waitFor(
+        () =>
+          expect(
+            events.some(
+              ({ event, data }) =>
+                event === "receiver" &&
+                (data as { id: string; status: string }).status === "ready",
+            ),
+          ).toBe(true),
+        { timeout: 6_000, interval: 20 },
+      );
+      expect(events[0]?.event).toBe("fleet");
+      const t0 = performance.now();
+      simulator.setChannel(0, { rssiDbm: -83 });
+      await vi.waitFor(
+        () =>
+          expect(
+            events.find(
+              ({ event, data, at }) =>
+                event === "receiver" &&
+                at >= t0 &&
+                (data as { channels: Array<{ rfLevelDbm: number | null }> })
+                  .channels[0]?.rfLevelDbm === -83,
+            ),
+          ).toBeTruthy(),
+        { timeout: 2_000, interval: 1 },
+      );
+      const arrival = events.find(
+        ({ event, data, at }) =>
+          event === "receiver" &&
+          at >= t0 &&
+          (data as { channels: Array<{ rfLevelDbm: number | null }> })
+            .channels[0]?.rfLevelDbm === -83,
+      )!;
+      expect(arrival.at - t0).toBeLessThan(150);
+      // A full fleet document keeps arriving even while nothing changes.
+      const fleets = events.filter(({ event }) => event === "fleet").length;
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      expect(
+        events.filter(({ event }) => event === "fleet").length,
+      ).toBeGreaterThan(fleets);
+      parseShureTelemetry(
+        events.filter(({ event }) => event === "fleet").at(-1)!.data,
+      );
+    } finally {
+      controller.abort();
       vi.unstubAllGlobals();
       await gateway.close();
       gateways.delete(gateway);

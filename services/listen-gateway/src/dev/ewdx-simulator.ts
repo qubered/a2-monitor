@@ -8,6 +8,8 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
+import { randomUUID } from "node:crypto";
+import type { ServerResponse } from "node:http";
 import { createServer, type Server } from "node:https";
 import type { Socket } from "node:net";
 import { tmpdir } from "node:os";
@@ -72,7 +74,7 @@ export function generateSimulatorCertificate(): SimulatorCertificate {
   }
 }
 
-type SimulatedChannel = {
+export type SimulatedChannel = {
   name: string;
   transmitterType: string;
   linked: boolean;
@@ -96,7 +98,32 @@ export type EwdxSimulatorOptions = {
   /** Drive the repeating development script instead of steady values. */
   scripted?: boolean;
   now?: () => number;
+  /** SSCv2 subscriptions (default on). Off answers 404, as an older server might. */
+  subscriptions?: boolean;
+  /** Concurrent subscription sessions before new ones are refused (default 4). */
+  maxSessions?: number;
+  /** Resource paths the server refuses to subscribe (403, whole request refused). */
+  refuseResources?: string[];
+  /** Overrides the Content-Location header (hostile-server tests). */
+  contentLocation?: (uuid: string) => string;
+  /** Overrides the open event's data (hostile-server tests). */
+  openEventData?: (uuid: string) => string;
+  /** Writes every event in tiny fragments to exercise reassembly. */
+  fragmentEvents?: boolean;
+  /** Sends one notification per resource instead of combining them. */
+  separateNotifications?: boolean;
+  /** Holds back the initial values after a subscription list is accepted. */
+  initialNotificationDelayMs?: number;
+  /** Delays answers to session-status GETs (liveness checks). */
+  sessionStatusDelayMs?: number;
+  /** Ends each session right after accepting its list, before any value. */
+  closeAfterSubscribe?: boolean;
+  /** HTTP status used to refuse a resource (default 403; the spec's form is 400). */
+  refusalStatus?: number;
 };
+
+export type SimulatorBarrier =
+  "session-status" | "open-event" | "subscribe-reply";
 
 export type EwdxSimulatorRequest = {
   method: string;
@@ -104,6 +131,8 @@ export type EwdxSimulatorRequest = {
   authorized: boolean | null;
   /** The product code of the chassis that received this request. */
   product: string;
+  /** Which TLS connection carried it, numbered from 1 in accept order. */
+  connection: number;
 };
 
 export type EwdxSimulator = {
@@ -131,11 +160,60 @@ export type EwdxSimulator = {
   }): void;
   /** Index into `requests` of the first request the replacement chassis saw. */
   readonly swappedAtRequest: number | null;
+  /** Changes channel values; subscribed clients are notified of what changed. */
+  setChannel(index: number, patch: Partial<SimulatedChannel>): void;
+  /** Open subscription sessions. */
+  readonly sessions: number;
+  /** The most sessions ever open at once. */
+  readonly peakSessions: number;
+  /**
+   * Deterministic barriers for interleaving tests: while held, the receiver
+   * accepts the request but withholds its answer (session-status GET reply,
+   * a new stream's `open` event, or a subscription-list reply, which is
+   * applied at once) until released.
+   */
+  hold(barrier: SimulatorBarrier): void;
+  release(barrier: SimulatorBarrier): void;
+  /** How many answers a barrier is withholding right now. */
+  held(barrier: SimulatorBarrier): number;
+  /** Notifications written, counting each resource once. */
+  readonly notificationsSent: number;
+  /** Ends every session as the receiver does on a password change. */
+  terminateSessions(): void;
+  /** Writes raw SSE text to every open session (malformed-stream tests). */
+  injectEvent(raw: string): void;
+  /** Forgets every session without closing its stream (status GETs then answer 422). */
+  forgetSessions(): void;
   dropConnections(): void;
   close(): Promise<void>;
 };
 
 const UNAUTHENTICATED = new Set(["/api/ssc/version", "/api/device/identity"]);
+const SESSION_PATH =
+  /^\/api\/ssc\/state\/subscriptions\/([A-Za-z0-9-]+)(?:\/(add|remove))?$/;
+const CHANNEL_RESOURCES = [
+  "",
+  "/warnings",
+  "/signalStrengthIndicator",
+  "/signalQualityIndicator",
+  "/level",
+];
+function channelPaths(index: number): string[] {
+  return [
+    ...CHANNEL_RESOURCES.map((suffix) => `/api/channel/${index}${suffix}`),
+    `/api/rf/channels/${index}`,
+    `/api/transmitters/${index}`,
+    `/api/transmitters/${index}/battery`,
+    `/api/transmitters/${index}/warnings`,
+  ];
+}
+
+type Session = {
+  uuid: string;
+  response: ServerResponse;
+  resources: Set<string>;
+  lastSent: Map<string, string>;
+};
 const MAX_RECORDED_REQUESTS = 10_000;
 
 function initialChannels(): SimulatedChannel[] {
@@ -222,6 +300,146 @@ export async function startEwdxSimulator(
   let serial = options.serial ?? "1000000001";
   let product = options.product ?? "EWDX2CHDS";
 
+  /** The GET answer for a channel, RF or transmitter resource, or null. */
+  function resourceBody(
+    url: string,
+  ): { status: number; body?: unknown } | null {
+    const reply = (status: number, body?: unknown) => ({ status, body });
+    const match =
+      /^\/api\/(channel|rf\/channels|transmitters)\/(\d+)(?:\/([A-Za-z]+))?$/.exec(
+        url,
+      );
+    const index = match ? Number(match[2]) : -1;
+    const channel = channels[index];
+    if (!match || !channel) return reply(404);
+    if (fault === "server-error") return reply(500);
+    if (fault === "wrong-shape") return reply(200, "unexpected");
+    const [, family, , resource] = match;
+    if (family === "channel") {
+      if (resource === undefined)
+        return reply(200, {
+          name: channel.name,
+          mute: false,
+          gain: 21,
+          outputLevel: 0,
+        });
+      if (resource === "warnings")
+        return reply(200, [
+          ...(channel.linked ? [] : ["NoLink"]),
+          ...(channel.linked && channel.rssiDbm < -85 ? ["LowSignal"] : []),
+        ]);
+      if (resource === "signalStrengthIndicator")
+        return reply(200, { value: channel.linked ? channel.rssiDbm : -104 });
+      if (resource === "signalQualityIndicator")
+        return reply(200, { value: channel.linked ? channel.rsqiPercent : 0 });
+      if (resource === "level")
+        return reply(200, {
+          value: channel.linked ? channel.levelDbfs : -138.5,
+        });
+      return reply(404);
+    }
+    if (family === "rf/channels" && resource === undefined)
+      return reply(200, {
+        frequency: channel.frequencyKhz,
+        presets: { type: "None" },
+      });
+    if (family === "transmitters") {
+      if (!channel.linked) return reply(422);
+      if (resource === undefined)
+        return reply(200, {
+          type: channel.transmitterType,
+          name: channel.name,
+          mute: channel.muted,
+          version: "0.0.0",
+        });
+      if (resource === "battery")
+        return reply(200, {
+          type: "Battery",
+          lifetime: channel.lifetimeMinutes,
+          gauge: channel.batteryPercent,
+        });
+      if (resource === "warnings")
+        return reply(200, channel.batteryPercent <= 10 ? ["LowBattery"] : []);
+    }
+    return reply(404);
+  }
+
+  const sessions = new Map<string, Session>();
+  let peakSessions = 0;
+  const barriers = new Map<SimulatorBarrier, Array<() => void> | null>();
+  /** Runs now, or later if the barrier is held. */
+  const through = (barrier: SimulatorBarrier, action: () => void) => {
+    const queue = barriers.get(barrier);
+    if (queue) queue.push(action);
+    else action();
+  };
+  const connectionIds = new WeakMap<object, number>();
+  let connectionCount = 0;
+  let notificationsSent = 0;
+  const writeEvent = (target: ServerResponse, text: string) => {
+    // A client that stops reading is dropped rather than buffered forever.
+    if (target.writableLength > 1024 * 1024) {
+      target.destroy();
+      return;
+    }
+    if (!options.fragmentEvents) {
+      target.write(text);
+      return;
+    }
+    for (let i = 0; i < text.length;) {
+      const size = 1 + Math.floor(Math.random() * 7);
+      target.write(text.slice(i, i + size));
+      i += size;
+    }
+  };
+  /** Sends each session the current value of every given resource that changed for it. */
+  const notify = (session: Session, paths: Iterable<string>, force = false) => {
+    const changed: Record<string, unknown> = {};
+    for (const path of paths) {
+      if (!session.resources.has(path)) continue;
+      const resource = resourceBody(path);
+      if (!resource || resource.status !== 200) continue;
+      const json = JSON.stringify(resource.body);
+      if (!force && session.lastSent.get(path) === json) continue;
+      session.lastSent.set(path, json);
+      changed[path] = resource.body;
+    }
+    const keys = Object.keys(changed);
+    if (!keys.length) return;
+    notificationsSent += keys.length;
+    if (options.separateNotifications) {
+      for (const key of keys)
+        writeEvent(
+          session.response,
+          `data: ${JSON.stringify({ [key]: changed[key] })}\n\n`,
+        );
+    } else {
+      writeEvent(session.response, `data: ${JSON.stringify(changed)}\n\n`);
+    }
+  };
+  const notifyAll = (paths: string[]) => {
+    for (const session of sessions.values()) notify(session, paths);
+  };
+  const allPaths = () => channels.flatMap((_, index) => channelPaths(index));
+  const closeSession = (session: Session, sendClose: boolean) => {
+    sessions.delete(session.uuid);
+    if (sendClose) {
+      const data = JSON.stringify({
+        path: `/api/ssc/state/subscriptions/${session.uuid}`,
+        sessionUUID: session.uuid,
+      });
+      session.response.write(`event: close\ndata: ${data}\n\n`);
+    }
+    session.response.end();
+  };
+  const ticker =
+    options.scripted &&
+    setInterval(() => {
+      script(channels, now());
+      notifyAll(allPaths());
+    }, 100);
+  if (ticker) ticker.unref();
+
   const server: Server = createServer(
     { key: certificate.key, cert: certificate.cert },
     (request, response) => {
@@ -236,6 +454,7 @@ export async function startEwdxSimulator(
           path: url,
           authorized,
           product,
+          connection: connectionIds.get(request.socket) ?? 0,
         });
       for (const callback of requestCallbacks) callback();
       if (pendingSwap) {
@@ -253,8 +472,119 @@ export async function startEwdxSimulator(
         response.writeHead(status, { "content-type": "application/json" });
         response.end(body === undefined ? undefined : JSON.stringify(body));
       };
-      if (request.method !== "GET") return send(405);
+      const sessionMatch = SESSION_PATH.exec(url);
+      const subscriptionsOn = options.subscriptions !== false;
+      if (request.method !== "GET" && !(sessionMatch && subscriptionsOn))
+        return send(405);
       if (needsAuth && authorized !== true) return send(401);
+      if (url === "/api/ssc/state/subscriptions" && request.method === "GET") {
+        if (!subscriptionsOn) return send(404);
+        if (sessions.size >= (options.maxSessions ?? 4)) return send(503);
+        const uuid = randomUUID();
+        const path = `/api/ssc/state/subscriptions/${uuid}`;
+        response.writeHead(200, {
+          "content-type": "text/event-stream",
+          "content-location": options.contentLocation?.(uuid) ?? path,
+        });
+        const session: Session = {
+          uuid,
+          response,
+          resources: new Set(),
+          lastSent: new Map(),
+        };
+        sessions.set(uuid, session);
+        peakSessions = Math.max(peakSessions, sessions.size);
+        response.on("close", () => sessions.delete(uuid));
+        through("open-event", () =>
+          writeEvent(
+            response,
+            `event: open\ndata: ${options.openEventData?.(uuid) ?? JSON.stringify({ path, sessionUUID: uuid })}\n\n`,
+          ),
+        );
+        return;
+      }
+      if (sessionMatch && subscriptionsOn) {
+        const session = sessions.get(sessionMatch[1]!);
+        if (!session) return send(422);
+        const operation = sessionMatch[2];
+        if (request.method === "GET" && !operation) {
+          const list = [...session.resources];
+          const delayMs = options.sessionStatusDelayMs ?? 0;
+          if (delayMs > 0) {
+            setTimeout(() => send(200, list), delayMs).unref();
+            return;
+          }
+          // A held answer reflects the session as it is when released.
+          through("session-status", () =>
+            sessions.has(session.uuid)
+              ? send(200, [...session.resources])
+              : send(422),
+          );
+          return;
+        }
+        if (request.method === "DELETE" && !operation) {
+          send(200);
+          closeSession(session, true);
+          return;
+        }
+        if (request.method !== "PUT") return send(405);
+        const chunks: Buffer[] = [];
+        let size = 0;
+        request.on("data", (chunk: Buffer) => {
+          size += chunk.length;
+          if (size > 64 * 1024) {
+            send(400);
+            request.destroy();
+            return;
+          }
+          chunks.push(chunk);
+        });
+        request.on("end", () => {
+          let list: unknown;
+          try {
+            list = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+          } catch {
+            return send(400);
+          }
+          if (
+            !Array.isArray(list) ||
+            list.some((item) => typeof item !== "string")
+          )
+            return send(400);
+          const paths = list as string[];
+          if (operation === "remove") {
+            if (paths.some((path) => !session.resources.has(path)))
+              return send(404);
+            for (const path of paths) session.resources.delete(path);
+            return send(200);
+          }
+          for (const path of paths) {
+            if (options.refuseResources?.includes(path))
+              return send(options.refusalStatus ?? 403, {
+                path,
+                error: 403,
+              });
+            // 422 (no transmitter linked) is an existing resource; only an
+            // unknown path is refused, and refusal is all or nothing.
+            const known = resourceBody(path);
+            if (!known || known.status === 404)
+              return send(404, { path, error: "not found" });
+          }
+          const added = paths.filter((path) => !session.resources.has(path));
+          if (!operation) session.resources = new Set(paths);
+          else for (const path of paths) session.resources.add(path);
+          through("subscribe-reply", () => send(200));
+          if (options.closeAfterSubscribe) {
+            closeSession(session, true);
+            return;
+          }
+          const delayMs = options.initialNotificationDelayMs ?? 0;
+          if (delayMs > 0)
+            setTimeout(() => notify(session, added, true), delayMs).unref();
+          else notify(session, added, true);
+        });
+        return;
+      }
       if (options.scripted) script(channels, now());
 
       if (url === "/api/ssc/version")
@@ -279,65 +609,14 @@ export async function startEwdxSimulator(
       if (url === "/api/device/state")
         return send(200, { state: "Normal", warnings: [] });
 
-      const match =
-        /^\/api\/(channel|rf\/channels|transmitters)\/(\d+)(?:\/([A-Za-z]+))?$/.exec(
-          url,
-        );
-      const index = match ? Number(match[2]) : -1;
-      const channel = channels[index];
-      if (!match || !channel) return send(404);
-      if (fault === "server-error") return send(500);
-      if (fault === "wrong-shape") return send(200, "unexpected");
-      const [, family, , resource] = match;
-      if (family === "channel") {
-        if (resource === undefined)
-          return send(200, {
-            name: channel.name,
-            mute: false,
-            gain: 21,
-            outputLevel: 0,
-          });
-        if (resource === "warnings")
-          return send(200, [
-            ...(channel.linked ? [] : ["NoLink"]),
-            ...(channel.linked && channel.rssiDbm < -85 ? ["LowSignal"] : []),
-          ]);
-        if (resource === "signalStrengthIndicator")
-          return send(200, { value: channel.linked ? channel.rssiDbm : -104 });
-        if (resource === "signalQualityIndicator")
-          return send(200, { value: channel.linked ? channel.rsqiPercent : 0 });
-        if (resource === "level")
-          return send(200, {
-            value: channel.linked ? channel.levelDbfs : -138.5,
-          });
-        return send(404);
-      }
-      if (family === "rf/channels" && resource === undefined)
-        return send(200, {
-          frequency: channel.frequencyKhz,
-          presets: { type: "None" },
-        });
-      if (family === "transmitters") {
-        if (!channel.linked) return send(422);
-        if (resource === undefined)
-          return send(200, {
-            type: channel.transmitterType,
-            name: channel.name,
-            mute: channel.muted,
-            version: "0.0.0",
-          });
-        if (resource === "battery")
-          return send(200, {
-            type: "Battery",
-            lifetime: channel.lifetimeMinutes,
-            gauge: channel.batteryPercent,
-          });
-        if (resource === "warnings")
-          return send(200, channel.batteryPercent <= 10 ? ["LowBattery"] : []);
-      }
-      return send(404);
+      const resource = resourceBody(url);
+      if (!resource) return send(404);
+      return send(resource.status, resource.body);
     },
   );
+  server.on("secureConnection", (socket) => {
+    connectionIds.set(socket, ++connectionCount);
+  });
   server.on("connection", (socket: Socket) => {
     sockets.add(socket);
     socket.on("close", () => sockets.delete(socket));
@@ -356,6 +635,41 @@ export async function startEwdxSimulator(
     setLinked(index, linked) {
       const channel = channels[index];
       if (channel) channel.linked = linked;
+      notifyAll(channelPaths(index));
+    },
+    setChannel(index, patch) {
+      const channel = channels[index];
+      if (channel) Object.assign(channel, patch);
+      notifyAll(channelPaths(index));
+    },
+    get sessions() {
+      return sessions.size;
+    },
+    get peakSessions() {
+      return peakSessions;
+    },
+    hold(barrier) {
+      if (!barriers.get(barrier)) barriers.set(barrier, []);
+    },
+    release(barrier) {
+      const queue = barriers.get(barrier);
+      barriers.set(barrier, null);
+      for (const action of queue ?? []) action();
+    },
+    held(barrier) {
+      return barriers.get(barrier)?.length ?? 0;
+    },
+    get notificationsSent() {
+      return notificationsSent;
+    },
+    forgetSessions() {
+      sessions.clear();
+    },
+    injectEvent(raw) {
+      for (const session of sessions.values()) session.response.write(raw);
+    },
+    terminateSessions() {
+      for (const session of [...sessions.values()]) closeSession(session, true);
     },
     setHung(value) {
       hung = value;
@@ -384,6 +698,7 @@ export async function startEwdxSimulator(
       for (const socket of sockets) socket.destroy();
     },
     close() {
+      if (ticker) clearInterval(ticker);
       for (const socket of sockets) socket.destroy();
       return new Promise((resolve) => server.close(() => resolve()));
     },

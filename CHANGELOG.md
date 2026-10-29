@@ -24,6 +24,12 @@ externally tested release.
 
 ### Changed
 
+- Live: wireless receiver changes (RF level, link quality, battery, transmitter
+  mute and presence) now reach the screen within a fraction of a second
+  instead of after one to three seconds, for both Shure and Sennheiser EW-DX.
+  EW-DX receivers are now followed through an SSCv2 subscription rather than
+  polled; when a receiver cannot grant one, Pulse says so and falls back to a
+  slower read-only poll. Timing on physical receivers is not yet verified.
 - Live: each wireless channel card's battery cell now shows the charge
   percentage and remaining runtime (for example `63%` / `3h 05m`), so battery
   levels can be checked from the grid without opening a channel's history. A

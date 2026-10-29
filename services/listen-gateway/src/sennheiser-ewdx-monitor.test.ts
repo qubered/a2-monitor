@@ -18,6 +18,7 @@ const fast = {
   requestTimeoutMs: 300,
   initialBackoffMs: 50,
   maxBackoffMs: 200,
+  livenessMs: 150,
 };
 
 let simulator: EwdxSimulator | undefined;
@@ -71,7 +72,7 @@ async function start(
 }
 
 describe("EwdxReceiverMonitor against the synthetic EM 2 Dante", () => {
-  it("reports both channels of the simulated receiver with only GET requests", async () => {
+  it("reports both channels of the simulated receiver and writes only to its own subscription session", async () => {
     const receiver = await start();
     await waitFor(() =>
       receiver
@@ -95,9 +96,15 @@ describe("EwdxReceiverMonitor against the synthetic EM 2 Dante", () => {
       transmitter: { type: "EW_DX_SKM", name: "VOX 1" },
     });
     expect(state.channels[1]?.transmitter.name).toBe("VOX 2");
-    expect(new Set(simulator!.requests.map(({ method }) => method))).toEqual(
-      new Set(["GET"]),
-    );
+    for (const { method, path } of simulator!.requests.filter(
+      ({ method }) => method !== "GET",
+    ))
+      expect([method, path]).toEqual([
+        method,
+        expect.stringMatching(
+          /^\/api\/ssc\/state\/subscriptions\/[0-9a-f-]{36}$/,
+        ),
+      ]);
     expect(
       simulator!.requests.some(({ path }) =>
         /^\/api\/channel\/[2-9]/.test(path),
@@ -292,7 +299,8 @@ describe("EwdxReceiverMonitor against the synthetic EM 2 Dante", () => {
   );
 
   it("does not call the receiver current when it answers without usable telemetry", async () => {
-    const receiver = await start();
+    // The bounded GET sweep, as used when no subscription can be had.
+    const receiver = await start({ subscriptions: false });
     await waitFor(() => receiver.getState().status === "ready");
     simulator!.setFault("server-error");
     await waitFor(() => receiver.getState().status !== "ready");
@@ -301,7 +309,7 @@ describe("EwdxReceiverMonitor against the synthetic EM 2 Dante", () => {
   });
 
   it("treats well-formed JSON of the wrong shape as no telemetry", async () => {
-    const receiver = await start();
+    const receiver = await start({ subscriptions: false });
     await waitFor(() => receiver.getState().status === "ready");
     simulator!.setFault("wrong-shape");
     await waitFor(() => receiver.getState().status !== "ready");
@@ -333,6 +341,9 @@ describe("SennheiserFleetMonitor", () => {
     expect(fleet.getStates()).toHaveLength(1);
     fleet.reconcile([]);
     expect(fleet.getStates()).toEqual([]);
+    // Removal ends its own session; after that, nothing more is sent.
+    await waitFor(() => simulator!.sessions === 0);
+    await new Promise((resolve) => setTimeout(resolve, 50));
     const count = simulator.requests.length;
     await new Promise((resolve) => setTimeout(resolve, 300));
     expect(simulator.requests.length).toBe(count);

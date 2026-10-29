@@ -54,6 +54,12 @@ const SESSION_SOURCES_PATH =
 const MAX_LISTEN_SOURCES = 16;
 /** Channel trim bounds, as in the showfile. */
 const MAX_TRIM_DB = 24;
+/** Receiver-telemetry stream subscribers (the backend, plus headroom). */
+const MAX_RECEIVER_CLIENTS = 16;
+/** Most one receiver's change events per this many ms; the latest always goes out. */
+const RECEIVER_EVENT_MIN_MS = 25;
+/** A subscriber this far behind skips to the next full fleet document. */
+const MAX_RECEIVER_BUFFERED_BYTES = 1024 * 1024;
 
 export type ListenGatewayOptions = MediaWorkerOptions &
   WebHostOptions & {
@@ -65,6 +71,8 @@ export type ListenGatewayOptions = MediaWorkerOptions &
     ewdxSecretsFile?: string;
     /** Development only: the EW-DX simulator's HTTPS port instead of 443. */
     ewdxPort?: number;
+    /** How often /audio/v0/receivers/events repeats the full fleet document (default 1 s). */
+    receiverFleetIntervalMs?: number;
     interfaces?: () => NodeJS.Dict<NetworkInterfaceInfo[]>;
   };
 
@@ -225,6 +233,11 @@ export class ListenGateway {
   private readonly interfaces: () => NodeJS.Dict<NetworkInterfaceInfo[]>;
   private readonly meterClients = new Set<ServerResponse>();
   private readonly outputClients = new Set<ServerResponse>();
+  /** Receiver-telemetry subscribers; true while one needs a full fleet document. */
+  private readonly receiverClients = new Map<ServerResponse, boolean>();
+  private readonly receiverSentAt = new Map<string, number>();
+  private readonly receiverPending = new Map<string, NodeJS.Timeout>();
+  private readonly receiverFleetTimer: NodeJS.Timeout;
   readonly hostFeeds: HostOutputFeeds;
   private readonly waitForShowfile: boolean;
   private startMediaOnce: () => void = () => undefined;
@@ -326,8 +339,22 @@ export class ListenGateway {
           this.startMediaOnce();
         },
       });
+    this.shure.addChangeListener((id) => this.receiverChanged(id));
+    this.sennheiser.addChangeListener((id) => this.receiverChanged(id));
+    this.receiverFleetTimer = setInterval(
+      () => this.broadcastFleet(),
+      options.receiverFleetIntervalMs ?? 1_000,
+    );
+    this.receiverFleetTimer.unref();
     this.interfaces = options.interfaces ?? networkInterfaces;
     this.server = createServer((request, response) => {
+      if (
+        request.method === "GET" &&
+        request.url === "/audio/v0/receivers/events"
+      ) {
+        this.openReceiverStream(response);
+        return;
+      }
       if (request.method === "GET" && request.url === "/audio/v0/device") {
         sendJson(response, 200, this.media.getState());
         return;
@@ -653,8 +680,90 @@ export class ListenGateway {
     };
   }
 
+  private fleetDocument() {
+    return mergeFleetTelemetry(
+      this.shure.getState(),
+      this.sennheiser.getStates(),
+    );
+  }
+
+  /**
+   * Pushes normalized receiver telemetry as it changes: a full `fleet`
+   * document on connect and every second, and one `receiver` event per
+   * changed receiver in between. Never carries secrets: only the same
+   * normalized contract GET /audio/v0/shure serves.
+   */
+  private openReceiverStream(response: ServerResponse): void {
+    if (this.receiverClients.size >= MAX_RECEIVER_CLIENTS) {
+      sendJson(response, 503, { error: "receiver-stream-capacity" });
+      return;
+    }
+    response.writeHead(200, {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-store",
+      Connection: "keep-alive",
+    });
+    response.write(
+      `event: fleet\ndata: ${JSON.stringify(this.fleetDocument())}\n\n`,
+    );
+    this.receiverClients.set(response, false);
+    response.on("close", () => this.receiverClients.delete(response));
+  }
+
+  private broadcastFleet(): void {
+    if (this.receiverClients.size === 0) return;
+    const event = `event: fleet\ndata: ${JSON.stringify(this.fleetDocument())}\n\n`;
+    for (const [client] of this.receiverClients) {
+      if (client.writableLength > MAX_RECEIVER_BUFFERED_BYTES) continue;
+      client.write(event);
+      this.receiverClients.set(client, false);
+    }
+  }
+
+  /** Leading and trailing throttle per receiver: first change now, the latest within 25 ms. */
+  private receiverChanged(id: string): void {
+    if (this.receiverClients.size === 0 || this.receiverPending.has(id)) return;
+    const waitMs = Math.max(
+      0,
+      (this.receiverSentAt.get(id) ?? 0) + RECEIVER_EVENT_MIN_MS - Date.now(),
+    );
+    const timer = setTimeout(() => {
+      this.receiverPending.delete(id);
+      this.sendReceiver(id);
+    }, waitMs);
+    timer.unref();
+    this.receiverPending.set(id, timer);
+  }
+
+  private sendReceiver(id: string): void {
+    this.receiverSentAt.set(id, Date.now());
+    const state =
+      this.shure.getReceiverState(id) ?? this.sennheiser.getState(id);
+    if (!state) return;
+    const event = `event: receiver\ndata: ${JSON.stringify(state)}\n\n`;
+    for (const [client, needsFleet] of this.receiverClients) {
+      if (client.writableLength > MAX_RECEIVER_BUFFERED_BYTES) {
+        this.receiverClients.set(client, true);
+        continue;
+      }
+      // A subscriber that missed events gets the full document first.
+      if (needsFleet) {
+        client.write(
+          `event: fleet\ndata: ${JSON.stringify(this.fleetDocument())}\n\n`,
+        );
+        this.receiverClients.set(client, false);
+      }
+      client.write(event);
+    }
+  }
+
   async close(): Promise<void> {
     clearInterval(this.keepalive);
+    clearInterval(this.receiverFleetTimer);
+    for (const timer of this.receiverPending.values()) clearTimeout(timer);
+    this.receiverPending.clear();
+    for (const [client] of this.receiverClients) client.end();
+    this.receiverClients.clear();
     this.media.stop();
     this.shure.close();
     this.sennheiser.close();

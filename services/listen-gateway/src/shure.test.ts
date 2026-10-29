@@ -372,3 +372,62 @@ describe("ShureFleetMonitor against the development AD4Q simulator", () => {
     }
   });
 });
+
+describe("ShureFleetMonitor change notifications", () => {
+  it("reports a pushed REP change the moment it is applied", async () => {
+    const sockets = new Set<Socket>();
+    const server = createServer((socket: Socket) => {
+      sockets.add(socket);
+      socket.on("data", () => undefined);
+    });
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
+    const { port } = server.address() as AddressInfo;
+    const showfile: Showfile = {
+      schemaVersion: "0",
+      revision: 0,
+      updatedAtUtc: null,
+      show: { name: "Test" },
+      device: null,
+      shureReceivers: [
+        {
+          id: "r1",
+          name: "ULXD",
+          host: "127.0.0.1",
+          model: "ULXD4D",
+          channelCount: 2,
+        },
+      ],
+      channels: [],
+    };
+    const changes: string[] = [];
+    const monitor = new ShureFleetMonitor({
+      backendOrigin: "http://showfile.invalid/",
+      port,
+      fetch: (async () => Response.json(showfile)) as typeof fetch,
+    });
+    monitor.addChangeListener((id) => changes.push(id));
+    try {
+      monitor.start();
+      await vi.waitFor(() => expect(sockets.size).toBe(1));
+      const before = changes.length;
+      const t0 = performance.now();
+      for (const socket of sockets) socket.write("< REP 1 TX_MUTE_STATUS ON >");
+      await vi.waitFor(
+        () =>
+          expect(
+            monitor.getReceiverState("r1")?.channels[0]?.transmitter.muted,
+          ).toBe(true),
+        { interval: 1 },
+      );
+      expect(performance.now() - t0).toBeLessThan(50);
+      expect(changes.length).toBeGreaterThan(before);
+      expect(changes.at(-1)).toBe("r1");
+    } finally {
+      monitor.close();
+      for (const socket of sockets) socket.destroy();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
+});

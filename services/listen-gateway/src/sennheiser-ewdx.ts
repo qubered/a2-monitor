@@ -1,4 +1,9 @@
-import { Agent, request as httpRequest } from "node:http";
+import {
+  Agent,
+  request as httpRequest,
+  type ClientRequest,
+  type IncomingMessage,
+} from "node:http";
 import { isIP, type NetConnectOpts } from "node:net";
 import type { Duplex } from "node:stream";
 import { connect as tlsConnect } from "node:tls";
@@ -8,6 +13,7 @@ import {
   isTlsCertificatePin,
   SENNHEISER_MODEL_INFO,
 } from "@rvlt/pulse-protocol/sennheiser-models";
+import { SseParser } from "@rvlt/pulse-protocol/sse-parser";
 
 // Read-only Sennheiser EW-DX EM 2 Dante adapter over authenticated SSCv2.
 //
@@ -511,7 +517,35 @@ class PinnedTlsAgent extends Agent {
   }
 }
 
-type GetOptions = { auth: boolean; signal: AbortSignal };
+type GetOptions = {
+  auth: boolean;
+  signal: AbortSignal;
+  method?: "GET" | "PUT" | "DELETE";
+  body?: unknown;
+};
+
+/** The SSCv2 subscription collection (SSCv2 2.3, "SSCv2 subscriptions"). */
+const SUBSCRIPTIONS_PATH = "/api/ssc/state/subscriptions";
+/**
+ * A session path this adapter may write to: exactly the collection plus a
+ * server-generated id. Pulse builds these paths itself from a validated id
+ * and never follows a location the receiver supplies.
+ */
+const SESSION_PATH = /^\/api\/ssc\/state\/subscriptions\/([A-Za-z0-9-]{8,64})$/;
+/**
+ * Content-Location of a new subscription. SSCv2 2.3 specifies the session
+ * path; the EW-DX OpenAPI 1.7 example shows the bare session id. Either form
+ * is accepted only as an id that must equal the `open` event's, and Pulse
+ * builds every session path itself from it.
+ */
+const SESSION_LOCATION =
+  /^(?:\/api\/ssc\/state\/subscriptions\/)?([A-Za-z0-9-]{8,64})$/;
+
+export type EwdxStreamOpen = {
+  response: IncomingMessage;
+  request: ClientRequest;
+  sessionUuid: string;
+};
 
 class EwdxTransport {
   private readonly agent: PinnedTlsAgent;
@@ -558,24 +592,115 @@ class EwdxTransport {
    * it unless the same receiver answers.
    */
   async get(path: string, options: GetOptions): Promise<EwdxReading> {
+    const verified = await this.verifyConnection(options.signal, path);
+    if (verified) return verified;
+    return this.send(path, options);
+  }
+
+  /**
+   * Makes sure the next request goes out on a connection already shown to be
+   * the identified receiver. Returns a reading to hand back instead of
+   * sending (an error, or the identity answer itself), or null to proceed.
+   */
+  private async verifyConnection(
+    signal: AbortSignal,
+    path: string,
+  ): Promise<EwdxReading | null> {
     if (!this.hasIdleSocket()) {
       this.agent.allowOneConnection();
       const identity = await this.send("/api/device/identity", {
         auth: false,
-        signal: options.signal,
+        signal,
       });
       if ("error" in identity) return identity;
       if (!this.matches(identity)) return { error: "identity-changed" };
       if (path === "/api/device/identity") return identity;
       if (!this.hasIdleSocket()) return { error: "network" };
     }
-    return this.send(path, options);
+    return null;
+  }
+
+  /**
+   * Opens the SSCv2 subscription stream on this transport's own connection:
+   * identity first on that socket, then the authenticated subscription GET on
+   * the same socket. Nothing else is ever sent on it (SSCv2 2.3 forbids
+   * regular requests on the stream connection).
+   */
+  async openStream(signal: AbortSignal): Promise<EwdxStreamOpen | EwdxReading> {
+    const verified = await this.verifyConnection(signal, SUBSCRIPTIONS_PATH);
+    if (verified) return verified;
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (value: EwdxStreamOpen | EwdxReading) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      };
+      const request = httpRequest(
+        {
+          agent: this.agent,
+          host: this.host,
+          port: this.port,
+          path: SUBSCRIPTIONS_PATH,
+          method: "GET",
+          headers: {
+            accept: "text/event-stream",
+            authorization: this.authorization,
+          },
+        },
+        (response) => {
+          const status = response.statusCode ?? 0;
+          const type = String(response.headers["content-type"] ?? "");
+          const location = response.headers["content-location"];
+          const match =
+            typeof location === "string"
+              ? SESSION_LOCATION.exec(location)
+              : null;
+          if (status !== 200) {
+            request.destroy();
+            return finish({ status, body: null });
+          }
+          if (!/^text\/event-stream\b/i.test(type) || !match) {
+            request.destroy();
+            return finish({ error: "malformed" });
+          }
+          // The stream has no request timeout once open; session liveness is
+          // checked separately on the control connection.
+          response.socket?.setTimeout(0);
+          response.socket?.setKeepAlive(true, 5_000);
+          finish({ response, request, sessionUuid: match[1]! });
+        },
+      );
+      const timer = setTimeout(() => {
+        request.destroy();
+        finish({ error: "timeout" });
+      }, this.timeoutMs);
+      const onAbort = () => {
+        request.destroy();
+        finish({ error: "aborted" });
+      };
+      signal.addEventListener("abort", onAbort, { once: true });
+      if (signal.aborted) onAbort();
+      request.on("error", (error) =>
+        finish({
+          error: error instanceof CertificatePinError ? "tls-pin" : "network",
+        }),
+      );
+      request.end();
+    });
   }
 
   private send(
     path: string,
-    { auth, signal }: GetOptions,
+    { auth, signal, method = "GET", body }: GetOptions,
   ): Promise<EwdxReading> {
+    // Read-only adapter: the only writes are to its own SSCv2 subscription
+    // session, never device configuration.
+    if (method !== "GET" && !SESSION_PATH.test(path))
+      return Promise.resolve({ error: "aborted" });
+    const payload = body === undefined ? undefined : JSON.stringify(body);
     return new Promise((resolve) => {
       let done = false;
       const finish = (reading: EwdxReading) => {
@@ -591,11 +716,17 @@ class EwdxTransport {
           host: this.host,
           port: this.port,
           path,
-          method: "GET",
+          method,
           headers: {
             accept: "application/json",
             // Credentials only on resources the OpenAPI marks authenticated.
             ...(auth ? { authorization: this.authorization } : {}),
+            ...(payload === undefined
+              ? {}
+              : {
+                  "content-type": "application/json",
+                  "content-length": Buffer.byteLength(payload),
+                }),
           },
         },
         (response) => {
@@ -612,7 +743,11 @@ class EwdxTransport {
             chunks.push(chunk);
           });
           response.on("end", () => {
-            if (status !== 200) return finish({ status, body: null });
+            if (status !== 200 || chunks.length === 0)
+              return finish({
+                status,
+                body: status === 200 ? null : parseOrNull(chunks),
+              });
             try {
               finish({
                 status,
@@ -640,12 +775,20 @@ class EwdxTransport {
           error: error instanceof CertificatePinError ? "tls-pin" : "network",
         }),
       );
-      request.end();
+      request.end(payload);
     });
   }
 
   close(): void {
     this.agent.destroy();
+  }
+}
+
+function parseOrNull(chunks: Buffer[]): unknown {
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  } catch {
+    return null;
   }
 }
 
@@ -665,6 +808,14 @@ export type EwdxMonitorOptions = {
   requestTimeoutMs?: number;
   initialBackoffMs?: number;
   maxBackoffMs?: number;
+  /** How often an open subscription session is confirmed (default 5 s). */
+  livenessMs?: number;
+  /** How long without a confirmed session or poll before telemetry is stale (default 15 s). */
+  staleAfterMs?: number;
+  /** How long to wait before trying a subscription again after a refusal (default 30 s). */
+  streamRetryMs?: number;
+  /** Called whenever this receiver's published state changes. */
+  onChange?: () => void;
 };
 
 const CHANNEL_RESOURCES: ReadonlyArray<
@@ -705,9 +856,37 @@ function transportDetail(reading: EwdxReading): string {
   }
 }
 
-/** Polls one EW-DX EM 2 Dante with documented read-only GETs. */
+type ResourceKey = keyof EwdxChannelReadings;
+type StreamSession = {
+  generation: number;
+  transport: EwdxTransport;
+  open: EwdxStreamOpen;
+  /** Subscribed path -> the channel and reading it feeds. */
+  routes: Map<string, { index: number; key: ResourceKey }>;
+  /** This generation's latest reading of every subscribed resource. */
+  readings: Array<Partial<EwdxChannelReadings>>;
+  /** Whether this session has delivered any valid value. */
+  delivered: boolean;
+};
+
+const NOT_YET: EwdxReading = { error: "aborted" };
+
+function fullReadings(
+  partial: Partial<EwdxChannelReadings>,
+): EwdxChannelReadings {
+  const readings = {} as EwdxChannelReadings;
+  for (const [key] of CHANNEL_RESOURCES)
+    readings[key] = partial[key] ?? NOT_YET;
+  return readings;
+}
+
+/**
+ * Reads one EW-DX EM 2 Dante. Telemetry arrives over an SSCv2 subscription
+ * (SSE) on its own pinned, identity-checked connection; while a subscription
+ * cannot be had, a bounded read-only GET sweep every 2 s stands in for it.
+ */
 export class EwdxReceiverMonitor {
-  private state: ReceiverState;
+  private current: ReceiverState;
   private readonly abort = new AbortController();
   private transport?: EwdxTransport;
   private timer?: NodeJS.Timeout;
@@ -717,9 +896,21 @@ export class EwdxReceiverMonitor {
   private notice = "";
   private backoffMs: number;
   private lastSuccessMs: number | null = null;
+  private stream: StreamSession | null = null;
+  private generation = 0;
+  /** Why the last subscription attempt failed; null while one is live. */
+  private fallbackReason: string | null = null;
+  private nextStreamAttemptMs = 0;
+  private cycling = false;
+  private cycleAgain = false;
+  /** Sessions in a row that ended before delivering any value. */
+  private quickCloses = 0;
   private readonly pollMs: number;
   private readonly initialBackoffMs: number;
   private readonly maxBackoffMs: number;
+  private readonly livenessMs: number;
+  private readonly staleAfterMs: number;
+  private readonly streamRetryMs: number;
 
   constructor(
     readonly config: EwdxReceiverConfig,
@@ -728,8 +919,11 @@ export class EwdxReceiverMonitor {
     this.pollMs = options.pollMs ?? 2_000;
     this.initialBackoffMs = options.initialBackoffMs ?? 500;
     this.maxBackoffMs = options.maxBackoffMs ?? 30_000;
+    this.livenessMs = options.livenessMs ?? 5_000;
+    this.staleAfterMs = options.staleAfterMs ?? STALE_AFTER_MS;
+    this.streamRetryMs = options.streamRetryMs ?? 30_000;
     this.backoffMs = this.initialBackoffMs;
-    this.state = {
+    this.current = {
       id: config.id,
       vendor: "sennheiser",
       name: config.name,
@@ -744,6 +938,15 @@ export class EwdxReceiverMonitor {
         emptyEwdxChannel(index),
       ),
     };
+  }
+
+  private get state(): ReceiverState {
+    return this.current;
+  }
+
+  private set state(next: ReceiverState) {
+    this.current = next;
+    this.options.onChange?.();
   }
 
   start(): void {
@@ -766,35 +969,45 @@ export class EwdxReceiverMonitor {
             )
           : "The receiver's third-party password is not configured on this audio node.",
       );
-    this.transport = new EwdxTransport(
+    this.transport = this.newTransport();
+    this.schedule(0);
+  }
+
+  private newTransport(): EwdxTransport {
+    return new EwdxTransport(
       this.config.host,
       ewdxPortFor(this.config.host, this.options.port),
       this.config.tlsCertificateSha256,
-      this.options.password,
+      this.options.password!,
       this.options.requestTimeoutMs ?? 3_000,
     );
-    this.schedule(0);
   }
 
   getState(): ReceiverState {
     if (
-      this.state.status === "ready" &&
+      this.current.status === "ready" &&
       this.lastSuccessMs !== null &&
-      Date.now() - this.lastSuccessMs > STALE_AFTER_MS
+      Date.now() - this.lastSuccessMs > this.staleAfterMs
     )
-      this.markStale("EW-DX telemetry has not updated for 15 seconds.");
-    return structuredClone(this.state);
+      this.markStale(
+        `EW-DX telemetry has not been confirmed for ${Math.round(this.staleAfterMs / 1000)} seconds.`,
+      );
+    return structuredClone(this.current);
   }
 
   close(): void {
+    if (this.closed) return;
     this.closed = true;
     if (this.timer) clearTimeout(this.timer);
     this.abort.abort();
-    this.transport?.close();
+    const control = this.transport;
+    // End our own session explicitly, then drop every connection.
+    void this.endStream(true).finally(() => control?.close());
   }
 
   private schedule(delayMs: number): void {
     if (this.closed) return;
+    if (this.timer) clearTimeout(this.timer);
     this.timer = setTimeout(() => void this.cycle(), delayMs);
     this.timer.unref();
   }
@@ -806,12 +1019,12 @@ export class EwdxReceiverMonitor {
 
   private markStale(detail: string): void {
     this.state = {
-      ...this.state,
-      status: this.state.channels.some(({ observedAtUtc }) => observedAtUtc)
+      ...this.current,
+      status: this.current.channels.some(({ observedAtUtc }) => observedAtUtc)
         ? "stale"
         : "connecting",
       detail,
-      channels: this.state.channels.map((channel) => ({
+      channels: this.current.channels.map((channel) => ({
         ...channel,
         availability: channel.observedAtUtc === null ? "unavailable" : "stale",
       })),
@@ -819,8 +1032,32 @@ export class EwdxReceiverMonitor {
   }
 
   private async cycle(): Promise<void> {
+    // One cycle at a time: a stream event can schedule another while this one
+    // is still waiting on the receiver; that one runs after this finishes.
+    if (this.cycling) {
+      this.cycleAgain = true;
+      return;
+    }
+    this.cycling = true;
     try {
       if (!this.identified) await this.identify();
+      if (this.stream) {
+        await this.confirmStream();
+        if (this.closed) return;
+        // A session found gone has already scheduled its own reopen.
+        if (this.stream) {
+          if (this.stream.delivered) this.backoffMs = this.initialBackoffMs;
+          this.schedule(this.livenessMs);
+        }
+        return;
+      }
+      if (Date.now() >= this.nextStreamAttemptMs && (await this.openStream())) {
+        if (this.closed) return;
+        // Back-off is reset only once a session delivers values; a stream
+        // that already ended has scheduled its own reconnect.
+        if (this.stream) this.schedule(this.livenessMs);
+        return;
+      }
       await this.poll();
       if (this.closed) return;
       this.backoffMs = this.initialBackoffMs;
@@ -831,23 +1068,34 @@ export class EwdxReceiverMonitor {
         error instanceof PollFailure
           ? error
           : new PollFailure("transport", "The receiver could not be read.");
+      await this.endStream(false);
       this.identified = false;
       if (failure.kind === "reidentify") {
-        // A new connection answered as a different receiver: discard this
-        // poll and identify it before anything it reports is published.
+        // A new connection answered as a different receiver: discard what
+        // this attempt read and identify it before anything is published.
         this.markStale(failure.detail);
         this.schedule(0);
         return;
       }
       if (failure.kind === "transport") this.markStale(failure.detail);
       else
-        this.state = { ...this.state, status: "error", detail: failure.detail };
+        this.state = {
+          ...this.current,
+          status: "error",
+          detail: failure.detail,
+        };
       // Credential and identity failures will not fix themselves quickly;
       // retry at the ceiling so a wrong password cannot hammer the receiver.
       const delay =
         failure.kind === "transport" ? this.backoffMs : this.maxBackoffMs;
       this.backoffMs = Math.min(this.backoffMs * 2, this.maxBackoffMs);
       this.schedule(delay);
+    } finally {
+      this.cycling = false;
+      if (this.cycleAgain && !this.closed) {
+        this.cycleAgain = false;
+        this.schedule(0);
+      }
     }
   }
 
@@ -891,8 +1139,8 @@ export class EwdxReceiverMonitor {
     if (this.serial !== null && result.serial !== this.serial) {
       this.notice = ` A different receiver (serial ${result.serial ?? "unknown"}) replaced serial ${this.serial} at this address; earlier telemetry was discarded.`;
       this.state = {
-        ...this.state,
-        channels: this.state.channels.map(({ index }) =>
+        ...this.current,
+        channels: this.current.channels.map(({ index }) =>
           emptyEwdxChannel(index),
         ),
       };
@@ -905,14 +1153,337 @@ export class EwdxReceiverMonitor {
         serial: result.serial,
       };
     this.state = {
-      ...this.state,
+      ...this.current,
       model: result.product,
       firmware: result.firmware,
     };
   }
 
+  // ---- Subscription stream ------------------------------------------------
+
+  private subscriptionDetail(): string {
+    return `Read-only SSCv2 subscription is live.${this.notice}`.slice(0, 240);
+  }
+
+  private fallBack(reason: string): false {
+    this.fallbackReason = reason;
+    this.nextStreamAttemptMs = Date.now() + this.streamRetryMs;
+    return false;
+  }
+
+  /** Opens and subscribes one SSCv2 session; false means use the bounded poll. */
+  private async openStream(): Promise<boolean> {
+    const expected = this.transport?.expected ?? null;
+    if (!expected) return this.fallBack("the receiver is not identified");
+    const transport = this.newTransport();
+    transport.expected = expected;
+    const opened = await transport.openStream(this.abort.signal);
+    if (!("response" in opened)) {
+      transport.close();
+      if ("error" in opened) {
+        if (opened.error === "identity-changed")
+          throw new PollFailure(
+            "reidentify",
+            "A reconnect reached a different receiver identity; rechecking it before trusting its telemetry.",
+          );
+        if (opened.error === "malformed")
+          return this.fallBack(
+            "the receiver's subscription answer was not a valid SSCv2 stream",
+          );
+        if (opened.error !== "aborted")
+          throw new PollFailure(
+            opened.error === "tls-pin" ? "identity" : "transport",
+            transportDetail(opened),
+          );
+        return false;
+      }
+      if (opened.status === 401 || opened.status === 403)
+        return this.fallBack("the receiver refused a subscription session");
+      return this.fallBack(
+        `the receiver did not grant a subscription session (HTTP ${opened.status})`,
+      );
+    }
+    const generation = ++this.generation;
+    const session: StreamSession = {
+      generation,
+      transport,
+      open: opened,
+      routes: new Map(),
+      readings: this.current.channels.map(() => ({})),
+      delivered: false,
+    };
+    for (let index = 0; index < this.config.channelCount; index += 1)
+      for (const [key, path] of CHANNEL_RESOURCES)
+        session.routes.set(path(index), { index, key });
+    const parser = new SseParser();
+    let opening: ((ok: boolean) => void) | null = null;
+    const opened$ = new Promise<boolean>((resolve) => (opening = resolve));
+    const openTimer = setTimeout(
+      () => opening?.(false),
+      this.options.requestTimeoutMs ?? 3_000,
+    );
+    const end = () => {
+      opening?.(false);
+      if (this.stream?.generation === generation) this.streamEnded();
+    };
+    opened.response.on("data", (chunk: Buffer) => {
+      if (this.stream && this.stream.generation !== generation && !opening)
+        return;
+      let events;
+      try {
+        events = parser.push(chunk);
+      } catch {
+        opened.request.destroy();
+        return end();
+      }
+      for (const event of events) {
+        if (opening) {
+          // The first event must be `open`, naming exactly this session.
+          const data = parseJson(event.data);
+          const ok =
+            event.event === "open" &&
+            isRecord(data) &&
+            data.sessionUUID === opened.sessionUuid &&
+            data.path === `${SUBSCRIPTIONS_PATH}/${opened.sessionUuid}`;
+          const resolve = opening;
+          opening = null;
+          resolve(ok);
+          if (!ok) return;
+          continue;
+        }
+        if (event.event === "close") return end();
+        if (event.event === "message")
+          this.applyNotification(session, event.data);
+      }
+    });
+    opened.response.on("end", end);
+    opened.response.on("error", end);
+    opened.request.on("error", end);
+
+    const ok = await opened$;
+    clearTimeout(openTimer);
+    if (!ok || this.closed) {
+      opened.request.destroy();
+      transport.close();
+      return this.fallBack(
+        "the receiver's subscription stream did not open as SSCv2 specifies",
+      );
+    }
+    // Never hold two sessions: end any earlier one before keeping this one.
+    if (this.stream) await this.endStream(true);
+    this.stream = session;
+    const paths = [...session.routes.keys()];
+    const put = await this.control(
+      `${SUBSCRIPTIONS_PATH}/${opened.sessionUuid}`,
+      "PUT",
+      paths,
+    );
+    if (this.stream?.generation !== generation) {
+      // The stream ended while the list was being set; its own reconnect is
+      // already scheduled. Nothing is claimed live.
+      return true;
+    }
+    if (!("status" in put) || put.status !== 200) {
+      await this.endStream(true);
+      if (
+        "status" in put &&
+        (put.status === 400 || put.status === 403 || put.status === 404)
+      ) {
+        const refused =
+          isRecord(put.body) &&
+          typeof put.body.path === "string" &&
+          session.routes.has(put.body.path)
+            ? ` ${put.body.path}`
+            : "";
+        return this.fallBack(
+          `the receiver refused to subscribe a resource${refused}`,
+        );
+      }
+      if ("error" in put)
+        throw new PollFailure("transport", transportDetail(put));
+      return this.fallBack(
+        `the receiver refused the subscription list (HTTP ${put.status})`,
+      );
+    }
+    this.fallbackReason = null;
+    this.lastSuccessMs = Date.now();
+    this.state = {
+      ...this.current,
+      status: this.current.channels.some(
+        ({ availability }) => availability === "observed",
+      )
+        ? "ready"
+        : this.current.status,
+      detail: this.subscriptionDetail(),
+    };
+    return true;
+  }
+
+  private async control(
+    path: string,
+    method: "GET" | "PUT" | "DELETE",
+    body?: unknown,
+    signal: AbortSignal = this.abort.signal,
+  ): Promise<EwdxReading> {
+    if (!this.transport) return { error: "aborted" };
+    return this.transport.get(path, { auth: true, signal, method, body });
+  }
+
+  /** Applies one URI-keyed SSCv2 notification to this generation's readings. */
+  private applyNotification(session: StreamSession, data: string): void {
+    if (this.closed || this.stream?.generation !== session.generation) return;
+    const parsed = parseJson(data);
+    if (!isRecord(parsed)) return;
+    const delivered = new Map<number, Partial<EwdxChannelReadings>>();
+    for (const [path, value] of Object.entries(parsed)) {
+      const route = session.routes.get(path);
+      if (!route) continue;
+      // A notification equals a GET of that resource (SSCv2 2.3).
+      const reading: EwdxReading = { status: 200, body: value };
+      session.readings[route.index]![route.key] = reading;
+      const fresh = delivered.get(route.index) ?? {};
+      fresh[route.key] = reading;
+      delivered.set(route.index, fresh);
+    }
+    if (!delivered.size) return;
+    const nowUtc = new Date().toISOString();
+    const channels = [...this.current.channels];
+    let observed = false;
+    for (const [index, fresh] of delivered) {
+      const previous = channels[index] ?? emptyEwdxChannel(index);
+      const next = normalizeEwdxChannel(
+        previous,
+        fullReadings(session.readings[index]!),
+        nowUtc,
+      );
+      // Only a notification that itself carries a valid value is a new
+      // observation. Invalid values still clear their field, but they never
+      // re-date the channel from cached readings.
+      const carriesValue =
+        normalizeEwdxChannel(
+          emptyEwdxChannel(index),
+          fullReadings(fresh),
+          nowUtc,
+        ).availability === "observed";
+      if (carriesValue) observed = true;
+      channels[index] = carriesValue
+        ? next
+        : {
+            ...next,
+            observedAtUtc: previous.observedAtUtc,
+            availability: previous.availability,
+          };
+    }
+    if (observed) {
+      this.lastSuccessMs = Date.now();
+      if (!session.delivered) {
+        session.delivered = true;
+        this.quickCloses = 0;
+        this.backoffMs = this.initialBackoffMs;
+      }
+    }
+    this.state = {
+      ...this.current,
+      status: channels.some(({ availability }) => availability === "observed")
+        ? "ready"
+        : this.current.status,
+      detail: this.subscriptionDetail(),
+      channels,
+    };
+  }
+
+  /** Confirms the session still exists: transport liveness, not fresh values. */
+  private async confirmStream(): Promise<void> {
+    const session = this.stream!;
+    const status = await this.control(
+      `${SUBSCRIPTIONS_PATH}/${session.open.sessionUuid}`,
+      "GET",
+    );
+    if (this.stream?.generation !== session.generation) return;
+    if ("error" in status) {
+      if (status.error === "identity-changed")
+        throw new PollFailure(
+          "reidentify",
+          "A reconnect reached a different receiver identity; rechecking it before trusting its telemetry.",
+        );
+      throw new PollFailure("transport", transportDetail(status));
+    }
+    if (status.status === 401 || status.status === 403)
+      throw new PollFailure(
+        "auth",
+        authFailure(status) ?? "The receiver refused the request.",
+      );
+    if (status.status !== 200) {
+      // The session is gone (e.g. 422): its values are stale from now on and
+      // a new session is opened, as when the stream itself ends.
+      this.streamEnded();
+      return;
+    }
+    this.lastSuccessMs = Date.now();
+    // Liveness keeps a live session current; it never makes retained values
+    // from an earlier session current again. Only this session's own
+    // notifications do that.
+    if (this.current.status !== "ready" && this.anyObservedNow())
+      this.state = {
+        ...this.current,
+        status: "ready",
+        detail: this.subscriptionDetail(),
+      };
+  }
+
+  private anyObservedNow(): boolean {
+    return this.current.channels.some(
+      ({ availability }) => availability === "observed",
+    );
+  }
+
+  /** The stream ended under us: values become stale until a new session is up. */
+  private streamEnded(): void {
+    const session = this.stream;
+    this.stream = null;
+    if (session) {
+      session.open.request.destroy();
+      session.transport.close();
+    }
+    if (this.closed) return;
+    if (session && !session.delivered) {
+      this.quickCloses += 1;
+      // A receiver that accepts and then drops every session gets the
+      // bounded poll for a while instead of a reconnect storm.
+      if (this.quickCloses >= 3) {
+        this.quickCloses = 0;
+        this.fallBack("the receiver keeps closing new subscription sessions");
+      }
+    }
+    this.markStale(
+      "The SSCv2 subscription stream ended; reconnecting. Retained telemetry is stale.",
+    );
+    this.schedule(Math.min(this.backoffMs, this.maxBackoffMs));
+    this.backoffMs = Math.min(this.backoffMs * 2, this.maxBackoffMs);
+  }
+
+  /** Ends our session (DELETE when asked, bounded) and drops its connection. */
+  private async endStream(deleteSession: boolean): Promise<void> {
+    const session = this.stream;
+    if (!session) return;
+    this.stream = null;
+    if (deleteSession && this.transport)
+      await this.transport.get(
+        `${SUBSCRIPTIONS_PATH}/${session.open.sessionUuid}`,
+        {
+          auth: true,
+          method: "DELETE",
+          signal: AbortSignal.timeout(1_000),
+        },
+      );
+    session.open.request.destroy();
+    session.transport.close();
+  }
+
+  // ---- Bounded fallback ---------------------------------------------------
+
   private async poll(): Promise<void> {
-    const channels = [...this.state.channels];
+    const channels = [...this.current.channels];
     for (let index = 0; index < this.config.channelCount; index += 1) {
       const readings = {} as EwdxChannelReadings;
       for (const [key, path] of CHANNEL_RESOURCES) {
@@ -950,14 +1521,22 @@ export class EwdxReceiverMonitor {
       );
     this.lastSuccessMs = Date.now();
     this.state = {
-      ...this.state,
+      ...this.current,
       status: "ready",
-      detail: `Read-only SSCv2 telemetry is current.${this.notice}`.slice(
-        0,
-        240,
-      ),
+      detail: (this.fallbackReason
+        ? `Read-only SSCv2 telemetry is current by polling, ${Math.round(this.pollMs / 1000)} s between sweeps (degraded: ${this.fallbackReason}).${this.notice}`
+        : `Read-only SSCv2 telemetry is current.${this.notice}`
+      ).slice(0, 240),
       channels,
     };
+  }
+}
+
+function parseJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
   }
 }
 
@@ -979,9 +1558,21 @@ export class SennheiserFleetMonitor {
   /** The secret each monitor was started with, so a changed secret restarts it. */
   private readonly secrets = new Map<string, string | null>();
   private readonly storeErrors = new Map<string, string | null>();
+  private readonly listeners = new Set<(receiverId: string) => void>();
   private closed = false;
 
   constructor(private readonly options: SennheiserFleetOptions) {}
+
+  /** Calls back with a receiver's id whenever its normalized state changes. */
+  addChangeListener(listener: (receiverId: string) => void): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  /** One receiver's normalized state, or undefined when it is not configured. */
+  getState(id: string): ReceiverState | undefined {
+    return this.monitors.get(id)?.getState();
+  }
 
   reconcile(configs: readonly EwdxReceiverConfig[]): void {
     if (this.closed) return;
@@ -1011,6 +1602,10 @@ export class SennheiserFleetMonitor {
         ...rest,
         password: secret,
         secretsError: storeError,
+        onChange: () => {
+          rest.onChange?.();
+          for (const listener of this.listeners) listener(config.id);
+        },
       });
       this.monitors.set(config.id, monitor);
       this.secrets.set(config.id, secret);

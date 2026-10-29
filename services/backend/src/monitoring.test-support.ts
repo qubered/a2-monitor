@@ -155,9 +155,21 @@ export class FakeNodeSource implements NodeSource {
     return this.observation;
   }
 
+  private readonly listeners = new Set<() => void>();
+
   start(): void {}
 
   stop(): void {}
+
+  onTelemetry(listener: () => void): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  /** Announces new receiver telemetry, as the node's push stream does. */
+  telemetryChanged(): void {
+    for (const listener of this.listeners) listener();
+  }
 
   observe(
     nowMs: number,
