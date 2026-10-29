@@ -451,18 +451,19 @@ export function applyChannelProperty(
 
 class ReceiverMonitor {
   private socket?: Socket;
+  private current!: ReceiverState;
   private reconnectTimer?: NodeJS.Timeout;
   private staleTimer?: NodeJS.Timeout;
   private telemetryRefreshTimer?: NodeJS.Timeout;
   private closed = false;
   private reconnectDelayMs = 500;
-  private state: ReceiverState;
   private readonly capabilities: ShureCapabilityProfile;
   private readonly commands: FamilyCommands | null;
 
   constructor(
     readonly config: ReceiverConfig,
     private readonly port = SHURE_CONTROL_PORT,
+    private readonly onChange: () => void = () => undefined,
   ) {
     this.capabilities = capabilitiesFor(config);
     this.commands = commandsFor(config);
@@ -493,6 +494,16 @@ class ReceiverMonitor {
       return;
     }
     this.connect();
+  }
+
+  /** Every state change is announced, so the gateway can push it at once. */
+  private get state(): ReceiverState {
+    return this.current;
+  }
+
+  private set state(next: ReceiverState) {
+    this.current = next;
+    this.onChange();
   }
 
   getState(): ReceiverState {
@@ -710,6 +721,7 @@ class ReceiverMonitor {
 
 export class ShureFleetMonitor {
   private readonly monitors = new Map<string, ReceiverMonitor>();
+  private readonly listeners = new Set<(receiverId: string) => void>();
   private readonly fetcher: typeof fetch;
   private refreshTimer?: NodeJS.Timeout;
   private closed = false;
@@ -727,6 +739,17 @@ export class ShureFleetMonitor {
       CONFIG_REFRESH_MS,
     );
     this.refreshTimer.unref();
+  }
+
+  /** Calls back with a receiver's id whenever its normalized state changes. */
+  addChangeListener(listener: (receiverId: string) => void): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  /** One receiver's normalized state, or undefined when it is not configured. */
+  getReceiverState(id: string): ReceiverState | undefined {
+    return this.monitors.get(id)?.getState();
   }
 
   getState(): ShureTelemetry {
@@ -795,7 +818,9 @@ export class ShureFleetMonitor {
       if (current && JSON.stringify(current.config) === JSON.stringify(config))
         continue;
       current?.close();
-      const monitor = new ReceiverMonitor(config, this.options.port);
+      const monitor = new ReceiverMonitor(config, this.options.port, () => {
+        for (const listener of this.listeners) listener(config.id);
+      });
       this.monitors.set(config.id, monitor);
       monitor.start();
     }

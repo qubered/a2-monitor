@@ -65,9 +65,20 @@ node.
 
 Unavailable on EW-DX and published as unknown: battery bars and cycle count,
 per-antenna diversity (the 0..2 `diversityIndicator` has no documented
-meaning) and interference classification. The adapter polls with GETs; it
-does not open SSE subscriptions, so it never holds one of the receiver's
-limited subscription sessions.
+meaning) and interference classification.
+
+Telemetry arrives over one SSCv2 subscription (SSE) per receiver, on its own
+pinned connection whose first request is the unauthenticated identity check.
+Pulse subscribes the nine resources above per channel with
+`PUT /api/ssc/state/subscriptions/{sessionUUID}`, applies only the subscribed
+URI-keyed notifications, and confirms the session every 5 s with a GET of the
+same path (transport liveness only; values keep the time of their last real
+notification). Close deletes the session. If a session cannot be opened or a
+resource is refused, a read-only GET sweep with 2 s between sweeps stands in,
+labelled degraded, and the subscription is retried every 30 s. The adapter
+holds exactly one session per receiver; the receiver's session limit, any
+notification interval and coexistence with other clients are not documented
+and remain hardware gates.
 
 Hardware acceptance gates still open: that `EWDX2CHDS` is the EM 2 Dante's
 product code (inferred from the documented list, not stated in it), real

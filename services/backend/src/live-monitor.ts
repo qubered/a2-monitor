@@ -57,6 +57,8 @@ import {
 } from "./sessions.js";
 
 const DEFAULT_TICK_MS = 1_000;
+/** New receiver telemetry is published at most this often (real time). */
+const TELEMETRY_PUBLISH_MIN_MS = 50;
 const SHOWFILE_REFRESH_MS = 5_000;
 const PERSIST_DEBOUNCE_MS = 1_000;
 
@@ -115,6 +117,11 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
   private timer: NodeJS.Timeout | undefined;
   private persistTimer: NodeJS.Timeout | undefined;
   private queue: Promise<void> = Promise.resolve();
+  /** A queued pass that has not started yet. */
+  private waiting: Promise<void> | null = null;
+  private telemetryTimer: NodeJS.Timeout | undefined;
+  private lastTelemetryEvaluationMs = 0;
+  private unsubscribeTelemetry: (() => void) | undefined;
   private busy = false;
   private started: Promise<void> | null = null;
 
@@ -158,6 +165,9 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
       } catch (error) {
         this.onError(error);
       }
+      this.unsubscribeTelemetry = this.nodeSource.onTelemetry?.(() =>
+        this.telemetryArrived(),
+      );
       this.nodeSource.start();
       await this.tick();
       this.timer = setInterval(() => {
@@ -168,9 +178,34 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
     return this.started;
   }
 
+  /**
+   * Re-evaluates soon after receiver telemetry changes instead of waiting for
+   * the next tick: at once when the last telemetry pass is older than 50 ms,
+   * otherwise once at the 50 ms mark with whatever arrived meanwhile.
+   */
+  private telemetryArrived(): void {
+    if (this.telemetryTimer) return;
+    const waitMs = Math.max(
+      0,
+      this.lastTelemetryEvaluationMs +
+        TELEMETRY_PUBLISH_MIN_MS -
+        performance.now(),
+    );
+    this.telemetryTimer = setTimeout(() => {
+      this.telemetryTimer = undefined;
+      this.lastTelemetryEvaluationMs = performance.now();
+      void this.tick();
+    }, waitMs);
+    this.telemetryTimer.unref?.();
+  }
+
   async stop(): Promise<void> {
     if (this.timer) clearInterval(this.timer);
     this.timer = undefined;
+    if (this.telemetryTimer) clearTimeout(this.telemetryTimer);
+    this.telemetryTimer = undefined;
+    this.unsubscribeTelemetry?.();
+    this.unsubscribeTelemetry = undefined;
     this.nodeSource.stop();
     if (this.persistTimer) {
       clearTimeout(this.persistTimer);
@@ -380,10 +415,20 @@ export class LiveMonitor extends EventEmitter<{ state: [PublishedState] }> {
     return this.current();
   }
 
-  /** Queues one evaluation pass after any pass already running; exposed for deterministic tests. */
+  /**
+   * Queues one evaluation pass after any pass already running; exposed for
+   * deterministic tests. Requests made while a pass is already waiting share
+   * it: that pass has not started, so it will see whatever they changed.
+   */
   tick(): Promise<void> {
-    this.queue = this.queue.then(() => this.evaluateOnce());
-    return this.queue;
+    if (this.waiting) return this.waiting;
+    const pass = this.queue.then(() => {
+      this.waiting = null;
+      return this.evaluateOnce();
+    });
+    this.waiting = pass;
+    this.queue = pass;
+    return pass;
   }
 
   private async evaluateOnce(): Promise<void> {
