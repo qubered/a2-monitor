@@ -122,7 +122,9 @@ export function ReceiversTab({
   }, []);
 
   const refreshStatus = useRef(onRefreshStatus);
-  refreshStatus.current = onRefreshStatus;
+  useEffect(() => {
+    refreshStatus.current = onRefreshStatus;
+  });
   useEffect(() => {
     const timer = setInterval(
       () => refreshStatus.current?.(),

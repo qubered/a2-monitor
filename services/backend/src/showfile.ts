@@ -320,10 +320,8 @@ function migrateSennheiserReceivers(value: unknown): Record<string, unknown> {
   return {
     sennheiserReceivers: value.map((receiver) => {
       if (typeof receiver !== "object" || receiver === null) return receiver;
-      const { tlsCertificateSha256: _pin, ...rest } = receiver as Record<
-        string,
-        unknown
-      >;
+      const rest = { ...(receiver as Record<string, unknown>) };
+      delete rest.tlsCertificateSha256;
       return rest;
     }),
   };
