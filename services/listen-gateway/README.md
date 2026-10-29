@@ -112,12 +112,15 @@ unavailable.
 Sennheiser EW-DX EM 2 Dante receivers in the showfile's `sennheiserReceivers`
 are read over HTTPS on port 443 (SSCv2, Basic auth as user `api`) through one
 SSCv2 subscription stream per receiver, with a bounded read-only GET sweep as
-a labelled fallback. Each connection is trusted only if the receiver's certificate
-matches the SHA-256 pin from Manager, and every new connection is identified
-(product and serial) before any telemetry is read. Their normalized state is
-published in the same fleet contract with `vendor: "sennheiser"`. Their
-third-party passwords live only on this node, in a file named by
-`A2_EWDX_SECRETS_FILE` that must not be readable by other users (mode 0600):
+a labelled fallback. Receivers present a self-signed certificate, which is
+trusted as presented; every new connection is identified (product and serial)
+without credentials before the password is sent or any telemetry is read. Their
+normalized state is published in the same fleet contract with
+`vendor: "sennheiser"`. Third-party passwords are entered per receiver in
+Manager. The backend stores them in `receiver-secrets.json` in its data
+directory (mode 0600, write-only: no route returns a password), and this node
+reads that file, found through `A2_DATA_DIR` or named explicitly by
+`A2_EWDX_SECRETS_FILE`:
 
 ```json
 { "schemaVersion": "0", "receivers": { "<receiver id>": { "password": "…" } } }

@@ -360,6 +360,11 @@ export function App() {
                   showfile={showfile}
                   shure={shure}
                   onChange={update}
+                  onRefreshStatus={() =>
+                    void loadShureTelemetry()
+                      .then(setShure)
+                      .catch(() => undefined)
+                  }
                 />
               </TabsContent>
               <TabsContent value="channels">

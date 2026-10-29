@@ -63,6 +63,7 @@ function summarizeProduction(id: string, showfile: StoredShowfile) {
 
 describe("Manager showfile editor", () => {
   let showfiles: Record<string, StoredShowfile>;
+  let passwords: Set<string>;
   let activeId: string;
   let nextId: number;
 
@@ -127,6 +128,20 @@ describe("Manager showfile editor", () => {
             },
           ],
         });
+      }
+      if (path === "/api/v1/receivers/passwords") {
+        return Response.json({ configured: [...passwords] });
+      }
+      const passwordMatch = /^\/api\/v1\/receivers\/([^/]+)\/password$/.exec(
+        path,
+      );
+      if (passwordMatch && method === "PUT") {
+        passwords.add(decodeURIComponent(passwordMatch[1]!));
+        return new Response(null, { status: 204 });
+      }
+      if (passwordMatch && method === "DELETE") {
+        passwords.delete(decodeURIComponent(passwordMatch[1]!));
+        return new Response(null, { status: 204 });
       }
       if (path === "/api/v1/showfile" && method === "PUT") {
         const body = JSON.parse(String(init?.body)) as StoredShowfile;
@@ -200,6 +215,7 @@ describe("Manager showfile editor", () => {
   beforeEach(() => {
     window.localStorage.clear();
     showfiles = { p1: { ...storedShowfile, shureReceivers: [] } };
+    passwords = new Set();
     deviceReady = true;
     activeId = "p1";
     nextId = 2;
@@ -271,22 +287,59 @@ describe("Manager showfile editor", () => {
     expect(String(saveCall?.[1]?.body)).toContain('"model":"ANX4"');
   });
 
-  it("adds an EW-DX EM 2 Dante with a pinned certificate and binds a channel to its second channel", async () => {
+  it("switches a receiver to an EW-DX in the same table, sets its password, and binds a channel to its second channel", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(await screen.findByRole("tab", { name: /receivers/i }));
+    await user.click(screen.getByRole("button", { name: "Add receiver" }));
+    // One table for every vendor: there is no separate EW-DX box.
+    expect(screen.queryByText("Sennheiser EW-DX receivers")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Add EW-DX EM 2 Dante" }),
+    ).toBeNull();
+    expect(screen.queryByText(/certificate/i)).toBeNull();
+
     await user.click(
-      screen.getByRole("button", { name: "Add EW-DX EM 2 Dante" }),
+      await screen.findByRole("combobox", { name: "Receiver 1 model" }),
     );
-    expect(screen.getByText("Sennheiser EW-DX EM 2 Dante")).toBeTruthy();
-    const pin = screen.getByLabelText("EW-DX receiver 1 certificate SHA-256");
-    // Pasted the way openssl prints it: upper-case pairs with colons.
-    await user.type(pin, Array.from({ length: 32 }, () => "AB").join(":"));
-    expect((pin as HTMLInputElement).value).toBe("ab".repeat(32));
-    const host = screen.getByLabelText("EW-DX receiver 1 control IP");
+    await user.click(
+      await screen.findByRole("option", {
+        name: "Sennheiser EW-DX EM 2 Dante",
+      }),
+    );
+    expect(screen.getByText("2 channels")).toBeTruthy();
+    const host = screen.getByLabelText("Receiver 1 control IP");
     await user.clear(host);
     await user.type(host, "192.168.1.140");
+
+    // No Set button: the password is just a field that saves on Enter.
+    expect(
+      screen.queryByRole("button", { name: /set .*password/i }),
+    ).toBeNull();
+    const password = await screen.findByLabelText("Receiver 1 password");
+    expect((password as HTMLInputElement).type).toBe("password");
+    expect((password as HTMLInputElement).placeholder).toBe(
+      "3rd party password",
+    );
+    await user.click(screen.getByRole("button", { name: "Show password" }));
+    expect((password as HTMLInputElement).type).toBe("text");
+    await user.type(password, "hunter2");
+    // Toggling visibility is not leaving the field, so nothing saved yet.
+    expect(passwords.size).toBe(0);
+    await user.type(password, "{Enter}");
+    expect(await screen.findByText("Password saved.")).toBeTruthy();
+    expect((password as HTMLInputElement).placeholder).toBe("Password set");
+    // The password is gone from the page once saved.
+    expect(screen.queryByDisplayValue("hunter2")).toBeNull();
+    const passwordCall = fetchMock.mock.calls.find(
+      ([path, init]) =>
+        /\/api\/v1\/receivers\/.+\/password$/.test(String(path)) &&
+        init?.method === "PUT",
+    );
+    expect(JSON.parse(String(passwordCall?.[1]?.body))).toEqual({
+      password: "hunter2",
+    });
 
     await user.click(screen.getByRole("tab", { name: /channels/i }));
     await user.click(
@@ -295,7 +348,7 @@ describe("Manager showfile editor", () => {
       }),
     );
     await user.click(
-      await screen.findByRole("option", { name: "EW-DX 1 · channel 2" }),
+      await screen.findByRole("option", { name: "Receiver 1 · channel 2" }),
     );
 
     await user.click(screen.getByRole("button", { name: "Save showfile" }));
@@ -304,55 +357,56 @@ describe("Manager showfile editor", () => {
         String(path) === "/api/v1/showfile" && init?.method === "PUT",
     );
     const saved = JSON.parse(String(saveCall?.[1]?.body)) as {
+      shureReceivers: unknown[];
       sennheiserReceivers: Array<Record<string, unknown>>;
       channels: Array<Record<string, unknown>>;
     };
+    expect(saved.shureReceivers).toEqual([]);
     expect(saved.sennheiserReceivers).toEqual([
       {
         id: expect.any(String),
-        name: "EW-DX 1",
+        name: "Receiver 1",
         host: "192.168.1.140",
         model: "EW-DX EM 2 Dante",
         channelCount: 2,
-        tlsCertificateSha256: "ab".repeat(32),
       },
     ]);
     expect(saved.channels[1]).toMatchObject({
       shureReceiverId: saved.sennheiserReceivers[0]!.id,
       shureChannelIndex: 1,
     });
-    expect(String(saveCall?.[1]?.body)).not.toMatch(/password/i);
+    // The password reaches the password store, never the showfile.
+    expect(String(saveCall?.[1]?.body)).not.toMatch(/password|hunter2/i);
   });
 
-  it.each([
-    ["an overlong fingerprint", "ab".repeat(33), "ab".repeat(33), false],
-    ["a non-hex digit", `${"ab".repeat(31)}az`, `${"ab".repeat(31)}az`, false],
-    [
-      "spaces and a line break",
-      `${"AB ".repeat(16)}\n${"ab".repeat(16)}`,
-      "ab".repeat(32),
-      true,
-    ],
-  ])(
-    "keeps %s exactly as entered and says whether it is a valid pin",
-    async (_label, typed, kept, valid) => {
-      const user = userEvent.setup();
-      render(<App />);
-      await user.click(await screen.findByRole("tab", { name: /receivers/i }));
-      await user.click(
-        screen.getByRole("button", { name: "Add EW-DX EM 2 Dante" }),
-      );
-      const pin = screen.getByLabelText("EW-DX receiver 1 certificate SHA-256");
-      await user.type(pin, typed);
-      expect((pin as HTMLInputElement).value).toBe(kept);
-      expect(pin.getAttribute("aria-invalid")).toBe(String(!valid));
-      const message = screen.queryByText(
-        "Leave empty, or enter exactly 64 hex digits (SHA-256).",
-      );
-      if (valid) expect(message).toBeNull();
-      else expect(message).not.toBeNull();
-    },
-  );
+  it("removes a receiver's stored password", async () => {
+    showfiles.p1 = {
+      ...storedShowfile,
+      shureReceivers: [],
+      sennheiserReceivers: [
+        {
+          id: "ewdx-a",
+          name: "EW-DX rack",
+          host: "192.0.2.200",
+          model: "EW-DX EM 2 Dante",
+          channelCount: 2,
+        },
+      ],
+    } as StoredShowfile;
+    passwords.add("ewdx-a");
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /receivers/i }));
+    expect(
+      (await screen.findByLabelText("Receiver 1 password")) as HTMLInputElement,
+    ).toBeTruthy();
+    await user.click(
+      screen.getByRole("button", { name: "Remove receiver 1 password" }),
+    );
+    expect(await screen.findByText("Password removed.")).toBeTruthy();
+    expect(passwords.has("ewdx-a")).toBe(false);
+  });
 
   it("shows an EW-DX receiver's observed status and stops adding receivers at 64", async () => {
     showfiles.p1 = {
@@ -371,7 +425,6 @@ describe("Manager showfile editor", () => {
           host: "192.0.2.200",
           model: "EW-DX EM 2 Dante",
           channelCount: 2,
-          tlsCertificateSha256: "ab".repeat(32),
         },
       ],
     } as StoredShowfile;
@@ -393,7 +446,7 @@ describe("Manager showfile editor", () => {
               compatibility: "compatible-read-only",
               status: "error",
               detail:
-                "The receiver's third-party password is not configured on this audio node.",
+                "No third-party password is set for this receiver. Set it in Manager.",
               capabilities: {
                 antennaDiversity: false,
                 linkQuality: true,
@@ -414,7 +467,7 @@ describe("Manager showfile editor", () => {
     await user.click(await screen.findByRole("tab", { name: /receivers/i }));
     expect(
       await screen.findByText(
-        "The receiver's third-party password is not configured on this audio node.",
+        "No third-party password is set for this receiver. Set it in Manager.",
       ),
     ).toBeTruthy();
     expect(screen.getByText(/error · model unknown/)).toBeTruthy();
@@ -422,13 +475,6 @@ describe("Manager showfile editor", () => {
       (
         screen.getByRole("button", {
           name: "Add receiver",
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(true);
-    expect(
-      (
-        screen.getByRole("button", {
-          name: "Add EW-DX EM 2 Dante",
         }) as HTMLButtonElement
       ).disabled,
     ).toBe(true);

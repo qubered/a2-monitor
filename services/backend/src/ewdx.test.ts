@@ -10,14 +10,12 @@ import {
 } from "./monitoring.test-support.js";
 import { buildServer } from "./server.js";
 
-const PIN = "0123456789abcdef".repeat(4);
 const EWDX = {
   id: "ewdx-a",
   name: "EW-DX rack",
   host: "192.0.2.40",
   model: "EW-DX EM 2 Dante" as const,
   channelCount: 2 as const,
-  tlsCertificateSha256: PIN,
 };
 
 const servers = new Set<ReturnType<typeof buildServer>>();
@@ -98,28 +96,12 @@ describe("showfile persistence of EW-DX receivers", () => {
       }),
     ],
     [
-      "an upper-case certificate pin",
+      "a stored certificate pin",
       (initial: Showfile) => ({
         ...inventory(initial),
         sennheiserReceivers: [
-          { ...EWDX, tlsCertificateSha256: PIN.toUpperCase() },
+          { ...EWDX, tlsCertificateSha256: "ab".repeat(32) },
         ],
-      }),
-    ],
-    [
-      "a non-hex certificate pin",
-      (initial: Showfile) => ({
-        ...inventory(initial),
-        sennheiserReceivers: [
-          { ...EWDX, tlsCertificateSha256: "z".repeat(64) },
-        ],
-      }),
-    ],
-    [
-      "a short certificate pin",
-      (initial: Showfile) => ({
-        ...inventory(initial),
-        sennheiserReceivers: [{ ...EWDX, tlsCertificateSha256: "not-a-pin" }],
       }),
     ],
     [
@@ -382,5 +364,70 @@ describe("production summary", () => {
       await server.inject({ method: "GET", url: "/api/v1/productions" })
     ).json();
     expect(list.productions[0]).toMatchObject({ receiverCount: 2 });
+  });
+});
+
+describe("receiver passwords", () => {
+  async function server() {
+    const built = buildServer();
+    servers.add(built);
+    return built;
+  }
+
+  it("stores a password without ever returning it", async () => {
+    const built = await server();
+    const set = await built.inject({
+      method: "PUT",
+      url: "/api/v1/receivers/ewdx-a/password",
+      payload: { password: "hunter2-secret" },
+    });
+    expect(set.statusCode).toBe(204);
+    expect(set.body).toBe("");
+    const listed = await built.inject({
+      method: "GET",
+      url: "/api/v1/receivers/passwords",
+    });
+    expect(listed.json()).toEqual({ configured: ["ewdx-a"] });
+    expect(listed.body).not.toContain("hunter2");
+    expect(listed.headers["cache-control"]).toBe("no-store");
+    const showfile = await built.inject({
+      method: "GET",
+      url: "/api/v1/showfile",
+    });
+    expect(showfile.body).not.toContain("hunter2");
+  });
+
+  it("clears a password", async () => {
+    const built = await server();
+    await built.inject({
+      method: "PUT",
+      url: "/api/v1/receivers/ewdx-a/password",
+      payload: { password: "pw" },
+    });
+    const cleared = await built.inject({
+      method: "DELETE",
+      url: "/api/v1/receivers/ewdx-a/password",
+    });
+    expect(cleared.statusCode).toBe(204);
+    const listed = await built.inject({
+      method: "GET",
+      url: "/api/v1/receivers/passwords",
+    });
+    expect(listed.json()).toEqual({ configured: [] });
+  });
+
+  it.each([
+    ["an empty password", { password: "" }],
+    ["an overlong password", { password: "x".repeat(257) }],
+    ["extra fields", { password: "pw", note: "x" }],
+    ["no password", {}],
+  ])("rejects %s", async (_label, payload) => {
+    const built = await server();
+    const response = await built.inject({
+      method: "PUT",
+      url: "/api/v1/receivers/ewdx-a/password",
+      payload,
+    });
+    expect(response.statusCode).toBe(400);
   });
 });

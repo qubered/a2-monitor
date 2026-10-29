@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { parseOutputChannels } from "./media-worker.js";
@@ -46,7 +47,13 @@ const gateway = new ListenGateway({
   webRoot: process.env.A2_LIVE_DIR,
   managerRoot: process.env.A2_MANAGER_DIR,
   backendOrigin: process.env.A2_BACKEND_ORIGIN,
-  ewdxSecretsFile: process.env.A2_EWDX_SECRETS_FILE,
+  // The backend writes receiver passwords (set in Manager) to its data
+  // directory; an explicit file overrides that.
+  ewdxSecretsFile:
+    process.env.A2_EWDX_SECRETS_FILE ??
+    (process.env.A2_DATA_DIR
+      ? join(process.env.A2_DATA_DIR, "receiver-secrets.json")
+      : undefined),
   ewdxPort,
 });
 

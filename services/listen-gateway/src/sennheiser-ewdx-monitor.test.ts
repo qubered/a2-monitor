@@ -38,7 +38,6 @@ function config(overrides: Record<string, unknown> = {}) {
     host: "127.0.0.1",
     model: "EW-DX EM 2 Dante" as const,
     channelCount: 2 as const,
-    tlsCertificateSha256: certificate.fingerprint256,
     ...overrides,
   };
 }
@@ -112,15 +111,8 @@ describe("EwdxReceiverMonitor against the synthetic EM 2 Dante", () => {
     ).toBe(false);
   });
 
-  it("never sends credentials to a certificate other than the pinned one", async () => {
-    const receiver = await start({}, { tlsCertificateSha256: "0".repeat(64) });
-    await waitFor(() => receiver.getState().status === "error");
-    expect(receiver.getState().detail).toMatch(/certificate.*pinned/i);
-    expect(simulator!.requests).toEqual([]);
-  });
-
-  it("connects without verification when no certificate pin is configured", async () => {
-    const receiver = await start({}, { tlsCertificateSha256: "" });
+  it("trusts the receiver's self-signed certificate", async () => {
+    const receiver = await start();
     await waitFor(() => receiver.getState().status === "ready");
     expect(simulator!.requests.length).toBeGreaterThan(0);
   });
@@ -142,7 +134,9 @@ describe("EwdxReceiverMonitor against the synthetic EM 2 Dante", () => {
   it("does not connect at all without a stored password", async () => {
     const receiver = await start({}, {}, null);
     expect(receiver.getState()).toMatchObject({ status: "error" });
-    expect(receiver.getState().detail).toMatch(/password.*not.*configured/i);
+    expect(receiver.getState().detail).toMatch(
+      /no third-party password is set/i,
+    );
     await new Promise((resolve) => setTimeout(resolve, 150));
     expect(simulator!.requests).toEqual([]);
   });

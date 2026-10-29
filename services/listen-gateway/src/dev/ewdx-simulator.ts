@@ -718,6 +718,7 @@ export function prepareSimulatorState(
   directory: string,
   receiverId: string,
   password: string,
+  secretsFile = path.join(directory, "ewdx-secrets.json"),
 ): SimulatorCertificate {
   mkdirSync(directory, { recursive: true, mode: 0o700 });
   const keyPath = path.join(directory, "simulator-key.pem");
@@ -737,11 +738,23 @@ export function prepareSimulatorState(
     writeFileSync(keyPath, certificate.key, { mode: 0o600 });
     writeFileSync(certPath, certificate.cert, { mode: 0o600 });
   }
+  // Merge into any existing file so passwords set in Manager for other
+  // receivers survive a restart of the simulator.
+  let receivers: Record<string, unknown> = {};
+  try {
+    const existing = JSON.parse(readFileSync(secretsFile, "utf8")) as {
+      receivers?: Record<string, unknown>;
+    };
+    if (existing.receivers && typeof existing.receivers === "object")
+      receivers = existing.receivers;
+  } catch {
+    // No usable file yet: start a fresh one.
+  }
   writeFileSync(
-    path.join(directory, "ewdx-secrets.json"),
+    secretsFile,
     JSON.stringify({
       schemaVersion: "0",
-      receivers: { [receiverId]: { password } },
+      receivers: { ...receivers, [receiverId]: { password } },
     }),
     { mode: 0o600 },
   );
@@ -762,6 +775,7 @@ if (isEntryPoint) {
         stateDirectory,
         process.env.EWDX_SIM_RECEIVER_ID ?? "sim-ewdx",
         password,
+        process.env.EWDX_SIM_SECRETS_FILE,
       )
     : undefined;
   if (process.argv.includes("--prepare")) process.exit(0);

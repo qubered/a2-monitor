@@ -1,5 +1,4 @@
 import { spawn, spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
@@ -23,13 +22,16 @@ const dataDir = process.env.A2_DATA_DIR ?? resolve(repoRoot, "data/simulated");
 // simulated data, which git ignores.
 const ewdxStateDir = resolve(dataDir, "ewdx-simulator");
 const EWDX_SIM_PORT = "8443";
+// The file the backend writes receiver passwords to (set in Manager) and the
+// gateway reads; the simulator seeds its synthetic password into it.
+const ewdxSecretsFile = resolve(dataDir, "receiver-secrets.json");
 const backendEnv = simulate ? { A2_DATA_DIR: dataDir } : {};
 const gatewayEnv = simulate
   ? {
       A2_AUDIO_DEVICE: process.env.A2_AUDIO_DEVICE ?? SIMULATED_DEVICE,
       A2_OUTPUT_DEVICE: process.env.A2_OUTPUT_DEVICE ?? SIMULATED_OUTPUT,
       A2_BACKEND_ORIGIN: process.env.A2_BACKEND_ORIGIN ?? BACKEND,
-      A2_EWDX_SECRETS_FILE: resolve(ewdxStateDir, "ewdx-secrets.json"),
+      A2_EWDX_SECRETS_FILE: ewdxSecretsFile,
       A2_EWDX_PORT: EWDX_SIM_PORT,
     }
   : { A2_BACKEND_ORIGIN: process.env.A2_BACKEND_ORIGIN ?? BACKEND };
@@ -87,7 +89,12 @@ if (simulate) {
     {
       cwd: resolve(repoRoot, "services/listen-gateway"),
       stdio: "inherit",
-      env: { ...process.env, EWDX_SIM_STATE_DIR: ewdxStateDir },
+      env: {
+        ...process.env,
+        EWDX_SIM_STATE_DIR: ewdxStateDir,
+        EWDX_SIM_SECRETS_FILE: ewdxSecretsFile,
+        EWDX_SIM_SECRETS_FILE: ewdxSecretsFile,
+      },
     },
   );
   if (prepare.status !== 0) process.exit(prepare.status ?? 1);
@@ -109,6 +116,7 @@ if (simulate) {
   children.push(
     startInGateway("node dist/dev/ewdx-simulator.js", {
       EWDX_SIM_STATE_DIR: ewdxStateDir,
+      EWDX_SIM_SECRETS_FILE: ewdxSecretsFile,
       EWDX_SIM_PORT,
     }),
   );
@@ -210,10 +218,6 @@ function demoShowfile(revision) {
         host: "127.0.0.1",
         model: "EW-DX EM 2 Dante",
         channelCount: 2,
-        tlsCertificateSha256: readFileSync(
-          resolve(ewdxStateDir, "fingerprint.txt"),
-          "utf8",
-        ).trim(),
       },
     ],
     rooms: [

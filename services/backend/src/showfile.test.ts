@@ -12,6 +12,24 @@ describe("showfile migration", () => {
     channels: [],
   };
 
+  it("drops the retired EW-DX certificate pin from a saved show", () => {
+    const receiver = {
+      id: "ewdx-a",
+      name: "EW-DX rack",
+      host: "192.0.2.40",
+      model: "EW-DX EM 2 Dante",
+      channelCount: 2,
+    };
+    const migrated = migrateShowfile({
+      ...base,
+      sennheiserReceivers: [
+        { ...receiver, tlsCertificateSha256: "ab".repeat(32) },
+      ],
+    });
+    expect(migrated).toMatchObject({ sennheiserReceivers: [receiver] });
+    expect(validateShowfile(migrated)).toBe(true);
+  });
+
   it("turns one saved host output channel list into one feed", () => {
     const migrated = migrateShowfile({
       ...base,

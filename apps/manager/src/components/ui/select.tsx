@@ -5,6 +5,22 @@ import { cn } from "../../lib/utils";
 
 const Select = SelectPrimitive.Root;
 const SelectValue = SelectPrimitive.Value;
+const SelectGroup = SelectPrimitive.Group;
+
+function SelectLabel({
+  className,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Label>) {
+  return (
+    <SelectPrimitive.Label
+      className={cn(
+        "px-3 pb-1 pt-2 text-badge font-bold uppercase tracking-wide text-muted-foreground",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
 function SelectTrigger({
   className,
@@ -80,4 +96,12 @@ function SelectItem({
   );
 }
 
-export { Select, SelectValue, SelectTrigger, SelectContent, SelectItem };
+export {
+  Select,
+  SelectValue,
+  SelectGroup,
+  SelectLabel,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+};

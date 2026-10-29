@@ -88,6 +88,48 @@ export async function loadHostOutput(
   return parseHostOutput(await response.json());
 }
 
+/**
+ * Receiver passwords are write-only: the backend says which receivers have
+ * one and stores or clears it, and never returns the password itself.
+ */
+export async function loadReceiverPasswords(
+  signal?: AbortSignal,
+): Promise<string[]> {
+  const response = await fetch("/api/v1/receivers/passwords", { signal });
+  if (!response.ok) throw new Error("Receiver passwords could not be checked.");
+  const body = (await response.json()) as unknown;
+  if (
+    !isRecord(body) ||
+    !Array.isArray(body.configured) ||
+    !body.configured.every((id) => typeof id === "string")
+  )
+    throw new Error("Receiver passwords could not be checked.");
+  return body.configured as string[];
+}
+
+export async function setReceiverPassword(
+  receiverId: string,
+  password: string,
+): Promise<void> {
+  const response = await fetch(
+    `/api/v1/receivers/${encodeURIComponent(receiverId)}/password`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    },
+  );
+  if (!response.ok) throw new Error("The password could not be saved.");
+}
+
+export async function clearReceiverPassword(receiverId: string): Promise<void> {
+  const response = await fetch(
+    `/api/v1/receivers/${encodeURIComponent(receiverId)}/password`,
+    { method: "DELETE" },
+  );
+  if (!response.ok) throw new Error("The password could not be removed.");
+}
+
 export async function saveShowfile(showfile: Showfile): Promise<Showfile> {
   const response = await fetch("/api/v1/showfile", {
     method: "PUT",
