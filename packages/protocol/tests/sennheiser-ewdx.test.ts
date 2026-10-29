@@ -11,7 +11,6 @@ import {
   SENNHEISER_RECEIVER_MODELS,
 } from "../receivers/sennheiser-models";
 
-
 function showfileWith(receiver: Record<string, unknown>): unknown {
   return {
     schemaVersion: "0",

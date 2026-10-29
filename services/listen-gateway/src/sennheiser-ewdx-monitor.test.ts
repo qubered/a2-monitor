@@ -134,7 +134,9 @@ describe("EwdxReceiverMonitor against the synthetic EM 2 Dante", () => {
   it("does not connect at all without a stored password", async () => {
     const receiver = await start({}, {}, null);
     expect(receiver.getState()).toMatchObject({ status: "error" });
-    expect(receiver.getState().detail).toMatch(/no third-party password is set/i);
+    expect(receiver.getState().detail).toMatch(
+      /no third-party password is set/i,
+    );
     await new Promise((resolve) => setTimeout(resolve, 150));
     expect(simulator!.requests).toEqual([]);
   });
