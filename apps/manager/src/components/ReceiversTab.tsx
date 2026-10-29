@@ -452,9 +452,10 @@ export function ReceiversTab({
 }
 
 /**
- * Sets, replaces or removes one receiver's third-party password. The password
- * goes straight to the backend and is never held after saving; the badge only
- * says whether one exists, not what it is.
+ * One receiver's third-party password: a plain field that saves when you press
+ * Enter or leave it. The password goes straight to the backend and is never
+ * held after saving; the field can't show what is stored, so its placeholder
+ * says only whether one exists.
  */
 function PasswordControl({
   position,
@@ -467,68 +468,46 @@ function PasswordControl({
   isSet: boolean | null;
   onChanged: (isSet: boolean) => void;
 }) {
-  const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<{
+    text: string;
+    failed: boolean;
+  } | null>(null);
 
-  function close() {
-    setEditing(false);
-    setValue("");
-    setVisible(false);
-    setError(null);
-  }
-
-  async function run(work: () => Promise<void>, isSetAfter: boolean) {
+  async function run(
+    work: () => Promise<void>,
+    isSetAfter: boolean,
+    done: string,
+  ) {
     setBusy(true);
-    setError(null);
+    setMessage(null);
     try {
       await work();
+      setValue("");
+      setVisible(false);
       onChanged(isSetAfter);
-      close();
+      setMessage({ text: done, failed: false });
     } catch (failure) {
-      setError(
-        failure instanceof Error ? failure.message : "The change failed.",
-      );
+      setMessage({
+        text: failure instanceof Error ? failure.message : "The change failed.",
+        failed: true,
+      });
     } finally {
       setBusy(false);
     }
   }
 
-  if (!editing) {
-    return (
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={isSet ? "ok" : isSet === false ? "warn" : "neutral"}>
-          {isSet ? "Password set" : isSet === false ? "No password" : "Unknown"}
-        </Badge>
-        <Button
-          variant={isSet ? "outline" : "default"}
-          size="sm"
-          aria-label={`${isSet ? "Change" : "Set"} receiver ${position} password`}
-          onClick={() => setEditing(true)}
-        >
-          {isSet ? "Change" : "Set password"}
-        </Button>
-      </div>
-    );
+  function save() {
+    if (value.length > 0 && !busy)
+      void run(() => setReceiverPassword(id, value), true, "Password saved.");
   }
 
   return (
-    <form
-      className="flex flex-col gap-2"
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (value.length > 0 && !busy)
-          void run(() => setReceiverPassword(id, value), true);
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") close();
-      }}
-    >
+    <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
         <Input
-          autoFocus
           aria-label={`Receiver ${position} password`}
           type={visible ? "text" : "password"}
           autoComplete="new-password"
@@ -536,9 +515,27 @@ function PasswordControl({
           autoCorrect="off"
           spellCheck={false}
           maxLength={256}
-          placeholder={isSet ? "New password" : "3rd party password"}
+          disabled={busy}
+          placeholder={isSet ? "Password set" : "3rd party password"}
           value={value}
-          onChange={(event) => setValue(event.target.value)}
+          aria-invalid={message?.failed ? true : undefined}
+          onChange={(event) => {
+            setValue(event.target.value);
+            setMessage(null);
+          }}
+          onBlur={(event) => {
+            // Moving to the show/hide toggle is not leaving the field.
+            if (
+              !event.currentTarget.parentElement?.contains(event.relatedTarget)
+            )
+              save();
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              save();
+            }
+          }}
         />
         <Button
           type="button"
@@ -546,35 +543,42 @@ function PasswordControl({
           size="icon"
           aria-label={visible ? "Hide password" : "Show password"}
           aria-pressed={visible}
+          // Keep focus in the field so toggling never counts as leaving it.
+          onMouseDown={(event) => event.preventDefault()}
           onClick={() => setVisible((shown) => !shown)}
         >
           {visible ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
         </Button>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button type="submit" size="sm" disabled={busy || value.length === 0}>
-          {busy ? "Saving…" : "Save"}
-        </Button>
-        <Button type="button" variant="outline" size="sm" onClick={close}>
-          Cancel
-        </Button>
-        {isSet ? (
+      <div className="flex min-h-6 flex-wrap items-center gap-2 text-caption">
+        <span
+          role={message?.failed ? "alert" : "status"}
+          className={message?.failed ? "text-out" : "text-muted-foreground"}
+        >
+          {busy
+            ? "Saving…"
+            : (message?.text ??
+              (isSet === false ? "No password yet. Press Enter to save." : ""))}
+        </span>
+        {isSet && value.length === 0 ? (
           <Button
             type="button"
-            variant="destructive"
+            variant="ghost"
             size="sm"
             disabled={busy}
-            onClick={() => void run(() => clearReceiverPassword(id), false)}
+            aria-label={`Remove receiver ${position} password`}
+            onClick={() =>
+              void run(
+                () => clearReceiverPassword(id),
+                false,
+                "Password removed.",
+              )
+            }
           >
-            Remove password
+            Remove
           </Button>
         ) : null}
       </div>
-      {error ? (
-        <p role="alert" className="text-caption text-out">
-          {error}
-        </p>
-      ) : null}
-    </form>
+    </div>
   );
 }

@@ -313,17 +313,23 @@ describe("Manager showfile editor", () => {
     await user.clear(host);
     await user.type(host, "192.168.1.140");
 
-    expect(await screen.findByText("No password")).toBeTruthy();
-    await user.click(
-      screen.getByRole("button", { name: "Set receiver 1 password" }),
-    );
-    const password = screen.getByLabelText("Receiver 1 password");
+    // No Set button: the password is just a field that saves on Enter.
+    expect(
+      screen.queryByRole("button", { name: /set .*password/i }),
+    ).toBeNull();
+    const password = await screen.findByLabelText("Receiver 1 password");
     expect((password as HTMLInputElement).type).toBe("password");
+    expect((password as HTMLInputElement).placeholder).toBe(
+      "3rd party password",
+    );
     await user.click(screen.getByRole("button", { name: "Show password" }));
     expect((password as HTMLInputElement).type).toBe("text");
     await user.type(password, "hunter2");
-    await user.click(screen.getByRole("button", { name: "Save" }));
-    expect(await screen.findByText("Password set")).toBeTruthy();
+    // Toggling visibility is not leaving the field, so nothing saved yet.
+    expect(passwords.size).toBe(0);
+    await user.type(password, "{Enter}");
+    expect(await screen.findByText("Password saved.")).toBeTruthy();
+    expect((password as HTMLInputElement).placeholder).toBe("Password set");
     // The password is gone from the page once saved.
     expect(screen.queryByDisplayValue("hunter2")).toBeNull();
     const passwordCall = fetchMock.mock.calls.find(
@@ -373,7 +379,7 @@ describe("Manager showfile editor", () => {
     expect(String(saveCall?.[1]?.body)).not.toMatch(/password|hunter2/i);
   });
 
-  it("removes a receiver's password after confirming it is set", async () => {
+  it("removes a receiver's stored password", async () => {
     showfiles.p1 = {
       ...storedShowfile,
       shureReceivers: [],
@@ -392,12 +398,13 @@ describe("Manager showfile editor", () => {
     render(<App />);
 
     await user.click(await screen.findByRole("tab", { name: /receivers/i }));
-    expect(await screen.findByText("Password set")).toBeTruthy();
+    expect(
+      (await screen.findByLabelText("Receiver 1 password")) as HTMLInputElement,
+    ).toBeTruthy();
     await user.click(
-      screen.getByRole("button", { name: "Change receiver 1 password" }),
+      screen.getByRole("button", { name: "Remove receiver 1 password" }),
     );
-    await user.click(screen.getByRole("button", { name: "Remove password" }));
-    expect(await screen.findByText("No password")).toBeTruthy();
+    expect(await screen.findByText("Password removed.")).toBeTruthy();
     expect(passwords.has("ewdx-a")).toBe(false);
   });
 

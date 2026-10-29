@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.c4688a722801c1b2",
-  "sourceSha256": "c4688a722801c1b2fb82c1345830f4a5812e07f88e8d515b667b46b98c0cc53f",
+  "buildId": "a2-0.0.0+sha256.c1eeb819079e16d6",
+  "sourceSha256": "c1eeb819079e16d65a516f3d9c38272d16f81d41424a7476b3db73bf33eb0729",
   "inputCount": 501,
   "inputs": [
     {
@@ -337,7 +337,7 @@
     },
     {
       "path": "apps/manager/src/App.test.tsx",
-      "sha256": "8075059fcf423243b445beb47a2832cf8680b5794bcc529daef3ad4c34af6740"
+      "sha256": "49d5f045afd52af36b0d1cd6ca5ffb0bb3adb6a18799c44e2c73c36dc16b6312"
     },
     {
       "path": "apps/manager/src/App.tsx",
@@ -365,7 +365,7 @@
     },
     {
       "path": "apps/manager/src/components/ReceiversTab.tsx",
-      "sha256": "57299682a00345f2ebc7f5e2b2e9c5a96fcae4a58fda1e779e731d39de68607d"
+      "sha256": "2c4146e9ca98547b04e91f6e8d7433fb11d88dd767c2c15e18566e27c331b759"
     },
     {
       "path": "apps/manager/src/components/RoomsTab.tsx",
