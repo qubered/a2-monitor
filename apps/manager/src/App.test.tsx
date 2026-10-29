@@ -347,7 +347,7 @@ describe("Manager showfile editor", () => {
       expect((pin as HTMLInputElement).value).toBe(kept);
       expect(pin.getAttribute("aria-invalid")).toBe(String(!valid));
       const message = screen.queryByText(
-        "Needs exactly 64 hex digits (SHA-256).",
+        "Leave empty, or enter exactly 64 hex digits (SHA-256).",
       );
       if (valid) expect(message).toBeNull();
       else expect(message).not.toBeNull();

@@ -20,7 +20,7 @@ import type {
   Showfile,
 } from "@rvlt/pulse-protocol/http";
 import { diffLiveState } from "@rvlt/pulse-protocol/live-state-delta";
-import { isTlsCertificatePin } from "@rvlt/pulse-protocol/sennheiser-models";
+import { isOptionalTlsCertificatePin } from "@rvlt/pulse-protocol/sennheiser-models";
 import {
   createStrictAjv2020,
   stringifyValidatedJson,
@@ -732,7 +732,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
         ) ||
         sennheiserReceivers.some(
           ({ tlsCertificateSha256 }) =>
-            !isTlsCertificatePin(tlsCertificateSha256),
+            !isOptionalTlsCertificatePin(tlsCertificateSha256),
         ) ||
         candidate.channels.some(({ shureReceiverId, shureChannelIndex }) => {
           if (shureReceiverId == null && shureChannelIndex == null)

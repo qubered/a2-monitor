@@ -52,6 +52,11 @@ export function isTlsCertificatePin(value: string): boolean {
   return /^[0-9a-f]{64}$/.test(value);
 }
 
+/** A pin is optional: empty means the receiver's self-signed certificate is trusted unverified. */
+export function isOptionalTlsCertificatePin(value: string): boolean {
+  return value === "" || isTlsCertificatePin(value);
+}
+
 // Transmitter `type` values from the EW-DX OpenAPI. SKM is the handheld and
 // SK the bodypack; table stands and plug-on (SKP) transmitters have no Live
 // form factor, so they stay unclassified rather than guessed.

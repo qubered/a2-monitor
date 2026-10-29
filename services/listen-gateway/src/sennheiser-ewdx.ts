@@ -10,7 +10,7 @@ import { connect as tlsConnect } from "node:tls";
 import type { Showfile, ShureTelemetry } from "@rvlt/pulse-protocol/http";
 import type { ShureCapabilityProfile } from "@rvlt/pulse-protocol/shure-models";
 import {
-  isTlsCertificatePin,
+  isOptionalTlsCertificatePin,
   SENNHEISER_MODEL_INFO,
 } from "@rvlt/pulse-protocol/sennheiser-models";
 import { SseParser } from "@rvlt/pulse-protocol/sse-parser";
@@ -505,7 +505,7 @@ class PinnedTlsAgent extends Agent {
         .getPeerCertificate()
         .fingerprint256?.replaceAll(":", "")
         .toLowerCase();
-      if (fingerprint !== this.pin) {
+      if (this.pin !== "" && fingerprint !== this.pin) {
         socket.destroy();
         settle(new CertificatePinError());
         return;
@@ -956,7 +956,7 @@ export class EwdxReceiverMonitor {
     };
     if (isIP(this.config.host) === 0)
       return refuse("Receiver host must be an explicit IP address.");
-    if (!isTlsCertificatePin(this.config.tlsCertificateSha256))
+    if (!isOptionalTlsCertificatePin(this.config.tlsCertificateSha256))
       return refuse(
         "The receiver's TLS certificate pin is not a SHA-256 fingerprint.",
       );
