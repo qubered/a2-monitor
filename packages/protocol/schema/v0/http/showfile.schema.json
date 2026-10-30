@@ -191,6 +191,16 @@
             "minLength": 1,
             "maxLength": 300000
           },
+          "imagePosition": {
+            "description": "Focal point of the photo as percentages from the top-left, used as the crop anchor on Live channel cards. Absent means centred (50, 50).",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["x", "y"],
+            "properties": {
+              "x": { "type": "number", "minimum": 0, "maximum": 100 },
+              "y": { "type": "number", "minimum": 0, "maximum": 100 }
+            }
+          },
           "rooms": {
             "description": "The rooms this channel belongs to, each with its own category in that room (ADR 0035). Absent or empty means no room.",
             "type": "array",

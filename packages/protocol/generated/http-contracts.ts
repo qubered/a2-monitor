@@ -14,9 +14,9 @@
 //   - schema/v0/http/alert-log.schema.json
 //   - schema/v0/http/mic-checks.schema.json
 // Regenerate: npm run generate --workspace @rvlt/pulse-protocol
-// Schema-SHA256: 0c5058cdfb2f22ed6874171e92bcb8af92bad45cd34bedfb66517119982f364d
+// Schema-SHA256: 0a14f8cae192160ae4bfebe008e7a9ff9f87533c73bed91dc096a5abaa9be31e
 // Generator-SHA256: 123e494d4215c85da4d6478cb1ee908a830ec3431fb8ab658c6fc0e098c4296b
-// Body-SHA256: 3fe316739003309637ac4e41a3fe79a2234527a084a390d1ee035271dbcf4be5
+// Body-SHA256: e4323d6a8121f2d7d80722fc771113a9a5cc194f39e5154ce4c8540a4cc92f32
 
 export type HealthResponse = {
   status: "ok";
@@ -158,6 +158,10 @@ export type Showfile = {
       | "other"
       | null;
     imageUrl?: string | null;
+    imagePosition?: {
+      x: number;
+      y: number;
+    };
     rooms?: Array<{
       roomId: string;
       categoryId: string | null;
@@ -375,6 +379,10 @@ export type LiveStateChannel = {
     | null;
   micTypeSource?: "operator" | "inferred" | null;
   hasImage: boolean;
+  imagePosition?: {
+    x: number;
+    y: number;
+  };
   input: {
     index: number | null;
     label: string;
@@ -604,6 +612,10 @@ export type LiveStateChannelPatch = {
     | null;
   micTypeSource?: "operator" | "inferred" | null;
   hasImage?: boolean;
+  imagePosition?: {
+    x: number;
+    y: number;
+  };
   input?: {
     index: number | null;
     label: string;
@@ -1375,6 +1387,25 @@ const showfileSchema = {
             type: ["string", "null"],
             minLength: 1,
             maxLength: 300000,
+          },
+          imagePosition: {
+            description:
+              "Focal point of the photo as percentages from the top-left, used as the crop anchor on Live channel cards. Absent means centred (50, 50).",
+            type: "object",
+            additionalProperties: false,
+            required: ["x", "y"],
+            properties: {
+              x: {
+                type: "number",
+                minimum: 0,
+                maximum: 100,
+              },
+              y: {
+                type: "number",
+                minimum: 0,
+                maximum: 100,
+              },
+            },
           },
           rooms: {
             description:
@@ -2621,6 +2652,25 @@ const liveStateSchema = {
         hasImage: {
           type: "boolean",
         },
+        imagePosition: {
+          description:
+            "Focal point of the photo as percentages from the top-left, used as the crop anchor on Live channel cards. Absent means centred (50, 50).",
+          type: "object",
+          additionalProperties: false,
+          required: ["x", "y"],
+          properties: {
+            x: {
+              type: "number",
+              minimum: 0,
+              maximum: 100,
+            },
+            y: {
+              type: "number",
+              minimum: 0,
+              maximum: 100,
+            },
+          },
+        },
         input: {
           type: "object",
           additionalProperties: false,
@@ -3610,6 +3660,25 @@ const liveStateDeltaSchema = {
         hasImage: {
           type: "boolean",
         },
+        imagePosition: {
+          description:
+            "Focal point of the photo as percentages from the top-left, used as the crop anchor on Live channel cards. Absent means centred (50, 50).",
+          type: "object",
+          additionalProperties: false,
+          required: ["x", "y"],
+          properties: {
+            x: {
+              type: "number",
+              minimum: 0,
+              maximum: 100,
+            },
+            y: {
+              type: "number",
+              minimum: 0,
+              maximum: 100,
+            },
+          },
+        },
         input: {
           type: "object",
           additionalProperties: false,
@@ -4325,6 +4394,25 @@ const liveStateDeltaSchema = {
         },
         hasImage: {
           type: "boolean",
+        },
+        imagePosition: {
+          description:
+            "Focal point of the photo as percentages from the top-left, used as the crop anchor on Live channel cards. Absent means centred (50, 50).",
+          type: "object",
+          additionalProperties: false,
+          required: ["x", "y"],
+          properties: {
+            x: {
+              type: "number",
+              minimum: 0,
+              maximum: 100,
+            },
+            y: {
+              type: "number",
+              minimum: 0,
+              maximum: 100,
+            },
+          },
         },
         input: {
           type: "object",
