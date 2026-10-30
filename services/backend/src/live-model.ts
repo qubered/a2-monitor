@@ -726,6 +726,9 @@ function buildChannel(
       trimDb: showChannel.trimDb ?? 0,
       rooms: roomsWithMicTypeCategory(showfile, showChannel, micType),
       hasImage: Boolean(showChannel.imageUrl),
+      ...(showChannel.imageUrl && showChannel.imagePosition
+        ? { imagePosition: showChannel.imagePosition }
+        : {}),
       input: { index: inputIndex, label: bounded(inputLabel, 160) },
       receiver: wireless
         ? {

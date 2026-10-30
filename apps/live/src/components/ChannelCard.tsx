@@ -244,6 +244,13 @@ export function ChannelCard({
               <img
                 src={`/api/v1/channels/${encodeURIComponent(channel.id)}/image?revision=${imageRevision}`}
                 alt=""
+                style={
+                  channel.imagePosition
+                    ? {
+                        objectPosition: `${channel.imagePosition.x}% ${channel.imagePosition.y}%`,
+                      }
+                    : undefined
+                }
                 loading="lazy"
                 decoding="async"
               />

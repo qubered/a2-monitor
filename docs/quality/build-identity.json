@@ -3,8 +3,8 @@
   "identityKind": "content-addressed-source-inputs",
   "algorithm": "SHA-256",
   "version": "0.0.0",
-  "buildId": "a2-0.0.0+sha256.7f3b6f7bbc5763be",
-  "sourceSha256": "7f3b6f7bbc5763bed25d21960ece0c8743aa17b1874933a4b2ceed8a52ca9539",
+  "buildId": "a2-0.0.0+sha256.ac64c224bac8d508",
+  "sourceSha256": "ac64c224bac8d508e01a4d12466dc37a689decc6c3eaee6db0118ea7870efa29",
   "inputCount": 501,
   "inputs": [
     {
@@ -49,7 +49,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "e9b27de10b429113624ac9a0eaeebfa5aa4dd4c026f2ff2a76902bf4dfe61bd8"
+      "sha256": "1686d20b122b4896777eb84439c1d370d3960ea7b0f1664c296ba8f9da9328a2"
     },
     {
       "path": "CLAUDE.md",
@@ -121,11 +121,11 @@
     },
     {
       "path": "apps/live/src/components/ChannelCard.test.tsx",
-      "sha256": "fadfc89ac71f23a9bd6df56b4e1931cff84fefe97247d7302c024bbf4c4bc04c"
+      "sha256": "dcd43787edb82bc9854de683ecf25eaaaae74c61b3442166399a39d09885db26"
     },
     {
       "path": "apps/live/src/components/ChannelCard.tsx",
-      "sha256": "09468fbfd74ea67a83fe4da57e44c80fef8fb7b674f5a4045f1db9893ded47f4"
+      "sha256": "fb3f8aaab07d3684940174e077feca0a7dfe3a73d7e498eabc533c65ae4d1a54"
     },
     {
       "path": "apps/live/src/components/ChannelDetail.tsx",
@@ -337,7 +337,7 @@
     },
     {
       "path": "apps/manager/src/App.test.tsx",
-      "sha256": "49d5f045afd52af36b0d1cd6ca5ffb0bb3adb6a18799c44e2c73c36dc16b6312"
+      "sha256": "b106e848dcde840006d01cd23d22cad3b3ef9570d01bdcc2cfface0a83e8d8e7"
     },
     {
       "path": "apps/manager/src/App.tsx",
@@ -349,7 +349,7 @@
     },
     {
       "path": "apps/manager/src/components/ChannelsTab.tsx",
-      "sha256": "6c18008d9c8023b659b8f98893a1d416a08451441109e037a6571cec236297cd"
+      "sha256": "cc64825c3ff80e15da5b8046ad08f0bcc010d27f6a76a0dbb705d571c0723382"
     },
     {
       "path": "apps/manager/src/components/EmptyState.tsx",
@@ -1369,7 +1369,7 @@
     },
     {
       "path": "packages/protocol/generated/http-contracts.ts",
-      "sha256": "555a77ea4cee0777fb693457f1f55fc40fb235a8845f175edc7bd88ee4beeb37"
+      "sha256": "73538d56e00ad35229c00e5627663f2160db45bb057c5331085fa3f250f9bbad"
     },
     {
       "path": "packages/protocol/model/aggregate-transitions.v0.json",
@@ -1413,7 +1413,7 @@
     },
     {
       "path": "packages/protocol/schema/v0/http/live-state.schema.json",
-      "sha256": "3c76aa9a6fa84f79c305ce5beabc64d5cc517023fd49ddfe0fe868abf4aee4d7"
+      "sha256": "1620731fc8234846c7a836cdf4335aa0dab4a6b4f67536d1539b09e1c06ef4d1"
     },
     {
       "path": "packages/protocol/schema/v0/http/meter-frame.schema.json",
@@ -1433,7 +1433,7 @@
     },
     {
       "path": "packages/protocol/schema/v0/http/showfile.schema.json",
-      "sha256": "ab038653626a109c109543512db9f6618c002923c80bf4b874bb4a91e9e928cd"
+      "sha256": "530d92ed1ea3b1c0bc02cffb0ab260db2dc9a44eb938fbc21108afff8ed49942"
     },
     {
       "path": "packages/protocol/schema/v0/http/shure-telemetry.schema.json",
@@ -1461,7 +1461,7 @@
     },
     {
       "path": "packages/protocol/tests/http-contracts.test.ts",
-      "sha256": "318e0ad0b26245a0ec3079d18fc4f1adeb1d4829a887eb809af5c8c05ce8de7a"
+      "sha256": "a3836d31d745c1de88e3fcc6b4e8353bd17e1972c2f169801b4b4ea8ab8e44f7"
     },
     {
       "path": "packages/protocol/tests/live-state-delta.test.ts",
@@ -1757,7 +1757,7 @@
     },
     {
       "path": "services/backend/src/live-model.ts",
-      "sha256": "5f613a50586de872fdc950b45d637b110ae37d1e227c2747ed8ffc6bb2d1e5e1"
+      "sha256": "d3eefe3c2566549e9cb0a44b0465fb38cd8d290fc283cbddc939c006933a8168"
     },
     {
       "path": "services/backend/src/live-monitor.ts",
@@ -1813,7 +1813,7 @@
     },
     {
       "path": "services/backend/src/server.test.ts",
-      "sha256": "422849dffd38b7fd0e1fa6ce9886433cec5d61f9b64bd9e3568649979a733dce"
+      "sha256": "57bc9d874e6605dd35356361c2bdce4e720ddca408487a474a9ef69c9eefcb16"
     },
     {
       "path": "services/backend/src/server.ts",

@@ -63,7 +63,7 @@ function renderCard(
     onLongPressSelect?: () => void;
   } = {},
 ) {
-  render(
+  return render(
     <ChannelCard
       channel={channel(overrides)}
       alert={null}
@@ -96,6 +96,23 @@ describe("ChannelCard photo fallback", () => {
   it("marks a telemetry-detected mic type as inferred with 'likely'", () => {
     renderCard({ micType: "beltpack", micTypeSource: "inferred" });
     expect(screen.getByText("Likely beltpack")).not.toBeNull();
+  });
+});
+
+describe("ChannelCard photo position", () => {
+  it("crops to the centre when the photo has no position", () => {
+    const { container } = renderCard({ hasImage: true });
+    expect(container.querySelector("img")?.style.objectPosition).toBe("");
+  });
+
+  it("anchors the crop at the channel's photo position", () => {
+    const { container } = renderCard({
+      hasImage: true,
+      imagePosition: { x: 30, y: 10 },
+    });
+    expect(container.querySelector("img")?.style.objectPosition).toBe(
+      "30% 10%",
+    );
   });
 });
 

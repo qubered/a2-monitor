@@ -1,10 +1,16 @@
-import { useRef, useState } from "react";
+import {
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import {
   Antenna,
   AudioLines,
   Battery,
+  Crosshair,
   ImageOff,
   Plus,
+  RotateCcw,
   Trash2,
   Upload,
   X,
@@ -172,19 +178,134 @@ function MonitorToggle({
   );
 }
 
-function ChannelImage({
+type ImagePosition = { x: number; y: number };
+
+const CENTRED: ImagePosition = { x: 50, y: 50 };
+
+function clampPercent(value: number): number {
+  return Math.min(100, Math.max(0, Math.round(value)));
+}
+
+/**
+ * Sets where a channel photo is anchored when Live crops it to the card. The
+ * preview has the card photo's 16:10 shape; tap or drag on it, or use the
+ * sliders, which are the keyboard route.
+ */
+function PhotoPositionControl({
   position,
   imageUrl,
-  micType,
+  value,
   onChange,
 }: {
   position: number;
+  imageUrl: string;
+  value: ImagePosition | undefined;
+  onChange: (next: ImagePosition | undefined) => void;
+}) {
+  const current = value ?? CENTRED;
+  const dragging = useRef(false);
+
+  function moveTo(event: ReactPointerEvent<HTMLDivElement>) {
+    const box = event.currentTarget.getBoundingClientRect();
+    if (box.width === 0 || box.height === 0) return;
+    onChange({
+      x: clampPercent(((event.clientX - box.left) / box.width) * 100),
+      y: clampPercent(((event.clientY - box.top) / box.height) * 100),
+    });
+  }
+
+  const label = `Channel ${position + 1} photo`;
+  return (
+    <div
+      className="flex flex-col gap-2"
+      role="group"
+      aria-label={`${label} position`}
+    >
+      <div
+        data-testid={`photo-position-preview-${position}`}
+        className="relative aspect-[16/10] w-44 cursor-crosshair touch-none overflow-hidden rounded-md border-2 border-line-2 bg-paper-2"
+        onPointerDown={(event) => {
+          dragging.current = true;
+          event.currentTarget.setPointerCapture?.(event.pointerId);
+          moveTo(event);
+        }}
+        onPointerMove={(event) => {
+          if (dragging.current) moveTo(event);
+        }}
+        onPointerUp={() => {
+          dragging.current = false;
+        }}
+        onPointerCancel={() => {
+          dragging.current = false;
+        }}
+      >
+        <img
+          src={imageUrl}
+          alt=""
+          draggable={false}
+          className="pointer-events-none size-full select-none object-cover"
+          style={{ objectPosition: `${current.x}% ${current.y}%` }}
+        />
+      </div>
+      {(["x", "y"] as const).map((axis) => (
+        <label
+          key={axis}
+          className="flex items-center gap-2 text-badge text-muted-foreground"
+        >
+          <span className="w-16">
+            {axis === "x" ? "Left–right" : "Up–down"}
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={current[axis]}
+            aria-label={`${label} ${axis === "x" ? "horizontal" : "vertical"} position`}
+            className="min-h-8 flex-1"
+            onChange={(event) =>
+              onChange({
+                ...current,
+                [axis]: clampPercent(Number(event.target.value)),
+              })
+            }
+          />
+        </label>
+      ))}
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="self-start"
+        disabled={value === undefined}
+        aria-label={`${label} reset position to centre`}
+        onClick={() => onChange(undefined)}
+      >
+        <RotateCcw aria-hidden="true" />
+        Centre
+      </Button>
+    </div>
+  );
+}
+
+function ChannelImage({
+  position,
+  imageUrl,
+  imagePosition,
+  micType,
+  onChange,
+  onPositionChange,
+}: {
+  position: number;
   imageUrl: string | null | undefined;
+  imagePosition: ImagePosition | undefined;
   micType: string | null | undefined;
   onChange: (imageUrl: string | null) => void;
+  onPositionChange: (next: ImagePosition | undefined) => void;
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [positioning, setPositioning] = useState(false);
 
   function pickFile() {
     setError(null);
@@ -217,6 +338,11 @@ function ChannelImage({
             src={imageUrl}
             alt=""
             className="size-11 shrink-0 rounded-full border-2 border-line-2 object-cover"
+            style={
+              imagePosition
+                ? { objectPosition: `${imagePosition.x}% ${imagePosition.y}%` }
+                : undefined
+            }
           />
         ) : (
           <span
@@ -254,6 +380,7 @@ function ChannelImage({
             aria-label={`Channel ${position + 1} remove photo`}
             onClick={() => {
               setError(null);
+              setPositioning(false);
               onChange(null);
             }}
           >
@@ -261,6 +388,30 @@ function ChannelImage({
           </Button>
         ) : null}
       </div>
+      {imageUrl ? (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="self-start"
+            aria-expanded={positioning}
+            aria-label={`Channel ${position + 1} position photo`}
+            onClick={() => setPositioning((open) => !open)}
+          >
+            <Crosshair aria-hidden="true" />
+            Position
+          </Button>
+          {positioning ? (
+            <PhotoPositionControl
+              position={position}
+              imageUrl={imageUrl}
+              value={imagePosition}
+              onChange={onPositionChange}
+            />
+          ) : null}
+        </>
+      ) : null}
       {error ? (
         <span role="alert" className="text-badge text-out">
           {error}
@@ -377,10 +528,23 @@ export function ChannelsTab({
                   <ChannelImage
                     position={position}
                     imageUrl={channel.imageUrl}
+                    imagePosition={channel.imagePosition}
                     micType={channel.micType}
                     onChange={(imageUrl) => {
                       const channels = [...showfile.channels];
-                      channels[position] = { ...channel, imageUrl };
+                      // A new or removed photo starts centred again.
+                      const rest = { ...channel };
+                      delete rest.imagePosition;
+                      channels[position] = { ...rest, imageUrl };
+                      onChange({ ...showfile, channels });
+                    }}
+                    onPositionChange={(imagePosition) => {
+                      const channels = [...showfile.channels];
+                      const rest = { ...channel };
+                      delete rest.imagePosition;
+                      channels[position] = imagePosition
+                        ? { ...rest, imagePosition }
+                        : rest;
                       onChange({ ...showfile, channels });
                     }}
                   />

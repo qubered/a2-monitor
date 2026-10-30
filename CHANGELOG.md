@@ -10,6 +10,11 @@ externally tested release.
 
 ### Added
 
+- Manager and Live: position a channel's photo. A Position control next to the
+  photo upload sets the focal point (tap or drag a preview shaped like the card
+  photo, or use the left-right and up-down sliders; Centre resets it), and Live
+  crops the photo around it on every card size. Photos without a position stay
+  centred.
 - Manager, Live and the audio node: read-only Sennheiser EW-DX EM 2 Dante
   receivers (two channels, firmware 4.x over authenticated SSCv2). Manager
   adds each unit by explicit IP in the same Receivers table as Shure, with a

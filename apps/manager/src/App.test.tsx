@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
@@ -521,6 +521,58 @@ describe("Manager showfile editor", () => {
     expect(body).toContain(
       '"monitor":{"battery":true,"rf":false,"audio":true}',
     );
+  });
+
+  it("positions a channel photo with the sliders, drag preview and reset", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("tab", { name: /channels/i }));
+    await user.upload(
+      await screen.findByLabelText("Channel 1 photo upload"),
+      new File(["hello"], "alice.png", { type: "image/png" }),
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "Channel 1 position photo" }),
+    );
+
+    const reset = screen.getByRole("button", {
+      name: "Channel 1 photo reset position to centre",
+    });
+    expect(reset.hasAttribute("disabled")).toBe(true);
+
+    const vertical = screen.getByLabelText(
+      "Channel 1 photo vertical position",
+    ) as HTMLInputElement;
+    expect(vertical.value).toBe("50");
+    fireEvent.change(vertical, { target: { value: "10" } });
+    expect(vertical.value).toBe("10");
+
+    const preview = screen.getByTestId("photo-position-preview-0");
+    preview.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 200, height: 100 }) as DOMRect;
+    fireEvent.pointerDown(preview, { clientX: 50, clientY: 80, pointerId: 1 });
+    expect(
+      (
+        screen.getByLabelText(
+          "Channel 1 photo horizontal position",
+        ) as HTMLInputElement
+      ).value,
+    ).toBe("25");
+    expect(vertical.value).toBe("80");
+
+    await user.click(screen.getByRole("button", { name: "Save showfile" }));
+    const saveCall = fetchMock.mock.calls.find(
+      ([path, init]) =>
+        String(path) === "/api/v1/showfile" && init?.method === "PUT",
+    );
+    expect(String(saveCall?.[1]?.body)).toContain(
+      '"imagePosition":{"x":25,"y":80}',
+    );
+
+    await user.click(reset);
+    expect(vertical.value).toBe("50");
+    expect(reset.hasAttribute("disabled")).toBe(true);
   });
 
   it("creates a production and switches the active showfile to it", async () => {

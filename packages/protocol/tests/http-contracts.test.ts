@@ -71,6 +71,29 @@ describe("generated HTTP contract compatibility", () => {
     expect(() => parseShowfile(invalid)).toThrow(ProtocolContractError);
   });
 
+  it("accepts a channel photo position and rejects one outside the photo", async () => {
+    const value = (await fixture("current/showfile.valid.json")) as {
+      channels: Array<Record<string, unknown>>;
+    };
+    const place = (imagePosition: unknown) => ({
+      ...value,
+      channels: [
+        { ...value.channels[0], imagePosition },
+        ...value.channels.slice(1),
+      ],
+    });
+    expect(parseShowfile(place({ x: 30, y: 0 }))).toBeTruthy();
+    expect(() => parseShowfile(place({ x: 101, y: 50 }))).toThrow(
+      ProtocolContractError,
+    );
+    expect(() => parseShowfile(place({ x: 50 }))).toThrow(
+      ProtocolContractError,
+    );
+    expect(() => parseShowfile(place({ x: 50, y: -1 }))).toThrow(
+      ProtocolContractError,
+    );
+  });
+
   it("rejects a normalized but impossible calendar date", async () => {
     const parity = (await fixture("parity-values.json")) as {
       invalidCalendarDateTime: string;

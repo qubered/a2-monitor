@@ -274,6 +274,44 @@ describe("backend health and Live snapshot", () => {
       ],
     });
 
+    const positioned = await server.inject({
+      method: "PUT",
+      url: "/api/v1/showfile",
+      payload: {
+        ...uploaded.json(),
+        channels: [
+          {
+            inputIndex: 0,
+            name: "Alice",
+            imageUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAE=",
+            imagePosition: { x: 40, y: 15 },
+          },
+        ],
+      },
+    });
+    expect(positioned.statusCode).toBe(200);
+    expect(positioned.json().channels[0].imagePosition).toEqual({
+      x: 40,
+      y: 15,
+    });
+
+    const outOfRange = await server.inject({
+      method: "PUT",
+      url: "/api/v1/showfile",
+      payload: {
+        ...uploaded.json(),
+        channels: [
+          {
+            inputIndex: 0,
+            name: "Alice",
+            imageUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAE=",
+            imagePosition: { x: 140, y: 15 },
+          },
+        ],
+      },
+    });
+    expect(outOfRange.statusCode).toBe(400);
+
     const malformed = await server.inject({
       method: "PUT",
       url: "/api/v1/showfile",
